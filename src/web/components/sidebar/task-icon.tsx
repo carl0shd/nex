@@ -10,7 +10,7 @@ function TaskIcon({ active = false, statusColor, onClick }: TaskIconProps): Reac
   return (
     <button
       onClick={onClick}
-      className={`relative flex size-8 cursor-pointer items-center justify-center rounded-md select-none transition-colors hover:bg-bg-mute ${active ? 'bg-bg-mute' : ''}`}
+      className={`relative flex size-8 cursor-pointer items-center justify-center rounded-md select-none hover:bg-bg-mute ${active ? 'bg-bg-mute' : ''}`}
     >
       <GitBranch size={16} className={active ? 'text-text' : 'text-text-muted'} />
       {statusColor && (

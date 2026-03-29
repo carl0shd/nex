@@ -14,7 +14,7 @@ function WorkspaceBadge({
   return (
     <button
       onClick={onClick}
-      className={`flex size-8 cursor-pointer items-center justify-center rounded-md text-[13px] font-semibold text-text select-none transition-opacity ${
+      className={`flex size-8 cursor-pointer items-center justify-center rounded-md text-[13px] font-semibold text-text select-none ${
         active ? 'opacity-100' : 'opacity-40'
       }`}
       style={{ backgroundColor: color }}

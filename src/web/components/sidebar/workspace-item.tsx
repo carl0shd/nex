@@ -1,0 +1,79 @@
+import { ChevronDown, ChevronRight, Folder } from 'lucide-react';
+import IconButton from '@/components/ui/icon-button';
+import { Plus, Ellipsis } from 'lucide-react';
+
+interface Project {
+  name: string;
+}
+
+interface WorkspaceItemProps {
+  name: string;
+  color: string;
+  count: number;
+  projects?: Project[];
+  collapsed?: boolean;
+  active?: boolean;
+  onToggle?: () => void;
+  onAddProject?: () => void;
+}
+
+function WorkspaceItem({
+  name,
+  color,
+  count,
+  projects = [],
+  collapsed = false,
+  active = true,
+  onToggle,
+  onAddProject
+}: WorkspaceItemProps): React.JSX.Element {
+  const Chevron = collapsed ? ChevronRight : ChevronDown;
+  const muted = !active;
+  const initial = name[0].toUpperCase();
+
+  return (
+    <div className="flex flex-col gap-0.5">
+      <div className="flex w-full items-center gap-1.5 rounded px-1.5 py-1.25 select-none">
+        <button onClick={onToggle} className="flex cursor-pointer items-center gap-1.5">
+          <Chevron size={12} className="text-text-muted" />
+          <span
+            className="flex size-4.5 items-center justify-center rounded text-[9px] font-bold text-text"
+            style={{ backgroundColor: color }}
+          >
+            {initial}
+          </span>
+          <span className={`text-[12px] font-semibold ${muted ? 'text-text-muted' : 'text-text'}`}>
+            {name}
+          </span>
+          <span className={`text-[12px] ${muted ? 'text-text-muted/50' : 'text-text-muted'}`}>
+            {count}
+          </span>
+        </button>
+        <span className="flex-1" />
+        <IconButton
+          icon={Plus}
+          size={13}
+          onClick={onAddProject}
+          className={muted ? 'opacity-40' : ''}
+        />
+        <IconButton icon={Ellipsis} size={14} className={muted ? 'opacity-40' : ''} />
+      </div>
+
+      {!collapsed && projects.length > 0 && (
+        <div className="flex flex-col gap-px pl-4.5">
+          {projects.map((project) => (
+            <button
+              key={project.name}
+              className="flex w-full cursor-pointer items-center gap-2 rounded px-2 py-1 text-left select-none hover:bg-bg-mute/50"
+            >
+              <Folder size={13} className="shrink-0 text-text-muted" />
+              <span className="truncate text-[12px] text-text-secondary">{project.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default WorkspaceItem;

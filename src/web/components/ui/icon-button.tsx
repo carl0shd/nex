@@ -16,7 +16,7 @@ function IconButton({
   return (
     <button
       onClick={onClick}
-      className={`flex cursor-pointer items-center justify-center rounded-md p-1.5 text-text-muted transition-colors hover:bg-bg-mute hover:text-text-secondary ${className}`}
+      className={`flex cursor-pointer items-center justify-center rounded-md p-1.5 text-text-muted hover:bg-bg-mute hover:text-text-secondary ${className}`}
     >
       <Icon size={size} />
     </button>

@@ -1,5 +1,7 @@
+import EmptyState from '@/components/layout/empty-state';
+
 function Home(): React.JSX.Element {
-  return <div className="flex-1 bg-bg" />;
+  return <EmptyState />;
 }
 
 export default Home;

@@ -1,6 +1,6 @@
-import { app, BrowserWindow, Menu } from 'electron';
+import { app, Menu } from 'electron';
 import { electronApp, optimizer } from '@electron-toolkit/utils';
-import { createMainWindow } from './app-window';
+import { createMainWindow, getMainWindow, setQuitting } from './app-window';
 import { buildAppMenu } from './menu';
 import { registerIPCHandlers } from '../ipc/handlers';
 import { initAutoUpdater } from './updater';
@@ -19,8 +19,17 @@ app.whenReady().then(() => {
   initAutoUpdater();
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
+    const win = getMainWindow();
+    if (win) {
+      win.show();
+    } else {
+      createMainWindow();
+    }
   });
+});
+
+app.on('before-quit', () => {
+  setQuitting(true);
 });
 
 app.on('window-all-closed', () => {
