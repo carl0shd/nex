@@ -2,6 +2,7 @@ import { BrowserWindow, shell } from 'electron';
 import { join } from 'path';
 import { is } from '@electron-toolkit/utils';
 import { load, save } from './store';
+import { IPC } from '../ipc/channels';
 
 interface WindowState {
   x?: number;
@@ -14,6 +15,11 @@ interface WindowState {
 const DEFAULT_STATE: WindowState = { width: 1024, height: 720, isMaximized: false };
 
 let mainWindow: BrowserWindow | null = null;
+let quitting = false;
+
+export function setQuitting(value: boolean): void {
+  quitting = value;
+}
 
 export function createMainWindow(): BrowserWindow {
   const state = load<WindowState>('window-state.json', DEFAULT_STATE);
@@ -41,7 +47,19 @@ export function createMainWindow(): BrowserWindow {
     mainWindow?.show();
   });
 
-  mainWindow.on('close', () => {
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
+
+  mainWindow.on('enter-full-screen', () => {
+    mainWindow?.webContents.send(IPC.FULLSCREEN_CHANGE, true);
+  });
+
+  mainWindow.on('leave-full-screen', () => {
+    mainWindow?.webContents.send(IPC.FULLSCREEN_CHANGE, false);
+  });
+
+  mainWindow.on('close', (e) => {
     if (!mainWindow) return;
     const isMaximized = mainWindow.isMaximized();
     const bounds = mainWindow.getBounds();
@@ -52,6 +70,11 @@ export function createMainWindow(): BrowserWindow {
       height: bounds.height,
       isMaximized
     });
+
+    if (process.platform === 'darwin' && !quitting) {
+      e.preventDefault();
+      mainWindow.hide();
+    }
   });
 
   mainWindow.webContents.setWindowOpenHandler((details) => {

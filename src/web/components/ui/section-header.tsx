@@ -28,7 +28,7 @@ function SectionHeader({
     <div className="flex w-full items-center gap-1 px-1">
       <button onClick={onToggle} className="flex cursor-pointer items-center gap-1 text-text-muted">
         <Chevron size={12} />
-        <span className="select-none text-[10px] font-medium">{title}</span>
+        <span className="select-none text-[13px] font-medium">{title}</span>
       </button>
       <div className="flex-1" />
       {actions.map((action, i) => (

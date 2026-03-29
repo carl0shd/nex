@@ -19,7 +19,7 @@ function TaskItem({
   return (
     <button
       onClick={onClick}
-      className={`flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left select-none transition-colors ${
+      className={`flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left select-none ${
         active
           ? 'bg-bg-mute text-text'
           : 'text-text-secondary hover:bg-bg-mute/50 hover:text-text-secondary'
