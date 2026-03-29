@@ -1,1 +1,80 @@
 @import 'tailwindcss';
+
+@theme {
+  --color-bg: var(--nex-bg);
+  --color-bg-soft: var(--nex-bg-soft);
+  --color-bg-mute: var(--nex-bg-mute);
+  --color-bg-card: var(--nex-bg-card);
+  --color-border: var(--nex-border);
+  --color-border-soft: var(--nex-border-soft);
+  --color-text: var(--nex-text);
+  --color-text-secondary: var(--nex-text-secondary);
+  --color-text-muted: var(--nex-text-muted);
+  --color-text-placeholder: var(--nex-text-placeholder);
+  --color-accent: var(--nex-accent);
+  --color-accent-hover: var(--nex-accent-hover);
+  --color-badge-success-bg: var(--nex-badge-success-bg);
+  --color-badge-success-text: var(--nex-badge-success-text);
+  --color-badge-warning-bg: var(--nex-badge-warning-bg);
+  --color-badge-warning-text: var(--nex-badge-warning-text);
+  --color-badge-error-bg: var(--nex-badge-error-bg);
+  --color-badge-error-text: var(--nex-badge-error-text);
+  --color-badge-default-bg: var(--nex-badge-default-bg);
+  --color-badge-default-text: var(--nex-badge-default-text);
+}
+
+:root {
+  /* Backgrounds */
+  --nex-bg: #0a0a0a;
+  --nex-bg-soft: #111113;
+  --nex-bg-mute: #18181a;
+  --nex-bg-card: #18181a;
+
+  /* Borders */
+  --nex-border: #2a2a2a;
+  --nex-border-soft: #1f1f1f;
+
+  /* Text */
+  --nex-text: #fafafa;
+  --nex-text-secondary: #a3a3a3;
+  --nex-text-muted: #636363;
+  --nex-text-placeholder: #4a4a4a;
+
+  /* Accent */
+  --nex-accent: #175f52;
+  --nex-accent-hover: #1a7363;
+
+  /* Badge - success */
+  --nex-badge-success-bg: #0c342d;
+  --nex-badge-success-text: #14957d;
+
+  /* Badge - warning */
+  --nex-badge-warning-bg: #422006;
+  --nex-badge-warning-text: #fbbf24;
+
+  /* Badge - error */
+  --nex-badge-error-bg: #450a0a;
+  --nex-badge-error-text: #f87171;
+
+  /* Badge - default */
+  --nex-badge-default-bg: #262626;
+  --nex-badge-default-text: #a3a3a3;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: auto;
+}
+
+#root {
+  height: 100%;
+  background: var(--nex-bg);
+  border-radius: 10px;
+  overflow: hidden;
+}

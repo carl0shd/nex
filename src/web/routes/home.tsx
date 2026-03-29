@@ -1,5 +1,5 @@
 function Home(): React.JSX.Element {
-  return <div className="flex min-h-screen items-center justify-center bg-neutral-900" />;
+  return <div className="flex-1 bg-bg" />;
 }
 
 export default Home;
