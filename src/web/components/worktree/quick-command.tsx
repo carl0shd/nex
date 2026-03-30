@@ -9,7 +9,7 @@ function QuickCommand({ label, onClick }: QuickCommandProps): React.JSX.Element 
   return (
     <button
       onClick={onClick}
-      className="flex cursor-pointer items-center gap-1 rounded border hover:bg-bg-hover border-border-strong px-2 py-0.75 font-mono text-[10px] font-medium text-text-secondary select-none hover:border-border-hover hover:text-text"
+      className="flex cursor-pointer items-center gap-1 rounded border hover:bg-bg-hover border-border px-2 py-0.75 font-mono text-[10px] font-medium text-text-secondary select-none hover:border-border-hover hover:text-text"
     >
       <Play size={10} className="text-badge-success-text" />
       {label}
