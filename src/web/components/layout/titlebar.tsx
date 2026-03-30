@@ -36,7 +36,7 @@ function Titlebar({ onToggleSidebar }: TitlebarProps): React.JSX.Element {
       <div className="flex-1" />
 
       <div
-        className="flex items-center gap-3 pr-3"
+        className="flex items-center gap-1 pr-3"
         style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
       >
         <IconButton icon={Bell} size={15} />

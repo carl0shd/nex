@@ -23,6 +23,12 @@
   --color-badge-default-text: var(--nex-badge-default-text);
   --color-badge-count-bg: var(--nex-badge-count-bg);
   --color-badge-count-text: var(--nex-badge-count-text);
+  --color-bg-raised: var(--nex-bg-raised);
+  --color-bg-input: var(--nex-bg-input);
+  --color-bg-panel: var(--nex-bg-panel);
+  --color-bg-hover: var(--nex-bg-hover);
+  --color-border-strong: var(--nex-border-strong);
+  --color-border-hover: var(--nex-border-hover);
 }
 
 :root {
@@ -32,9 +38,17 @@
   --nex-bg-mute: #18181a;
   --nex-bg-card: #18181a;
 
+  /* Backgrounds - elevated */
+  --nex-bg-raised: #202022;
+  --nex-bg-input: #151515;
+  --nex-bg-panel: #222225;
+  --nex-bg-hover: #1d1d1f;
+
   /* Borders */
   --nex-border: #2a2a2a;
   --nex-border-soft: #1f1f1f;
+  --nex-border-strong: #343434;
+  --nex-border-hover: #404040;
 
   /* Text */
   --nex-text: #fafafa;
@@ -67,6 +81,38 @@
   --nex-badge-count-text: #18181b;
 }
 
+::selection {
+  background: var(--nex-border-strong);
+}
+
+*:focus-visible {
+  outline: 1px solid var(--nex-badge-success-text);
+  outline-offset: -1px;
+}
+
+textarea:focus-visible,
+input:focus-visible {
+  outline: none;
+}
+
+textarea {
+  scrollbar-width: thin;
+  scrollbar-color: var(--nex-border) transparent;
+}
+
+textarea::-webkit-scrollbar {
+  width: 4px;
+}
+
+textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+textarea::-webkit-scrollbar-thumb {
+  background: var(--nex-border);
+  border-radius: 2px;
+}
+
 html,
 body {
   margin: 0;
@@ -84,8 +130,6 @@ body {
 .simplebar-scrollbar::before {
   background: var(--nex-border);
   border-radius: 3px;
-  left: 0 !important;
-  right: 0 !important;
 }
 
 .simplebar-scrollbar.simplebar-hover::before,
@@ -93,8 +137,39 @@ body {
   background: var(--nex-text-placeholder);
 }
 
+.simplebar-content-wrapper:focus-visible {
+  outline: none;
+}
+
+.simplebar-content {
+  height: 100%;
+}
+
 .simplebar-track.simplebar-vertical {
   width: 6px !important;
+}
+
+.simplebar-track.simplebar-vertical .simplebar-scrollbar::before {
+  left: 0 !important;
+  right: 0 !important;
+}
+
+.simplebar-track.simplebar-horizontal {
+  height: 6px !important;
+}
+
+.simplebar-track.simplebar-horizontal .simplebar-scrollbar::before {
+  top: 0 !important;
+  bottom: 0 !important;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 #root {

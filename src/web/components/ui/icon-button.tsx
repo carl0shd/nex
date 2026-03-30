@@ -3,6 +3,7 @@ import type { LucideIcon } from 'lucide-react';
 interface IconButtonProps {
   icon: LucideIcon;
   size?: number;
+  ghost?: boolean;
   onClick?: () => void;
   className?: string;
 }
@@ -10,13 +11,14 @@ interface IconButtonProps {
 function IconButton({
   icon: Icon,
   size = 14,
+  ghost = false,
   onClick,
   className = ''
 }: IconButtonProps): React.JSX.Element {
   return (
     <button
       onClick={onClick}
-      className={`flex cursor-pointer items-center justify-center rounded-md p-1.5 text-text-muted hover:bg-bg-mute hover:text-text-secondary ${className}`}
+      className={`flex cursor-pointer items-center justify-center rounded-md text-text-muted hover:text-text-secondary ${ghost ? 'p-1' : 'p-1.5 hover:bg-bg-mute'} ${className}`}
     >
       <Icon size={size} />
     </button>
