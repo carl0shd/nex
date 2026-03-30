@@ -1,6 +1,5 @@
 import { Plus, LayoutGrid, ChevronDown } from 'lucide-react';
 import SimpleBar from 'simplebar-react';
-import 'simplebar-react/dist/simplebar.min.css';
 import { useScrollable } from '@/hooks/use-scrollable';
 import SectionHeader from '@/components/ui/section-header';
 import TipBox from '@/components/ui/tip-box';
@@ -79,7 +78,7 @@ function Sidebar(): React.JSX.Element {
         </SimpleBar>
       </div>
 
-      <div className="shrink-0 px-4 pb-3 pt-3">
+      <div className="shrink-0 px-4 pb-3 pt-3 z-20">
         <button className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded bg-accent py-2 text-[12px] font-medium text-text select-none hover:bg-accent-hover">
           &gt; new task
         </button>

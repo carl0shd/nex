@@ -143,6 +143,7 @@ Uses `MemoryRouter` from react-router-dom. This is required for Electron (no rea
 - **Transitions:** No CSS transitions on hover states. All interactions are instant.
 - **Hardcoded colors:** Never use hardcoded hex colors in components. Always use theme tokens. Exception: inline `style` for dynamic colors passed as props (e.g. workspace color).
 - **Native feel:** Global `user-select: none`, `cursor: default`, `-webkit-user-drag: none`. The app should never feel like a website.
+- **No inline markup:** Never leave repeated inline JSX when a component can be extracted. If a pattern appears more than once, create a component. Use existing components (`IconButton`, `Badge`, etc.) instead of raw `<button>` or `<span>` with manual styling.
 
 ## Components
 
