@@ -33,30 +33,39 @@ function WorkspaceItem({
 
   return (
     <div className="flex flex-col gap-0.5">
-      <div className="flex w-full items-center gap-1.5 rounded px-1.5 py-1.25 select-none">
-        <button onClick={onToggle} className="flex cursor-pointer items-center gap-1.5">
-          <Chevron size={12} className="text-text-muted" />
-          <span
-            className="flex size-4.5 items-center justify-center rounded text-[9px] font-bold text-text"
-            style={{ backgroundColor: color }}
-          >
-            {initial}
-          </span>
-          <span className={`text-[12px] font-semibold ${muted ? 'text-text-muted' : 'text-text'}`}>
-            {name}
-          </span>
-          <span className={`text-[12px] ${muted ? 'text-text-muted/50' : 'text-text-muted'}`}>
-            {count}
-          </span>
-        </button>
+      <div
+        onClick={onToggle}
+        className="flex w-full cursor-pointer items-center gap-1.5 rounded px-1.5 py-1.25 select-none"
+      >
+        <Chevron size={12} className="text-text-muted" />
+        <span
+          className="flex size-4.5 items-center justify-center rounded text-[9px] font-bold text-text"
+          style={{ backgroundColor: color }}
+        >
+          {initial}
+        </span>
+        <span className={`text-[12px] font-semibold ${muted ? 'text-text-muted' : 'text-text'}`}>
+          {name}
+        </span>
+        <span className={`text-[12px] ${muted ? 'text-text-muted/50' : 'text-text-muted'}`}>
+          {count}
+        </span>
         <span className="flex-1" />
         <IconButton
           icon={Plus}
           size={13}
-          onClick={onAddProject}
+          onClick={(e) => {
+            e.stopPropagation();
+            onAddProject?.();
+          }}
           className={muted ? 'opacity-40' : ''}
         />
-        <IconButton icon={Ellipsis} size={14} className={muted ? 'opacity-40' : ''} />
+        <IconButton
+          icon={Ellipsis}
+          size={14}
+          onClick={(e) => e.stopPropagation()}
+          className={muted ? 'opacity-40' : ''}
+        />
       </div>
 
       {!collapsed && projects.length > 0 && (
