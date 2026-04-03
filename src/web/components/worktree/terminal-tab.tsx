@@ -18,7 +18,7 @@ function TerminalTab({
   return (
     <div
       onClick={onClick}
-      className={`flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-[5px] px-2 py-1 select-none ${
+      className={`flex shrink-0 cursor-pointer border-border items-center gap-2 whitespace-nowrap rounded-[5px] px-2 py-1 select-none ${
         active
           ? 'border border-border hover:border-border-hover bg-bg-hover text-text'
           : 'border border-bg-raised hover:border-border-strong text-text-secondary hover:text-text'

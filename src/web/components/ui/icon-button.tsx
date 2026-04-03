@@ -4,7 +4,7 @@ interface IconButtonProps {
   icon: LucideIcon;
   size?: number;
   ghost?: boolean;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent) => void;
   className?: string;
 }
 

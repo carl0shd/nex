@@ -1,8 +1,8 @@
-import { BrowserWindow, shell } from 'electron';
+import { BrowserWindow, screen, shell } from 'electron';
 import { join } from 'path';
 import { is } from '@electron-toolkit/utils';
-import { load, save } from './store';
-import { IPC } from '../ipc/channels';
+import * as settings from '@native/db/repositories/settings.repo';
+import { IPC } from '@native/ipc/channels';
 
 interface WindowState {
   x?: number;
@@ -12,8 +12,6 @@ interface WindowState {
   isMaximized: boolean;
 }
 
-const DEFAULT_STATE: WindowState = { width: 1024, height: 720, isMaximized: false };
-
 let mainWindow: BrowserWindow | null = null;
 let quitting = false;
 
@@ -22,7 +20,9 @@ export function setQuitting(value: boolean): void {
 }
 
 export function createMainWindow(): BrowserWindow {
-  const state = load<WindowState>('window-state.json', DEFAULT_STATE);
+  const saved = settings.get<WindowState | null>('window-state', null);
+  const { width: screenW, height: screenH } = screen.getPrimaryDisplay().workAreaSize;
+  const state = saved ?? { width: screenW, height: screenH, isMaximized: true };
 
   mainWindow = new BrowserWindow({
     ...state,
@@ -63,7 +63,7 @@ export function createMainWindow(): BrowserWindow {
     if (!mainWindow) return;
     const isMaximized = mainWindow.isMaximized();
     const bounds = mainWindow.getBounds();
-    save('window-state.json', {
+    settings.set('window-state', {
       x: bounds.x,
       y: bounds.y,
       width: bounds.width,
@@ -80,6 +80,19 @@ export function createMainWindow(): BrowserWindow {
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url);
     return { action: 'deny' };
+  });
+
+  const csp = is.dev
+    ? "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; worker-src 'self' blob:"
+    : "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:";
+
+  mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [csp]
+      }
+    });
   });
 
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {

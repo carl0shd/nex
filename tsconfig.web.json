@@ -4,14 +4,16 @@
     "src/web/types/env.d.ts",
     "src/web/**/*",
     "src/web/**/*.tsx",
-    "src/native/preload/*.d.ts"
+    "src/native/preload/*.d.ts",
+    "src/native/db/types.ts"
   ],
   "compilerOptions": {
     "composite": true,
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/web/*"]
+      "@/*": ["src/web/*"],
+      "@native/*": ["src/native/*"]
     }
   }
 }

@@ -2,8 +2,11 @@ import { app, Menu } from 'electron';
 import { electronApp, optimizer } from '@electron-toolkit/utils';
 import { createMainWindow, getMainWindow, setQuitting } from './app-window';
 import { buildAppMenu } from './menu';
-import { registerIPCHandlers } from '../ipc/handlers';
+import { registerIPCHandlers } from '@native/ipc/handlers';
 import { initAutoUpdater } from './updater';
+import { is } from '@electron-toolkit/utils';
+import { initDatabase, closeDatabase } from '@native/db/database';
+import { seedDevData } from '@native/db/seed';
 
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.nex.app');
@@ -12,6 +15,8 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window);
   });
 
+  initDatabase();
+  if (is.dev) seedDevData();
   Menu.setApplicationMenu(buildAppMenu());
   registerIPCHandlers();
 
@@ -30,6 +35,10 @@ app.whenReady().then(() => {
 
 app.on('before-quit', () => {
   setQuitting(true);
+});
+
+app.on('will-quit', () => {
+  closeDatabase();
 });
 
 app.on('window-all-closed', () => {

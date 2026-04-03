@@ -3,6 +3,10 @@
   "include": ["electron.vite.config.*", "src/native/**/*"],
   "compilerOptions": {
     "composite": true,
-    "types": ["electron-vite/node"]
+    "types": ["electron-vite/node"],
+    "baseUrl": ".",
+    "paths": {
+      "@native/*": ["src/native/*"]
+    }
   }
 }

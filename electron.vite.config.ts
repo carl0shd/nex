@@ -5,9 +5,14 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   main: {
+    resolve: {
+      alias: {
+        '@native': resolve(__dirname, './src/native')
+      }
+    },
     build: {
       watch: {
-        include: ['src/native/main/**', 'src/native/ipc/**']
+        include: ['src/native/main/**', 'src/native/ipc/**', 'src/native/db/**']
       },
       rollupOptions: {
         input: resolve('src/native/main/index.ts')
@@ -33,7 +38,8 @@ export default defineConfig({
     },
     resolve: {
       alias: {
-        '@': resolve(__dirname, './src/web')
+        '@': resolve(__dirname, './src/web'),
+        '@native': resolve(__dirname, './src/native')
       }
     },
     plugins: [react(), tailwindcss()]
