@@ -1,12 +1,16 @@
 import Database from 'better-sqlite3';
-import { app } from 'electron';
 import { join } from 'path';
+import { mkdirSync } from 'fs';
 import { runMigrations } from './migrations';
 
 let db: Database.Database;
 
+const NEX_DIR = join(process.env.HOME!, '.nex');
+const DB_PATH = join(NEX_DIR, 'nex.db');
+
 export function initDatabase(): void {
-  const dbPath = join(app.getPath('userData'), 'nex.db');
+  mkdirSync(NEX_DIR, { recursive: true });
+  const dbPath = DB_PATH;
   db = new Database(dbPath);
 
   db.pragma('journal_mode = WAL');

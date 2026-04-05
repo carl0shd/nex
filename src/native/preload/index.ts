@@ -30,9 +30,32 @@ const api = {
   updateTask: (id: string, input: unknown) => ipcRenderer.invoke('task:update', id, input),
   deleteTask: (id: string) => ipcRenderer.invoke('task:delete', id),
 
-  getSetting: (key: string, fallback: unknown) =>
-    ipcRenderer.invoke('settings:get', key, fallback),
+  getSetting: (key: string, fallback: unknown) => ipcRenderer.invoke('settings:get', key, fallback),
   setSetting: (key: string, value: unknown) => ipcRenderer.invoke('settings:set', key, value),
+
+  getAgents: () => ipcRenderer.invoke('agent:get-all'),
+  getAgentBySlug: (slug: string) => ipcRenderer.invoke('agent:get-by-slug', slug),
+  createAgent: (input: unknown) => ipcRenderer.invoke('agent:create', input),
+  updateAgent: (id: string, input: unknown) => ipcRenderer.invoke('agent:update', id, input),
+  deleteAgent: (id: string) => ipcRenderer.invoke('agent:delete', id),
+
+  getAgentAccounts: () => ipcRenderer.invoke('agent-account:get-all'),
+  getAgentAccountsByAgent: (agentId: string) =>
+    ipcRenderer.invoke('agent-account:get-by-agent', agentId),
+  createAgentAccount: (input: unknown) => ipcRenderer.invoke('agent-account:create', input),
+  updateAgentAccount: (id: string, input: unknown) =>
+    ipcRenderer.invoke('agent-account:update', id, input),
+  deleteAgentAccount: (id: string) => ipcRenderer.invoke('agent-account:delete', id),
+
+  getSessions: () => ipcRenderer.invoke('session:get-all'),
+  getSessionsByProject: (projectId: string) =>
+    ipcRenderer.invoke('session:get-by-project', projectId),
+  getActiveSessions: () => ipcRenderer.invoke('session:get-active'),
+  createSession: (input: unknown) => ipcRenderer.invoke('session:create', input),
+  updateSession: (id: string, input: unknown) => ipcRenderer.invoke('session:update', id, input),
+  deleteSession: (id: string) => ipcRenderer.invoke('session:delete', id),
+
+  cli: (args: string[], cwd?: string) => ipcRenderer.invoke('cli:exec', args, cwd),
 
   onFullscreenChange: (callback: (value: boolean) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, value: boolean): void => callback(value);

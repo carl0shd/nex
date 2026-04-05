@@ -27,7 +27,28 @@ export const IPC = {
   TASK_DELETE: 'task:delete',
 
   SETTINGS_GET: 'settings:get',
-  SETTINGS_SET: 'settings:set'
+  SETTINGS_SET: 'settings:set',
+
+  AGENT_GET_ALL: 'agent:get-all',
+  AGENT_GET_BY_SLUG: 'agent:get-by-slug',
+  AGENT_CREATE: 'agent:create',
+  AGENT_UPDATE: 'agent:update',
+  AGENT_DELETE: 'agent:delete',
+
+  AGENT_ACCOUNT_GET_ALL: 'agent-account:get-all',
+  AGENT_ACCOUNT_GET_BY_AGENT: 'agent-account:get-by-agent',
+  AGENT_ACCOUNT_CREATE: 'agent-account:create',
+  AGENT_ACCOUNT_UPDATE: 'agent-account:update',
+  AGENT_ACCOUNT_DELETE: 'agent-account:delete',
+
+  SESSION_GET_ALL: 'session:get-all',
+  SESSION_GET_BY_PROJECT: 'session:get-by-project',
+  SESSION_GET_ACTIVE: 'session:get-active',
+  SESSION_CREATE: 'session:create',
+  SESSION_UPDATE: 'session:update',
+  SESSION_DELETE: 'session:delete',
+
+  CLI_EXEC: 'cli:exec'
 } as const;
 
 export type IPCChannel = (typeof IPC)[keyof typeof IPC];

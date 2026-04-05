@@ -4,9 +4,7 @@ import { createMainWindow, getMainWindow, setQuitting } from './app-window';
 import { buildAppMenu } from './menu';
 import { registerIPCHandlers } from '@native/ipc/handlers';
 import { initAutoUpdater } from './updater';
-import { is } from '@electron-toolkit/utils';
 import { initDatabase, closeDatabase } from '@native/db/database';
-import { seedDevData } from '@native/db/seed';
 
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.nex.app');
@@ -16,7 +14,6 @@ app.whenReady().then(() => {
   });
 
   initDatabase();
-  if (is.dev) seedDevData();
   Menu.setApplicationMenu(buildAppMenu());
   registerIPCHandlers();
 

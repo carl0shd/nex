@@ -5,6 +5,10 @@ import * as projectRepo from '@native/db/repositories/project.repo';
 import * as worktreeRepo from '@native/db/repositories/worktree.repo';
 import * as taskRepo from '@native/db/repositories/task.repo';
 import * as settings from '@native/db/repositories/settings.repo';
+import * as agentRepo from '@native/db/repositories/agent.repo';
+import * as agentAccountRepo from '@native/db/repositories/agent-account.repo';
+import * as sessionRepo from '@native/db/repositories/session.repo';
+import { nex } from '@native/cli/exec';
 
 export function registerIPCHandlers(): void {
   ipcMain.handle(IPC.APP_GET_INFO, () => ({
@@ -46,4 +50,27 @@ export function registerIPCHandlers(): void {
 
   ipcMain.handle(IPC.SETTINGS_GET, (_, key, fallback) => settings.get(key, fallback));
   ipcMain.handle(IPC.SETTINGS_SET, (_, key, value) => settings.set(key, value));
+
+  ipcMain.handle(IPC.AGENT_GET_ALL, () => agentRepo.getAll());
+  ipcMain.handle(IPC.AGENT_GET_BY_SLUG, (_, slug) => agentRepo.getBySlug(slug));
+  ipcMain.handle(IPC.AGENT_CREATE, (_, input) => agentRepo.create(input));
+  ipcMain.handle(IPC.AGENT_UPDATE, (_, id, input) => agentRepo.update(id, input));
+  ipcMain.handle(IPC.AGENT_DELETE, (_, id) => agentRepo.remove(id));
+
+  ipcMain.handle(IPC.AGENT_ACCOUNT_GET_ALL, () => agentAccountRepo.getAll());
+  ipcMain.handle(IPC.AGENT_ACCOUNT_GET_BY_AGENT, (_, agentId) =>
+    agentAccountRepo.getByAgent(agentId)
+  );
+  ipcMain.handle(IPC.AGENT_ACCOUNT_CREATE, (_, input) => agentAccountRepo.create(input));
+  ipcMain.handle(IPC.AGENT_ACCOUNT_UPDATE, (_, id, input) => agentAccountRepo.update(id, input));
+  ipcMain.handle(IPC.AGENT_ACCOUNT_DELETE, (_, id) => agentAccountRepo.remove(id));
+
+  ipcMain.handle(IPC.SESSION_GET_ALL, () => sessionRepo.getAll());
+  ipcMain.handle(IPC.SESSION_GET_BY_PROJECT, (_, projectId) => sessionRepo.getByProject(projectId));
+  ipcMain.handle(IPC.SESSION_GET_ACTIVE, () => sessionRepo.getActive());
+  ipcMain.handle(IPC.SESSION_CREATE, (_, input) => sessionRepo.create(input));
+  ipcMain.handle(IPC.SESSION_UPDATE, (_, id, input) => sessionRepo.update(id, input));
+  ipcMain.handle(IPC.SESSION_DELETE, (_, id) => sessionRepo.remove(id));
+
+  ipcMain.handle(IPC.CLI_EXEC, (_, args: string[], cwd?: string) => nex(args, cwd));
 }
