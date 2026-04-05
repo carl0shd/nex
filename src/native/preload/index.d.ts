@@ -10,7 +10,16 @@ import type {
   UpdateWorktreeInput,
   Task,
   CreateTaskInput,
-  UpdateTaskInput
+  UpdateTaskInput,
+  Agent,
+  CreateAgentInput,
+  UpdateAgentInput,
+  AgentAccount,
+  CreateAgentAccountInput,
+  UpdateAgentAccountInput,
+  Session,
+  CreateSessionInput,
+  UpdateSessionInput
 } from '@native/db/types';
 
 interface NexAPI {
@@ -45,6 +54,30 @@ interface NexAPI {
 
   getSetting: <T>(key: string, fallback: T) => Promise<T>;
   setSetting: (key: string, value: unknown) => Promise<void>;
+
+  getAgents: () => Promise<Agent[]>;
+  getAgentBySlug: (slug: string) => Promise<Agent | null>;
+  createAgent: (input: CreateAgentInput) => Promise<Agent>;
+  updateAgent: (id: string, input: UpdateAgentInput) => Promise<Agent>;
+  deleteAgent: (id: string) => Promise<void>;
+
+  getAgentAccounts: () => Promise<AgentAccount[]>;
+  getAgentAccountsByAgent: (agentId: string) => Promise<AgentAccount[]>;
+  createAgentAccount: (input: CreateAgentAccountInput) => Promise<AgentAccount>;
+  updateAgentAccount: (id: string, input: UpdateAgentAccountInput) => Promise<AgentAccount>;
+  deleteAgentAccount: (id: string) => Promise<void>;
+
+  getSessions: () => Promise<Session[]>;
+  getSessionsByProject: (projectId: string) => Promise<Session[]>;
+  getActiveSessions: () => Promise<Session[]>;
+  createSession: (input: CreateSessionInput) => Promise<Session>;
+  updateSession: (id: string, input: UpdateSessionInput) => Promise<Session>;
+  deleteSession: (id: string) => Promise<void>;
+
+  cli: <T = unknown>(
+    args: string[],
+    cwd?: string
+  ) => Promise<{ ok: boolean; data?: T; error?: string }>;
 
   onFullscreenChange: (callback: (value: boolean) => void) => () => void;
 }

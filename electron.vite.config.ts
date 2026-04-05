@@ -12,7 +12,12 @@ export default defineConfig({
     },
     build: {
       watch: {
-        include: ['src/native/main/**', 'src/native/ipc/**', 'src/native/db/**']
+        include: [
+          'src/native/main/**',
+          'src/native/ipc/**',
+          'src/native/db/**',
+          'src/native/cli/**'
+        ]
       },
       rollupOptions: {
         input: resolve('src/native/main/index.ts')

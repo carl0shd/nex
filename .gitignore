@@ -20,6 +20,9 @@ Thumbs.db
 .env
 .env.*
 
+# Rust CLI
+cli/target/
+
 # ESLint
 .eslintcache
 

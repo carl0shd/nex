@@ -43,6 +43,46 @@ const migrations: string[] = [
   `CREATE TABLE settings (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
+  );`,
+
+  `CREATE TABLE agents (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    slug TEXT NOT NULL UNIQUE,
+    command TEXT NOT NULL,
+    default_config_dir TEXT NOT NULL DEFAULT '',
+    config_env_var TEXT NOT NULL DEFAULT '',
+    args TEXT NOT NULL DEFAULT '[]',
+    resume_args TEXT NOT NULL DEFAULT '[]',
+    skip_permissions_args TEXT NOT NULL DEFAULT '[]',
+    builtin INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE agent_accounts (
+    id TEXT PRIMARY KEY,
+    agent_id TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+    name TEXT NOT NULL UNIQUE,
+    config_dir TEXT NOT NULL,
+    is_default INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE sessions (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    agent_id TEXT REFERENCES agents(id) ON DELETE SET NULL,
+    account_id TEXT REFERENCES agent_accounts(id) ON DELETE SET NULL,
+    name TEXT NOT NULL,
+    branch TEXT NOT NULL,
+    base_branch TEXT NOT NULL,
+    worktree_path TEXT NOT NULL,
+    notes_path TEXT NOT NULL DEFAULT '',
+    symlinks TEXT NOT NULL DEFAULT '[]',
+    status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','done','pr')),
+    opens INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_opened TEXT NOT NULL DEFAULT (datetime('now'))
   );`
 ];
 
