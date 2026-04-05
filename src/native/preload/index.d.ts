@@ -79,6 +79,10 @@ interface NexAPI {
     cwd?: string
   ) => Promise<{ ok: boolean; data?: T; error?: string }>;
 
+  pickImage: () => Promise<string | null>;
+  pickDirectory: () => Promise<string | null>;
+  saveWorkspaceIcon: (workspaceId: string, dataUrl: string) => Promise<string | null>;
+
   onFullscreenChange: (callback: (value: boolean) => void) => () => void;
 }
 

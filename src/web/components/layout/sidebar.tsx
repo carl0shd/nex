@@ -86,6 +86,8 @@ function Sidebar(): React.JSX.Element {
                 key={ws.id}
                 name={ws.name}
                 color={ws.color}
+                icon={ws.icon}
+                customImage={ws.customImage}
                 count={wsProjects.length}
                 projects={wsProjects.map((p) => ({ name: p.name }))}
                 collapsed={wsCollapsed}

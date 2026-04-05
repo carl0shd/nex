@@ -2,6 +2,8 @@ export interface Workspace {
   id: string;
   name: string;
   color: string;
+  icon: string;
+  customImage: string | null;
   sortOrder: number;
   collapsed: boolean;
   createdAt: string;
@@ -10,11 +12,15 @@ export interface Workspace {
 export interface CreateWorkspaceInput {
   name: string;
   color: string;
+  icon?: string;
+  customImage?: string | null;
 }
 
 export interface UpdateWorkspaceInput {
   name?: string;
   color?: string;
+  icon?: string;
+  customImage?: string | null;
   sortOrder?: number;
   collapsed?: boolean;
 }
@@ -24,19 +30,27 @@ export interface Project {
   workspaceId: string;
   name: string;
   path: string;
+  quickCommands: QuickCommand[];
   sortOrder: number;
   createdAt: string;
+}
+
+export interface QuickCommand {
+  name: string;
+  command: string;
 }
 
 export interface CreateProjectInput {
   workspaceId: string;
   name: string;
   path: string;
+  quickCommands?: QuickCommand[];
 }
 
 export interface UpdateProjectInput {
   name?: string;
   path?: string;
+  quickCommands?: QuickCommand[];
   sortOrder?: number;
 }
 
@@ -196,6 +210,3 @@ export interface WorktreeTab {
   active?: boolean;
 }
 
-export interface QuickCommand {
-  label: string;
-}

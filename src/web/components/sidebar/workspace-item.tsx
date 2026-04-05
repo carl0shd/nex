@@ -1,5 +1,6 @@
 import { ChevronDown, ChevronRight, Folder } from 'lucide-react';
 import IconButton from '@/components/ui/icon-button';
+import WorkspaceBadge from '@/components/ui/workspace-badge';
 import { Plus, Ellipsis } from 'lucide-react';
 
 interface Project {
@@ -9,6 +10,8 @@ interface Project {
 interface WorkspaceItemProps {
   name: string;
   color: string;
+  icon?: string;
+  customImage?: string | null;
   count: number;
   projects?: Project[];
   collapsed?: boolean;
@@ -20,6 +23,8 @@ interface WorkspaceItemProps {
 function WorkspaceItem({
   name,
   color,
+  icon,
+  customImage,
   count,
   projects = [],
   collapsed = false,
@@ -29,7 +34,6 @@ function WorkspaceItem({
 }: WorkspaceItemProps): React.JSX.Element {
   const Chevron = collapsed ? ChevronRight : ChevronDown;
   const muted = !active;
-  const initial = name[0].toUpperCase();
 
   return (
     <div className="flex flex-col gap-0.5">
@@ -38,12 +42,7 @@ function WorkspaceItem({
         className="flex w-full cursor-pointer items-center gap-1.5 rounded px-1.5 py-1.25 select-none"
       >
         <Chevron size={12} className="text-text-muted" />
-        <span
-          className="flex size-4.5 items-center justify-center rounded text-[9px] font-bold text-text"
-          style={{ backgroundColor: color }}
-        >
-          {initial}
-        </span>
+        <WorkspaceBadge name={name} color={color} icon={icon} customImage={customImage} />
         <span className={`text-[12px] font-semibold ${muted ? 'text-text-muted' : 'text-text'}`}>
           {name}
         </span>

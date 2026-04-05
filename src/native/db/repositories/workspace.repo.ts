@@ -6,6 +6,8 @@ interface WorkspaceRow {
   id: string;
   name: string;
   color: string;
+  icon: string;
+  custom_image: string | null;
   sort_order: number;
   collapsed: number;
   created_at: string;
@@ -16,6 +18,8 @@ function toWorkspace(row: WorkspaceRow): Workspace {
     id: row.id,
     name: row.name,
     color: row.color,
+    icon: row.icon,
+    customImage: row.custom_image,
     sortOrder: row.sort_order,
     collapsed: row.collapsed === 1,
     createdAt: row.created_at
@@ -42,8 +46,17 @@ export function create(input: CreateWorkspaceInput): Workspace {
     .prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 as next FROM workspaces')
     .get() as { next: number };
   const row = db
-    .prepare('INSERT INTO workspaces (id, name, color, sort_order) VALUES (?, ?, ?, ?) RETURNING *')
-    .get(randomUUID(), input.name, input.color, maxOrder.next) as WorkspaceRow;
+    .prepare(
+      'INSERT INTO workspaces (id, name, color, icon, custom_image, sort_order) VALUES (?, ?, ?, ?, ?, ?) RETURNING *'
+    )
+    .get(
+      randomUUID(),
+      input.name,
+      input.color,
+      input.icon ?? 'letter',
+      input.customImage ?? null,
+      maxOrder.next
+    ) as WorkspaceRow;
   return toWorkspace(row);
 }
 
@@ -58,6 +71,14 @@ export function update(id: string, input: UpdateWorkspaceInput): Workspace {
   if (input.color !== undefined) {
     fields.push('color = ?');
     values.push(input.color);
+  }
+  if (input.icon !== undefined) {
+    fields.push('icon = ?');
+    values.push(input.icon);
+  }
+  if (input.customImage !== undefined) {
+    fields.push('custom_image = ?');
+    values.push(input.customImage);
   }
   if (input.sortOrder !== undefined) {
     fields.push('sort_order = ?');

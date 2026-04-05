@@ -83,7 +83,11 @@ const migrations: string[] = [
     opens INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     last_opened TEXT NOT NULL DEFAULT (datetime('now'))
-  );`
+  );`,
+
+  `ALTER TABLE workspaces ADD COLUMN icon TEXT NOT NULL DEFAULT 'letter';
+  ALTER TABLE workspaces ADD COLUMN custom_image TEXT;
+  ALTER TABLE projects ADD COLUMN quick_commands TEXT NOT NULL DEFAULT '[]';`
 ];
 
 export function runMigrations(db: Database.Database): void {

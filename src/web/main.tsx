@@ -1,3 +1,5 @@
+import '@fontsource-variable/inter';
+import '@fontsource-variable/jetbrains-mono';
 import './styles/globals.css';
 import 'simplebar-react/dist/simplebar.min.css';
 
