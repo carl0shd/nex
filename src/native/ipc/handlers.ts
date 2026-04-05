@@ -1,4 +1,6 @@
-import { ipcMain } from 'electron';
+import { ipcMain, dialog, BrowserWindow } from 'electron';
+import { statSync, readFileSync, mkdirSync, writeFileSync } from 'fs';
+import { extname, join } from 'path';
 import { IPC } from './channels';
 import * as workspaceRepo from '@native/db/repositories/workspace.repo';
 import * as projectRepo from '@native/db/repositories/project.repo';
@@ -73,4 +75,60 @@ export function registerIPCHandlers(): void {
   ipcMain.handle(IPC.SESSION_DELETE, (_, id) => sessionRepo.remove(id));
 
   ipcMain.handle(IPC.CLI_EXEC, (_, args: string[], cwd?: string) => nex(args, cwd));
+
+  ipcMain.handle(IPC.DIALOG_PICK_IMAGE, async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (!win) return null;
+    const result = await dialog.showOpenDialog(win, {
+      properties: ['openFile'],
+      filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'svg', 'gif', 'ico'] }]
+    });
+    if (result.canceled || result.filePaths.length === 0) return null;
+    const filePath = result.filePaths[0];
+    const stats = statSync(filePath);
+    if (stats.size > 10 * 1024 * 1024) return null;
+    const ext = extname(filePath).toLowerCase().replace('.', '');
+    const mimeMap: Record<string, string> = {
+      png: 'image/png',
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      webp: 'image/webp',
+      svg: 'image/svg+xml',
+      gif: 'image/gif',
+      ico: 'image/x-icon'
+    };
+    const mime = mimeMap[ext] || 'image/png';
+    const base64 = readFileSync(filePath).toString('base64');
+    return `data:${mime};base64,${base64}`;
+  });
+
+  ipcMain.handle(IPC.DIALOG_PICK_DIRECTORY, async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (!win) return null;
+    const result = await dialog.showOpenDialog(win, {
+      properties: ['openDirectory']
+    });
+    if (result.canceled || result.filePaths.length === 0) return null;
+    return result.filePaths[0];
+  });
+
+  ipcMain.handle(
+    IPC.SAVE_WORKSPACE_ICON,
+    (_, workspaceId: string, dataUrl: string): string | null => {
+      const match = dataUrl.match(/^data:image\/([^;]+);base64,(.+)$/);
+      if (!match) return null;
+
+      const mimeType = match[1];
+      const ext = mimeType === 'svg+xml' ? 'svg' : mimeType;
+      const buffer = Buffer.from(match[2], 'base64');
+
+      const dir = join(process.env.HOME!, '.nex', 'workspace-icons');
+      mkdirSync(dir, { recursive: true });
+
+      const filePath = join(dir, `${workspaceId}.${ext}`);
+      writeFileSync(filePath, buffer);
+
+      return filePath;
+    }
+  );
 }

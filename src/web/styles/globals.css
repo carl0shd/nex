@@ -40,7 +40,7 @@
 
   /* Backgrounds - elevated */
   --nex-bg-raised: #202022;
-  --nex-bg-input: #151515;
+  --nex-bg-input: #1a1a1c;
   --nex-bg-panel: #222225;
   --nex-bg-hover: #1d1d1f;
 
@@ -120,6 +120,7 @@ body {
   height: 100%;
   overflow: hidden;
   background: transparent;
+  font-family: 'Inter Variable', Inter, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: auto;
   user-select: none;

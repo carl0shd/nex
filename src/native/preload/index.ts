@@ -56,6 +56,10 @@ const api = {
   deleteSession: (id: string) => ipcRenderer.invoke('session:delete', id),
 
   cli: (args: string[], cwd?: string) => ipcRenderer.invoke('cli:exec', args, cwd),
+  pickImage: () => ipcRenderer.invoke('dialog:pick-image'),
+  pickDirectory: () => ipcRenderer.invoke('dialog:pick-directory'),
+  saveWorkspaceIcon: (workspaceId: string, dataUrl: string) =>
+    ipcRenderer.invoke('workspace:save-icon', workspaceId, dataUrl),
 
   onFullscreenChange: (callback: (value: boolean) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, value: boolean): void => callback(value);

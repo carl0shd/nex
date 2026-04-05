@@ -1,4 +1,4 @@
-import nexLogo from '@/assets/logo-white.svg';
+import nexLogo from '@/assets/images/logo-white.svg';
 import ShortcutKey from '@/components/ui/shortcut-key';
 
 function EmptyState(): React.JSX.Element {

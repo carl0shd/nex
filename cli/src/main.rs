@@ -1,3 +1,4 @@
+mod agents;
 mod context;
 mod db;
 mod git;
@@ -35,10 +36,10 @@ enum Commands {
         #[command(subcommand)]
         sub: WorkspaceSub,
     },
-    /// Manage Claude accounts
-    Account {
+    /// Manage agents and accounts
+    Agents {
         #[command(subcommand)]
-        sub: AccountSub,
+        sub: AgentsSub,
     },
     /// Manage projects
     Project {
@@ -50,6 +51,8 @@ enum Commands {
         #[command(subcommand)]
         sub: WorktreeSub,
     },
+    /// Detect and register installed agents
+    DetectAgents,
     /// Overview of all projects and sessions
     Status,
     /// Health check
@@ -64,7 +67,7 @@ enum WorkspaceSub {
 }
 
 #[derive(Subcommand)]
-enum AccountSub {
+enum AgentsSub {
     Add {
         name: String,
         #[arg(long)]
@@ -94,7 +97,6 @@ enum ProjectSub {
 enum WorktreeSub {
     List { project: Option<String> },
     Status { task: Option<String> },
-    Push { task: Option<String> },
     Pr {
         task: Option<String>,
         #[arg(long)]
@@ -157,8 +159,12 @@ fn uid() -> String {
 }
 
 fn main() {
+    if which::which("git").is_err() {
+        err("git is not installed. Nex requires git to work.");
+        process::exit(1);
+    }
+
     let conn = db::open();
-    db::auto_detect_agents(&conn);
     let cli = Cli::parse();
     let json = cli.json;
 
@@ -166,9 +172,10 @@ fn main() {
         Some(Commands::Work { args }) => cmd_work(&conn, &args, json),
         Some(Commands::Resume { args }) => cmd_resume(&conn, &args, json),
         Some(Commands::Workspace { sub }) => cmd_workspace(&conn, sub, json),
-        Some(Commands::Account { sub }) => cmd_account(&conn, sub, json),
+        Some(Commands::Agents { sub }) => cmd_agents(&conn, sub, json),
         Some(Commands::Project { sub }) => cmd_project(&conn, sub, json),
         Some(Commands::Worktree { sub }) => cmd_worktree(&conn, sub, json),
+        Some(Commands::DetectAgents) => cmd_detect(&conn, json),
         Some(Commands::Status) => cmd_status(&conn, json),
         Some(Commands::Doctor) => cmd_doctor(&conn, json),
         None => {
@@ -254,9 +261,9 @@ struct AccountOut {
     authenticated: bool,
 }
 
-fn cmd_account(conn: &rusqlite::Connection, sub: AccountSub, json: bool) {
+fn cmd_agents(conn: &rusqlite::Connection, sub: AgentsSub, json: bool) {
     match sub {
-        AccountSub::Add { name, copy_config } => {
+        AgentsSub::Add { name, copy_config } => {
             let agent_id: String = conn
                 .query_row("SELECT id FROM agents WHERE slug = 'claude-code'", [], |r| r.get(0))
                 .unwrap_or_else(|_| {
@@ -304,7 +311,7 @@ fn cmd_account(conn: &rusqlite::Connection, sub: AccountSub, json: bool) {
                 println!();
             }
         }
-        AccountSub::List => {
+        AgentsSub::List => {
             let mut stmt = conn.prepare("SELECT aa.id, aa.name, a.name, aa.config_dir, aa.is_default FROM agent_accounts aa JOIN agents a ON aa.agent_id = a.id ORDER BY aa.created_at").unwrap();
             let rows: Vec<AccountOut> = stmt
                 .query_map([], |r| {
@@ -338,7 +345,7 @@ fn cmd_account(conn: &rusqlite::Connection, sub: AccountSub, json: bool) {
                 println!();
             }
         }
-        AccountSub::Remove { name } => {
+        AgentsSub::Remove { name } => {
             if name == "default" {
                 if json { json_err("Cannot remove the default account"); } else { err("Cannot remove the default account"); }
                 process::exit(1);
@@ -346,7 +353,7 @@ fn cmd_account(conn: &rusqlite::Connection, sub: AccountSub, json: bool) {
             conn.execute("DELETE FROM agent_accounts WHERE name = ?1", params![name]).unwrap();
             if json { json_ok(serde_json::json!({"removed": name})); } else { log(&format!("Removed account '{name}'")); }
         }
-        AccountSub::Default { name } => {
+        AgentsSub::Default { name } => {
             let agent_id: String = conn
                 .query_row("SELECT agent_id FROM agent_accounts WHERE name = ?1", params![name], |r| r.get(0))
                 .unwrap_or_else(|_| {
@@ -756,20 +763,6 @@ fn cmd_worktree(conn: &rusqlite::Connection, sub: WorktreeSub, json: bool) {
                 println!();
             }
         }
-        WorktreeSub::Push { task } => {
-            let task = task.or_else(context::detect_task).unwrap_or_else(|| { if json { json_err("Missing task"); } else { err("Usage: nex worktree push [task]"); } process::exit(1); });
-            let project = context::detect_project(conn).unwrap_or_default();
-            let project_id: String = conn.query_row("SELECT id FROM projects WHERE name = ?1", params![project], |r| r.get(0)).unwrap_or_default();
-            let (wt_path, branch): (String, String) = conn.query_row(
-                "SELECT worktree_path, branch FROM sessions WHERE name = ?1 AND project_id = ?2 AND status = 'active'",
-                params![task, project_id], |r| Ok((r.get(0)?, r.get(1)?))
-            ).unwrap_or_else(|_| { if json { json_err(&format!("No active session '{task}'")); } else { err(&format!("No active session '{task}'")); } process::exit(1); });
-            if !json { dim(&format!("Pushing {branch}...")); }
-            match git::push_branch(&wt_path, &branch) {
-                Ok(()) => { if json { json_ok(serde_json::json!({"pushed": branch})); } else { log(&format!("Pushed {branch}")); } }
-                Err(e) => { if json { json_err(&format!("Push failed: {e}")); } else { err(&format!("Push failed: {e}")); } process::exit(1); }
-            }
-        }
         WorktreeSub::Pr { task, title } => {
             if which::which("gh").is_err() { if json { json_err("gh CLI not found"); } else { err("gh CLI not found. Install: https://cli.github.com"); } process::exit(1); }
             let task = task.or_else(context::detect_task).unwrap_or_else(|| { if json { json_err("Missing task"); } else { err("Usage: nex worktree pr [task]"); } process::exit(1); });
@@ -821,6 +814,66 @@ fn cmd_worktree(conn: &rusqlite::Connection, sub: WorktreeSub, json: bool) {
             conn.execute("UPDATE sessions SET status = 'done' WHERE id = ?1", params![session_id]).unwrap();
             if json { json_ok(serde_json::json!({"removed": task, "session_id": session_id})); } else { log(&format!("Session '{task}' closed")); }
         }
+    }
+}
+
+// ─── Status ───
+
+fn cmd_detect(conn: &rusqlite::Connection, json: bool) {
+    // Force re-detect even if agents exist
+    let existing: i32 = conn
+        .query_row("SELECT COUNT(*) FROM agents", [], |r| r.get(0))
+        .unwrap_or(0);
+
+    if existing > 0 {
+        if json {
+            let mut stmt = conn
+                .prepare("SELECT a.slug, a.name, aa.config_dir FROM agents a LEFT JOIN agent_accounts aa ON aa.agent_id = a.id AND aa.is_default = 1")
+                .unwrap();
+            let agents: Vec<serde_json::Value> = stmt
+                .query_map([], |r| {
+                    Ok(serde_json::json!({
+                        "slug": r.get::<_, String>(0)?,
+                        "name": r.get::<_, String>(1)?,
+                        "config_dir": r.get::<_, Option<String>>(2)?
+                    }))
+                })
+                .unwrap()
+                .filter_map(|r| r.ok())
+                .collect();
+            json_ok(serde_json::json!({ "agents": agents, "detected": false }));
+        } else {
+            log(&format!("{existing} agent(s) already registered"));
+        }
+        return;
+    }
+
+    agents::detect_all(conn);
+
+    let count: i32 = conn
+        .query_row("SELECT COUNT(*) FROM agents", [], |r| r.get(0))
+        .unwrap_or(0);
+
+    if json {
+        let mut stmt = conn
+            .prepare("SELECT a.slug, a.name, aa.config_dir FROM agents a LEFT JOIN agent_accounts aa ON aa.agent_id = a.id AND aa.is_default = 1")
+            .unwrap();
+        let agents: Vec<serde_json::Value> = stmt
+            .query_map([], |r| {
+                Ok(serde_json::json!({
+                    "slug": r.get::<_, String>(0)?,
+                    "name": r.get::<_, String>(1)?,
+                    "config_dir": r.get::<_, Option<String>>(2)?
+                }))
+            })
+            .unwrap()
+            .filter_map(|r| r.ok())
+            .collect();
+        json_ok(serde_json::json!({ "agents": agents, "detected": true }));
+    } else if count > 0 {
+        log(&format!("Detected {count} agent(s)"));
+    } else {
+        warn("No agents found. Is Claude Code installed?");
     }
 }
 

@@ -48,7 +48,10 @@ export const IPC = {
   SESSION_UPDATE: 'session:update',
   SESSION_DELETE: 'session:delete',
 
-  CLI_EXEC: 'cli:exec'
+  CLI_EXEC: 'cli:exec',
+  DIALOG_PICK_IMAGE: 'dialog:pick-image',
+  DIALOG_PICK_DIRECTORY: 'dialog:pick-directory',
+  SAVE_WORKSPACE_ICON: 'workspace:save-icon'
 } as const;
 
 export type IPCChannel = (typeof IPC)[keyof typeof IPC];

@@ -121,35 +121,3 @@ fn run_migrations(conn: &Connection) {
     )
     .unwrap();
 }
-
-pub fn auto_detect_agents(conn: &Connection) {
-    let count: i32 = conn
-        .query_row("SELECT COUNT(*) FROM agents", [], |r| r.get(0))
-        .unwrap_or(0);
-    if count > 0 {
-        return;
-    }
-
-    let home = dirs::home_dir().unwrap();
-    let claude_dir = home.join(".claude");
-
-    if which::which("claude").is_ok() && claude_dir.exists() {
-        let agent_id = uuid::Uuid::new_v4().to_string();
-        let account_id = uuid::Uuid::new_v4().to_string();
-        let config_dir = claude_dir.to_string_lossy().to_string();
-
-        conn.execute(
-            "INSERT INTO agents (id, name, slug, command, default_config_dir, config_env_var, resume_args, skip_permissions_args, builtin) VALUES (?1, 'Claude Code', 'claude-code', 'claude', ?2, 'CLAUDE_CONFIG_DIR', '[\"--resume\"]', '[\"--dangerously-skip-permissions\"]', 1)",
-            rusqlite::params![agent_id, config_dir],
-        ).unwrap();
-
-        conn.execute(
-            "INSERT INTO agent_accounts (id, agent_id, name, config_dir, is_default) VALUES (?1, ?2, 'default', ?3, 1)",
-            rusqlite::params![account_id, agent_id, config_dir],
-        ).unwrap();
-
-        println!("  {} Auto-detected Claude Code", "✓".green());
-    }
-}
-
-use colored::Colorize;
