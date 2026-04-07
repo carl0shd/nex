@@ -14,6 +14,7 @@ interface WindowState {
 
 let mainWindow: BrowserWindow | null = null;
 let quitting = false;
+let pendingMaximize = false;
 
 export function setQuitting(value: boolean): void {
   quitting = value;
@@ -39,13 +40,7 @@ export function createMainWindow(): BrowserWindow {
     }
   });
 
-  if (state.isMaximized) {
-    mainWindow.maximize();
-  }
-
-  mainWindow.on('ready-to-show', () => {
-    mainWindow?.show();
-  });
+  pendingMaximize = state.isMaximized;
 
   mainWindow.on('closed', () => {
     mainWindow = null;
@@ -102,6 +97,15 @@ export function createMainWindow(): BrowserWindow {
   }
 
   return mainWindow;
+}
+
+export function showMainWindow(): void {
+  if (!mainWindow) return;
+  if (pendingMaximize) {
+    mainWindow.maximize();
+    pendingMaximize = false;
+  }
+  mainWindow.show();
 }
 
 export function getMainWindow(): BrowserWindow | null {

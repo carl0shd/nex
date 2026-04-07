@@ -55,7 +55,10 @@ const api = {
   updateSession: (id: string, input: unknown) => ipcRenderer.invoke('session:update', id, input),
   deleteSession: (id: string) => ipcRenderer.invoke('session:delete', id),
 
-  cli: (args: string[], cwd?: string) => ipcRenderer.invoke('cli:exec', args, cwd),
+  showWindow: () => ipcRenderer.invoke('window:show'),
+  detectAgents: () => ipcRenderer.invoke('agents:detect'),
+  cloneAgentAccount: (input: unknown) => ipcRenderer.invoke('agent-account:clone', input),
+  startWork: (input: unknown) => ipcRenderer.invoke('work:start', input),
   pickImage: () => ipcRenderer.invoke('dialog:pick-image'),
   pickDirectory: () => ipcRenderer.invoke('dialog:pick-directory'),
   saveWorkspaceIcon: (workspaceId: string, dataUrl: string) =>

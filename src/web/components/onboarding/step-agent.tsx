@@ -27,7 +27,7 @@ function StepAgent({ onFinish }: StepAgentProps): React.JSX.Element {
 
   useEffect(() => {
     async function detect(): Promise<void> {
-      await window.api.cli(['detect-agents']);
+      await window.api.detectAgents();
       const [agents, accounts] = await Promise.all([
         window.api.getAgents(),
         window.api.getAgentAccounts()

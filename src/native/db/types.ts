@@ -202,6 +202,19 @@ export interface UpdateSessionInput {
   lastOpened?: string;
 }
 
+export interface StartWorkInput {
+  projectId: string;
+  name: string;
+  agentId?: string;
+  accountId?: string;
+}
+
+export interface CloneAgentAccountInput {
+  agentId: string;
+  name: string;
+  copyConfig?: boolean;
+}
+
 export interface ChangedFile {
   name: string;
   added: number;

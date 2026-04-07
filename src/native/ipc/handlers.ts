@@ -10,7 +10,10 @@ import * as settings from '@native/db/repositories/settings.repo';
 import * as agentRepo from '@native/db/repositories/agent.repo';
 import * as agentAccountRepo from '@native/db/repositories/agent-account.repo';
 import * as sessionRepo from '@native/db/repositories/session.repo';
-import { nex } from '@native/cli/exec';
+import { detectAgents } from '@native/agents/detect';
+import { cloneAgentAccount } from '@native/agents/clone-account';
+import { startWork } from '@native/git/start-work';
+import { showMainWindow } from '@native/main/app-window';
 
 export function registerIPCHandlers(): void {
   ipcMain.handle(IPC.APP_GET_INFO, () => ({
@@ -74,7 +77,10 @@ export function registerIPCHandlers(): void {
   ipcMain.handle(IPC.SESSION_UPDATE, (_, id, input) => sessionRepo.update(id, input));
   ipcMain.handle(IPC.SESSION_DELETE, (_, id) => sessionRepo.remove(id));
 
-  ipcMain.handle(IPC.CLI_EXEC, (_, args: string[], cwd?: string) => nex(args, cwd));
+  ipcMain.handle(IPC.WINDOW_SHOW, () => showMainWindow());
+  ipcMain.handle(IPC.DETECT_AGENTS, () => detectAgents());
+  ipcMain.handle(IPC.AGENT_ACCOUNT_CLONE, (_, input) => cloneAgentAccount(input));
+  ipcMain.handle(IPC.WORK_START, (_, input) => startWork(input));
 
   ipcMain.handle(IPC.DIALOG_PICK_IMAGE, async (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);

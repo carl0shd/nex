@@ -26,6 +26,13 @@ function toProject(row: ProjectRow): Project {
   };
 }
 
+export function getById(id: string): Project | null {
+  const row = getDb().prepare('SELECT * FROM projects WHERE id = ?').get(id) as
+    | ProjectRow
+    | undefined;
+  return row ? toProject(row) : null;
+}
+
 export function getAll(): Project[] {
   const rows = getDb().prepare('SELECT * FROM projects ORDER BY sort_order').all() as ProjectRow[];
   return rows.map(toProject);
