@@ -90,7 +90,7 @@ function QuickCommandList({
         <div className="flex flex-col gap-1">
           {commands.length === 0 && (
             <div
-              className="rounded border border-dashed border-border px-2.5 py-1.25 text-center text-[11px] text-text-placeholder"
+              className="rounded border border-dashed border-border px-2.5 py-1.25 text-left text-[11px] text-text-placeholder"
               style={{ fontFamily: 'JetBrains Mono Variable, JetBrains Mono, monospace' }}
             >
               No commands yet

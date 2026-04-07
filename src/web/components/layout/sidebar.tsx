@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Plus, LayoutGrid, ChevronDown, ChevronRight } from 'lucide-react';
 import SimpleBar from 'simplebar-react';
 import { useScrollable } from '@/hooks/use-scrollable';
@@ -10,55 +10,77 @@ import TaskGroupHeader from '@/components/sidebar/task-group-header';
 import ProjectLabel from '@/components/sidebar/project-label';
 import CountBadge from '@/components/sidebar/count-badge';
 import SidebarTask from '@/components/sidebar/sidebar-task';
+import WorkspaceModal from '@/components/modals/workspace-modal';
+import CreateProjectModal from '@/components/modals/create-project-modal';
+import DeleteWorkspaceModal from '@/components/modals/delete-workspace-modal';
+import ManageWorkspacesModal from '@/components/modals/manage-workspaces-modal';
 import { useWorkspaceStore } from '@/stores/workspace.store';
 import { useWorktreeStore } from '@/stores/worktree.store';
-
-interface SidebarCollapsed {
-  workspacesSection: boolean;
-  workspaces: string[];
-  tasks: boolean;
-  groups: string[];
-  projects: string[];
-}
-
-const DEFAULT_COLLAPSED: SidebarCollapsed = {
-  workspacesSection: false,
-  workspaces: [],
-  tasks: false,
-  groups: [],
-  projects: []
-};
+import { useSidebarStore } from '@/stores/sidebar.store';
 
 function Sidebar(): React.JSX.Element {
   const [simpleBarRef, isScrollable] = useScrollable();
   const workspaces = useWorkspaceStore((s) => s.workspaces);
   const projects = useWorkspaceStore((s) => s.projects);
+  const updateWorkspace = useWorkspaceStore((s) => s.updateWorkspace);
   const worktrees = useWorktreeStore((s) => s.worktrees);
-  const [collapsed, setCollapsed] = useState<SidebarCollapsed>(DEFAULT_COLLAPSED);
-  const [loaded, setLoaded] = useState(false);
+
+  const collapsed = useSidebarStore((s) => s.collapsed);
+  const loaded = useSidebarStore((s) => s.loaded);
+  const workspaceModalOpen = useSidebarStore((s) => s.workspaceModalOpen);
+  const workspaceModalId = useSidebarStore((s) => s.workspaceModalId);
+  const createProjectOpen = useSidebarStore((s) => s.createProjectOpen);
+  const createProjectWorkspaceId = useSidebarStore((s) => s.createProjectWorkspaceId);
+  const deleteWorkspaceOpen = useSidebarStore((s) => s.deleteWorkspaceOpen);
+  const deleteWorkspaceId = useSidebarStore((s) => s.deleteWorkspaceId);
+
+  const load = useSidebarStore((s) => s.load);
+  const persist = useSidebarStore((s) => s.persist);
+  const toggle = useSidebarStore((s) => s.toggle);
+  const openCreateWorkspace = useSidebarStore((s) => s.openCreateWorkspace);
+  const openEditWorkspace = useSidebarStore((s) => s.openEditWorkspace);
+  const closeWorkspaceModal = useSidebarStore((s) => s.closeWorkspaceModal);
+  const openCreateProject = useSidebarStore((s) => s.openCreateProject);
+  const closeCreateProject = useSidebarStore((s) => s.closeCreateProject);
+  const openDeleteWorkspace = useSidebarStore((s) => s.openDeleteWorkspace);
+  const closeDeleteWorkspace = useSidebarStore((s) => s.closeDeleteWorkspace);
+  const manageWorkspacesOpen = useSidebarStore((s) => s.manageWorkspacesOpen);
+  const openManageWorkspaces = useSidebarStore((s) => s.openManageWorkspaces);
+  const closeManageWorkspaces = useSidebarStore((s) => s.closeManageWorkspaces);
 
   useEffect(() => {
-    window.api.getSetting<SidebarCollapsed>('sidebar-collapsed', DEFAULT_COLLAPSED).then((val) => {
-      setCollapsed(val);
-      setLoaded(true);
-    });
-  }, []);
+    load();
+  }, [load]);
 
-  const persist = useCallback((next: SidebarCollapsed) => {
-    setCollapsed(next);
-    window.api.setSetting('sidebar-collapsed', next);
-  }, []);
+  const activeWorkspaces = useMemo(() => workspaces.filter((ws) => !ws.archived), [workspaces]);
 
-  const toggle = (key: 'workspaces' | 'groups' | 'projects', id: string): void => {
-    const list = collapsed[key];
-    const next = list.includes(id) ? list.filter((i) => i !== id) : [...list, id];
-    persist({ ...collapsed, [key]: next });
-  };
+  const projectsByWorkspace = useMemo(() => {
+    const map = new Map<string, typeof projects>();
+    for (const p of projects) {
+      const list = map.get(p.workspaceId);
+      if (list) list.push(p);
+      else map.set(p.workspaceId, [p]);
+    }
+    return map;
+  }, [projects]);
 
-  const workspacesWithWorktrees = workspaces.filter((ws) => {
-    const wsProjects = projects.filter((p) => p.workspaceId === ws.id);
-    return wsProjects.some((p) => worktrees.some((wt) => wt.projectId === p.id));
-  });
+  const hasWorkspaces = workspaces.length > 0;
+  const hasProjects = projects.length > 0;
+  const ctaLabel = !hasWorkspaces ? 'new workspace' : !hasProjects ? 'new project' : 'new task';
+  const ctaAction = !hasWorkspaces
+    ? openCreateWorkspace
+    : !hasProjects
+      ? () => openCreateProject(activeWorkspaces[0].id)
+      : undefined;
+
+  const workspacesWithWorktrees = useMemo(
+    () =>
+      activeWorkspaces.filter((ws) => {
+        const wsProjects = projectsByWorkspace.get(ws.id) ?? [];
+        return wsProjects.some((p) => worktrees.some((wt) => wt.projectId === p.id));
+      }),
+    [activeWorkspaces, projectsByWorkspace, worktrees]
+  );
 
   const totalWorktrees = worktrees.length;
   const TasksChevron = collapsed.tasks ? ChevronRight : ChevronDown;
@@ -74,24 +96,28 @@ function Sidebar(): React.JSX.Element {
           onToggle={() =>
             persist({ ...collapsed, workspacesSection: !collapsed.workspacesSection })
           }
-          actions={[{ icon: LayoutGrid }, { icon: Plus }]}
+          actions={[
+            { icon: LayoutGrid, onClick: openManageWorkspaces },
+            { icon: Plus, onClick: openCreateWorkspace }
+          ]}
         />
 
         {!collapsed.workspacesSection &&
-          workspaces.map((ws) => {
-            const wsProjects = projects.filter((p) => p.workspaceId === ws.id);
+          activeWorkspaces.map((ws) => {
+            const wsProjects = projectsByWorkspace.get(ws.id) ?? [];
             const wsCollapsed = collapsed.workspaces.includes(ws.id);
             return (
               <WorkspaceItem
                 key={ws.id}
-                name={ws.name}
-                color={ws.color}
-                icon={ws.icon}
-                customImage={ws.customImage}
-                count={wsProjects.length}
+                workspace={ws}
+                projectCount={wsProjects.length}
                 projects={wsProjects.map((p) => ({ name: p.name }))}
                 collapsed={wsCollapsed}
                 onToggle={() => toggle('workspaces', ws.id)}
+                onAddProject={() => openCreateProject(ws.id)}
+                onSettings={() => openEditWorkspace(ws.id)}
+                onArchive={() => updateWorkspace(ws.id, { archived: true })}
+                onDelete={() => openDeleteWorkspace(ws.id)}
               />
             );
           })}
@@ -117,7 +143,7 @@ function Sidebar(): React.JSX.Element {
             <div className={`flex flex-col gap-2.5 ${isScrollable ? 'pr-3' : ''}`}>
               {workspacesWithWorktrees.map((ws) => {
                 const groupCollapsed = collapsed.groups.includes(ws.id);
-                const wsProjects = projects.filter((p) => p.workspaceId === ws.id);
+                const wsProjects = projectsByWorkspace.get(ws.id) ?? [];
                 const projectsWithWorktrees = wsProjects.filter((p) =>
                   worktrees.some((wt) => wt.projectId === p.id)
                 );
@@ -164,8 +190,11 @@ function Sidebar(): React.JSX.Element {
       {collapsed.tasks && <div className="flex-1" />}
 
       <div className="shrink-0 px-4 pb-3 pt-3 z-20">
-        <button className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded bg-accent py-2 text-[12px] font-medium text-text select-none hover:bg-accent-hover">
-          &gt; new task
+        <button
+          onClick={ctaAction}
+          className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded bg-accent py-2 text-[12px] font-medium text-text select-none hover:bg-accent-hover"
+        >
+          &gt; {ctaLabel}
         </button>
       </div>
 
@@ -177,6 +206,26 @@ function Sidebar(): React.JSX.Element {
           <ShortcutKey keys="⌘D" label="view diff" />
         </TipBox>
       </div>
+
+      <WorkspaceModal
+        open={workspaceModalOpen}
+        workspaceId={workspaceModalId || undefined}
+        onClose={closeWorkspaceModal}
+      />
+
+      <CreateProjectModal
+        open={createProjectOpen}
+        workspaceId={createProjectWorkspaceId}
+        onClose={closeCreateProject}
+      />
+
+      <DeleteWorkspaceModal
+        open={deleteWorkspaceOpen}
+        workspaceId={deleteWorkspaceId}
+        onClose={closeDeleteWorkspace}
+      />
+
+      <ManageWorkspacesModal open={manageWorkspacesOpen} onClose={closeManageWorkspaces} />
     </div>
   );
 }

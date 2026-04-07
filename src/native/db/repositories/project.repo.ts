@@ -7,6 +7,7 @@ interface ProjectRow {
   workspace_id: string;
   name: string;
   path: string;
+  branch_prefix: string;
   quick_commands: string;
   sort_order: number;
   created_at: string;
@@ -18,6 +19,7 @@ function toProject(row: ProjectRow): Project {
     workspaceId: row.workspace_id,
     name: row.name,
     path: row.path,
+    branchPrefix: row.branch_prefix,
     quickCommands: JSON.parse(row.quick_commands),
     sortOrder: row.sort_order,
     createdAt: row.created_at
@@ -45,13 +47,14 @@ export function create(input: CreateProjectInput): Project {
     .get(input.workspaceId) as { next: number };
   const row = db
     .prepare(
-      'INSERT INTO projects (id, workspace_id, name, path, quick_commands, sort_order) VALUES (?, ?, ?, ?, ?, ?) RETURNING *'
+      'INSERT INTO projects (id, workspace_id, name, path, branch_prefix, quick_commands, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *'
     )
     .get(
       randomUUID(),
       input.workspaceId,
       input.name,
       input.path,
+      input.branchPrefix ?? '',
       JSON.stringify(input.quickCommands ?? []),
       maxOrder.next
     ) as ProjectRow;
@@ -69,6 +72,10 @@ export function update(id: string, input: UpdateProjectInput): Project {
   if (input.path !== undefined) {
     fields.push('path = ?');
     values.push(input.path);
+  }
+  if (input.branchPrefix !== undefined) {
+    fields.push('branch_prefix = ?');
+    values.push(input.branchPrefix);
   }
   if (input.quickCommands !== undefined) {
     fields.push('quick_commands = ?');

@@ -36,7 +36,7 @@ function WorkspaceBadge({
 
   return (
     <span
-      className={`flex items-center justify-center overflow-hidden ${rounded} font-bold text-text`}
+      className={`flex shrink-0 items-center justify-center overflow-hidden ${rounded} font-bold text-text`}
       style={{
         width: size,
         height: size,
@@ -45,7 +45,12 @@ function WorkspaceBadge({
       }}
     >
       {isCustomImage ? (
-        <img src={`file://${customImage}`} alt="" className="h-full w-full object-cover" draggable={false} />
+        <img
+          src={customImage!.startsWith('data:') ? customImage! : `nex-file://${customImage}`}
+          alt=""
+          className="h-full w-full object-cover"
+          draggable={false}
+        />
       ) : IconComponent ? (
         <IconComponent size={resolvedIconSize} />
       ) : (

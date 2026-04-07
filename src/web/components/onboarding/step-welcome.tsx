@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Terminal, GitBranch, LayoutDashboard } from 'lucide-react';
+import { DialogPanel } from '@headlessui/react';
 import { ModalHeader, ModalDivider, ModalFooter, ModalButton } from '@/components/ui/modal';
 import nexLogo from '@/assets/images/logo-white.svg';
 import { useOnboardingStore } from '@/stores/onboarding.store';
@@ -64,20 +65,10 @@ function StepWelcome(): React.JSX.Element {
   }, [introPlayed]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div
-        className="absolute inset-0 bg-black/80"
-        style={
-          introPlayed
-            ? undefined
-            : {
-                opacity: visible ? 1 : 0,
-                transition: 'opacity 700ms ease-out'
-              }
-        }
-      />
+    <>
       {visible && !introPlayed && (
         <div
+          className="pointer-events-none fixed inset-0"
           style={{
             opacity: leaving ? 0 : 1,
             transition: 'opacity 400ms ease-out'
@@ -98,7 +89,7 @@ function StepWelcome(): React.JSX.Element {
           100% { opacity: 0; }
         }
       `}</style>
-      <div
+      <DialogPanel
         className="relative flex w-110 flex-col gap-5 rounded-lg border border-border-strong bg-bg-panel p-6 shadow-2xl"
         style={
           introPlayed
@@ -150,8 +141,8 @@ function StepWelcome(): React.JSX.Element {
             Get Started
           </ModalButton>
         </ModalFooter>
-      </div>
-    </div>
+      </DialogPanel>
+    </>
   );
 }
 

@@ -9,6 +9,7 @@ interface WorkspaceRow {
   icon: string;
   custom_image: string | null;
   sort_order: number;
+  archived: number;
   collapsed: number;
   created_at: string;
 }
@@ -21,6 +22,7 @@ function toWorkspace(row: WorkspaceRow): Workspace {
     icon: row.icon,
     customImage: row.custom_image,
     sortOrder: row.sort_order,
+    archived: row.archived === 1,
     collapsed: row.collapsed === 1,
     createdAt: row.created_at
   };
@@ -83,6 +85,10 @@ export function update(id: string, input: UpdateWorkspaceInput): Workspace {
   if (input.sortOrder !== undefined) {
     fields.push('sort_order = ?');
     values.push(input.sortOrder);
+  }
+  if (input.archived !== undefined) {
+    fields.push('archived = ?');
+    values.push(input.archived ? 1 : 0);
   }
   if (input.collapsed !== undefined) {
     fields.push('collapsed = ?');

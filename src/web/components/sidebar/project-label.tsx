@@ -15,7 +15,7 @@ function ProjectLabel({ name, collapsed = false, onToggle }: ProjectLabelProps):
       className="flex cursor-pointer items-center gap-1.5 px-1 py-0.5 select-none"
     >
       <Chevron size={12} className="text-text-muted" />
-      <span className="text-[12px] font-medium text-text-muted">{name}</span>
+      <span className="truncate text-[12px] font-medium text-text-muted">{name}</span>
     </button>
   );
 }

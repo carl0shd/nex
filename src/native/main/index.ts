@@ -4,9 +4,13 @@ import { createMainWindow, getMainWindow, setQuitting } from './app-window';
 import { registerIPCHandlers } from '@native/ipc/handlers';
 import { initAutoUpdater } from './updater';
 import { initDatabase, closeDatabase } from '@native/db/database';
+import { registerScheme, registerHandler } from '@native/protocol/nex-file';
+
+registerScheme();
 
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.nex.app');
+  registerHandler();
 
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window);
