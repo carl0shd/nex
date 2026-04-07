@@ -48,7 +48,10 @@ export const IPC = {
   SESSION_UPDATE: 'session:update',
   SESSION_DELETE: 'session:delete',
 
-  CLI_EXEC: 'cli:exec',
+  DETECT_AGENTS: 'agents:detect',
+  AGENT_ACCOUNT_CLONE: 'agent-account:clone',
+  WORK_START: 'work:start',
+  WINDOW_SHOW: 'window:show',
   DIALOG_PICK_IMAGE: 'dialog:pick-image',
   DIALOG_PICK_DIRECTORY: 'dialog:pick-directory',
   SAVE_WORKSPACE_ICON: 'workspace:save-icon'

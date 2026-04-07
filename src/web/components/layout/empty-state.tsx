@@ -6,27 +6,18 @@ import { useSidebarStore } from '@/stores/sidebar.store';
 function EmptyState(): React.JSX.Element {
   const workspaces = useWorkspaceStore((s) => s.workspaces);
   const projects = useWorkspaceStore((s) => s.projects);
-  const loaded = useSidebarStore((s) => s.loaded);
   const openCreateWorkspace = useSidebarStore((s) => s.openCreateWorkspace);
   const openCreateProject = useSidebarStore((s) => s.openCreateProject);
 
-  const hasWorkspaces = loaded && workspaces.length > 0;
-  const hasProjects = loaded && projects.length > 0;
+  const hasWorkspaces = workspaces.length > 0;
+  const hasProjects = projects.length > 0;
 
-  const ctaLabel = !loaded
-    ? 'new task'
-    : !hasWorkspaces
-      ? 'new workspace'
-      : !hasProjects
-        ? 'new project'
-        : 'new task';
-  const ctaSubtitle = !loaded
-    ? 'Create a new task to start working'
-    : !hasWorkspaces
-      ? 'Create a workspace to get started'
-      : !hasProjects
-        ? 'Add a project to your workspace'
-        : 'Create a new task to start working';
+  const ctaLabel = !hasWorkspaces ? 'new workspace' : !hasProjects ? 'new project' : 'new task';
+  const ctaSubtitle = !hasWorkspaces
+    ? 'Create a workspace to get started'
+    : !hasProjects
+      ? 'Add a project to your workspace'
+      : 'Create a new task to start working';
   const ctaAction = !hasWorkspaces
     ? openCreateWorkspace
     : !hasProjects

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Plus, LayoutGrid, ChevronDown, ChevronRight } from 'lucide-react';
 import SimpleBar from 'simplebar-react';
 import { useScrollable } from '@/hooks/use-scrollable';
@@ -26,7 +26,6 @@ function Sidebar(): React.JSX.Element {
   const worktrees = useWorktreeStore((s) => s.worktrees);
 
   const collapsed = useSidebarStore((s) => s.collapsed);
-  const loaded = useSidebarStore((s) => s.loaded);
   const workspaceModalOpen = useSidebarStore((s) => s.workspaceModalOpen);
   const workspaceModalId = useSidebarStore((s) => s.workspaceModalId);
   const createProjectOpen = useSidebarStore((s) => s.createProjectOpen);
@@ -34,7 +33,6 @@ function Sidebar(): React.JSX.Element {
   const deleteWorkspaceOpen = useSidebarStore((s) => s.deleteWorkspaceOpen);
   const deleteWorkspaceId = useSidebarStore((s) => s.deleteWorkspaceId);
 
-  const load = useSidebarStore((s) => s.load);
   const persist = useSidebarStore((s) => s.persist);
   const toggle = useSidebarStore((s) => s.toggle);
   const openCreateWorkspace = useSidebarStore((s) => s.openCreateWorkspace);
@@ -47,10 +45,6 @@ function Sidebar(): React.JSX.Element {
   const manageWorkspacesOpen = useSidebarStore((s) => s.manageWorkspacesOpen);
   const openManageWorkspaces = useSidebarStore((s) => s.openManageWorkspaces);
   const closeManageWorkspaces = useSidebarStore((s) => s.closeManageWorkspaces);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   const activeWorkspaces = useMemo(() => workspaces.filter((ws) => !ws.archived), [workspaces]);
 
@@ -84,8 +78,6 @@ function Sidebar(): React.JSX.Element {
 
   const totalWorktrees = worktrees.length;
   const TasksChevron = collapsed.tasks ? ChevronRight : ChevronDown;
-
-  if (!loaded) return <div className="flex h-full w-65 shrink-0 flex-col bg-bg" />;
 
   return (
     <div className="flex h-full w-65 shrink-0 flex-col bg-bg">

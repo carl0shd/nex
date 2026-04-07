@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dialog, DialogBackdrop } from '@headlessui/react';
 import StepWelcome from '@/components/onboarding/step-welcome';
 import StepWorkspace from '@/components/onboarding/step-workspace';
@@ -18,56 +18,49 @@ function OnboardingModal({ onComplete }: OnboardingModalProps): React.JSX.Elemen
   const createProject = useWorkspaceStore((s) => s.createProject);
 
   const [open, setOpen] = useState(false);
-  const finishRef = useRef<(() => Promise<void>) | null>(null);
 
   useEffect(() => {
-    requestAnimationFrame(() => setOpen(true));
+    const timer = setTimeout(() => setOpen(true), 500);
+    return () => clearTimeout(timer);
   }, []);
 
   const handleFinish = async (): Promise<void> => {
-    const finish = async (): Promise<void> => {
-      if (workspace.name.trim()) {
-        const ws = await createWorkspace({
-          name: workspace.name,
-          color: workspace.color,
-          icon: workspace.icon
-        });
+    if (workspace.name.trim()) {
+      const ws = await createWorkspace({
+        name: workspace.name,
+        color: workspace.color,
+        icon: workspace.icon
+      });
 
-        if (workspace.icon === 'custom' && workspace.customImage) {
-          const iconPath = await window.api.saveWorkspaceIcon(ws.id, workspace.customImage);
-          if (iconPath) {
-            await updateWorkspace(ws.id, { customImage: iconPath });
-          }
-        }
-
-        if (project.name.trim() && project.path.trim()) {
-          const validCommands = project.quickCommands.filter(
-            (cmd) => cmd.name.trim() && cmd.command.trim()
-          );
-          await createProject({
-            workspaceId: ws.id,
-            name: project.name,
-            path: project.path,
-            branchPrefix: project.branchPrefix.trim(),
-            quickCommands: validCommands
-          });
+      if (workspace.icon === 'custom' && workspace.customImage) {
+        const iconPath = await window.api.saveWorkspaceIcon(ws.id, workspace.customImage);
+        if (iconPath) {
+          await updateWorkspace(ws.id, { customImage: iconPath });
         }
       }
 
-      await window.api.setSetting('onboarding-complete', true);
-      reset();
-      onComplete();
-    };
+      if (project.name.trim() && project.path.trim()) {
+        const validCommands = project.quickCommands.filter(
+          (cmd) => cmd.name.trim() && cmd.command.trim()
+        );
+        await createProject({
+          workspaceId: ws.id,
+          name: project.name,
+          path: project.path,
+          branchPrefix: project.branchPrefix.trim(),
+          quickCommands: validCommands
+        });
+      }
+    }
 
-    finishRef.current = finish;
+    await window.api.setSetting('onboarding-complete', true);
     setOpen(false);
   };
 
   const handleTransitionEnd = (): void => {
-    if (!open && finishRef.current) {
-      const fn = finishRef.current;
-      finishRef.current = null;
-      fn();
+    if (!open) {
+      reset();
+      onComplete();
     }
   };
 
@@ -90,7 +83,7 @@ function OnboardingModal({ onComplete }: OnboardingModalProps): React.JSX.Elemen
     <Dialog open={open} onClose={() => {}} className="relative z-50">
       <DialogBackdrop
         transition
-        className="fixed inset-0 bg-black/80 duration-400 ease-out data-closed:opacity-0"
+        className="fixed inset-0 bg-black/70 duration-1000 ease-in-out data-closed:opacity-0"
         onTransitionEnd={handleTransitionEnd}
       />
       <div className="fixed inset-0 flex items-center justify-center">{renderStep()}</div>

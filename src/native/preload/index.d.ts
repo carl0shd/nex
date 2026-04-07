@@ -17,9 +17,11 @@ import type {
   AgentAccount,
   CreateAgentAccountInput,
   UpdateAgentAccountInput,
+  CloneAgentAccountInput,
   Session,
   CreateSessionInput,
-  UpdateSessionInput
+  UpdateSessionInput,
+  StartWorkInput
 } from '@native/db/types';
 
 interface NexAPI {
@@ -74,10 +76,10 @@ interface NexAPI {
   updateSession: (id: string, input: UpdateSessionInput) => Promise<Session>;
   deleteSession: (id: string) => Promise<void>;
 
-  cli: <T = unknown>(
-    args: string[],
-    cwd?: string
-  ) => Promise<{ ok: boolean; data?: T; error?: string }>;
+  showWindow: () => Promise<void>;
+  detectAgents: () => Promise<Agent[]>;
+  cloneAgentAccount: (input: CloneAgentAccountInput) => Promise<AgentAccount>;
+  startWork: (input: StartWorkInput) => Promise<Session>;
 
   pickImage: () => Promise<string | null>;
   pickDirectory: () => Promise<string | null>;
