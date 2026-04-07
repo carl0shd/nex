@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Check, Terminal } from 'lucide-react';
-import { Modal, ModalHeader, ModalDivider, ModalFooter, ModalButton } from '@/components/ui/modal';
+import {
+  ModalPanel,
+  ModalHeader,
+  ModalDivider,
+  ModalFooter,
+  ModalButton
+} from '@/components/ui/modal';
 import { useOnboardingStore } from '@/stores/onboarding.store';
 import claudeLogo from '@/assets/images/claude-logo.svg';
 import type { Agent, AgentAccount } from '@native/db/types';
@@ -45,7 +51,7 @@ function StepAgent({ onFinish }: StepAgentProps): React.JSX.Element {
   }, [setAgentId]);
 
   return (
-    <Modal>
+    <ModalPanel>
       <ModalHeader
         label="Step 4 of 4"
         title="Select Your Default Agent"
@@ -78,7 +84,7 @@ function StepAgent({ onFinish }: StepAgentProps): React.JSX.Element {
                   >
                     <div
                       className="flex h-10 w-10 items-center justify-center rounded-md"
-                      style={{ backgroundColor: '#2a2a2a' }}
+                      style={{ backgroundColor: 'var(--nex-border)' }}
                     >
                       <img src={claudeLogo} alt="" className="h-5 w-5" draggable={false} />
                     </div>
@@ -117,7 +123,7 @@ function StepAgent({ onFinish }: StepAgentProps): React.JSX.Element {
           >
             <div
               className="flex h-10 w-10 items-center justify-center rounded-md"
-              style={{ backgroundColor: '#2a2a2a' }}
+              style={{ backgroundColor: 'var(--nex-border)' }}
             >
               <Terminal size={18} className="text-text-secondary" />
             </div>
@@ -145,7 +151,7 @@ function StepAgent({ onFinish }: StepAgentProps): React.JSX.Element {
           finish setup
         </ModalButton>
       </ModalFooter>
-    </Modal>
+    </ModalPanel>
   );
 }
 

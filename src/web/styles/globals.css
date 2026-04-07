@@ -27,8 +27,21 @@
   --color-bg-input: var(--nex-bg-input);
   --color-bg-panel: var(--nex-bg-panel);
   --color-bg-hover: var(--nex-bg-hover);
+  --color-bg-item-active: var(--nex-bg-item-active);
   --color-border-strong: var(--nex-border-strong);
   --color-border-hover: var(--nex-border-hover);
+
+  /* Destructive */
+  --color-destructive: var(--nex-destructive);
+  --color-destructive-hover: var(--nex-destructive-hover);
+  --color-destructive-text: var(--nex-destructive-text);
+
+  /* Context menu */
+  --color-bg-menu: var(--nex-bg-menu);
+  --color-border-menu: var(--nex-border-menu);
+
+  /* Archived */
+  --color-archived: var(--nex-archived);
 }
 
 :root {
@@ -43,6 +56,7 @@
   --nex-bg-input: #1a1a1c;
   --nex-bg-panel: #222225;
   --nex-bg-hover: #1d1d1f;
+  --nex-bg-item-active: #222224;
 
   /* Borders */
   --nex-border: #2a2a2a;
@@ -79,6 +93,18 @@
   /* Badge - count */
   --nex-badge-count-bg: #e4e4e7;
   --nex-badge-count-text: #18181b;
+
+  /* Destructive */
+  --nex-destructive: #e62e2e;
+  --nex-destructive-hover: #cc2929;
+  --nex-destructive-text: #ff3535;
+
+  /* Context menu */
+  --nex-bg-menu: #1c1c1e;
+  --nex-border-menu: #2a2a2a;
+
+  /* Archived */
+  --nex-archived: #6b7280;
 }
 
 ::selection {

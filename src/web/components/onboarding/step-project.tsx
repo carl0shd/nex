@@ -1,6 +1,13 @@
-import { Folder, FolderOpen, GitBranch } from 'lucide-react';
-import { Modal, ModalHeader, ModalDivider, ModalFooter, ModalButton } from '@/components/ui/modal';
+import { Folder, GitBranch } from 'lucide-react';
+import {
+  ModalPanel,
+  ModalHeader,
+  ModalDivider,
+  ModalFooter,
+  ModalButton
+} from '@/components/ui/modal';
 import Input from '@/components/ui/input';
+import FolderPicker from '@/components/ui/folder-picker';
 import QuickCommandList from '@/components/ui/quick-command-list';
 import WorkspaceBadge from '@/components/ui/workspace-badge';
 import { useOnboardingStore } from '@/stores/onboarding.store';
@@ -23,7 +30,7 @@ function StepProject(): React.JSX.Element {
   };
 
   return (
-    <Modal width={460}>
+    <ModalPanel width={460}>
       <ModalHeader
         label="Step 3 of 4"
         title="Add Your First Project"
@@ -57,23 +64,7 @@ function StepProject(): React.JSX.Element {
           icon={Folder}
         />
 
-        <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-medium text-text-muted">{'// project path'}</label>
-          <button
-            onClick={handleBrowse}
-            className="flex cursor-pointer items-center gap-2 rounded-[5px] border border-border bg-bg-input px-2.5 py-2 hover:border-border-strong"
-          >
-            <FolderOpen size={14} className="shrink-0 text-text-muted" />
-            <span
-              className={`flex-1 truncate text-left text-[12px] ${path ? 'text-text-secondary' : 'text-text-placeholder'}`}
-            >
-              {path || 'Select project folder...'}
-            </span>
-            <span className="rounded-[3px] bg-border px-2 py-0.5 text-[10px] font-medium text-text-secondary">
-              browse
-            </span>
-          </button>
-        </div>
+        <FolderPicker value={path} onBrowse={handleBrowse} />
 
         <Input
           value={branchPrefix}
@@ -101,7 +92,7 @@ function StepProject(): React.JSX.Element {
           continue
         </ModalButton>
       </ModalFooter>
-    </Modal>
+    </ModalPanel>
   );
 }
 

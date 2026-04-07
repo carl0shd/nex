@@ -1,39 +1,47 @@
-import { ChevronDown, ChevronRight, Folder } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronRight,
+  Folder,
+  Plus,
+  Ellipsis,
+  Settings,
+  Archive,
+  Trash2
+} from 'lucide-react';
 import IconButton from '@/components/ui/icon-button';
 import WorkspaceBadge from '@/components/ui/workspace-badge';
-import { Plus, Ellipsis } from 'lucide-react';
+import ContextMenu from '@/components/ui/context-menu';
+import type { Workspace } from '@native/db/types';
 
-interface Project {
+interface ProjectItem {
   name: string;
+  onMore?: () => void;
 }
 
 interface WorkspaceItemProps {
-  name: string;
-  color: string;
-  icon?: string;
-  customImage?: string | null;
-  count: number;
-  projects?: Project[];
+  workspace: Workspace;
+  projectCount: number;
+  projects?: ProjectItem[];
   collapsed?: boolean;
-  active?: boolean;
   onToggle?: () => void;
   onAddProject?: () => void;
+  onSettings?: () => void;
+  onArchive?: () => void;
+  onDelete?: () => void;
 }
 
 function WorkspaceItem({
-  name,
-  color,
-  icon,
-  customImage,
-  count,
+  workspace,
+  projectCount,
   projects = [],
   collapsed = false,
-  active = true,
   onToggle,
-  onAddProject
+  onAddProject,
+  onSettings,
+  onArchive,
+  onDelete
 }: WorkspaceItemProps): React.JSX.Element {
   const Chevron = collapsed ? ChevronRight : ChevronDown;
-  const muted = !active;
 
   return (
     <div className="flex flex-col gap-0.5">
@@ -41,14 +49,15 @@ function WorkspaceItem({
         onClick={onToggle}
         className="flex w-full cursor-pointer items-center gap-1.5 rounded px-1.5 py-1.25 select-none"
       >
-        <Chevron size={12} className="text-text-muted" />
-        <WorkspaceBadge name={name} color={color} icon={icon} customImage={customImage} />
-        <span className={`text-[12px] font-semibold ${muted ? 'text-text-muted' : 'text-text'}`}>
-          {name}
-        </span>
-        <span className={`text-[12px] ${muted ? 'text-text-muted/50' : 'text-text-muted'}`}>
-          {count}
-        </span>
+        <Chevron size={12} className="shrink-0 text-text-muted" />
+        <WorkspaceBadge
+          name={workspace.name}
+          color={workspace.color}
+          icon={workspace.icon}
+          customImage={workspace.customImage}
+        />
+        <span className="truncate text-[12px] font-semibold text-text">{workspace.name}</span>
+        <span className="ml-0.5 text-[12px] text-text-muted">{projectCount}</span>
         <span className="flex-1" />
         <IconButton
           icon={Plus}
@@ -57,26 +66,42 @@ function WorkspaceItem({
             e.stopPropagation();
             onAddProject?.();
           }}
-          className={muted ? 'opacity-40' : ''}
         />
-        <IconButton
-          icon={Ellipsis}
-          size={14}
-          onClick={(e) => e.stopPropagation()}
-          className={muted ? 'opacity-40' : ''}
+        <ContextMenu
+          trigger={<IconButton icon={Ellipsis} size={14} onClick={(e) => e.stopPropagation()} />}
+          actions={[
+            { label: 'Edit workspace', icon: Settings, onClick: () => onSettings?.() },
+            { label: 'Archive workspace', icon: Archive, onClick: () => onArchive?.() },
+            {
+              label: 'Delete workspace',
+              icon: Trash2,
+              onClick: () => onDelete?.(),
+              destructive: true
+            }
+          ]}
         />
       </div>
 
       {!collapsed && projects.length > 0 && (
         <div className="flex flex-col gap-px pl-4.5">
           {projects.map((project) => (
-            <button
+            <div
               key={project.name}
-              className="flex w-full cursor-pointer items-center gap-2 rounded px-2 py-1 text-left select-none hover:bg-bg-mute/50"
+              className="group flex h-[30px] w-full items-center gap-2 rounded px-2 select-none hover:bg-bg-mute/50"
             >
               <Folder size={13} className="shrink-0 text-text-muted" />
               <span className="truncate text-[12px] text-text-secondary">{project.name}</span>
-            </button>
+              <span className="flex-1" />
+              <IconButton
+                icon={Ellipsis}
+                size={13}
+                className="opacity-0 group-hover:opacity-100"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  project.onMore?.();
+                }}
+              />
+            </div>
           ))}
         </div>
       )}

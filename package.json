@@ -14,7 +14,7 @@
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
     "build": "npm run typecheck && electron-vite build",
-    "postinstall": "electron-builder install-app-deps",
+    "postinstall": "git config core.hooksPath .githooks && electron-builder install-app-deps",
     "build:mac": "electron-vite build && electron-builder --mac --config build/electron-builder.yml"
   },
   "dependencies": {
@@ -22,6 +22,7 @@
     "@electron-toolkit/utils": "^4.0.0",
     "@fontsource-variable/inter": "^5.2.8",
     "@fontsource-variable/jetbrains-mono": "^5.2.8",
+    "@headlessui/react": "^2.2.9",
     "@tailwindcss/vite": "^4.2.2",
     "better-sqlite3": "^12.8.0",
     "electron-updater": "^6.3.9",

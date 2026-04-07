@@ -27,7 +27,7 @@ function TaskGroupHeader({
       >
         {name[0].toUpperCase()}
       </span>
-      <span className="text-[12px] font-semibold text-text-secondary">{name}</span>
+      <span className="truncate text-[12px] font-semibold text-text-secondary">{name}</span>
     </button>
   );
 }

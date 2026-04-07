@@ -87,7 +87,11 @@ const migrations: string[] = [
 
   `ALTER TABLE workspaces ADD COLUMN icon TEXT NOT NULL DEFAULT 'letter';
   ALTER TABLE workspaces ADD COLUMN custom_image TEXT;
-  ALTER TABLE projects ADD COLUMN quick_commands TEXT NOT NULL DEFAULT '[]';`
+  ALTER TABLE projects ADD COLUMN quick_commands TEXT NOT NULL DEFAULT '[]';`,
+
+  `ALTER TABLE projects ADD COLUMN branch_prefix TEXT NOT NULL DEFAULT '';`,
+
+  `ALTER TABLE workspaces ADD COLUMN archived INTEGER NOT NULL DEFAULT 0;`
 ];
 
 export function runMigrations(db: Database.Database): void {

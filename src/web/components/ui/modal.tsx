@@ -1,22 +1,69 @@
+import { Dialog, DialogPanel, DialogBackdrop } from '@headlessui/react';
 import type { LucideIcon } from 'lucide-react';
+
+const PANEL_CLASS =
+  'relative flex flex-col gap-5 rounded-lg border border-border-strong bg-bg-panel p-6 shadow-2xl';
 
 interface ModalProps {
   children: React.ReactNode;
   width?: number;
+  open?: boolean;
   onClose?: () => void;
+  onAfterClose?: () => void;
 }
 
-function Modal({ children, width = 440, onClose }: ModalProps): React.JSX.Element {
+function Modal({
+  children,
+  width = 440,
+  open = true,
+  onClose,
+  onAfterClose
+}: ModalProps): React.JSX.Element {
+  const handleTransitionEnd = (): void => {
+    if (!open && onAfterClose) onAfterClose();
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/80" onClick={onClose} />
-      <div
-        className="relative flex flex-col gap-5 rounded-lg border border-border-strong bg-bg-panel p-6 shadow-2xl"
-        style={{ width }}
-      >
-        {children}
+    <Dialog open={open} onClose={onClose ?? (() => {})} className="relative z-50">
+      <DialogBackdrop
+        transition
+        className="fixed inset-0 bg-black/80 duration-150 ease-out data-closed:opacity-0"
+        onTransitionEnd={handleTransitionEnd}
+      />
+      <div className="fixed inset-0 flex items-center justify-center">
+        <DialogPanel
+          transition
+          className={`${PANEL_CLASS} duration-150 ease-out data-closed:scale-95 data-closed:opacity-0`}
+          style={{ width }}
+        >
+          {children}
+        </DialogPanel>
       </div>
-    </div>
+    </Dialog>
+  );
+}
+
+interface ModalPanelProps {
+  children: React.ReactNode;
+  width?: number;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+function ModalPanel({
+  children,
+  width = 440,
+  className,
+  style
+}: ModalPanelProps): React.JSX.Element {
+  return (
+    <DialogPanel
+      transition
+      className={`${PANEL_CLASS} duration-200 ease-out data-closed:scale-95 data-closed:opacity-0 ${className ?? ''}`}
+      style={{ width, ...style }}
+    >
+      {children}
+    </DialogPanel>
   );
 }
 
@@ -67,7 +114,7 @@ function ModalFooter({ children }: { children: React.ReactNode }): React.JSX.Ele
 
 interface ModalButtonProps {
   children: React.ReactNode;
-  variant?: 'primary' | 'ghost';
+  variant?: 'primary' | 'ghost' | 'destructive';
   onClick?: () => void;
   disabled?: boolean;
 }
@@ -80,20 +127,22 @@ function ModalButton({
 }: ModalButtonProps): React.JSX.Element {
   const base =
     'flex cursor-pointer items-center justify-center gap-1.5 rounded-md px-4 py-2 text-[13px] font-medium select-none';
-  const styles =
-    variant === 'primary'
-      ? 'bg-accent text-text hover:bg-accent-hover'
-      : 'border border-border-strong text-text-secondary hover:text-text';
+
+  const variantStyles: Record<string, string> = {
+    primary: 'bg-accent text-text hover:bg-accent-hover',
+    ghost: 'border border-border-strong text-text-secondary hover:text-text',
+    destructive: 'bg-destructive text-white hover:bg-destructive-hover'
+  };
 
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`${base} ${styles} ${disabled ? 'pointer-events-none opacity-40' : ''}`}
+      className={`${base} ${variantStyles[variant]} ${disabled ? 'pointer-events-none opacity-40' : ''}`}
     >
       {children}
     </button>
   );
 }
 
-export { Modal, ModalHeader, ModalBody, ModalDivider, ModalFooter, ModalButton };
+export { Modal, ModalPanel, ModalHeader, ModalBody, ModalDivider, ModalFooter, ModalButton };
