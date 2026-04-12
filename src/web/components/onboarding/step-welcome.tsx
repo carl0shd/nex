@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Terminal, GitBranch, LayoutDashboard } from 'lucide-react';
 import { DialogPanel } from '@headlessui/react';
 import { ModalHeader, ModalDivider, ModalFooter, ModalButton } from '@/components/ui/modal';
-import nexLogo from '@/assets/images/logo-white.svg';
+import nexLogo from '@/assets/images/logo.svg';
 import { useOnboardingStore } from '@/stores/onboarding.store';
 import type { LucideIcon } from 'lucide-react';
 

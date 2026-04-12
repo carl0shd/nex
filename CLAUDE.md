@@ -67,7 +67,7 @@ src/
 │   ├── lib/                   # Utilities
 │   │   └── status.ts          # Status types and badge mappings
 │   ├── assets/                # Images, SVGs
-│   │   └── logo-white.svg     # Nex logo
+│   │   └── logo.svg     # Nex logo
 │   ├── styles/
 │   │   └── globals.css        # Tailwind + theme variables + scrollbar styles
 │   └── types/
@@ -128,6 +128,7 @@ yarn typecheck        # TypeScript check (node + web)
 All colors use CSS variables defined in `globals.css`. Never hardcode colors in components.
 
 **Theme tokens available as Tailwind classes:**
+
 - Backgrounds: `bg-bg`, `bg-bg-soft`, `bg-bg-mute`, `bg-bg-card`, `bg-bg-raised`, `bg-bg-input`, `bg-bg-panel`, `bg-bg-hover`, `bg-bg-item-active`, `bg-bg-menu`
 - Borders: `border-border`, `border-border-soft`, `border-border-strong`, `border-border-menu`
 - Text: `text-text`, `text-text-secondary`, `text-text-muted`, `text-text-placeholder`
@@ -147,6 +148,7 @@ Uses `simplebar-react` for custom scrollbars. Styles in `globals.css`. Use `useS
 ### Titlebar
 
 The app uses `titleBarStyle: 'hiddenInset'` for native macOS look. The `Titlebar` component provides a 47px drag region with:
+
 - Left: traffic lights zone (78px) + sidebar toggle (PanelLeft icon)
 - Center-left: command bar + active badge
 - Right: bell, smartphone, grid, settings icons
@@ -210,6 +212,7 @@ When creating a new component, place it in the folder that matches its scope. If
 ## Design Reference
 
 The UI design lives in `pencil-new.pen` (Pencil app). Look for "Worktree Terminal App" frames:
+
 1. **Empty State** — Sidebar + centered CTA with logo and shortcuts
 2. **Main View** — Sidebar + horizontal terminal boxes
 3. **Grid View** — Sidebar + 2x2 terminal grid
