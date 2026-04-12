@@ -42,7 +42,7 @@ function StepProject(): React.JSX.Element {
       <div className="flex flex-col gap-3.5">
         <div className="flex flex-col gap-1">
           <label className="text-[10px] font-medium text-text-muted">{'// workspace'}</label>
-          <div className="flex items-center gap-2 rounded border border-border bg-bg-input px-2.5 py-2">
+          <div className="flex items-center gap-2 rounded border border-border-soft bg-bg-input px-2.5 py-2">
             <WorkspaceBadge
               name={workspace.name}
               color={workspace.color}

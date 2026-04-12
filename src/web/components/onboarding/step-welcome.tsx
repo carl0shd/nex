@@ -90,7 +90,7 @@ function StepWelcome(): React.JSX.Element {
         }
       `}</style>
       <DialogPanel
-        className="relative flex w-110 flex-col gap-5 rounded-lg border border-border-strong bg-bg-panel p-6 shadow-2xl"
+        className="relative flex w-110 flex-col gap-5 rounded-lg border border-border-soft bg-bg-panel p-6 shadow-2xl"
         style={
           introPlayed
             ? undefined
@@ -110,6 +110,7 @@ function StepWelcome(): React.JSX.Element {
         <div className="flex items-center gap-2">
           <span className="text-lg font-semibold text-text">Welcome to</span>
           <img src={nexLogo} alt="Nex" className="h-6" draggable={false} />
+          <span className="text-lg font-semibold text-text">Nex</span>
         </div>
 
         <div className="flex flex-col gap-2">

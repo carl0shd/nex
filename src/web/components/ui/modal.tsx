@@ -2,7 +2,7 @@ import { Dialog, DialogPanel, DialogBackdrop } from '@headlessui/react';
 import type { LucideIcon } from 'lucide-react';
 
 const PANEL_CLASS =
-  'relative flex flex-col gap-5 rounded-lg border border-border-strong bg-bg-panel p-6 shadow-2xl';
+  'relative flex flex-col gap-5 rounded-lg border border-border-soft bg-bg-panel p-6 shadow-2xl';
 
 interface ModalProps {
   children: React.ReactNode;
@@ -105,44 +105,15 @@ function ModalBody({ children }: { children: React.ReactNode }): React.JSX.Eleme
 }
 
 function ModalDivider(): React.JSX.Element {
-  return <div className="h-px bg-border" />;
+  return <div className="h-px bg-border-soft" />;
 }
 
 function ModalFooter({ children }: { children: React.ReactNode }): React.JSX.Element {
   return <div className="flex items-center justify-end gap-2">{children}</div>;
 }
 
-interface ModalButtonProps {
-  children: React.ReactNode;
-  variant?: 'primary' | 'ghost' | 'destructive';
-  onClick?: () => void;
-  disabled?: boolean;
-}
+import Button from '@/components/ui/button';
 
-function ModalButton({
-  children,
-  variant = 'primary',
-  onClick,
-  disabled = false
-}: ModalButtonProps): React.JSX.Element {
-  const base =
-    'flex cursor-pointer items-center justify-center gap-1.5 rounded-md px-4 py-2 text-[13px] font-medium select-none';
-
-  const variantStyles: Record<string, string> = {
-    primary: 'bg-accent text-text hover:bg-accent-hover',
-    ghost: 'border border-border-strong text-text-secondary hover:text-text',
-    destructive: 'bg-destructive text-white hover:bg-destructive-hover'
-  };
-
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`${base} ${variantStyles[variant]} ${disabled ? 'pointer-events-none opacity-40' : ''}`}
-    >
-      {children}
-    </button>
-  );
-}
+const ModalButton = Button;
 
 export { Modal, ModalPanel, ModalHeader, ModalBody, ModalDivider, ModalFooter, ModalButton };

@@ -1,4 +1,5 @@
 import { GitBranch, ChevronDown, Eye, Paperclip, Mic, Send } from 'lucide-react';
+import Button from '@/components/ui/button';
 import IconButton from '@/components/ui/icon-button';
 
 interface TerminalInputProps {
@@ -22,7 +23,7 @@ function TerminalInput({
             <Eye size={11} />
             <span className="text-[10px]">Notes</span>
           </button>
-          <span className="h-2.5 w-px bg-border" />
+          <span className="h-2.5 w-px bg-border-soft" />
           <button className="flex cursor-pointer items-center gap-1.5 text-text-muted select-none hover:text-text-secondary">
             <Eye size={11} />
             <span className="text-[10px]">Diff</span>
@@ -30,20 +31,20 @@ function TerminalInput({
         </div>
       </div>
 
-      <div className="rounded-lg border border-border bg-bg-input hover:border-border-strong">
+      <div className="rounded-lg border border-border-soft bg-bg-input hover:border-border">
         <div className="h-15 py-2.5 pl-3 pr-1">
           <textarea
             placeholder={placeholder}
             className="size-full resize-none overflow-y-auto bg-transparent font-mono text-[12px] text-text-secondary outline-none placeholder:text-text-muted"
           />
         </div>
-        <div className="flex items-center gap-2 border-t border-border px-2.5 pr-2 py-1.5">
+        <div className="flex items-center gap-2 border-t border-border-soft px-2.5 pr-2 py-1.5">
           <IconButton icon={Paperclip} size={14} ghost />
           <span className="flex-1" />
           <IconButton icon={Mic} size={14} ghost />
-          <button className="flex size-6.5 cursor-pointer items-center justify-center rounded-md bg-accent select-none hover:bg-accent-hover">
-            <Send size={12} className="text-text" />
-          </button>
+          <Button className="size-6.5 px-0 py-0">
+            <Send size={12} />
+          </Button>
         </div>
       </div>
     </div>

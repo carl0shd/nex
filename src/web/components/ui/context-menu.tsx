@@ -40,7 +40,7 @@ function ContextMenu({ trigger, actions }: ContextMenuProps): React.JSX.Element 
           <div key={gi} className="flex flex-col">
             {gi > 0 && (
               <div className="py-1">
-                <div className="h-px bg-border" />
+                <div className="h-px bg-border-soft" />
               </div>
             )}
             {group.map((action) => (

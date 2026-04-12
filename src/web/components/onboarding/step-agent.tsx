@@ -62,7 +62,7 @@ function StepAgent({ onFinish }: StepAgentProps): React.JSX.Element {
 
       {loading ? (
         <div className="flex flex-col items-center gap-3 py-8">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-border-strong border-t-accent" />
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-border-soft border-t-text-muted" />
           <span className="text-[12px] text-text-muted">Detecting agents...</span>
         </div>
       ) : (
@@ -78,8 +78,8 @@ function StepAgent({ onFinish }: StepAgentProps): React.JSX.Element {
                     onClick={() => setAgentId(agent.id)}
                     className={`flex w-full cursor-pointer items-center gap-3 rounded-md p-3 ${
                       isSelected
-                        ? 'border border-accent bg-bg-input'
-                        : 'border border-border bg-bg-input'
+                        ? 'border border-border-hover bg-bg-input'
+                        : 'border border-border-soft bg-bg-input'
                     }`}
                   >
                     <div
@@ -117,8 +117,8 @@ function StepAgent({ onFinish }: StepAgentProps): React.JSX.Element {
             onClick={() => setAgentId('skip')}
             className={`flex w-full cursor-pointer items-center gap-3 rounded-md p-3 ${
               agentId === 'skip'
-                ? 'border border-accent bg-bg-input'
-                : 'border border-border bg-bg-input hover:border-border-strong'
+                ? 'border border-border-hover bg-bg-input'
+                : 'border border-border-soft bg-bg-input hover:border-border-hover'
             }`}
           >
             <div

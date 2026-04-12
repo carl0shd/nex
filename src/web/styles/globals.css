@@ -46,33 +46,33 @@
 
 :root {
   /* Backgrounds */
-  --nex-bg: #0a0a0a;
-  --nex-bg-soft: #111113;
-  --nex-bg-mute: #18181a;
-  --nex-bg-card: #18181a;
+  --nex-bg: #0c0b0b;
+  --nex-bg-soft: #131212;
+  --nex-bg-mute: #1a1918;
+  --nex-bg-card: #171615;
 
   /* Backgrounds - elevated */
-  --nex-bg-raised: #202022;
-  --nex-bg-input: #1a1a1c;
-  --nex-bg-panel: #222225;
-  --nex-bg-hover: #1d1d1f;
-  --nex-bg-item-active: #222224;
+  --nex-bg-raised: #1c1b1a;
+  --nex-bg-input: #121110;
+  --nex-bg-panel: #161514;
+  --nex-bg-hover: #1d1c1b;
+  --nex-bg-item-active: #242322;
 
   /* Borders */
-  --nex-border: #2a2a2a;
-  --nex-border-soft: #1f1f1f;
-  --nex-border-strong: #343434;
-  --nex-border-hover: #404040;
+  --nex-border: #2b2a28;
+  --nex-border-soft: #1f1e1d;
+  --nex-border-strong: #353432;
+  --nex-border-hover: #464543;
 
   /* Text */
-  --nex-text: #fafafa;
-  --nex-text-secondary: #a3a3a3;
-  --nex-text-muted: #636363;
-  --nex-text-placeholder: #4a4a4a;
+  --nex-text: #eeeceb;
+  --nex-text-secondary: #908e8c;
+  --nex-text-muted: #5d5b5a;
+  --nex-text-placeholder: #454341;
 
   /* Accent */
-  --nex-accent: #1f1f1f;
-  --nex-accent-hover: #2a2a2a;
+  --nex-accent: #1e1d1c;
+  --nex-accent-hover: #232221;
 
   /* Badge - success */
   --nex-badge-success-bg: #1a3d20;
@@ -87,12 +87,12 @@
   --nex-badge-error-text: #f87171;
 
   /* Badge - default */
-  --nex-badge-default-bg: #262626;
-  --nex-badge-default-text: #a3a3a3;
+  --nex-badge-default-bg: #252423;
+  --nex-badge-default-text: #908e8c;
 
   /* Badge - count */
-  --nex-badge-count-bg: #e4e4e7;
-  --nex-badge-count-text: #18181b;
+  --nex-badge-count-bg: #e2e0de;
+  --nex-badge-count-text: #171615;
 
   /* Destructive */
   --nex-destructive: #e62e2e;
@@ -100,11 +100,11 @@
   --nex-destructive-text: #ff3535;
 
   /* Context menu */
-  --nex-bg-menu: #1c1c1e;
-  --nex-border-menu: #2a2a2a;
+  --nex-bg-menu: #171615;
+  --nex-border-menu: #2b2a28;
 
   /* Archived */
-  --nex-archived: #6b7280;
+  --nex-archived: #6b6967;
 }
 
 ::selection {

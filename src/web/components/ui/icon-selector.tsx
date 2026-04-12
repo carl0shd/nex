@@ -43,7 +43,7 @@ function IconSelector({
             <div key={opt.id} className="flex flex-col items-center gap-1">
               <button
                 onClick={handleClick}
-                className={`flex cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-bg-input ${isActive ? 'border-[1.5px] border-accent' : 'border border-border'}`}
+                className={`flex cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-bg-input ${isActive ? 'border border-border' : 'border border-border-soft'}`}
                 style={{ width: size, height: size }}
               >
                 {opt.type === 'letter' && opt.letter ? (

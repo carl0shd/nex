@@ -53,7 +53,7 @@ function DeleteWorkspaceModal({
       </div>
 
       {projectsWithTaskCount.length > 0 && (
-        <div className="flex flex-col gap-2 rounded-md border border-border p-3">
+        <div className="flex flex-col gap-2 rounded-md border border-border-soft p-3">
           <span className="text-[9px] font-semibold text-destructive-text">
             {'// the following will be deleted'}
           </span>

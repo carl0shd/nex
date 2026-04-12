@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import SimpleBar from 'simplebar-react';
 import { Archive, ArchiveRestore, Ellipsis, Plus, Search, Settings, Trash2 } from 'lucide-react';
 import { Modal, ModalDivider, ModalFooter, ModalButton } from '@/components/ui/modal';
+import Input from '@/components/ui/input';
 import IconButton from '@/components/ui/icon-button';
 import WorkspaceBadge from '@/components/ui/workspace-badge';
 import ContextMenu from '@/components/ui/context-menu';
@@ -139,16 +140,12 @@ function ManageWorkspacesModal({ open, onClose }: ManageWorkspacesModalProps): R
           </p>
         </div>
 
-        <div className="flex h-9 items-center gap-2 rounded-md border border-border bg-bg-input px-3">
-          <Search size={14} className="shrink-0 text-text-muted" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search workspaces..."
-            className="flex-1 bg-transparent text-[13px] text-text placeholder:text-text-muted outline-none"
-          />
-        </div>
+        <Input
+          value={search}
+          onChange={setSearch}
+          placeholder="Search workspaces..."
+          icon={Search}
+        />
       </div>
 
       <ModalDivider />
