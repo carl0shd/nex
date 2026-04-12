@@ -71,12 +71,12 @@
   --nex-text-placeholder: #4a4a4a;
 
   /* Accent */
-  --nex-accent: #175f52;
-  --nex-accent-hover: #1a7363;
+  --nex-accent: #1f1f1f;
+  --nex-accent-hover: #2a2a2a;
 
   /* Badge - success */
-  --nex-badge-success-bg: #0c342d;
-  --nex-badge-success-text: #14957d;
+  --nex-badge-success-bg: #1a3d20;
+  --nex-badge-success-text: #33843F;
 
   /* Badge - warning */
   --nex-badge-warning-bg: #422006;
@@ -112,7 +112,7 @@
 }
 
 *:focus-visible {
-  outline: 1px solid var(--nex-badge-success-text);
+  outline: 1px solid var(--nex-border-hover);
   outline-offset: -1px;
 }
 

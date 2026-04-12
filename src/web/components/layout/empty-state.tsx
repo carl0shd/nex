@@ -1,4 +1,4 @@
-import nexLogo from '@/assets/images/logo-white.svg';
+import nexLogo from '@/assets/images/logo.svg';
 import ShortcutKey from '@/components/ui/shortcut-key';
 import { useWorkspaceStore } from '@/stores/workspace.store';
 import { useSidebarStore } from '@/stores/sidebar.store';
@@ -26,7 +26,7 @@ function EmptyState(): React.JSX.Element {
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-6 bg-bg">
-      <img src={nexLogo} alt="Nex" className="w-35 pb-10" draggable={false} />
+      <img src={nexLogo} alt="Nex" className="w-12 pb-10" draggable={false} />
 
       <div className="flex flex-col items-center gap-2">
         <h2 className="text-lg font-medium text-text">No active worktrees</h2>
