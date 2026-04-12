@@ -32,7 +32,7 @@ function Dropdown({
           <div className="relative">
             <ListboxButton
               className={`flex h-9 w-full cursor-pointer items-center gap-2 rounded border px-2.5 ${
-                open ? 'border-accent' : 'border-border'
+                open ? 'border-border' : 'border-border-soft'
               } bg-bg-input`}
             >
               {selected?.icon}
@@ -47,7 +47,7 @@ function Dropdown({
                 <ChevronDown size={12} className="shrink-0 text-text-muted" />
               )}
             </ListboxButton>
-            <ListboxOptions className="absolute top-full right-0 left-0 z-10 mt-1 flex flex-col gap-1 rounded-md border border-border bg-bg-input p-1 shadow-[0_6px_16px_1px_#00000040]">
+            <ListboxOptions className="absolute top-full right-0 left-0 z-10 mt-1 flex flex-col gap-1 rounded-md border border-border-soft bg-bg-input p-1 shadow-[0_6px_16px_1px_#00000040]">
               {options.map((option) => (
                 <ListboxOption
                   key={option.value}

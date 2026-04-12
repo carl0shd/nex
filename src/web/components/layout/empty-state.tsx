@@ -1,4 +1,5 @@
 import nexLogo from '@/assets/images/logo.svg';
+import Button from '@/components/ui/button';
 import ShortcutKey from '@/components/ui/shortcut-key';
 import { useWorkspaceStore } from '@/stores/workspace.store';
 import { useSidebarStore } from '@/stores/sidebar.store';
@@ -33,12 +34,9 @@ function EmptyState(): React.JSX.Element {
         <p className="text-sm text-text-secondary">{ctaSubtitle}</p>
       </div>
 
-      <button
-        onClick={ctaAction}
-        className="cursor-pointer rounded bg-accent px-6 py-2.5 text-sm font-medium text-text select-none hover:bg-accent-hover"
-      >
+      <Button onClick={ctaAction} className="px-6 py-2.5 text-sm">
         &gt; {ctaLabel}
-      </button>
+      </Button>
 
       <div className="flex flex-col gap-2">
         <ShortcutKey keys="⌘W" label="new workspace" />

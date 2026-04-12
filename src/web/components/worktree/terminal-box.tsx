@@ -21,11 +21,11 @@ function TerminalBox({
 }: TerminalBoxProps): React.JSX.Element {
   return (
     <div
-      className={`flex flex-col overflow-hidden rounded-lg border border-border shadow-sm ${
+      className={`flex flex-col overflow-hidden rounded-lg border border-border-soft shadow-sm ${
         active ? 'opacity-100' : 'opacity-50'
       }`}
     >
-      <div className="flex items-center justify-between border-b border-border bg-bg-soft px-3 py-2">
+      <div className="flex items-center justify-between border-b border-border-soft bg-bg-soft px-3 py-2">
         <div className="flex items-center gap-2">
           <span className="text-[13px] font-semibold text-text">{title}</span>
           {branch && <span className="text-[11px] text-text-muted">({branch})</span>}

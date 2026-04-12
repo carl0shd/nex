@@ -32,7 +32,7 @@ interface OnboardingStore {
 
 const INITIAL_WORKSPACE: OnboardingWorkspace = {
   name: '',
-  color: '#175F52',
+  color: '#33843F',
   icon: 'letter',
   customImage: null
 };

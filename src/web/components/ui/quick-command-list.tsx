@@ -10,7 +10,7 @@ interface QuickCommandRowProps {
 
 function QuickCommandRow({ cmd, onChange, onRemove }: QuickCommandRowProps): React.JSX.Element {
   return (
-    <div className="flex items-center gap-2 rounded border border-border px-2.5 py-1 hover:border-border-strong">
+    <div className="flex items-center gap-2 rounded border border-border-soft px-2.5 py-1 hover:border-border">
       <Play size={10} className="shrink-0 text-badge-success-text" />
       <input
         type="text"
@@ -27,7 +27,7 @@ function QuickCommandRow({ cmd, onChange, onRemove }: QuickCommandRowProps): Rea
           fontWeight: 500
         }}
       />
-      <div className="h-3 w-px bg-border" />
+      <div className="h-3 w-px bg-border-soft" />
       <input
         type="text"
         value={cmd.command}
@@ -79,7 +79,7 @@ function QuickCommandList({
         <span className="flex-1" />
         <button
           onClick={add}
-          className="flex cursor-pointer items-center gap-1 rounded-[3px] bg-border px-2 py-0.5 text-[10px] font-medium text-text-secondary hover:bg-border-strong hover:text-text"
+          className="flex cursor-pointer items-center gap-1 rounded-[3px] bg-bg-raised px-2 py-0.5 text-[10px] font-medium text-text-muted hover:bg-bg-hover hover:text-text-secondary"
         >
           <Plus size={10} />
           add
@@ -90,7 +90,7 @@ function QuickCommandList({
         <div className="flex flex-col gap-1">
           {commands.length === 0 && (
             <div
-              className="rounded border border-dashed border-border px-2.5 py-1.25 text-left text-[11px] text-text-placeholder"
+              className="rounded border border-dashed border-border-soft px-2.5 py-1.25 text-left text-[11px] text-text-placeholder"
               style={{ fontFamily: 'JetBrains Mono Variable, JetBrains Mono, monospace' }}
             >
               No commands yet

@@ -10,7 +10,7 @@ interface NotesPanelProps {
 function NotesPanel({ content, onClose }: NotesPanelProps): React.JSX.Element {
   return (
     <div className="flex h-full flex-1 flex-col">
-      <div className="flex shrink-0 items-center justify-between border-b border-border bg-bg-mute px-2.5 py-1.5">
+      <div className="flex shrink-0 items-center justify-between border-b border-border-soft bg-bg-mute px-2.5 py-1.5">
         <span className="text-[11px] text-text-muted">{'// notes'}</span>
         <IconButton icon={X} size={10} ghost onClick={onClose} />
       </div>

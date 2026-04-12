@@ -20,7 +20,7 @@ function WorkspaceForm({ existing, onClose }: WorkspaceFormProps): React.JSX.Ele
 
   const isEditing = !!existing;
   const [name, setName] = useState(existing?.name ?? '');
-  const [color, setColor] = useState(existing?.color ?? '#175F52');
+  const [color, setColor] = useState(existing?.color ?? '#33843F');
   const [icon, setIcon] = useState(existing?.icon ?? 'letter');
   const [customImage, setCustomImage] = useState<string | null>(existing?.customImage ?? null);
   const [saving, setSaving] = useState(false);

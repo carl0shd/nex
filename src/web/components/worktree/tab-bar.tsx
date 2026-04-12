@@ -22,7 +22,7 @@ function TabBar({
   const hiddenTabCount = tabs.length - maxVisibleTabs;
 
   return (
-    <div className="flex items-center justify-between gap-0.5 border-b border-t border-border bg-bg-raised p-1">
+    <div className="flex items-center justify-between gap-0.5 border-b border-t border-border-soft bg-bg-raised p-1">
       <div className="no-scrollbar flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
         {visibleTabs.map((tab) => (
           <TerminalTab key={tab.name} name={tab.name} dotColor={tab.dotColor} active={tab.active} />

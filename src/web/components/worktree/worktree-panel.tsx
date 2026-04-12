@@ -12,11 +12,11 @@ interface WorktreePanelProps {
 function WorktreePanel({ worktree }: WorktreePanelProps): React.JSX.Element {
   return (
     <div
-      className={`flex w-150 shrink-0 flex-col overflow-hidden rounded-lg border border-border ${worktree.active ? 'opacity-100' : 'opacity-50'}`}
+      className={`flex w-150 shrink-0 flex-col overflow-hidden rounded-lg border border-border-soft ${worktree.active ? 'opacity-100' : 'opacity-50'}`}
     >
       <WorktreeHeader worktree={worktree} />
 
-      <div className="flex border-border" style={{ height: 200 }}>
+      <div className="flex border-border-soft" style={{ height: 200 }}>
         <ChangedFilesPanel worktree={worktree} />
         <NotesPanel content={worktree.notes} />
       </div>

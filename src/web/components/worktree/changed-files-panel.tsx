@@ -16,8 +16,8 @@ const statusLabel: Record<ChangedFile['status'], { letter: string; color: string
 
 function ChangedFilesPanel({ worktree, onClose }: ChangedFilesPanelProps): React.JSX.Element {
   return (
-    <div className="flex h-full min-w-67.5 flex-col border-r border-border">
-      <div className="flex shrink-0 items-center justify-between border-b border-border bg-bg-mute px-2.5 py-1.5">
+    <div className="flex h-full min-w-67.5 flex-col border-r border-border-soft">
+      <div className="flex shrink-0 items-center justify-between border-b border-border-soft bg-bg-mute px-2.5 py-1.5">
         <span className="text-[11px] text-text-muted">{'// changed files'}</span>
         <IconButton icon={X} size={10} ghost onClick={onClose} />
       </div>
@@ -45,7 +45,7 @@ function ChangedFilesPanel({ worktree, onClose }: ChangedFilesPanelProps): React
                     +{file.added}
                   </span>
                   <span
-                    className={`shrink-0 font-mono text-[9px] font-medium ${file.removed > 0 ? 'text-red-400' : 'text-text-muted'}`}
+                    className={`shrink-0 font-mono text-[9px] font-medium ${file.removed > 0 ? 'text-badge-error-text' : 'text-text-muted'}`}
                   >
                     -{file.removed}
                   </span>
@@ -56,10 +56,10 @@ function ChangedFilesPanel({ worktree, onClose }: ChangedFilesPanelProps): React
         </SimpleBar>
       </div>
 
-      <div className="flex shrink-0 items-center gap-1.5 border-t border-border bg-bg-mute px-2.5 py-1.5 font-mono text-[10px]">
+      <div className="flex shrink-0 items-center gap-1.5 border-t border-border-soft bg-bg-mute px-2.5 py-1.5 font-mono text-[10px]">
         <span className="text-text-muted">{worktree.totalFiles} files,</span>
         <span className="font-semibold text-badge-success-text">+{worktree.totalAdded}</span>
-        <span className="font-semibold text-red-400">-{worktree.totalRemoved}</span>
+        <span className="font-semibold text-badge-error-text">-{worktree.totalRemoved}</span>
       </div>
     </div>
   );

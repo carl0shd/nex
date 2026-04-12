@@ -1,4 +1,5 @@
 import { Search } from 'lucide-react';
+import Kbd from '@/components/ui/kbd';
 
 interface CommandBarProps {
   onClick?: () => void;
@@ -16,9 +17,7 @@ function CommandBar({ onClick }: CommandBarProps): React.JSX.Element {
           Search or type a command...
         </span>
       </div>
-      <kbd className="select-none rounded border border-border-soft bg-bg-mute/50 px-1.5 py-0.5 font-[system-ui] text-[10px] leading-none text-text-muted group-hover:border-border group-hover:text-text-muted">
-        ⌘K
-      </kbd>
+      <Kbd className="group-hover:border-border">⌘K</Kbd>
     </button>
   );
 }

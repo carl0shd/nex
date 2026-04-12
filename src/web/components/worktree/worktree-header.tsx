@@ -10,7 +10,7 @@ interface WorktreeHeaderProps {
 
 function WorktreeHeader({ worktree, onClose, onOpenIDE }: WorktreeHeaderProps): React.JSX.Element {
   return (
-    <div className="flex items-center justify-between border-b border-border bg-bg-raised px-3 py-2">
+    <div className="flex items-center justify-between border-b border-border-soft bg-bg-raised px-3 py-2">
       <div className="flex items-center gap-2 overflow-hidden">
         <span
           className="size-2 shrink-0 rounded-full"

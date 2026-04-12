@@ -83,7 +83,7 @@ function OnboardingModal({ onComplete }: OnboardingModalProps): React.JSX.Elemen
     <Dialog open={open} onClose={() => {}} className="relative z-50">
       <DialogBackdrop
         transition
-        className="fixed inset-0 bg-black/70 duration-600 ease-in-out data-closed:opacity-0"
+        className="fixed inset-0 bg-black/80 duration-600 ease-in-out data-closed:opacity-0"
         onTransitionEnd={handleTransitionEnd}
       />
       <div className="fixed inset-0 flex items-center justify-center">{renderStep()}</div>
