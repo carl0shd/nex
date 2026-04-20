@@ -191,7 +191,7 @@ Best practices for using Tailwind CSS v4 utility classes effectively.
 
 ```css
 /* Tailwind v4: Configure in app/globals.css */
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @media (prefers-color-scheme: dark) {
   /* Or use class-based: .dark */
@@ -233,7 +233,7 @@ Best practices for using Tailwind CSS v4 utility classes effectively.
 
 ```css
 /* app/globals.css */
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   /* Custom colors */
@@ -257,32 +257,26 @@ Best practices for using Tailwind CSS v4 utility classes effectively.
 ```javascript
 // tailwind.config.js (optional in v4)
 module.exports = {
-  content: [
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
+  content: ['./app/**/*.{js,ts,jsx,tsx,mdx}', './components/**/*.{js,ts,jsx,tsx,mdx}'],
   theme: {
     extend: {
       colors: {
         brand: {
           50: '#eff6ff',
           100: '#dbeafe',
-          900: '#1e3a8a',
+          900: '#1e3a8a'
         }
       },
       spacing: {
-        '128': '32rem',
+        128: '32rem'
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-      },
-    },
+        sans: ['Inter', 'sans-serif']
+      }
+    }
   },
-  plugins: [
-    require('@tailwindcss/forms'),
-    require('@tailwindcss/typography'),
-  ],
-}
+  plugins: [require('@tailwindcss/forms'), require('@tailwindcss/typography')]
+};
 ```
 
 ## Plugins
@@ -341,7 +335,7 @@ Tailwind v4 delivers 3.5x faster full builds (~100ms) compared to v3 using moder
 
 ```tsx
 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-  {posts.map(post => (
+  {posts.map((post) => (
     <PostCard key={post.id} post={post} />
   ))}
 </div>
@@ -368,6 +362,7 @@ Tailwind v4 delivers 3.5x faster full builds (~100ms) compared to v3 using moder
 ## Additional Resources
 
 For detailed information, see:
+
 - [Utility Patterns](resources/utility-patterns.md)
 - [Component Library](resources/component-library.md)
 - [Configuration Guide](resources/configuration.md)
