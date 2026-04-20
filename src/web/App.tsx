@@ -6,15 +6,17 @@ import Home from '@/routes/home';
 import OnboardingModal from '@/components/onboarding/onboarding-modal';
 import { useAppData } from '@/hooks/use-app-data';
 import { useOnboarding } from '@/hooks/use-onboarding';
+import { useSidebarStore } from '@/stores/sidebar.store';
 
 function App(): React.JSX.Element {
   useAppData();
   const onboarding = useOnboarding();
+  const toggleFull = useSidebarStore((s) => s.toggleFull);
 
   return (
     <ErrorBoundary>
       <div className="flex h-screen flex-col overflow-hidden bg-bg">
-        <Titlebar />
+        <Titlebar onToggleSidebar={toggleFull} />
         <div className="flex flex-1 overflow-hidden">
           <Sidebar />
           <MemoryRouter>
