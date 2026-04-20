@@ -14,6 +14,8 @@ import SidebarTask from '@/components/sidebar/sidebar-task';
 import WorkspaceModal from '@/components/modals/workspace-modal';
 import CreateProjectModal from '@/components/modals/create-project-modal';
 import DeleteWorkspaceModal from '@/components/modals/delete-workspace-modal';
+import EditProjectModal from '@/components/modals/edit-project-modal';
+import DeleteProjectModal from '@/components/modals/delete-project-modal';
 import ManageWorkspacesModal from '@/components/modals/manage-workspaces-modal';
 import { useWorkspaceStore } from '@/stores/workspace.store';
 import { useWorktreeStore } from '@/stores/worktree.store';
@@ -46,6 +48,15 @@ function Sidebar(): React.JSX.Element {
   const manageWorkspacesOpen = useSidebarStore((s) => s.manageWorkspacesOpen);
   const openManageWorkspaces = useSidebarStore((s) => s.openManageWorkspaces);
   const closeManageWorkspaces = useSidebarStore((s) => s.closeManageWorkspaces);
+
+  const editProjectOpen = useSidebarStore((s) => s.editProjectOpen);
+  const editProjectId = useSidebarStore((s) => s.editProjectId);
+  const openEditProject = useSidebarStore((s) => s.openEditProject);
+  const closeEditProject = useSidebarStore((s) => s.closeEditProject);
+  const deleteProjectOpen = useSidebarStore((s) => s.deleteProjectOpen);
+  const deleteProjectId = useSidebarStore((s) => s.deleteProjectId);
+  const openDeleteProject = useSidebarStore((s) => s.openDeleteProject);
+  const closeDeleteProject = useSidebarStore((s) => s.closeDeleteProject);
 
   const activeWorkspaces = useMemo(() => workspaces.filter((ws) => !ws.archived), [workspaces]);
 
@@ -104,7 +115,11 @@ function Sidebar(): React.JSX.Element {
                 key={ws.id}
                 workspace={ws}
                 projectCount={wsProjects.length}
-                projects={wsProjects.map((p) => ({ name: p.name }))}
+                projects={wsProjects.map((p) => ({
+                  name: p.name,
+                  onEdit: () => openEditProject(p.id),
+                  onDelete: () => openDeleteProject(p.id)
+                }))}
                 collapsed={wsCollapsed}
                 onToggle={() => toggle('workspaces', ws.id)}
                 onAddProject={() => openCreateProject(ws.id)}
@@ -213,6 +228,18 @@ function Sidebar(): React.JSX.Element {
         open={deleteWorkspaceOpen}
         workspaceId={deleteWorkspaceId}
         onClose={closeDeleteWorkspace}
+      />
+
+      <EditProjectModal
+        open={editProjectOpen}
+        projectId={editProjectId}
+        onClose={closeEditProject}
+      />
+
+      <DeleteProjectModal
+        open={deleteProjectOpen}
+        projectId={deleteProjectId}
+        onClose={closeDeleteProject}
       />
 
       <ManageWorkspacesModal open={manageWorkspacesOpen} onClose={closeManageWorkspaces} />

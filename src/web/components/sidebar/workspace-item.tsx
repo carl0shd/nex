@@ -6,7 +6,8 @@ import {
   Ellipsis,
   Settings,
   Archive,
-  Trash2
+  Trash2,
+  Pencil
 } from 'lucide-react';
 import IconButton from '@/components/ui/icon-button';
 import WorkspaceBadge from '@/components/ui/workspace-badge';
@@ -15,7 +16,8 @@ import type { Workspace } from '@native/db/types';
 
 interface ProjectItem {
   name: string;
-  onMore?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 interface WorkspaceItemProps {
@@ -87,20 +89,31 @@ function WorkspaceItem({
           {projects.map((project) => (
             <div
               key={project.name}
-              className="group flex h-[30px] w-full items-center gap-2 rounded px-2 select-none hover:bg-bg-mute/50"
+              className="group flex h-7.5 w-full items-center gap-2 rounded px-2 select-none hover:bg-bg-mute/50"
             >
               <Folder size={13} className="shrink-0 text-text-muted" />
               <span className="truncate text-[12px] text-text-secondary">{project.name}</span>
               <span className="flex-1" />
-              <IconButton
-                icon={Ellipsis}
-                size={13}
-                className="opacity-0 group-hover:opacity-100"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  project.onMore?.();
-                }}
-              />
+              <div className="opacity-0 group-hover:opacity-100">
+                <ContextMenu
+                  trigger={
+                    <IconButton icon={Ellipsis} size={13} onClick={(e) => e.stopPropagation()} />
+                  }
+                  actions={[
+                    {
+                      label: 'Edit project',
+                      icon: Pencil,
+                      onClick: () => project.onEdit?.()
+                    },
+                    {
+                      label: 'Delete project',
+                      icon: Trash2,
+                      onClick: () => project.onDelete?.(),
+                      destructive: true
+                    }
+                  ]}
+                />
+              </div>
             </div>
           ))}
         </div>

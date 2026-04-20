@@ -62,7 +62,7 @@ function DeleteWorkspaceModal({
               <Folder size={12} className="shrink-0 text-text-muted" />
               <span className="text-[11px] text-text-secondary">{p.name}</span>
               <span className="flex-1" />
-              <span className="text-[9px] font-medium text-text-muted">
+              <span className="text-[11px] font-medium text-text-muted">
                 {p.taskCount} {p.taskCount === 1 ? 'task' : 'tasks'}
               </span>
             </div>
