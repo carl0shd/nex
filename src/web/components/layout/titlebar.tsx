@@ -3,6 +3,8 @@ import { useFullscreen } from '@/hooks/use-fullscreen';
 import IconButton from '@/components/ui/icon-button';
 import CommandBar from '@/components/ui/command-bar';
 import ActiveBadge from '@/components/layout/active-badge';
+import TokensBadge from '@/components/layout/tokens-badge';
+import CostBadge from '@/components/layout/cost-badge';
 
 interface TitlebarProps {
   onToggleSidebar?: () => void;
@@ -31,6 +33,8 @@ function Titlebar({ onToggleSidebar }: TitlebarProps): React.JSX.Element {
       >
         <CommandBar />
         <ActiveBadge count={2} />
+        <TokensBadge percent={65} />
+        <CostBadge amount={0.08} />
       </div>
 
       <div className="flex-1" />

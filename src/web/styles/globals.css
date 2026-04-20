@@ -42,6 +42,11 @@
 
   /* Archived */
   --color-archived: var(--nex-archived);
+
+  /* Selected */
+  --color-selected: var(--nex-selected);
+  --color-selected-bg: var(--nex-selected-bg);
+  --color-selected-border: var(--nex-selected-border);
 }
 
 :root {
@@ -76,7 +81,7 @@
 
   /* Badge - success */
   --nex-badge-success-bg: #1a3d20;
-  --nex-badge-success-text: #33843F;
+  --nex-badge-success-text: #33843f;
 
   /* Badge - warning */
   --nex-badge-warning-bg: #422006;
@@ -105,6 +110,11 @@
 
   /* Archived */
   --nex-archived: #6b6967;
+
+  /* Selected */
+  --nex-selected: #175f52;
+  --nex-selected-bg: #112b26;
+  --nex-selected-border: #175f52;
 }
 
 ::selection {

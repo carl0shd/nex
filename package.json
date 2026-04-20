@@ -24,6 +24,7 @@
     "@fontsource-variable/jetbrains-mono": "^5.2.8",
     "@headlessui/react": "^2.2.9",
     "@tailwindcss/vite": "^4.2.2",
+    "@tanstack/react-virtual": "^3.13.24",
     "better-sqlite3": "^12.8.0",
     "electron-updater": "^6.3.9",
     "lucide-react": "^1.7.0",

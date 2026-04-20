@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, writeFileSync, symlinkSync } from 'fs';
+import { mkdir, writeFile, symlink } from 'fs/promises';
 import { join } from 'path';
 import { homedir } from 'os';
 import * as projectRepo from '@native/db/repositories/project.repo';
@@ -9,10 +9,27 @@ import {
   createWorktree,
   removeWorktree,
   deleteBranch,
-  setupGitExclude
+  setupGitExclude,
+  isGitRepo
 } from '@native/git/git';
 import { setupSymlinks } from '@native/git/symlinks';
 import type { Session, StartWorkInput } from '@native/db/types';
+
+async function writeIfMissing(path: string, content: string): Promise<void> {
+  try {
+    await writeFile(path, content, { flag: 'wx' });
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'EEXIST') throw err;
+  }
+}
+
+async function linkIfMissing(target: string, link: string): Promise<void> {
+  try {
+    await symlink(target, link);
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'EEXIST') throw err;
+  }
+}
 
 export async function startWork(input: StartWorkInput): Promise<Session> {
   const project = projectRepo.getById(input.projectId);
@@ -23,10 +40,31 @@ export async function startWork(input: StartWorkInput): Promise<Session> {
     throw new Error(`Active session '${input.name}' already exists for this project`);
   }
 
-  const [baseBranch] = await Promise.all([
-    detectBaseBranch(project.path),
-    fetchOrigin(project.path)
-  ]);
+  const sessionsDir = join(homedir(), '.nex', 'sessions', project.name, input.name);
+  await mkdir(sessionsDir, { recursive: true });
+
+  const notesPath = join(sessionsDir, 'TASK_NOTES.md');
+  await writeIfMissing(notesPath, `# ${input.name}\n\n## Notes\n`);
+
+  const sharedPath = join(homedir(), '.nex', 'sessions', project.name, 'SHARED_CONTEXT.md');
+  await writeIfMissing(sharedPath, `# ${project.name} - Shared Context\n`);
+
+  if (!(await isGitRepo(project.path))) {
+    return sessionRepo.create({
+      projectId: project.id,
+      agentId: input.agentId,
+      accountId: input.accountId,
+      name: input.name,
+      branch: '',
+      baseBranch: '',
+      worktreePath: project.path,
+      notesPath,
+      symlinks: []
+    });
+  }
+
+  const [detected] = await Promise.all([detectBaseBranch(project.path), fetchOrigin(project.path)]);
+  const baseBranch = input.baseBranch?.trim() || detected;
   const prefix = project.branchPrefix || '';
   const branch = prefix ? `${prefix}/${input.name}` : input.name;
   const wtPath = join(project.path, '.worktrees', input.name);
@@ -36,23 +74,8 @@ export async function startWork(input: StartWorkInput): Promise<Session> {
     setupGitExclude(project.path);
     setupSymlinks(project.path, wtPath, ['.claude']);
 
-    const sessionsDir = join(homedir(), '.nex', 'sessions', project.name, input.name);
-    mkdirSync(sessionsDir, { recursive: true });
-
-    const notesPath = join(sessionsDir, 'TASK_NOTES.md');
-    if (!existsSync(notesPath)) {
-      writeFileSync(notesPath, `# ${input.name}\n\n## Notes\n`);
-    }
-    const notesLink = join(wtPath, 'TASK_NOTES.md');
-    if (!existsSync(notesLink)) symlinkSync(notesPath, notesLink);
-
-    const sharedDir = join(homedir(), '.nex', 'sessions', project.name);
-    const sharedPath = join(sharedDir, 'SHARED_CONTEXT.md');
-    if (!existsSync(sharedPath)) {
-      writeFileSync(sharedPath, `# ${project.name} - Shared Context\n`);
-    }
-    const sharedLink = join(wtPath, 'SHARED_CONTEXT.md');
-    if (!existsSync(sharedLink)) symlinkSync(sharedPath, sharedLink);
+    await linkIfMissing(notesPath, join(wtPath, 'TASK_NOTES.md'));
+    await linkIfMissing(sharedPath, join(wtPath, 'SHARED_CONTEXT.md'));
 
     return sessionRepo.create({
       projectId: project.id,

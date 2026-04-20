@@ -59,57 +59,6 @@ export interface UpdateProjectInput {
   sortOrder?: number;
 }
 
-export interface Worktree {
-  id: string;
-  projectId: string;
-  branch: string;
-  path: string;
-  dotColor: string;
-  active: boolean;
-  notes: string;
-  sortOrder: number;
-  createdAt: string;
-}
-
-export interface CreateWorktreeInput {
-  projectId: string;
-  branch: string;
-  path: string;
-  dotColor?: string;
-}
-
-export interface UpdateWorktreeInput {
-  branch?: string;
-  path?: string;
-  dotColor?: string;
-  active?: boolean;
-  notes?: string;
-  sortOrder?: number;
-}
-
-export type TaskStatus = 'running' | 'idle' | 'done' | 'error';
-
-export interface Task {
-  id: string;
-  projectId: string;
-  worktreeId: string | null;
-  name: string;
-  status: TaskStatus;
-  createdAt: string;
-}
-
-export interface CreateTaskInput {
-  projectId: string;
-  worktreeId?: string;
-  name: string;
-}
-
-export interface UpdateTaskInput {
-  name?: string;
-  status?: TaskStatus;
-  worktreeId?: string | null;
-}
-
 export interface Agent {
   id: string;
   name: string;
@@ -207,23 +156,11 @@ export interface StartWorkInput {
   name: string;
   agentId?: string;
   accountId?: string;
+  baseBranch?: string;
 }
 
 export interface CloneAgentAccountInput {
   agentId: string;
   name: string;
   copyConfig?: boolean;
-}
-
-export interface ChangedFile {
-  name: string;
-  added: number;
-  removed: number;
-  status: 'modified' | 'added' | 'deleted';
-}
-
-export interface WorktreeTab {
-  name: string;
-  dotColor: string;
-  active?: boolean;
 }

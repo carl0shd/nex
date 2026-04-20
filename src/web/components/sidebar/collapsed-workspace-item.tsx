@@ -4,13 +4,14 @@ import Popover from '@/components/ui/popover';
 import WorkspaceBadge from '@/components/ui/workspace-badge';
 import IconButton from '@/components/ui/icon-button';
 import ContextMenu from '@/components/ui/context-menu';
-import type { Workspace, Project, Worktree } from '@native/db/types';
+import Badge from '@/components/ui/badge';
+import type { Workspace, Project, Session } from '@native/db/types';
 import { Archive, Trash2 } from 'lucide-react';
 
 interface CollapsedWorkspaceItemProps {
   workspace: Workspace;
   projects: Project[];
-  worktrees: Worktree[];
+  sessions: Session[];
   onAddProject?: () => void;
   onEditWorkspace?: () => void;
   onArchiveWorkspace?: () => void;
@@ -23,7 +24,7 @@ interface CollapsedWorkspaceItemProps {
 function CollapsedWorkspaceItem({
   workspace,
   projects,
-  worktrees,
+  sessions,
   onAddProject,
   onEditWorkspace,
   onArchiveWorkspace,
@@ -33,7 +34,9 @@ function CollapsedWorkspaceItem({
   onDeleteProject
 }: CollapsedWorkspaceItemProps): React.JSX.Element {
   const projectIds = new Set(projects.map((p) => p.id));
-  const activeWorktrees = worktrees.filter((wt) => projectIds.has(wt.projectId));
+  const workspaceSessions = sessions.filter(
+    (s) => s.status === 'active' && projectIds.has(s.projectId)
+  );
   const projectById = new Map(projects.map((p) => [p.id, p] as const));
 
   const hoverCard = (
@@ -50,13 +53,11 @@ function CollapsedWorkspaceItem({
         />
         <span className="truncate text-[13px] font-semibold text-text">{workspace.name}</span>
         <span className="flex-1" />
-        <span className="shrink-0 rounded-xl bg-badge-success-bg px-1.5 py-px text-[9px] font-semibold text-badge-success-text">
-          active
-        </span>
+        <Badge label="active" variant="success" size="sm" />
       </div>
       <span className="text-[11px] text-text-muted">
-        {projects.length} project{projects.length === 1 ? '' : 's'} · {activeWorktrees.length}{' '}
-        branch{activeWorktrees.length === 1 ? '' : 'es'}
+        {projects.length} project{projects.length === 1 ? '' : 's'} · {workspaceSessions.length}{' '}
+        task{workspaceSessions.length === 1 ? '' : 's'}
       </span>
     </div>
   );
@@ -80,7 +81,6 @@ function CollapsedWorkspaceItem({
           </div>
         </HoverCard>
       )}
-      className=""
     >
       {({ close }) => (
         <div className="flex w-56 flex-col overflow-hidden rounded-lg border border-border-menu bg-bg-menu shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
@@ -182,32 +182,24 @@ function CollapsedWorkspaceItem({
             ))}
           </div>
 
-          {activeWorktrees.length > 0 && (
+          {workspaceSessions.length > 0 && (
             <>
               <div className="h-px bg-border-soft" />
               <div className="flex flex-col gap-px px-2 py-1.5">
                 <span className="px-2 py-1 text-[10px] font-medium text-text-muted">
                   {'// active tasks'}
                 </span>
-                {activeWorktrees.map((wt) => {
-                  const project = projectById.get(wt.projectId);
+                {workspaceSessions.map((s) => {
+                  const project = projectById.get(s.projectId);
                   return (
                     <div
-                      key={wt.id}
+                      key={s.id}
                       className="flex cursor-pointer items-center gap-1.5 rounded px-2 py-1 select-none hover:bg-bg-mute/50"
                     >
                       <GitBranch size={12} className="shrink-0 text-text-muted" />
-                      <span
-                        className={`truncate text-[11px] ${wt.active ? 'text-text' : 'text-text-secondary'}`}
-                      >
-                        {wt.branch}
-                      </span>
+                      <span className="truncate text-[11px] text-text">{s.name}</span>
                       <span className="flex-1" />
-                      {wt.active && (
-                        <span className="shrink-0 rounded-xl bg-badge-success-bg px-1.5 py-px text-[9px] font-semibold text-badge-success-text">
-                          active
-                        </span>
-                      )}
+                      <Badge label="active" variant="success" size="sm" />
                       {project && (
                         <span className="truncate text-[10px] text-text-muted">{project.name}</span>
                       )}

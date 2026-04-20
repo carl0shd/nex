@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Folder } from 'lucide-react';
 import { Modal, ModalDivider, ModalFooter, ModalButton } from '@/components/ui/modal';
 import { useWorkspaceStore } from '@/stores/workspace.store';
-import { useWorktreeStore } from '@/stores/worktree.store';
+import { useSessionStore } from '@/stores/session.store';
 
 interface DeleteWorkspaceModalProps {
   open: boolean;
@@ -17,7 +17,7 @@ function DeleteWorkspaceModal({
 }: DeleteWorkspaceModalProps): React.JSX.Element {
   const workspaces = useWorkspaceStore((s) => s.workspaces);
   const projects = useWorkspaceStore((s) => s.projects);
-  const worktrees = useWorktreeStore((s) => s.worktrees);
+  const sessions = useSessionStore((s) => s.sessions);
   const deleteWorkspace = useWorkspaceStore((s) => s.deleteWorkspace);
   const [deleting, setDeleting] = useState(false);
 
@@ -26,7 +26,7 @@ function DeleteWorkspaceModal({
 
   const projectsWithTaskCount = wsProjects.map((p) => ({
     name: p.name,
-    taskCount: worktrees.filter((wt) => wt.projectId === p.id).length
+    taskCount: sessions.filter((s) => s.projectId === p.id && s.status === 'active').length
   }));
 
   const handleDelete = (): void => {

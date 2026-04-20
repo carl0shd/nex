@@ -35,6 +35,10 @@ interface SidebarState {
   deleteProjectOpen: boolean;
   deleteProjectId: string;
 
+  createTaskOpen: boolean;
+  createTaskWorkspaceId: string;
+  createTaskProjectId: string;
+
   load: () => Promise<void>;
   persist: (next: SidebarCollapsed) => void;
   toggle: (key: 'workspaces' | 'groups' | 'projects', id: string) => void;
@@ -54,6 +58,9 @@ interface SidebarState {
   closeEditProject: () => void;
   openDeleteProject: (projectId: string) => void;
   closeDeleteProject: () => void;
+
+  openCreateTask: (opts?: { workspaceId?: string; projectId?: string }) => void;
+  closeCreateTask: () => void;
 }
 
 export const useSidebarStore = create<SidebarState>((set, get) => ({
@@ -72,6 +79,10 @@ export const useSidebarStore = create<SidebarState>((set, get) => ({
   editProjectId: '',
   deleteProjectOpen: false,
   deleteProjectId: '',
+
+  createTaskOpen: false,
+  createTaskWorkspaceId: '',
+  createTaskProjectId: '',
 
   load: async () => {
     const val = await window.api.getSetting<SidebarCollapsed>(
@@ -117,5 +128,13 @@ export const useSidebarStore = create<SidebarState>((set, get) => ({
   openEditProject: (projectId) => set({ editProjectOpen: true, editProjectId: projectId }),
   closeEditProject: () => set({ editProjectOpen: false }),
   openDeleteProject: (projectId) => set({ deleteProjectOpen: true, deleteProjectId: projectId }),
-  closeDeleteProject: () => set({ deleteProjectOpen: false })
+  closeDeleteProject: () => set({ deleteProjectOpen: false }),
+
+  openCreateTask: (opts) =>
+    set({
+      createTaskOpen: true,
+      createTaskWorkspaceId: opts?.workspaceId ?? '',
+      createTaskProjectId: opts?.projectId ?? ''
+    }),
+  closeCreateTask: () => set({ createTaskOpen: false })
 }));

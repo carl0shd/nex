@@ -7,7 +7,7 @@ import IconButton from '@/components/ui/icon-button';
 import WorkspaceBadge from '@/components/ui/workspace-badge';
 import ContextMenu from '@/components/ui/context-menu';
 import { useWorkspaceStore } from '@/stores/workspace.store';
-import { useWorktreeStore } from '@/stores/worktree.store';
+import { useSessionStore } from '@/stores/session.store';
 import { useSidebarStore } from '@/stores/sidebar.store';
 import type { Workspace } from '@native/db/types';
 
@@ -98,7 +98,7 @@ function WorkspaceRow({
 function ManageWorkspacesModal({ open, onClose }: ManageWorkspacesModalProps): React.JSX.Element {
   const workspaces = useWorkspaceStore((s) => s.workspaces);
   const projects = useWorkspaceStore((s) => s.projects);
-  const worktrees = useWorktreeStore((s) => s.worktrees);
+  const sessions = useSessionStore((s) => s.sessions);
   const openCreateWorkspace = useSidebarStore((s) => s.openCreateWorkspace);
 
   const [search, setSearch] = useState('');
@@ -119,8 +119,9 @@ function ManageWorkspacesModal({ open, onClose }: ManageWorkspacesModalProps): R
       else projectsByWs.set(p.workspaceId, [p.id]);
     }
     const tasksByProject = new Map<string, number>();
-    for (const wt of worktrees) {
-      tasksByProject.set(wt.projectId, (tasksByProject.get(wt.projectId) ?? 0) + 1);
+    for (const s of sessions) {
+      if (s.status !== 'active') continue;
+      tasksByProject.set(s.projectId, (tasksByProject.get(s.projectId) ?? 0) + 1);
     }
     for (const ws of workspaces) {
       const wsProjectIds = projectsByWs.get(ws.id) ?? [];
@@ -128,7 +129,7 @@ function ManageWorkspacesModal({ open, onClose }: ManageWorkspacesModalProps): R
       map.set(ws.id, { projectCount: wsProjectIds.length, taskCount });
     }
     return map;
-  }, [workspaces, projects, worktrees]);
+  }, [workspaces, projects, sessions]);
 
   return (
     <Modal open={open} onClose={onClose} width={620}>

@@ -17,9 +17,10 @@ import DeleteWorkspaceModal from '@/components/modals/delete-workspace-modal';
 import EditProjectModal from '@/components/modals/edit-project-modal';
 import DeleteProjectModal from '@/components/modals/delete-project-modal';
 import ManageWorkspacesModal from '@/components/modals/manage-workspaces-modal';
+import CreateTaskModal from '@/components/modals/create-task-modal';
 import CollapsedSidebar from '@/components/layout/collapsed-sidebar';
 import { useWorkspaceStore } from '@/stores/workspace.store';
-import { useWorktreeStore } from '@/stores/worktree.store';
+import { useSessionStore } from '@/stores/session.store';
 import { useSidebarStore } from '@/stores/sidebar.store';
 
 function Sidebar(): React.JSX.Element {
@@ -27,7 +28,8 @@ function Sidebar(): React.JSX.Element {
   const workspaces = useWorkspaceStore((s) => s.workspaces);
   const projects = useWorkspaceStore((s) => s.projects);
   const updateWorkspace = useWorkspaceStore((s) => s.updateWorkspace);
-  const worktrees = useWorktreeStore((s) => s.worktrees);
+  const sessions = useSessionStore((s) => s.sessions);
+  const activeSessions = useMemo(() => sessions.filter((s) => s.status === 'active'), [sessions]);
 
   const collapsed = useSidebarStore((s) => s.collapsed);
   const workspaceModalOpen = useSidebarStore((s) => s.workspaceModalOpen);
@@ -59,6 +61,12 @@ function Sidebar(): React.JSX.Element {
   const openDeleteProject = useSidebarStore((s) => s.openDeleteProject);
   const closeDeleteProject = useSidebarStore((s) => s.closeDeleteProject);
 
+  const createTaskOpen = useSidebarStore((s) => s.createTaskOpen);
+  const createTaskWorkspaceId = useSidebarStore((s) => s.createTaskWorkspaceId);
+  const createTaskProjectId = useSidebarStore((s) => s.createTaskProjectId);
+  const openCreateTask = useSidebarStore((s) => s.openCreateTask);
+  const closeCreateTask = useSidebarStore((s) => s.closeCreateTask);
+
   const activeWorkspaces = useMemo(() => workspaces.filter((ws) => !ws.archived), [workspaces]);
 
   const projectsByWorkspace = useMemo(() => {
@@ -78,18 +86,18 @@ function Sidebar(): React.JSX.Element {
     ? openCreateWorkspace
     : !hasProjects
       ? () => openCreateProject(activeWorkspaces[0].id)
-      : undefined;
+      : () => openCreateTask();
 
-  const workspacesWithWorktrees = useMemo(
+  const workspacesWithTasks = useMemo(
     () =>
       activeWorkspaces.filter((ws) => {
         const wsProjects = projectsByWorkspace.get(ws.id) ?? [];
-        return wsProjects.some((p) => worktrees.some((wt) => wt.projectId === p.id));
+        return wsProjects.some((p) => activeSessions.some((s) => s.projectId === p.id));
       }),
-    [activeWorkspaces, projectsByWorkspace, worktrees]
+    [activeWorkspaces, projectsByWorkspace, activeSessions]
   );
 
-  const totalWorktrees = worktrees.length;
+  const totalTasks = activeSessions.length;
   const TasksChevron = collapsed.tasks ? ChevronRight : ChevronDown;
 
   const modals = (
@@ -120,6 +128,12 @@ function Sidebar(): React.JSX.Element {
         onClose={closeDeleteProject}
       />
       <ManageWorkspacesModal open={manageWorkspacesOpen} onClose={closeManageWorkspaces} />
+      <CreateTaskModal
+        open={createTaskOpen}
+        workspaceId={createTaskWorkspaceId}
+        projectId={createTaskProjectId}
+        onClose={closeCreateTask}
+      />
     </>
   );
 
@@ -183,18 +197,18 @@ function Sidebar(): React.JSX.Element {
           <span className="select-none text-[13px] font-medium">{'// active tasks'}</span>
         </button>
         <span className="flex-1" />
-        <CountBadge count={totalWorktrees} />
+        <CountBadge count={totalTasks} />
       </div>
 
       {!collapsed.tasks && (
         <div className="min-h-0 flex-1 pl-4 pr-4 pt-2">
           <SimpleBar ref={simpleBarRef} style={{ maxHeight: '100%' }} autoHide={false}>
             <div className={`flex flex-col gap-2.5 ${isScrollable ? 'pr-3' : ''}`}>
-              {workspacesWithWorktrees.map((ws) => {
+              {workspacesWithTasks.map((ws) => {
                 const groupCollapsed = collapsed.groups.includes(ws.id);
                 const wsProjects = projectsByWorkspace.get(ws.id) ?? [];
-                const projectsWithWorktrees = wsProjects.filter((p) =>
-                  worktrees.some((wt) => wt.projectId === p.id)
+                const projectsWithTasks = wsProjects.filter((p) =>
+                  activeSessions.some((s) => s.projectId === p.id)
                 );
 
                 return (
@@ -207,10 +221,10 @@ function Sidebar(): React.JSX.Element {
                     />
                     {!groupCollapsed && (
                       <div className="flex flex-col gap-1 pl-4">
-                        {projectsWithWorktrees.map((project) => {
+                        {projectsWithTasks.map((project) => {
                           const projectCollapsed = collapsed.projects.includes(project.id);
-                          const projectWorktrees = worktrees.filter(
-                            (wt) => wt.projectId === project.id
+                          const projectSessions = activeSessions.filter(
+                            (s) => s.projectId === project.id
                           );
                           return (
                             <div key={project.id} className="flex flex-col gap-0.5">
@@ -220,8 +234,8 @@ function Sidebar(): React.JSX.Element {
                                 onToggle={() => toggle('projects', project.id)}
                               />
                               {!projectCollapsed &&
-                                projectWorktrees.map((wt) => (
-                                  <SidebarTask key={wt.id} name={wt.branch} />
+                                projectSessions.map((s) => (
+                                  <SidebarTask key={s.id} name={s.name} />
                                 ))}
                             </div>
                           );

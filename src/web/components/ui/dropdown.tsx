@@ -1,10 +1,12 @@
 import { Listbox, ListboxButton, ListboxOptions, ListboxOption } from '@headlessui/react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import Chip from '@/components/ui/chip';
 
 interface DropdownOption {
   value: string;
   label: string;
   icon?: React.ReactNode;
+  badge?: string;
 }
 
 interface DropdownProps {
@@ -25,7 +27,7 @@ function Dropdown({
   const selected = options.find((o) => o.value === value) ?? null;
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1.5">
       {label && <label className="text-[10px] font-medium text-text-muted">{label}</label>}
       <Listbox value={value} onChange={onChange}>
         {({ open }) => (
@@ -41,6 +43,7 @@ function Dropdown({
                   <span className="text-text-placeholder">{placeholder ?? 'Select...'}</span>
                 )}
               </span>
+              {selected?.badge && <Chip>{selected.badge}</Chip>}
               {open ? (
                 <ChevronUp size={12} className="shrink-0 text-text-muted" />
               ) : (
@@ -56,12 +59,13 @@ function Dropdown({
                 >
                   {option.icon}
                   <span
-                    className={`text-[12px] ${
+                    className={`flex-1 text-[12px] ${
                       option.value === value ? 'text-text' : 'text-text-secondary'
                     }`}
                   >
                     {option.label}
                   </span>
+                  {option.badge && <Chip>{option.badge}</Chip>}
                 </ListboxOption>
               ))}
             </ListboxOptions>
