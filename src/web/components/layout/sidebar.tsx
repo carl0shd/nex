@@ -17,6 +17,7 @@ import DeleteWorkspaceModal from '@/components/modals/delete-workspace-modal';
 import EditProjectModal from '@/components/modals/edit-project-modal';
 import DeleteProjectModal from '@/components/modals/delete-project-modal';
 import ManageWorkspacesModal from '@/components/modals/manage-workspaces-modal';
+import CollapsedSidebar from '@/components/layout/collapsed-sidebar';
 import { useWorkspaceStore } from '@/stores/workspace.store';
 import { useWorktreeStore } from '@/stores/worktree.store';
 import { useSidebarStore } from '@/stores/sidebar.store';
@@ -90,6 +91,46 @@ function Sidebar(): React.JSX.Element {
 
   const totalWorktrees = worktrees.length;
   const TasksChevron = collapsed.tasks ? ChevronRight : ChevronDown;
+
+  const modals = (
+    <>
+      <WorkspaceModal
+        open={workspaceModalOpen}
+        workspaceId={workspaceModalId || undefined}
+        onClose={closeWorkspaceModal}
+      />
+      <CreateProjectModal
+        open={createProjectOpen}
+        workspaceId={createProjectWorkspaceId}
+        onClose={closeCreateProject}
+      />
+      <DeleteWorkspaceModal
+        open={deleteWorkspaceOpen}
+        workspaceId={deleteWorkspaceId}
+        onClose={closeDeleteWorkspace}
+      />
+      <EditProjectModal
+        open={editProjectOpen}
+        projectId={editProjectId}
+        onClose={closeEditProject}
+      />
+      <DeleteProjectModal
+        open={deleteProjectOpen}
+        projectId={deleteProjectId}
+        onClose={closeDeleteProject}
+      />
+      <ManageWorkspacesModal open={manageWorkspacesOpen} onClose={closeManageWorkspaces} />
+    </>
+  );
+
+  if (collapsed.full) {
+    return (
+      <>
+        <CollapsedSidebar />
+        {modals}
+      </>
+    );
+  }
 
   return (
     <div className="flex h-full w-65 shrink-0 flex-col bg-bg">
@@ -212,37 +253,7 @@ function Sidebar(): React.JSX.Element {
         </TipBox>
       </div>
 
-      <WorkspaceModal
-        open={workspaceModalOpen}
-        workspaceId={workspaceModalId || undefined}
-        onClose={closeWorkspaceModal}
-      />
-
-      <CreateProjectModal
-        open={createProjectOpen}
-        workspaceId={createProjectWorkspaceId}
-        onClose={closeCreateProject}
-      />
-
-      <DeleteWorkspaceModal
-        open={deleteWorkspaceOpen}
-        workspaceId={deleteWorkspaceId}
-        onClose={closeDeleteWorkspace}
-      />
-
-      <EditProjectModal
-        open={editProjectOpen}
-        projectId={editProjectId}
-        onClose={closeEditProject}
-      />
-
-      <DeleteProjectModal
-        open={deleteProjectOpen}
-        projectId={deleteProjectId}
-        onClose={closeDeleteProject}
-      />
-
-      <ManageWorkspacesModal open={manageWorkspacesOpen} onClose={closeManageWorkspaces} />
+      {modals}
     </div>
   );
 }

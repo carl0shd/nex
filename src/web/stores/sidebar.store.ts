@@ -6,6 +6,7 @@ interface SidebarCollapsed {
   tasks: boolean;
   groups: string[];
   projects: string[];
+  full: boolean;
 }
 
 const DEFAULT_COLLAPSED: SidebarCollapsed = {
@@ -13,7 +14,8 @@ const DEFAULT_COLLAPSED: SidebarCollapsed = {
   workspaces: [],
   tasks: false,
   groups: [],
-  projects: []
+  projects: [],
+  full: false
 };
 
 interface SidebarState {
@@ -36,6 +38,7 @@ interface SidebarState {
   load: () => Promise<void>;
   persist: (next: SidebarCollapsed) => void;
   toggle: (key: 'workspaces' | 'groups' | 'projects', id: string) => void;
+  toggleFull: () => void;
 
   openCreateWorkspace: () => void;
   openEditWorkspace: (workspaceId: string) => void;
@@ -75,7 +78,7 @@ export const useSidebarStore = create<SidebarState>((set, get) => ({
       'sidebar-collapsed',
       DEFAULT_COLLAPSED
     );
-    set({ collapsed: val, loaded: true });
+    set({ collapsed: { ...DEFAULT_COLLAPSED, ...val }, loaded: true });
   },
 
   persist: (next) => {
@@ -88,6 +91,11 @@ export const useSidebarStore = create<SidebarState>((set, get) => ({
     const list = collapsed[key];
     const next = list.includes(id) ? list.filter((i) => i !== id) : [...list, id];
     persist({ ...collapsed, [key]: next });
+  },
+
+  toggleFull: () => {
+    const { collapsed, persist } = get();
+    persist({ ...collapsed, full: !collapsed.full });
   },
 
   openCreateWorkspace: () => set({ workspaceModalOpen: true, workspaceModalId: '' }),
