@@ -5,12 +5,6 @@ import type {
   Project,
   CreateProjectInput,
   UpdateProjectInput,
-  Worktree,
-  CreateWorktreeInput,
-  UpdateWorktreeInput,
-  Task,
-  CreateTaskInput,
-  UpdateTaskInput,
   Agent,
   CreateAgentInput,
   UpdateAgentInput,
@@ -42,18 +36,6 @@ interface NexAPI {
   updateProject: (id: string, input: UpdateProjectInput) => Promise<Project>;
   deleteProject: (id: string) => Promise<void>;
 
-  getWorktrees: () => Promise<Worktree[]>;
-  getWorktreesByProject: (projectId: string) => Promise<Worktree[]>;
-  createWorktree: (input: CreateWorktreeInput) => Promise<Worktree>;
-  updateWorktree: (id: string, input: UpdateWorktreeInput) => Promise<Worktree>;
-  deleteWorktree: (id: string) => Promise<void>;
-
-  getTasks: () => Promise<Task[]>;
-  getTasksByProject: (projectId: string) => Promise<Task[]>;
-  createTask: (input: CreateTaskInput) => Promise<Task>;
-  updateTask: (id: string, input: UpdateTaskInput) => Promise<Task>;
-  deleteTask: (id: string) => Promise<void>;
-
   getSetting: <T>(key: string, fallback: T) => Promise<T>;
   setSetting: (key: string, value: unknown) => Promise<void>;
 
@@ -80,6 +62,9 @@ interface NexAPI {
   detectAgents: () => Promise<Agent[]>;
   cloneAgentAccount: (input: CloneAgentAccountInput) => Promise<AgentAccount>;
   startWork: (input: StartWorkInput) => Promise<Session>;
+  detectBaseBranch: (repoPath: string) => Promise<string>;
+  isGitRepo: (repoPath: string) => Promise<boolean>;
+  listBranches: (repoPath: string) => Promise<string[]>;
 
   pickImage: () => Promise<string | null>;
   pickDirectory: () => Promise<string | null>;

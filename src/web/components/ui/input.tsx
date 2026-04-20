@@ -22,7 +22,7 @@ function Input({
   className = ''
 }: InputProps): React.JSX.Element {
   return (
-    <div className={`flex flex-col gap-1 ${className}`}>
+    <div className={`flex flex-col gap-1.5 ${className}`}>
       {label && <label className="text-[10px] font-medium text-text-muted">{label}</label>}
       <div
         className={`flex items-center gap-2 rounded-[5px] border border-border-soft bg-bg-input px-2.5 py-2 not-focus-within:hover:border-border focus-within:border-border ${disabled ? 'opacity-50' : ''}`}

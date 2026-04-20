@@ -4,10 +4,10 @@ interface ActiveBadgeProps {
 
 function ActiveBadge({ count }: ActiveBadgeProps): React.JSX.Element {
   return (
-    <div className="flex max-h-5.25 select-none items-center gap-1.5 rounded-xl bg-accent/12 px-2 py-1">
+    <span className="inline-flex select-none items-center gap-1.5 rounded-full bg-accent/40 px-2 py-0.5 text-[11px] font-medium text-badge-success-text">
       <span className="size-1.5 rounded-full bg-badge-success-text" />
-      <span className="text-[11px] font-medium text-badge-success-text">{count} active</span>
-    </div>
+      {count} active
+    </span>
   );
 }
 

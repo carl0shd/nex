@@ -14,18 +14,6 @@ export const IPC = {
   PROJECT_UPDATE: 'project:update',
   PROJECT_DELETE: 'project:delete',
 
-  WORKTREE_GET_ALL: 'worktree:get-all',
-  WORKTREE_GET_BY_PROJECT: 'worktree:get-by-project',
-  WORKTREE_CREATE: 'worktree:create',
-  WORKTREE_UPDATE: 'worktree:update',
-  WORKTREE_DELETE: 'worktree:delete',
-
-  TASK_GET_ALL: 'task:get-all',
-  TASK_GET_BY_PROJECT: 'task:get-by-project',
-  TASK_CREATE: 'task:create',
-  TASK_UPDATE: 'task:update',
-  TASK_DELETE: 'task:delete',
-
   SETTINGS_GET: 'settings:get',
   SETTINGS_SET: 'settings:set',
 
@@ -51,6 +39,9 @@ export const IPC = {
   DETECT_AGENTS: 'agents:detect',
   AGENT_ACCOUNT_CLONE: 'agent-account:clone',
   WORK_START: 'work:start',
+  GIT_DETECT_BASE_BRANCH: 'git:detect-base-branch',
+  GIT_IS_REPO: 'git:is-repo',
+  GIT_LIST_BRANCHES: 'git:list-branches',
   WINDOW_SHOW: 'window:show',
   DIALOG_PICK_IMAGE: 'dialog:pick-image',
   DIALOG_PICK_DIRECTORY: 'dialog:pick-directory',

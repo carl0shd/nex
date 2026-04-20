@@ -4,22 +4,23 @@ import SimpleBar from 'simplebar-react';
 import CollapsedWorkspaceItem from '@/components/sidebar/collapsed-workspace-item';
 import CollapsedTaskItem from '@/components/sidebar/collapsed-task-item';
 import { useWorkspaceStore } from '@/stores/workspace.store';
-import { useWorktreeStore } from '@/stores/worktree.store';
+import { useSessionStore } from '@/stores/session.store';
 import { useSidebarStore } from '@/stores/sidebar.store';
 
 function CollapsedSidebar(): React.JSX.Element {
   const workspaces = useWorkspaceStore((s) => s.workspaces);
   const projects = useWorkspaceStore((s) => s.projects);
-  const worktrees = useWorktreeStore((s) => s.worktrees);
+  const sessions = useSessionStore((s) => s.sessions);
+  const activeSessions = useMemo(() => sessions.filter((s) => s.status === 'active'), [sessions]);
   const updateWorkspace = useWorkspaceStore((s) => s.updateWorkspace);
 
-  const toggleFull = useSidebarStore((s) => s.toggleFull);
   const openCreateWorkspace = useSidebarStore((s) => s.openCreateWorkspace);
   const openEditWorkspace = useSidebarStore((s) => s.openEditWorkspace);
   const openCreateProject = useSidebarStore((s) => s.openCreateProject);
   const openDeleteWorkspace = useSidebarStore((s) => s.openDeleteWorkspace);
   const openEditProject = useSidebarStore((s) => s.openEditProject);
   const openDeleteProject = useSidebarStore((s) => s.openDeleteProject);
+  const openCreateTask = useSidebarStore((s) => s.openCreateTask);
 
   const activeWorkspaces = useMemo(() => workspaces.filter((ws) => !ws.archived), [workspaces]);
 
@@ -56,11 +57,12 @@ function CollapsedSidebar(): React.JSX.Element {
               key={ws.id}
               workspace={ws}
               projects={wsProjects}
-              worktrees={worktrees}
+              sessions={activeSessions}
               onAddProject={() => openCreateProject(ws.id)}
               onEditWorkspace={() => openEditWorkspace(ws.id)}
               onArchiveWorkspace={() => updateWorkspace(ws.id, { archived: true })}
               onDeleteWorkspace={() => openDeleteWorkspace(ws.id)}
+              onAddTask={() => openCreateTask({ workspaceId: ws.id })}
               onEditProject={(id) => openEditProject(id)}
               onDeleteProject={(id) => openDeleteProject(id)}
             />
@@ -74,21 +76,21 @@ function CollapsedSidebar(): React.JSX.Element {
         </button>
       </div>
 
-      {activeWorkspaces.length > 0 && worktrees.length > 0 && (
+      {activeWorkspaces.length > 0 && activeSessions.length > 0 && (
         <div className="h-px w-full shrink-0 bg-border-soft" />
       )}
 
       <div className="min-h-0 w-full flex-1 overflow-hidden">
         <SimpleBar style={{ maxHeight: '100%' }} autoHide>
           <div className="flex w-full flex-col items-center gap-1">
-            {worktrees.map((wt) => {
-              const project = projectById.get(wt.projectId);
-              const workspace = workspaceByProject.get(wt.projectId);
+            {activeSessions.map((session) => {
+              const project = projectById.get(session.projectId);
+              const workspace = workspaceByProject.get(session.projectId);
               if (!project || !workspace) return null;
               return (
                 <CollapsedTaskItem
-                  key={wt.id}
-                  worktree={wt}
+                  key={session.id}
+                  session={session}
                   project={project}
                   workspace={workspace}
                 />
@@ -99,8 +101,9 @@ function CollapsedSidebar(): React.JSX.Element {
       </div>
 
       <button
-        onClick={toggleFull}
-        className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md bg-accent text-text select-none hover:bg-accent-hover"
+        onClick={() => openCreateTask()}
+        disabled={projects.length === 0}
+        className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md bg-accent text-text select-none hover:bg-accent-hover disabled:pointer-events-none disabled:opacity-40"
       >
         <ChevronRight size={16} />
       </button>

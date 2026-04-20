@@ -9,6 +9,7 @@ function EmptyState(): React.JSX.Element {
   const projects = useWorkspaceStore((s) => s.projects);
   const openCreateWorkspace = useSidebarStore((s) => s.openCreateWorkspace);
   const openCreateProject = useSidebarStore((s) => s.openCreateProject);
+  const openCreateTask = useSidebarStore((s) => s.openCreateTask);
 
   const hasWorkspaces = workspaces.length > 0;
   const hasProjects = projects.length > 0;
@@ -23,7 +24,7 @@ function EmptyState(): React.JSX.Element {
     ? openCreateWorkspace
     : !hasProjects
       ? () => openCreateProject(workspaces[0].id)
-      : undefined;
+      : () => openCreateTask();
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-6 bg-bg">

@@ -14,7 +14,7 @@ function FolderPicker({
   placeholder = 'select project folder...'
 }: FolderPickerProps): React.JSX.Element {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1.5">
       <label className="text-[10px] font-medium text-text-muted">{label}</label>
       <button
         onClick={onBrowse}

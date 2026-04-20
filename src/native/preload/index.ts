@@ -17,19 +17,6 @@ const api = {
   updateProject: (id: string, input: unknown) => ipcRenderer.invoke('project:update', id, input),
   deleteProject: (id: string) => ipcRenderer.invoke('project:delete', id),
 
-  getWorktrees: () => ipcRenderer.invoke('worktree:get-all'),
-  getWorktreesByProject: (projectId: string) =>
-    ipcRenderer.invoke('worktree:get-by-project', projectId),
-  createWorktree: (input: unknown) => ipcRenderer.invoke('worktree:create', input),
-  updateWorktree: (id: string, input: unknown) => ipcRenderer.invoke('worktree:update', id, input),
-  deleteWorktree: (id: string) => ipcRenderer.invoke('worktree:delete', id),
-
-  getTasks: () => ipcRenderer.invoke('task:get-all'),
-  getTasksByProject: (projectId: string) => ipcRenderer.invoke('task:get-by-project', projectId),
-  createTask: (input: unknown) => ipcRenderer.invoke('task:create', input),
-  updateTask: (id: string, input: unknown) => ipcRenderer.invoke('task:update', id, input),
-  deleteTask: (id: string) => ipcRenderer.invoke('task:delete', id),
-
   getSetting: (key: string, fallback: unknown) => ipcRenderer.invoke('settings:get', key, fallback),
   setSetting: (key: string, value: unknown) => ipcRenderer.invoke('settings:set', key, value),
 
@@ -59,6 +46,9 @@ const api = {
   detectAgents: () => ipcRenderer.invoke('agents:detect'),
   cloneAgentAccount: (input: unknown) => ipcRenderer.invoke('agent-account:clone', input),
   startWork: (input: unknown) => ipcRenderer.invoke('work:start', input),
+  detectBaseBranch: (repoPath: string) => ipcRenderer.invoke('git:detect-base-branch', repoPath),
+  isGitRepo: (repoPath: string) => ipcRenderer.invoke('git:is-repo', repoPath),
+  listBranches: (repoPath: string) => ipcRenderer.invoke('git:list-branches', repoPath),
   pickImage: () => ipcRenderer.invoke('dialog:pick-image'),
   pickDirectory: () => ipcRenderer.invoke('dialog:pick-directory'),
   saveWorkspaceIcon: (workspaceId: string, dataUrl: string) =>

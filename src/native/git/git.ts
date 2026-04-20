@@ -52,6 +52,25 @@ export async function fetchOrigin(repo: string): Promise<void> {
   await gitSilent(repo, ['fetch', 'origin', '--quiet']);
 }
 
+export async function listBranches(repo: string): Promise<string[]> {
+  const output = await gitSilent(repo, [
+    'for-each-ref',
+    '--format=%(refname:short)',
+    'refs/heads/',
+    'refs/remotes/'
+  ]);
+  if (!output) return [];
+  const seen = new Set<string>();
+  const branches: string[] = [];
+  for (const raw of output.split('\n')) {
+    const name = raw.replace(/^origin\//, '').trim();
+    if (!name || name === 'HEAD' || seen.has(name)) continue;
+    seen.add(name);
+    branches.push(name);
+  }
+  return branches.sort((a, b) => a.localeCompare(b));
+}
+
 export async function createWorktree(
   repo: string,
   branch: string,
@@ -69,59 +88,6 @@ export async function removeWorktree(repo: string, path: string): Promise<void> 
 export async function deleteBranch(repo: string, branch: string): Promise<void> {
   await gitSilent(repo, ['branch', '-D', branch]);
 }
-
-export async function pushBranch(wtPath: string, branch: string): Promise<void> {
-  await git(wtPath, ['push', '-u', 'origin', branch]);
-}
-
-export function createPr(
-  wtPath: string,
-  base: string,
-  branch: string,
-  title: string
-): Promise<string> {
-  return new Promise((resolve, reject) => {
-    execFile(
-      'gh',
-      ['pr', 'create', '--base', base, '--head', branch, '--title', title, '--body', ''],
-      { cwd: wtPath },
-      (err, stdout, stderr) => {
-        if (err) reject(new Error(stderr.trim() || err.message));
-        else resolve(stdout.trim());
-      }
-    );
-  });
-}
-
-export async function aheadBehind(
-  wtPath: string,
-  base: string
-): Promise<{ ahead: number; behind: number }> {
-  const [ahead, behind] = await Promise.all([
-    gitSilent(wtPath, ['rev-list', '--count', `${base}..HEAD`]),
-    gitSilent(wtPath, ['rev-list', '--count', `HEAD..${base}`])
-  ]);
-  return {
-    ahead: parseInt(ahead, 10) || 0,
-    behind: parseInt(behind, 10) || 0
-  };
-}
-
-export async function changedFileCount(wtPath: string): Promise<number> {
-  const out = await gitSilent(wtPath, ['status', '--porcelain']);
-  return out ? out.split('\n').length : 0;
-}
-
-export async function diffStat(wtPath: string): Promise<string> {
-  return gitSilent(wtPath, ['diff', '--stat', 'HEAD']);
-}
-
-export async function unpushedCount(wtPath: string, branch: string): Promise<number> {
-  const out = await gitSilent(wtPath, ['log', '--oneline', `origin/${branch}..HEAD`]);
-  return out ? out.split('\n').length : 0;
-}
-
-export const uncommittedCount = changedFileCount;
 
 export function setupGitExclude(repo: string): void {
   const gitDir = join(repo, '.git');

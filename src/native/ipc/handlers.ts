@@ -4,8 +4,6 @@ import { extname, join } from 'path';
 import { IPC } from './channels';
 import * as workspaceRepo from '@native/db/repositories/workspace.repo';
 import * as projectRepo from '@native/db/repositories/project.repo';
-import * as worktreeRepo from '@native/db/repositories/worktree.repo';
-import * as taskRepo from '@native/db/repositories/task.repo';
 import * as settings from '@native/db/repositories/settings.repo';
 import * as agentRepo from '@native/db/repositories/agent.repo';
 import * as agentAccountRepo from '@native/db/repositories/agent-account.repo';
@@ -13,6 +11,7 @@ import * as sessionRepo from '@native/db/repositories/session.repo';
 import { detectAgents } from '@native/agents/detect';
 import { cloneAgentAccount } from '@native/agents/clone-account';
 import { startWork } from '@native/git/start-work';
+import { detectBaseBranch, isGitRepo, listBranches } from '@native/git/git';
 import { showMainWindow } from '@native/main/app-window';
 
 export function registerIPCHandlers(): void {
@@ -38,20 +37,6 @@ export function registerIPCHandlers(): void {
   ipcMain.handle(IPC.PROJECT_CREATE, (_, input) => projectRepo.create(input));
   ipcMain.handle(IPC.PROJECT_UPDATE, (_, id, input) => projectRepo.update(id, input));
   ipcMain.handle(IPC.PROJECT_DELETE, (_, id) => projectRepo.remove(id));
-
-  ipcMain.handle(IPC.WORKTREE_GET_ALL, () => worktreeRepo.getAll());
-  ipcMain.handle(IPC.WORKTREE_GET_BY_PROJECT, (_, projectId) =>
-    worktreeRepo.getByProject(projectId)
-  );
-  ipcMain.handle(IPC.WORKTREE_CREATE, (_, input) => worktreeRepo.create(input));
-  ipcMain.handle(IPC.WORKTREE_UPDATE, (_, id, input) => worktreeRepo.update(id, input));
-  ipcMain.handle(IPC.WORKTREE_DELETE, (_, id) => worktreeRepo.remove(id));
-
-  ipcMain.handle(IPC.TASK_GET_ALL, () => taskRepo.getAll());
-  ipcMain.handle(IPC.TASK_GET_BY_PROJECT, (_, projectId) => taskRepo.getByProject(projectId));
-  ipcMain.handle(IPC.TASK_CREATE, (_, input) => taskRepo.create(input));
-  ipcMain.handle(IPC.TASK_UPDATE, (_, id, input) => taskRepo.update(id, input));
-  ipcMain.handle(IPC.TASK_DELETE, (_, id) => taskRepo.remove(id));
 
   ipcMain.handle(IPC.SETTINGS_GET, (_, key, fallback) => settings.get(key, fallback));
   ipcMain.handle(IPC.SETTINGS_SET, (_, key, value) => settings.set(key, value));
@@ -81,6 +66,9 @@ export function registerIPCHandlers(): void {
   ipcMain.handle(IPC.DETECT_AGENTS, () => detectAgents());
   ipcMain.handle(IPC.AGENT_ACCOUNT_CLONE, (_, input) => cloneAgentAccount(input));
   ipcMain.handle(IPC.WORK_START, (_, input) => startWork(input));
+  ipcMain.handle(IPC.GIT_DETECT_BASE_BRANCH, (_, repoPath) => detectBaseBranch(repoPath));
+  ipcMain.handle(IPC.GIT_IS_REPO, (_, repoPath) => isGitRepo(repoPath));
+  ipcMain.handle(IPC.GIT_LIST_BRANCHES, (_, repoPath) => listBranches(repoPath));
 
   ipcMain.handle(IPC.DIALOG_PICK_IMAGE, async (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);

@@ -1,22 +1,23 @@
 import { GitBranch } from 'lucide-react';
 import HoverCard from '@/components/ui/hover-card';
 import WorkspaceBadge from '@/components/ui/workspace-badge';
-import type { Worktree, Project, Workspace } from '@native/db/types';
+import Badge from '@/components/ui/badge';
+import type { Session, Project, Workspace } from '@native/db/types';
 
 interface CollapsedTaskItemProps {
-  worktree: Worktree;
+  session: Session;
   project: Project;
   workspace: Workspace;
   onClick?: () => void;
 }
 
 function CollapsedTaskItem({
-  worktree,
+  session,
   project,
   workspace,
   onClick
 }: CollapsedTaskItemProps): React.JSX.Element {
-  const isActive = worktree.active;
+  const isActive = session.status === 'active';
 
   return (
     <HoverCard
@@ -24,13 +25,9 @@ function CollapsedTaskItem({
         <div className="flex w-44 flex-col gap-1 rounded-lg border border-border-menu bg-bg-menu px-3 py-2.5 shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
           <div className="flex items-center gap-1.5">
             <GitBranch size={12} className="shrink-0 text-text-muted" />
-            <span className="truncate text-[12px] font-semibold text-text">{worktree.branch}</span>
+            <span className="truncate text-[12px] font-semibold text-text">{session.name}</span>
             <span className="flex-1" />
-            {isActive && (
-              <span className="shrink-0 rounded-xl bg-badge-success-bg px-1.5 py-px text-[9px] font-semibold text-badge-success-text">
-                active
-              </span>
-            )}
+            {isActive && <Badge label="active" variant="success" size="sm" />}
           </div>
           <div className="flex items-center gap-1.5">
             <WorkspaceBadge
@@ -56,12 +53,6 @@ function CollapsedTaskItem({
         }`}
       >
         <GitBranch size={16} className={isActive ? 'text-text' : 'text-text-muted'} />
-        {worktree.dotColor && isActive && (
-          <span
-            className="absolute top-0 right-0 size-2 rounded-full"
-            style={{ backgroundColor: worktree.dotColor }}
-          />
-        )}
       </button>
     </HoverCard>
   );

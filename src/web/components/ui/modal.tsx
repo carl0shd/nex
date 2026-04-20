@@ -1,8 +1,9 @@
 import { Dialog, DialogPanel, DialogBackdrop } from '@headlessui/react';
+import SimpleBar from 'simplebar-react';
 import type { LucideIcon } from 'lucide-react';
 
 const PANEL_CLASS =
-  'relative flex flex-col gap-5 rounded-lg border border-border-soft bg-bg-panel p-6 shadow-2xl';
+  'relative flex max-h-[calc(100vh-64px)] flex-col gap-5 rounded-lg border border-border-soft bg-bg-panel p-6 shadow-2xl';
 
 interface ModalProps {
   children: React.ReactNode;
@@ -101,7 +102,11 @@ function ModalHeader({
 }
 
 function ModalBody({ children }: { children: React.ReactNode }): React.JSX.Element {
-  return <div className="flex flex-col">{children}</div>;
+  return (
+    <SimpleBar autoHide={false} className="-mx-6" style={{ maxHeight: 'calc(100vh - 280px)' }}>
+      <div className="flex flex-col gap-5 px-6">{children}</div>
+    </SimpleBar>
+  );
 }
 
 function ModalDivider(): React.JSX.Element {
