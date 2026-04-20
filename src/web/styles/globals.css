@@ -121,6 +121,13 @@ input:focus-visible {
   outline: none;
 }
 
+[role='dialog'] *:focus-visible,
+[role='menu'] *:focus-visible,
+[role='dialog']:focus-visible,
+[role='menu']:focus-visible {
+  outline: none;
+}
+
 textarea {
   scrollbar-width: thin;
   scrollbar-color: var(--nex-border) transparent;

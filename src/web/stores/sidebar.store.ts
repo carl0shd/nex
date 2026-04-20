@@ -28,6 +28,11 @@ interface SidebarState {
   deleteWorkspaceOpen: boolean;
   manageWorkspacesOpen: boolean;
 
+  editProjectOpen: boolean;
+  editProjectId: string;
+  deleteProjectOpen: boolean;
+  deleteProjectId: string;
+
   load: () => Promise<void>;
   persist: (next: SidebarCollapsed) => void;
   toggle: (key: 'workspaces' | 'groups' | 'projects', id: string) => void;
@@ -41,6 +46,11 @@ interface SidebarState {
   closeDeleteWorkspace: () => void;
   openManageWorkspaces: () => void;
   closeManageWorkspaces: () => void;
+
+  openEditProject: (projectId: string) => void;
+  closeEditProject: () => void;
+  openDeleteProject: (projectId: string) => void;
+  closeDeleteProject: () => void;
 }
 
 export const useSidebarStore = create<SidebarState>((set, get) => ({
@@ -54,6 +64,11 @@ export const useSidebarStore = create<SidebarState>((set, get) => ({
   deleteWorkspaceId: '',
   deleteWorkspaceOpen: false,
   manageWorkspacesOpen: false,
+
+  editProjectOpen: false,
+  editProjectId: '',
+  deleteProjectOpen: false,
+  deleteProjectId: '',
 
   load: async () => {
     const val = await window.api.getSetting<SidebarCollapsed>(
@@ -89,5 +104,10 @@ export const useSidebarStore = create<SidebarState>((set, get) => ({
   closeDeleteWorkspace: () => set({ deleteWorkspaceOpen: false }),
 
   openManageWorkspaces: () => set({ manageWorkspacesOpen: true }),
-  closeManageWorkspaces: () => set({ manageWorkspacesOpen: false })
+  closeManageWorkspaces: () => set({ manageWorkspacesOpen: false }),
+
+  openEditProject: (projectId) => set({ editProjectOpen: true, editProjectId: projectId }),
+  closeEditProject: () => set({ editProjectOpen: false }),
+  openDeleteProject: (projectId) => set({ deleteProjectOpen: true, deleteProjectId: projectId }),
+  closeDeleteProject: () => set({ deleteProjectOpen: false })
 }));
