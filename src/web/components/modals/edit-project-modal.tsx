@@ -125,11 +125,21 @@ interface EditProjectModalProps {
 function EditProjectModal({ open, projectId, onClose }: EditProjectModalProps): React.JSX.Element {
   const projects = useWorkspaceStore((s) => s.projects);
   const project = projects.find((p) => p.id === projectId);
+  const [resetCount, setResetCount] = useState(0);
 
   return (
-    <Modal width={460} open={open} onClose={onClose}>
+    <Modal
+      width={460}
+      open={open}
+      onClose={onClose}
+      onAfterClose={() => setResetCount((c) => c + 1)}
+    >
       {project && (
-        <EditProjectForm key={`${projectId}-${open}`} project={project} onClose={onClose} />
+        <EditProjectForm
+          key={`${projectId}-${resetCount}`}
+          project={project}
+          onClose={onClose}
+        />
       )}
     </Modal>
   );

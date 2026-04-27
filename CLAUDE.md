@@ -161,7 +161,7 @@ Modals use Headless UI `Dialog` via the `Modal` component (`ui/modal.tsx`). Key 
 
 - **Always mounted:** Modals stay in the DOM with `open` prop controlling visibility. This enables close animations (fade + scale). Never conditionally render a modal (`{show && <Modal/>}`).
 - **`onAfterClose`:** Fires after the close transition ends. Use for deferred actions (e.g. delete after animation).
-- **Form reset:** Extract form into a child component with `key` prop to reset state on reopen. E.g. `<MyForm key={entityId ?? 'new'} />` inside the `Modal`.
+- **Form reset:** Extract form into a child component with `key` prop to reset state on reopen. E.g. `<MyForm key={entityId ?? 'new'} />` inside the `Modal`. **Never include `open` in the key** — that remounts the form mid-close-animation, so the user sees inputs/dropdowns reset to defaults during the fade-out. Instead, bump a `resetCount` from `onAfterClose` and use it in the key, so the remount happens *after* the modal is hidden.
 - **`ModalPanel`:** Use inside a shared `Dialog` (e.g. onboarding steps) when multiple panels share one backdrop.
 - **`ModalButton` variants:** `primary` (accent), `ghost` (border), `destructive` (red).
 
