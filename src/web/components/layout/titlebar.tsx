@@ -5,6 +5,7 @@ import CommandBar from '@/components/ui/command-bar';
 import ActiveBadge from '@/components/layout/active-badge';
 import TokensBadge from '@/components/layout/tokens-badge';
 import CostBadge from '@/components/layout/cost-badge';
+import { useSidebarStore } from '@/stores/sidebar.store';
 
 interface TitlebarProps {
   onToggleSidebar?: () => void;
@@ -12,6 +13,9 @@ interface TitlebarProps {
 
 function Titlebar({ onToggleSidebar }: TitlebarProps): React.JSX.Element {
   const isFullscreen = useFullscreen();
+  const sidebarCollapsed = useSidebarStore((s) => s.collapsed.full);
+
+  const spacerClass = sidebarCollapsed ? 'pl-2' : isFullscreen ? 'pl-58.25' : 'pl-41.25';
 
   return (
     <div
@@ -25,7 +29,7 @@ function Titlebar({ onToggleSidebar }: TitlebarProps): React.JSX.Element {
         <IconButton icon={PanelLeft} size={15} onClick={onToggleSidebar} />
       </div>
 
-      <div className={`${isFullscreen ? 'pl-58.25' : 'pl-41.25'}`} />
+      <div className={spacerClass} />
 
       <div
         className="flex items-center gap-3"
