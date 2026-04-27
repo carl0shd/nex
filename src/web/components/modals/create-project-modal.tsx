@@ -167,9 +167,19 @@ function CreateProjectModal({
   workspaceId,
   onClose
 }: CreateProjectModalProps): React.JSX.Element {
+  const [resetCount, setResetCount] = useState(0);
   return (
-    <Modal width={460} open={open} onClose={onClose}>
-      <ProjectForm key={`${workspaceId}-${open}`} workspaceId={workspaceId} onClose={onClose} />
+    <Modal
+      width={460}
+      open={open}
+      onClose={onClose}
+      onAfterClose={() => setResetCount((c) => c + 1)}
+    >
+      <ProjectForm
+        key={`${workspaceId}-${resetCount}`}
+        workspaceId={workspaceId}
+        onClose={onClose}
+      />
     </Modal>
   );
 }
