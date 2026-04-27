@@ -25,6 +25,9 @@
   --color-badge-count-text: var(--nex-badge-count-text);
   --color-bg-raised: var(--nex-bg-raised);
   --color-bg-input: var(--nex-bg-input);
+  --color-bg-notes: var(--nex-bg-notes);
+  --color-bg-chat: var(--nex-bg-chat);
+  --color-bg-chat-input: var(--nex-bg-chat-input);
   --color-bg-panel: var(--nex-bg-panel);
   --color-bg-hover: var(--nex-bg-hover);
   --color-bg-item-active: var(--nex-bg-item-active);
@@ -59,6 +62,9 @@
   /* Backgrounds - elevated */
   --nex-bg-raised: #1c1b1a;
   --nex-bg-input: #121110;
+  --nex-bg-notes: #10100f;
+  --nex-bg-chat: #141212;
+  --nex-bg-chat-input: #0f0f0f;
   --nex-bg-panel: #161514;
   --nex-bg-hover: #1d1c1b;
   --nex-bg-item-active: #242322;
@@ -71,9 +77,9 @@
 
   /* Text */
   --nex-text: #eeeceb;
-  --nex-text-secondary: #908e8c;
-  --nex-text-muted: #5d5b5a;
-  --nex-text-placeholder: #454341;
+  --nex-text-secondary: #b8b5b2;
+  --nex-text-muted: #8a8784;
+  --nex-text-placeholder: #6a6764;
 
   /* Accent */
   --nex-accent: #1e1d1c;
@@ -93,7 +99,7 @@
 
   /* Badge - default */
   --nex-badge-default-bg: #252423;
-  --nex-badge-default-text: #908e8c;
+  --nex-badge-default-text: #b8b5b2;
 
   /* Badge - count */
   --nex-badge-count-bg: #e2e0de;
@@ -109,12 +115,16 @@
   --nex-border-menu: #2b2a28;
 
   /* Archived */
-  --nex-archived: #6b6967;
+  --nex-archived: #908d8a;
 
   /* Selected */
   --nex-selected: #175f52;
   --nex-selected-bg: #112b26;
   --nex-selected-border: #175f52;
+
+  /* Shadows */
+  --nex-shadow-dropdown: 0 6px 16px 1px rgb(0 0 0 / 0.25);
+  --nex-shadow-popover: 0 4px 12px rgb(0 0 0 / 0.4);
 }
 
 ::selection {
@@ -205,6 +215,97 @@ body {
 .simplebar-track.simplebar-horizontal .simplebar-scrollbar::before {
   top: 0 !important;
   bottom: 0 !important;
+}
+
+[data-sonner-toaster] {
+  --normal-bg: var(--nex-bg-menu);
+  --normal-text: var(--nex-text);
+  --normal-border: var(--nex-border-menu);
+  --success-bg: var(--nex-bg-menu);
+  --success-text: var(--nex-text);
+  --success-border: var(--nex-border-menu);
+  --error-bg: var(--nex-bg-menu);
+  --error-text: var(--nex-text);
+  --error-border: var(--nex-border-menu);
+  --warning-bg: var(--nex-bg-menu);
+  --warning-text: var(--nex-text);
+  --warning-border: var(--nex-border-menu);
+  --info-bg: var(--nex-bg-menu);
+  --info-text: var(--nex-text);
+  --info-border: var(--nex-border-menu);
+  z-index: 9999 !important;
+}
+
+[data-sonner-toaster] > ol,
+[data-sonner-toaster] li {
+  z-index: 9999 !important;
+}
+
+[data-sonner-toast] {
+  font-family: 'Inter', system-ui, sans-serif !important;
+  background: var(--nex-bg-menu) !important;
+  border: 1px solid var(--nex-border-menu) !important;
+  border-radius: 8px !important;
+  padding: 12px 14px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-sonner-toast] [data-icon] {
+  display: none !important;
+}
+
+[data-sonner-toast] [data-title] {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  color: var(--nex-text) !important;
+}
+
+[data-sonner-toast] [data-description] {
+  font-size: 11px !important;
+  line-height: 1.5 !important;
+  color: var(--nex-text-secondary) !important;
+  font-family: 'JetBrains Mono', monospace !important;
+}
+
+[data-sonner-toast][data-type='error'] [data-title] {
+  color: var(--nex-destructive-text) !important;
+}
+
+[data-sonner-toast][data-type='success'] [data-title] {
+  color: var(--nex-badge-success-text) !important;
+}
+
+[data-sonner-toast][data-type='warning'] [data-title] {
+  color: var(--nex-badge-warning-text) !important;
+}
+
+[data-sonner-toast] [data-close-button] {
+  inset: 6px 6px auto auto !important;
+  width: 20px !important;
+  height: 20px !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  color: var(--nex-text-muted) !important;
+  transform: none !important;
+  opacity: 0;
+  transition: opacity 100ms ease;
+}
+
+[data-sonner-toast] [data-close-button] svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+[data-sonner-toast]:hover [data-close-button],
+[data-sonner-toast] [data-close-button]:focus-visible {
+  opacity: 1;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+  background: var(--nex-bg-hover) !important;
+  color: var(--nex-text) !important;
 }
 
 .no-scrollbar {

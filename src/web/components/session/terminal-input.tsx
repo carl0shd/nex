@@ -1,5 +1,4 @@
-import { GitBranch, ChevronDown, Eye, Paperclip, Mic, Send } from 'lucide-react';
-import Button from '@/components/ui/button';
+import { GitBranch, ChevronDown, Eye, Paperclip, Mic, ArrowUp } from 'lucide-react';
 import IconButton from '@/components/ui/icon-button';
 
 interface TerminalInputProps {
@@ -31,7 +30,7 @@ function TerminalInput({
         </div>
       </div>
 
-      <div className="rounded-lg border border-border-soft bg-bg-input hover:border-border">
+      <div className="rounded-lg border border-border-soft bg-bg-chat-input hover:border-border">
         <div className="h-15 py-2.5 pl-3 pr-1">
           <textarea
             placeholder={placeholder}
@@ -42,9 +41,7 @@ function TerminalInput({
           <IconButton icon={Paperclip} size={14} ghost />
           <span className="flex-1" />
           <IconButton icon={Mic} size={14} ghost />
-          <Button className="size-6.5 px-0 py-0">
-            <Send size={12} />
-          </Button>
+          <IconButton icon={ArrowUp} size={14} variant="filled" />
         </div>
       </div>
     </div>

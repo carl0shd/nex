@@ -1,4 +1,5 @@
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import ErrorBoundary from '@/components/layout/error-boundary';
 import Titlebar from '@/components/layout/titlebar';
 import Sidebar from '@/components/layout/sidebar';
@@ -26,6 +27,14 @@ function App(): React.JSX.Element {
           </MemoryRouter>
         </div>
         {onboarding.show && <OnboardingModal onComplete={onboarding.complete} />}
+        <Toaster
+          position="bottom-center"
+          theme="dark"
+          closeButton
+          expand
+          duration={10000}
+          style={{ zIndex: 9999 }}
+        />
       </div>
     </ErrorBoundary>
   );

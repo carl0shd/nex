@@ -76,7 +76,7 @@ function BranchPicker({
               portal
               anchor={{ to: 'bottom start', gap: 4 }}
               transition
-              className="z-50 flex w-[390px] flex-col rounded-md border border-border-soft bg-bg-input p-1 shadow-[0_6px_16px_1px_#00000040] transition-opacity duration-100 ease-out data-closed:opacity-0"
+              className="z-50 flex w-[390px] flex-col rounded-md border border-border-soft bg-bg-input p-1 shadow-[var(--nex-shadow-dropdown)] transition-opacity duration-100 ease-out data-closed:opacity-0"
             >
               <div className="flex items-center gap-1.5 border-b border-border-soft px-2 py-1.5">
                 <Search size={12} className="shrink-0 text-text-muted" />

@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Folder, GitBranch } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   Modal,
   ModalHeader,
@@ -102,7 +103,6 @@ function TaskForm({
   const [defaultBranch, setDefaultBranch] = useState(true);
   const [symlinks, setSymlinks] = useState<string[]>(['.env', 'node_modules']);
   const [saving, setSaving] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
   const [baseBranch, setBaseBranch] = useState('');
   const [customBranch, setCustomBranch] = useState('');
   const [branches, setBranches] = useState<string[]>([]);
@@ -226,7 +226,6 @@ function TaskForm({
   const handleCreate = async (): Promise<void> => {
     if (!canCreate) return;
     setSaving(true);
-    setSubmitError(null);
     try {
       await window.api.startWork({
         projectId,
@@ -237,12 +236,16 @@ function TaskForm({
       });
     } catch (err) {
       setSaving(false);
-      setSubmitError(err instanceof Error ? err.message : 'Failed to create task');
+      onClose();
+      toast.error('Failed to create task', {
+        description: err instanceof Error ? err.message : undefined
+      });
       return;
     }
     await loadSessions();
     setSaving(false);
     onClose();
+    toast.success('Task created');
   };
 
   return (
@@ -376,8 +379,6 @@ function TaskForm({
 
       <ModalDivider />
 
-      {submitError && <Callout variant="error">{submitError}</Callout>}
-
       <ModalFooter>
         <ModalButton variant="ghost" onClick={onClose}>
           cancel
@@ -403,10 +404,16 @@ function CreateTaskModal({
   projectId,
   onClose
 }: CreateTaskModalProps): React.JSX.Element {
+  const [resetCount, setResetCount] = useState(0);
   return (
-    <Modal width={440} open={open} onClose={onClose}>
+    <Modal
+      width={440}
+      open={open}
+      onClose={onClose}
+      onAfterClose={() => setResetCount((c) => c + 1)}
+    >
       <TaskForm
-        key={`${workspaceId}-${projectId}-${open}`}
+        key={`${workspaceId}-${projectId}-${resetCount}`}
         initialWorkspaceId={workspaceId}
         initialProjectId={projectId}
         onClose={onClose}

@@ -48,11 +48,9 @@ function CollapsedTaskItem({
     >
       <button
         onClick={onClick}
-        className={`relative flex size-8 cursor-pointer items-center justify-center rounded-md select-none hover:bg-bg-mute ${
-          isActive ? 'bg-bg-mute' : ''
-        }`}
+        className="group relative flex size-8 cursor-pointer items-center justify-center rounded-md select-none hover:bg-bg-mute"
       >
-        <GitBranch size={16} className={isActive ? 'text-text' : 'text-text-muted'} />
+        <GitBranch size={16} className="text-text-muted group-hover:text-text" />
       </button>
     </HoverCard>
   );

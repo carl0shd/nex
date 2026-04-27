@@ -65,7 +65,7 @@ export async function startWork(input: StartWorkInput): Promise<Session> {
 
   const [detected] = await Promise.all([detectBaseBranch(project.path), fetchOrigin(project.path)]);
   const baseBranch = input.baseBranch?.trim() || detected;
-  const prefix = project.branchPrefix || '';
+  const prefix = (project.branchPrefix || '').replace(/\/+$/, '');
   const branch = prefix ? `${prefix}/${input.name}` : input.name;
   const wtPath = join(project.path, '.worktrees', input.name);
   await createWorktree(project.path, branch, wtPath, baseBranch);
