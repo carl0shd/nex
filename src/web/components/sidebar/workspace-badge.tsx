@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 interface WorkspaceBadgeProps {
   initial: string;
   color: string;
@@ -24,4 +26,4 @@ function WorkspaceBadge({
   );
 }
 
-export default WorkspaceBadge;
+export default memo(WorkspaceBadge);

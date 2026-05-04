@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 interface CountBadgeProps {
   count: number;
 }
@@ -10,4 +12,4 @@ function CountBadge({ count }: CountBadgeProps): React.JSX.Element {
   );
 }
 
-export default CountBadge;
+export default memo(CountBadge);

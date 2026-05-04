@@ -57,6 +57,9 @@ interface NexAPI {
   createSession: (input: CreateSessionInput) => Promise<Session>;
   updateSession: (id: string, input: UpdateSessionInput) => Promise<Session>;
   deleteSession: (id: string) => Promise<void>;
+  reorderSessions: (orderedIds: string[]) => Promise<void>;
+  readSessionNotes: (sessionId: string) => Promise<string>;
+  writeSessionNotes: (sessionId: string, content: string) => Promise<void>;
 
   showWindow: () => Promise<void>;
   detectAgents: () => Promise<Agent[]>;

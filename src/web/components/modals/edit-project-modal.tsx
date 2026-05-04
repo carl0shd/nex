@@ -135,11 +135,7 @@ function EditProjectModal({ open, projectId, onClose }: EditProjectModalProps): 
       onAfterClose={() => setResetCount((c) => c + 1)}
     >
       {project && (
-        <EditProjectForm
-          key={`${projectId}-${resetCount}`}
-          project={project}
-          onClose={onClose}
-        />
+        <EditProjectForm key={`${projectId}-${resetCount}`} project={project} onClose={onClose} />
       )}
     </Modal>
   );

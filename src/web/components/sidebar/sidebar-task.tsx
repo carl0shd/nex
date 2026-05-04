@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { GitBranch } from 'lucide-react';
 
 type SidebarTaskStatus = 'active' | 'running';
@@ -46,4 +47,4 @@ function SidebarTask({
   );
 }
 
-export default SidebarTask;
+export default memo(SidebarTask);

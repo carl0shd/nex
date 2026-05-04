@@ -41,6 +41,10 @@ const api = {
   createSession: (input: unknown) => ipcRenderer.invoke('session:create', input),
   updateSession: (id: string, input: unknown) => ipcRenderer.invoke('session:update', id, input),
   deleteSession: (id: string) => ipcRenderer.invoke('session:delete', id),
+  reorderSessions: (orderedIds: string[]) => ipcRenderer.invoke('session:reorder', orderedIds),
+  readSessionNotes: (sessionId: string) => ipcRenderer.invoke('session:notes-read', sessionId),
+  writeSessionNotes: (sessionId: string, content: string) =>
+    ipcRenderer.invoke('session:notes-write', sessionId, content),
 
   showWindow: () => ipcRenderer.invoke('window:show'),
   detectAgents: () => ipcRenderer.invoke('agents:detect'),

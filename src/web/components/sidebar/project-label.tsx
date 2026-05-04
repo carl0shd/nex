@@ -1,17 +1,24 @@
+import { memo } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 
 interface ProjectLabelProps {
+  id: string;
   name: string;
   collapsed?: boolean;
-  onToggle?: () => void;
+  onToggle?: (id: string) => void;
 }
 
-function ProjectLabel({ name, collapsed = false, onToggle }: ProjectLabelProps): React.JSX.Element {
+function ProjectLabel({
+  id,
+  name,
+  collapsed = false,
+  onToggle
+}: ProjectLabelProps): React.JSX.Element {
   const Chevron = collapsed ? ChevronRight : ChevronDown;
 
   return (
     <button
-      onClick={onToggle}
+      onClick={() => onToggle?.(id)}
       className="flex cursor-pointer items-center gap-1.5 px-1 py-0.5 select-none"
     >
       <Chevron size={12} className="text-text-muted" />
@@ -20,4 +27,4 @@ function ProjectLabel({ name, collapsed = false, onToggle }: ProjectLabelProps):
   );
 }
 
-export default ProjectLabel;
+export default memo(ProjectLabel);

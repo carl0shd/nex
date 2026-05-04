@@ -1,28 +1,81 @@
+import { memo, useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
-import SimpleBar from 'simplebar-react';
 import IconButton from '@/components/ui/icon-button';
 
 interface NotesPanelProps {
-  content: string;
+  sessionId: string;
   onClose?: () => void;
 }
 
-function NotesPanel({ content, onClose }: NotesPanelProps): React.JSX.Element {
+const SAVE_DEBOUNCE_MS = 400;
+
+function NotesPanel({ sessionId, onClose }: NotesPanelProps): React.JSX.Element {
+  const [value, setValue] = useState('');
+  const loadedRef = useRef(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingValue = useRef<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadedRef.current = false;
+    window.api.readSessionNotes(sessionId).then((content) => {
+      if (cancelled) return;
+      setValue(content);
+      loadedRef.current = true;
+    });
+    return () => {
+      cancelled = true;
+      if (saveTimer.current) {
+        clearTimeout(saveTimer.current);
+        saveTimer.current = null;
+      }
+      if (pendingValue.current !== null) {
+        window.api.writeSessionNotes(sessionId, pendingValue.current);
+        pendingValue.current = null;
+      }
+    };
+  }, [sessionId]);
+
+  const flushSave = (): void => {
+    if (saveTimer.current) {
+      clearTimeout(saveTimer.current);
+      saveTimer.current = null;
+    }
+    if (pendingValue.current !== null) {
+      window.api.writeSessionNotes(sessionId, pendingValue.current);
+      pendingValue.current = null;
+    }
+  };
+
+  const handleChange = (next: string): void => {
+    setValue(next);
+    if (!loadedRef.current) return;
+    pendingValue.current = next;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      if (pendingValue.current !== null) {
+        window.api.writeSessionNotes(sessionId, pendingValue.current);
+        pendingValue.current = null;
+      }
+      saveTimer.current = null;
+    }, SAVE_DEBOUNCE_MS);
+  };
+
   return (
     <div className="flex h-full flex-1 flex-col">
       <div className="flex shrink-0 items-center justify-between border-b border-border-soft bg-bg-soft px-2.5 py-1.5">
         <span className="text-[11px] text-text-muted">{'// notes'}</span>
         <IconButton icon={X} size={10} ghost onClick={onClose} />
       </div>
-      <div className="min-h-0 flex-1 overflow-hidden bg-bg-notes">
-        <SimpleBar style={{ maxHeight: '100%', width: '100%' }} autoHide={false}>
-          <div className="p-2.5 font-mono text-[11px] leading-relaxed text-text-secondary">
-            {content}
-          </div>
-        </SimpleBar>
-      </div>
+      <textarea
+        value={value}
+        onChange={(e) => handleChange(e.target.value)}
+        onBlur={flushSave}
+        spellCheck={false}
+        className="min-h-0 flex-1 resize-none bg-bg-notes p-2.5 font-mono text-[11px] leading-relaxed text-text-secondary outline-none"
+      />
     </div>
   );
 }
 
-export default NotesPanel;
+export default memo(NotesPanel);
