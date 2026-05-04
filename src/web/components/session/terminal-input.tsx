@@ -1,13 +1,24 @@
-import { GitBranch, ChevronDown, Eye, Paperclip, Mic, ArrowUp } from 'lucide-react';
+import { memo } from 'react';
+import { GitBranch, ChevronDown, Eye, EyeOff, Paperclip, Mic, ArrowUp } from 'lucide-react';
 import IconButton from '@/components/ui/icon-button';
 
 interface TerminalInputProps {
   placeholder?: string;
+  notesVisible?: boolean;
+  diffVisible?: boolean;
+  onToggleNotes?: () => void;
+  onToggleDiff?: () => void;
 }
 
 function TerminalInput({
-  placeholder = '> type a message...'
+  placeholder = '> type a message...',
+  notesVisible = true,
+  diffVisible = true,
+  onToggleNotes,
+  onToggleDiff
 }: TerminalInputProps): React.JSX.Element {
+  const NotesIcon = notesVisible ? Eye : EyeOff;
+  const DiffIcon = diffVisible ? Eye : EyeOff;
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center gap-3 px-2 py-1">
@@ -18,13 +29,19 @@ function TerminalInput({
         </button>
         <span className="flex-1" />
         <div className="flex items-center gap-2">
-          <button className="flex cursor-pointer items-center gap-1.5 text-text-muted select-none hover:text-text-secondary">
-            <Eye size={11} />
+          <button
+            onClick={onToggleNotes}
+            className={`flex cursor-pointer items-center gap-1.5 select-none hover:text-text-secondary ${notesVisible ? 'text-text-secondary' : 'text-text-muted'}`}
+          >
+            <NotesIcon size={11} />
             <span className="text-[10px]">Notes</span>
           </button>
           <span className="h-2.5 w-px bg-border-soft" />
-          <button className="flex cursor-pointer items-center gap-1.5 text-text-muted select-none hover:text-text-secondary">
-            <Eye size={11} />
+          <button
+            onClick={onToggleDiff}
+            className={`flex cursor-pointer items-center gap-1.5 select-none hover:text-text-secondary ${diffVisible ? 'text-text-secondary' : 'text-text-muted'}`}
+          >
+            <DiffIcon size={11} />
             <span className="text-[10px]">Diff</span>
           </button>
         </div>
@@ -48,4 +65,4 @@ function TerminalInput({
   );
 }
 
-export default TerminalInput;
+export default memo(TerminalInput);

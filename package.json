@@ -18,6 +18,9 @@
     "build:mac": "electron-vite build && electron-builder --mac --config build/electron-builder.yml"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
     "@fontsource-variable/inter": "^5.2.8",
@@ -28,6 +31,7 @@
     "better-sqlite3": "^12.8.0",
     "electron-updater": "^6.3.9",
     "lucide-react": "^1.7.0",
+    "react-resizable-panels": "^4.10.0",
     "react-router-dom": "^7.13.2",
     "simplebar-react": "^3.3.2",
     "sonner": "^2.0.7",

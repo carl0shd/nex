@@ -35,6 +35,9 @@ export const IPC = {
   SESSION_CREATE: 'session:create',
   SESSION_UPDATE: 'session:update',
   SESSION_DELETE: 'session:delete',
+  SESSION_REORDER: 'session:reorder',
+  SESSION_NOTES_READ: 'session:notes-read',
+  SESSION_NOTES_WRITE: 'session:notes-write',
 
   DETECT_AGENTS: 'agents:detect',
   AGENT_ACCOUNT_CLONE: 'agent-account:clone',

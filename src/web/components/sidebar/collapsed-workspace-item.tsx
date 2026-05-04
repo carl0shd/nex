@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Folder, Plus, Ellipsis, GitBranch, ChevronRight, Settings } from 'lucide-react';
 import HoverCard from '@/components/ui/hover-card';
 import Popover from '@/components/ui/popover';
@@ -242,4 +243,4 @@ function CollapsedWorkspaceItem({
   );
 }
 
-export default CollapsedWorkspaceItem;
+export default memo(CollapsedWorkspaceItem);

@@ -1,5 +1,5 @@
 import { ipcMain, dialog, BrowserWindow } from 'electron';
-import { statSync, readFileSync, mkdirSync, writeFileSync } from 'fs';
+import { statSync, readFileSync, mkdirSync, writeFileSync, existsSync } from 'fs';
 import { extname, join } from 'path';
 import { IPC } from './channels';
 import * as workspaceRepo from '@native/db/repositories/workspace.repo';
@@ -61,6 +61,19 @@ export function registerIPCHandlers(): void {
   ipcMain.handle(IPC.SESSION_CREATE, (_, input) => sessionRepo.create(input));
   ipcMain.handle(IPC.SESSION_UPDATE, (_, id, input) => sessionRepo.update(id, input));
   ipcMain.handle(IPC.SESSION_DELETE, (_, id) => sessionRepo.remove(id));
+  ipcMain.handle(IPC.SESSION_REORDER, (_, orderedIds: string[]) => sessionRepo.reorder(orderedIds));
+
+  ipcMain.handle(IPC.SESSION_NOTES_READ, (_, sessionId: string): string => {
+    const session = sessionRepo.getById(sessionId);
+    if (!session?.notesPath || !existsSync(session.notesPath)) return '';
+    return readFileSync(session.notesPath, 'utf8');
+  });
+
+  ipcMain.handle(IPC.SESSION_NOTES_WRITE, (_, sessionId: string, content: string): void => {
+    const session = sessionRepo.getById(sessionId);
+    if (!session?.notesPath) return;
+    writeFileSync(session.notesPath, content, 'utf8');
+  });
 
   ipcMain.handle(IPC.WINDOW_SHOW, () => showMainWindow());
   ipcMain.handle(IPC.DETECT_AGENTS, () => detectAgents());

@@ -116,6 +116,8 @@ export interface UpdateAgentAccountInput {
 
 export type SessionStatus = 'active' | 'done' | 'pr';
 
+export type PanelLayout = Record<string, number>;
+
 export interface Session {
   id: string;
   projectId: string;
@@ -131,6 +133,11 @@ export interface Session {
   opens: number;
   createdAt: string;
   lastOpened: string;
+  diffVisible: boolean;
+  notesVisible: boolean;
+  verticalLayout: PanelLayout | null;
+  horizontalLayout: PanelLayout | null;
+  sortOrder: number;
 }
 
 export interface CreateSessionInput {
@@ -149,6 +156,10 @@ export interface UpdateSessionInput {
   status?: SessionStatus;
   opens?: number;
   lastOpened?: string;
+  diffVisible?: boolean;
+  notesVisible?: boolean;
+  verticalLayout?: PanelLayout | null;
+  horizontalLayout?: PanelLayout | null;
 }
 
 export interface StartWorkInput {

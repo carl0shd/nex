@@ -14,21 +14,3 @@ export interface SessionTab {
 export interface QuickCommand {
   label: string;
 }
-
-export interface SessionView {
-  id: string;
-  branch: string;
-  workspace: string;
-  project: string;
-  dotColor: string;
-  active: boolean;
-  notes: string;
-  inputPlaceholder?: string;
-  files: ChangedFile[];
-  totalFiles: number;
-  totalAdded: number;
-  totalRemoved: number;
-  tabs: SessionTab[];
-  commands: QuickCommand[];
-  commandOverflowCount?: number;
-}

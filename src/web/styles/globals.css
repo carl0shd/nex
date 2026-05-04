@@ -62,7 +62,7 @@
   /* Backgrounds - elevated */
   --nex-bg-raised: #1c1b1a;
   --nex-bg-input: #121110;
-  --nex-bg-notes: #10100f;
+  --nex-bg-notes: #0f0f0f;
   --nex-bg-chat: #141212;
   --nex-bg-chat-input: #0f0f0f;
   --nex-bg-panel: #161514;
@@ -215,6 +215,23 @@ body {
 .simplebar-track.simplebar-horizontal .simplebar-scrollbar::before {
   top: 0 !important;
   bottom: 0 !important;
+}
+
+.session-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.session-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.session-scroll::-webkit-scrollbar-thumb {
+  background: var(--nex-border);
+  border-radius: 3px;
+}
+
+.session-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--nex-text-placeholder);
 }
 
 [data-sonner-toaster] {

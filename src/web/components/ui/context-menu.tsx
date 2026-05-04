@@ -6,6 +6,7 @@ interface ContextMenuAction {
   icon: LucideIcon;
   onClick: () => void;
   destructive?: boolean;
+  iconClassName?: string;
 }
 
 interface ContextMenuProps {
@@ -28,7 +29,9 @@ function ContextMenu({ trigger, actions }: ContextMenuProps): React.JSX.Element 
 
   return (
     <Menu>
-      <MenuButton as="div">{trigger}</MenuButton>
+      <MenuButton as="div" className="inline-flex">
+        {trigger}
+      </MenuButton>
       <MenuItems
         portal
         anchor="bottom start"
@@ -56,7 +59,9 @@ function ContextMenu({ trigger, actions }: ContextMenuProps): React.JSX.Element 
                 >
                   <action.icon
                     size={13}
-                    className={`shrink-0 ${action.destructive ? '' : 'text-text-muted'}`}
+                    className={`shrink-0 ${
+                      action.iconClassName ?? (action.destructive ? '' : 'text-text-muted')
+                    }`}
                   />
                   <span className="text-[12px]">{action.label}</span>
                 </button>

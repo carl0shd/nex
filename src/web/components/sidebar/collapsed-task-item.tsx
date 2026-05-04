@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { GitBranch } from 'lucide-react';
 import HoverCard from '@/components/ui/hover-card';
 import WorkspaceBadge from '@/components/ui/workspace-badge';
@@ -56,4 +57,4 @@ function CollapsedTaskItem({
   );
 }
 
-export default CollapsedTaskItem;
+export default memo(CollapsedTaskItem);

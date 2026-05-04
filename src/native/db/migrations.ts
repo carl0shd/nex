@@ -70,7 +70,15 @@ const migrations: string[] = [
 
   `ALTER TABLE projects ADD COLUMN branch_prefix TEXT NOT NULL DEFAULT '';`,
 
-  `ALTER TABLE workspaces ADD COLUMN archived INTEGER NOT NULL DEFAULT 0;`
+  `ALTER TABLE workspaces ADD COLUMN archived INTEGER NOT NULL DEFAULT 0;`,
+
+  `ALTER TABLE sessions ADD COLUMN diff_visible INTEGER NOT NULL DEFAULT 1;
+  ALTER TABLE sessions ADD COLUMN notes_visible INTEGER NOT NULL DEFAULT 1;
+  ALTER TABLE sessions ADD COLUMN vertical_layout TEXT;
+  ALTER TABLE sessions ADD COLUMN horizontal_layout TEXT;
+  DELETE FROM settings WHERE key = 'session-ui';`,
+
+  `ALTER TABLE sessions ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0;`
 ];
 
 export function runMigrations(db: Database.Database): void {
