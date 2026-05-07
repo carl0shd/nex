@@ -1,4 +1,5 @@
 import { ipcMain, dialog, BrowserWindow } from 'electron';
+import { spawn } from 'child_process';
 import { statSync, readFileSync, mkdirSync, writeFileSync, existsSync } from 'fs';
 import { extname, join } from 'path';
 import { IPC } from './channels';
@@ -8,7 +9,17 @@ import * as settings from '@native/db/repositories/settings.repo';
 import * as agentRepo from '@native/db/repositories/agent.repo';
 import * as agentAccountRepo from '@native/db/repositories/agent-account.repo';
 import * as sessionRepo from '@native/db/repositories/session.repo';
+import * as terminalRepo from '@native/db/repositories/terminal.repo';
+import {
+  spawnTerminal,
+  writeToTerminal,
+  resizeTerminal,
+  killTerminal,
+  getSnapshot,
+  isAlive
+} from '@native/pty/manager';
 import { detectAgents } from '@native/agents/detect';
+import { createTerminalForSession } from '@native/agents/agent-terminal';
 import { cloneAgentAccount } from '@native/agents/clone-account';
 import { startWork } from '@native/git/start-work';
 import { detectBaseBranch, isGitRepo, listBranches } from '@native/git/git';
@@ -60,7 +71,10 @@ export function registerIPCHandlers(): void {
   ipcMain.handle(IPC.SESSION_GET_ACTIVE, () => sessionRepo.getActive());
   ipcMain.handle(IPC.SESSION_CREATE, (_, input) => sessionRepo.create(input));
   ipcMain.handle(IPC.SESSION_UPDATE, (_, id, input) => sessionRepo.update(id, input));
-  ipcMain.handle(IPC.SESSION_DELETE, (_, id) => sessionRepo.remove(id));
+  ipcMain.handle(IPC.SESSION_DELETE, (_, id: string) => {
+    for (const term of terminalRepo.getBySession(id)) killTerminal(term.id);
+    sessionRepo.remove(id);
+  });
   ipcMain.handle(IPC.SESSION_REORDER, (_, orderedIds: string[]) => sessionRepo.reorder(orderedIds));
 
   ipcMain.handle(IPC.SESSION_NOTES_READ, (_, sessionId: string): string => {
@@ -74,6 +88,44 @@ export function registerIPCHandlers(): void {
     if (!session?.notesPath) return;
     writeFileSync(session.notesPath, content, 'utf8');
   });
+
+  ipcMain.handle(IPC.TERMINAL_GET_ALL, () => terminalRepo.getAll());
+  ipcMain.handle(IPC.TERMINAL_GET_BY_SESSION, (_, sessionId: string) =>
+    terminalRepo.getBySession(sessionId)
+  );
+  ipcMain.handle(IPC.TERMINAL_CREATE, (_, input) => terminalRepo.create(input));
+  ipcMain.handle(IPC.TERMINAL_CREATE_FOR_SESSION, (_, input) => createTerminalForSession(input));
+  ipcMain.handle(IPC.TERMINAL_DELETE, (_, id: string) => {
+    killTerminal(id);
+    terminalRepo.remove(id);
+  });
+
+  ipcMain.handle(IPC.PTY_ENSURE, (_, terminalId: string, cols?: number, rows?: number): boolean => {
+    if (isAlive(terminalId)) return true;
+    const terminal = terminalRepo.getById(terminalId);
+    if (!terminal) return false;
+    spawnTerminal({
+      id: terminal.id,
+      command: terminal.command,
+      args: terminal.args,
+      cwd: terminal.cwd,
+      env: terminal.env,
+      cols,
+      rows,
+      runCommand: terminal.runCommand
+    });
+    return true;
+  });
+  ipcMain.on(IPC.PTY_WRITE, (_, terminalId: string, data: string) => {
+    writeToTerminal(terminalId, data);
+  });
+  ipcMain.on(IPC.PTY_RESIZE, (_, terminalId: string, cols: number, rows: number) => {
+    resizeTerminal(terminalId, cols, rows);
+  });
+  ipcMain.handle(IPC.PTY_KILL, (_, terminalId: string) => {
+    killTerminal(terminalId);
+  });
+  ipcMain.handle(IPC.PTY_GET_SNAPSHOT, (_, terminalId: string) => getSnapshot(terminalId));
 
   ipcMain.handle(IPC.WINDOW_SHOW, () => showMainWindow());
   ipcMain.handle(IPC.DETECT_AGENTS, () => detectAgents());
@@ -117,6 +169,14 @@ export function registerIPCHandlers(): void {
     });
     if (result.canceled || result.filePaths.length === 0) return null;
     return result.filePaths[0];
+  });
+
+  ipcMain.handle(IPC.IDE_OPEN_VSCODE, (_, path: string): boolean => {
+    if (!path) return false;
+    const child = spawn('code', [path], { detached: true, stdio: 'ignore' });
+    child.on('error', () => {});
+    child.unref();
+    return true;
   });
 
   ipcMain.handle(

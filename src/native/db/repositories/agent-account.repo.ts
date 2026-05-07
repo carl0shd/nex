@@ -47,6 +47,13 @@ export function getDefault(agentId: string): AgentAccount | null {
   return row ? toAgentAccount(row) : null;
 }
 
+export function getById(id: string): AgentAccount | null {
+  const row = getDb().prepare('SELECT * FROM agent_accounts WHERE id = ?').get(id) as
+    | AgentAccountRow
+    | undefined;
+  return row ? toAgentAccount(row) : null;
+}
+
 export function getByName(name: string): AgentAccount | null {
   const row = getDb().prepare('SELECT * FROM agent_accounts WHERE name = ?').get(name) as
     | AgentAccountRow

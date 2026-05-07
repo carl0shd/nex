@@ -27,6 +27,7 @@ interface SessionRow {
   vertical_layout: string | null;
   horizontal_layout: string | null;
   sort_order: number;
+  width: number;
 }
 
 function parseLayout(value: string | null): PanelLayout | null {
@@ -58,7 +59,8 @@ function toSession(row: SessionRow): Session {
     notesVisible: row.notes_visible === 1,
     verticalLayout: parseLayout(row.vertical_layout),
     horizontalLayout: parseLayout(row.horizontal_layout),
-    sortOrder: row.sort_order
+    sortOrder: row.sort_order,
+    width: row.width
   };
 }
 
@@ -170,6 +172,10 @@ export function update(id: string, input: UpdateSessionInput): Session {
   if (input.horizontalLayout !== undefined) {
     fields.push('horizontal_layout = ?');
     values.push(input.horizontalLayout === null ? null : JSON.stringify(input.horizontalLayout));
+  }
+  if (input.width !== undefined) {
+    fields.push('width = ?');
+    values.push(input.width);
   }
 
   if (fields.length === 0) {

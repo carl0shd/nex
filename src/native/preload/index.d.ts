@@ -15,7 +15,11 @@ import type {
   Session,
   CreateSessionInput,
   UpdateSessionInput,
-  StartWorkInput
+  StartWorkInput,
+  Terminal,
+  CreateTerminalInput,
+  TerminalStatus,
+  TerminalType
 } from '@native/db/types';
 
 interface NexAPI {
@@ -72,8 +76,36 @@ interface NexAPI {
   pickImage: () => Promise<string | null>;
   pickDirectory: () => Promise<string | null>;
   saveWorkspaceIcon: (workspaceId: string, dataUrl: string) => Promise<string | null>;
+  openInVSCode: (path: string) => Promise<boolean>;
 
   onFullscreenChange: (callback: (value: boolean) => void) => () => void;
+
+  getTerminals: () => Promise<Terminal[]>;
+  getTerminalsBySession: (sessionId: string) => Promise<Terminal[]>;
+  createTerminal: (input: CreateTerminalInput) => Promise<Terminal>;
+  createSessionTerminal: (input: {
+    sessionId: string;
+    type: TerminalType;
+    name?: string;
+    runCommand?: string;
+  }) => Promise<Terminal>;
+  deleteTerminal: (id: string) => Promise<void>;
+
+  ptyEnsure: (terminalId: string, cols?: number, rows?: number) => Promise<boolean>;
+  ptyWrite: (terminalId: string, data: string) => void;
+  ptyResize: (terminalId: string, cols: number, rows: number) => void;
+  ptyKill: (terminalId: string) => Promise<void>;
+  ptyGetSnapshot: (terminalId: string) => Promise<{ data: string; alive: boolean } | null>;
+
+  onPtyData: (terminalId: string, callback: (data: string) => void) => () => void;
+  onPtyExit: (
+    terminalId: string,
+    callback: (info: { exitCode: number; signal?: number }) => void
+  ) => () => void;
+
+  onTerminalStatus: (
+    callback: (info: { id: string; status: TerminalStatus }) => void
+  ) => () => void;
 }
 
 declare global {

@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import { IPC } from '@native/ipc/channels';
 
 const api = {
   getAppInfo: () => ipcRenderer.invoke('app:get-info'),
@@ -57,11 +58,63 @@ const api = {
   pickDirectory: () => ipcRenderer.invoke('dialog:pick-directory'),
   saveWorkspaceIcon: (workspaceId: string, dataUrl: string) =>
     ipcRenderer.invoke('workspace:save-icon', workspaceId, dataUrl),
+  openInVSCode: (path: string) => ipcRenderer.invoke(IPC.IDE_OPEN_VSCODE, path),
 
   onFullscreenChange: (callback: (value: boolean) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, value: boolean): void => callback(value);
     ipcRenderer.on('window:fullscreen-change', handler);
     return () => ipcRenderer.removeListener('window:fullscreen-change', handler);
+  },
+
+  getTerminals: () => ipcRenderer.invoke(IPC.TERMINAL_GET_ALL),
+  getTerminalsBySession: (sessionId: string) =>
+    ipcRenderer.invoke(IPC.TERMINAL_GET_BY_SESSION, sessionId),
+  createTerminal: (input: unknown) => ipcRenderer.invoke(IPC.TERMINAL_CREATE, input),
+  createSessionTerminal: (input: unknown) =>
+    ipcRenderer.invoke(IPC.TERMINAL_CREATE_FOR_SESSION, input),
+  deleteTerminal: (id: string) => ipcRenderer.invoke(IPC.TERMINAL_DELETE, id),
+
+  ptyEnsure: (terminalId: string, cols?: number, rows?: number) =>
+    ipcRenderer.invoke(IPC.PTY_ENSURE, terminalId, cols, rows),
+  ptyWrite: (terminalId: string, data: string) => ipcRenderer.send(IPC.PTY_WRITE, terminalId, data),
+  ptyResize: (terminalId: string, cols: number, rows: number) =>
+    ipcRenderer.send(IPC.PTY_RESIZE, terminalId, cols, rows),
+  ptyKill: (terminalId: string) => ipcRenderer.invoke(IPC.PTY_KILL, terminalId),
+  ptyGetSnapshot: (terminalId: string) => ipcRenderer.invoke(IPC.PTY_GET_SNAPSHOT, terminalId),
+
+  onPtyData: (terminalId: string, callback: (data: string) => void) => {
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      payload: { id: string; data: string }
+    ): void => {
+      if (payload.id === terminalId) callback(payload.data);
+    };
+    ipcRenderer.on(IPC.PTY_DATA, handler);
+    return () => ipcRenderer.removeListener(IPC.PTY_DATA, handler);
+  },
+
+  onPtyExit: (
+    terminalId: string,
+    callback: (info: { exitCode: number; signal?: number }) => void
+  ) => {
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      payload: { id: string; exitCode: number; signal?: number }
+    ): void => {
+      if (payload.id === terminalId)
+        callback({ exitCode: payload.exitCode, signal: payload.signal });
+    };
+    ipcRenderer.on(IPC.PTY_EXIT, handler);
+    return () => ipcRenderer.removeListener(IPC.PTY_EXIT, handler);
+  },
+
+  onTerminalStatus: (callback: (info: { id: string; status: 'idle' | 'running' }) => void) => {
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      payload: { id: string; status: 'idle' | 'running' }
+    ): void => callback(payload);
+    ipcRenderer.on(IPC.TERMINAL_STATUS, handler);
+    return () => ipcRenderer.removeListener(IPC.TERMINAL_STATUS, handler);
   }
 };
 

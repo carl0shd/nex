@@ -21,7 +21,7 @@ import Chip from '@/components/ui/chip';
 import { useWorkspaceStore } from '@/stores/workspace.store';
 import { useAgentStore } from '@/stores/agent.store';
 import { useSessionStore } from '@/stores/session.store';
-import claudeLogo from '@/assets/images/claude-logo.svg';
+import AgentIcon from '@/components/ui/agent-icon';
 
 const SYMLINK_OPTIONS = ['.env', 'node_modules'] as const;
 
@@ -189,10 +189,7 @@ function TaskForm({
       agents.map((agent) => ({
         value: agent.id,
         label: agent.name,
-        icon:
-          agent.slug === 'claude-code' ? (
-            <img src={claudeLogo} alt="" className="h-[18px] w-[18px]" draggable={false} />
-          ) : undefined
+        icon: <AgentIcon slug={agent.slug} size={18} />
       })),
     [agents]
   );

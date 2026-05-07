@@ -11,6 +11,8 @@ files:
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
 asarUnpack:
   - build/**
+  - node_modules/node-pty/**
+  - node_modules/better-sqlite3/**
 win:
   executableName: nex
 nsis:

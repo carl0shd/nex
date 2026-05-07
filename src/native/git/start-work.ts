@@ -13,7 +13,16 @@ import {
   isGitRepo
 } from '@native/git/git';
 import { setupSymlinks } from '@native/git/symlinks';
+import { createTerminalForSession } from '@native/agents/agent-terminal';
 import type { Session, StartWorkInput } from '@native/db/types';
+
+function createPrimaryTerminal(session: Session): void {
+  createTerminalForSession({
+    sessionId: session.id,
+    type: session.agentId ? 'agent' : 'shell',
+    isPrimary: true
+  });
+}
 
 async function writeIfMissing(path: string, content: string): Promise<void> {
   try {
@@ -50,7 +59,7 @@ export async function startWork(input: StartWorkInput): Promise<Session> {
   await writeIfMissing(sharedPath, `# ${project.name} - Shared Context\n`);
 
   if (!(await isGitRepo(project.path))) {
-    return sessionRepo.create({
+    const session = sessionRepo.create({
       projectId: project.id,
       agentId: input.agentId,
       accountId: input.accountId,
@@ -61,6 +70,8 @@ export async function startWork(input: StartWorkInput): Promise<Session> {
       notesPath,
       symlinks: []
     });
+    createPrimaryTerminal(session);
+    return session;
   }
 
   const [detected] = await Promise.all([detectBaseBranch(project.path), fetchOrigin(project.path)]);
@@ -77,7 +88,7 @@ export async function startWork(input: StartWorkInput): Promise<Session> {
     await linkIfMissing(notesPath, join(wtPath, 'TASK_NOTES.md'));
     await linkIfMissing(sharedPath, join(wtPath, 'SHARED_CONTEXT.md'));
 
-    return sessionRepo.create({
+    const session = sessionRepo.create({
       projectId: project.id,
       agentId: input.agentId,
       accountId: input.accountId,
@@ -88,6 +99,8 @@ export async function startWork(input: StartWorkInput): Promise<Session> {
       notesPath,
       symlinks: ['.claude']
     });
+    createPrimaryTerminal(session);
+    return session;
   } catch (err) {
     await removeWorktree(project.path, wtPath).catch(() => {});
     await deleteBranch(project.path, branch).catch(() => {});

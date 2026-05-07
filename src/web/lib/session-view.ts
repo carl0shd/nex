@@ -6,6 +6,7 @@ export interface ChangedFile {
 }
 
 export interface SessionTab {
+  id: string;
   name: string;
   dotColor: string;
   active?: boolean;
@@ -13,4 +14,5 @@ export interface SessionTab {
 
 export interface QuickCommand {
   label: string;
+  command: string;
 }
