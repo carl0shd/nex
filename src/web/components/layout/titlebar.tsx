@@ -36,7 +36,7 @@ function Titlebar({ onToggleSidebar }: TitlebarProps): React.JSX.Element {
         style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
       >
         <CommandBar />
-        <ActiveBadge count={2} />
+        <ActiveBadge count={0} />
         <TokensBadge percent={65} />
         <CostBadge amount={0.08} />
       </div>

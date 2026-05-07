@@ -48,7 +48,23 @@ export const IPC = {
   WINDOW_SHOW: 'window:show',
   DIALOG_PICK_IMAGE: 'dialog:pick-image',
   DIALOG_PICK_DIRECTORY: 'dialog:pick-directory',
-  SAVE_WORKSPACE_ICON: 'workspace:save-icon'
+  SAVE_WORKSPACE_ICON: 'workspace:save-icon',
+  IDE_OPEN_VSCODE: 'ide:open-vscode',
+
+  TERMINAL_GET_ALL: 'terminal:get-all',
+  TERMINAL_GET_BY_SESSION: 'terminal:get-by-session',
+  TERMINAL_CREATE: 'terminal:create',
+  TERMINAL_CREATE_FOR_SESSION: 'terminal:create-for-session',
+  TERMINAL_DELETE: 'terminal:delete',
+
+  PTY_ENSURE: 'pty:ensure',
+  PTY_WRITE: 'pty:write',
+  PTY_RESIZE: 'pty:resize',
+  PTY_KILL: 'pty:kill',
+  PTY_GET_SNAPSHOT: 'pty:get-snapshot',
+  PTY_DATA: 'pty:data',
+  PTY_EXIT: 'pty:exit',
+  TERMINAL_STATUS: 'terminal:status'
 } as const;
 
 export type IPCChannel = (typeof IPC)[keyof typeof IPC];

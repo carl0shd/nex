@@ -78,7 +78,39 @@ const migrations: string[] = [
   ALTER TABLE sessions ADD COLUMN horizontal_layout TEXT;
   DELETE FROM settings WHERE key = 'session-ui';`,
 
-  `ALTER TABLE sessions ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0;`
+  `ALTER TABLE sessions ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0;`,
+
+  `CREATE TABLE terminals (
+    id TEXT PRIMARY KEY,
+    session_id TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    command TEXT,
+    args TEXT NOT NULL DEFAULT '[]',
+    cwd TEXT NOT NULL,
+    env TEXT NOT NULL DEFAULT '{}',
+    is_primary INTEGER NOT NULL DEFAULT 0,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE INDEX idx_terminals_session ON terminals(session_id);`,
+
+  `ALTER TABLE terminals ADD COLUMN status TEXT NOT NULL DEFAULT 'idle' CHECK(status IN ('idle','running'));`,
+
+  `ALTER TABLE terminals ADD COLUMN type TEXT NOT NULL DEFAULT 'shell' CHECK(type IN ('agent','shell'));`,
+
+  `UPDATE terminals SET type = 'agent' WHERE is_primary = 1 AND command IS NOT NULL;
+   UPDATE terminals SET name = 'Claude Code'
+     WHERE id IN (
+       SELECT t.id FROM terminals t
+       JOIN sessions s ON s.id = t.session_id
+       JOIN agents a ON a.id = s.agent_id
+       WHERE t.is_primary = 1 AND a.slug = 'claude-code'
+     );`,
+
+  `ALTER TABLE terminals ADD COLUMN run_command TEXT;`,
+
+  `ALTER TABLE sessions ADD COLUMN width INTEGER NOT NULL DEFAULT 600;`
 ];
 
 export function runMigrations(db: Database.Database): void {

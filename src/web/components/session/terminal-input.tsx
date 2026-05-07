@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { GitBranch, ChevronDown, Eye, EyeOff, Paperclip, Mic, ArrowUp } from 'lucide-react';
+import { Eye, EyeOff, Paperclip, Mic, ArrowUp } from 'lucide-react';
 import IconButton from '@/components/ui/icon-button';
 
 interface TerminalInputProps {
@@ -20,31 +20,23 @@ function TerminalInput({
   const NotesIcon = notesVisible ? Eye : EyeOff;
   const DiffIcon = diffVisible ? Eye : EyeOff;
   return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-center gap-3 px-2 py-1">
-        <button className="group flex cursor-pointer items-center gap-1.5 text-text-muted select-none hover:text-text-secondary">
-          <GitBranch size={12} />
-          <span className="text-[10px] font-medium">Git Actions</span>
-          <ChevronDown size={10} />
+    <div className="flex shrink-0 flex-col gap-1.5">
+      <div className="flex items-center justify-end gap-2 px-2 py-1">
+        <button
+          onClick={onToggleNotes}
+          className="flex cursor-pointer items-center gap-1.5 text-text-muted select-none hover:text-text-secondary"
+        >
+          <NotesIcon size={11} />
+          <span className="text-[10px]">Notes</span>
         </button>
-        <span className="flex-1" />
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onToggleNotes}
-            className={`flex cursor-pointer items-center gap-1.5 select-none hover:text-text-secondary ${notesVisible ? 'text-text-secondary' : 'text-text-muted'}`}
-          >
-            <NotesIcon size={11} />
-            <span className="text-[10px]">Notes</span>
-          </button>
-          <span className="h-2.5 w-px bg-border-soft" />
-          <button
-            onClick={onToggleDiff}
-            className={`flex cursor-pointer items-center gap-1.5 select-none hover:text-text-secondary ${diffVisible ? 'text-text-secondary' : 'text-text-muted'}`}
-          >
-            <DiffIcon size={11} />
-            <span className="text-[10px]">Diff</span>
-          </button>
-        </div>
+        <span className="h-2.5 w-px bg-border-soft" />
+        <button
+          onClick={onToggleDiff}
+          className="flex cursor-pointer items-center gap-1.5 text-text-muted select-none hover:text-text-secondary"
+        >
+          <DiffIcon size={11} />
+          <span className="text-[10px]">Diff</span>
+        </button>
       </div>
 
       <div className="rounded-lg border border-border-soft bg-bg-chat-input hover:border-border">

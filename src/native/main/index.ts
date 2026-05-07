@@ -5,6 +5,8 @@ import { registerIPCHandlers } from '@native/ipc/handlers';
 import { initAutoUpdater } from './updater';
 import { initDatabase, closeDatabase } from '@native/db/database';
 import { registerScheme, registerHandler } from '@native/protocol/nex-file';
+import { killAllTerminals } from '@native/pty/manager';
+import { resetAllStatus } from '@native/db/repositories/terminal.repo';
 
 registerScheme();
 
@@ -17,6 +19,7 @@ app.whenReady().then(() => {
   });
 
   initDatabase();
+  resetAllStatus();
   registerIPCHandlers();
 
   createMainWindow();
@@ -37,6 +40,7 @@ app.on('before-quit', () => {
 });
 
 app.on('will-quit', () => {
+  killAllTerminals();
   closeDatabase();
 });
 

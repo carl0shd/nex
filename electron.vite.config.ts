@@ -16,7 +16,11 @@ export default defineConfig({
           'src/native/main/**',
           'src/native/ipc/**',
           'src/native/db/**',
-          'src/native/cli/**'
+          'src/native/cli/**',
+          'src/native/pty/**',
+          'src/native/git/**',
+          'src/native/agents/**',
+          'src/native/protocol/**'
         ]
       },
       rollupOptions: {
@@ -25,6 +29,11 @@ export default defineConfig({
     }
   },
   preload: {
+    resolve: {
+      alias: {
+        '@native': resolve(__dirname, './src/native')
+      }
+    },
     build: {
       watch: {
         include: ['src/native/preload/**']

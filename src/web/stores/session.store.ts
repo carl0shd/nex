@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import type { Session, CreateSessionInput, UpdateSessionInput } from '@native/db/types';
+import { useTerminalStore } from '@/stores/terminal.store';
+import { clearXtermSnapshot } from '@/lib/xterm-snapshot-cache';
 
 interface SessionStore {
   sessions: Session[];
@@ -38,6 +40,14 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
   deleteSession: async (id) => {
     await window.api.deleteSession(id);
     set((s) => ({ sessions: s.sessions.filter((sess) => sess.id !== id) }));
+    useTerminalStore.setState((s) => {
+      const removed = s.terminals.filter((t) => t.sessionId === id);
+      const terminals = s.terminals.filter((t) => t.sessionId !== id);
+      const activeBySession = { ...s.activeBySession };
+      delete activeBySession[id];
+      removed.forEach((t) => clearXtermSnapshot(t.id));
+      return { terminals, activeBySession };
+    });
   },
 
   reorderSessions: async (orderedIds) => {

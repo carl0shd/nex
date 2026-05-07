@@ -234,6 +234,29 @@ body {
   background: var(--nex-text-placeholder);
 }
 
+.xterm-viewport {
+  scrollbar-width: thin;
+  scrollbar-color: var(--nex-border) transparent;
+  right: -2px !important;
+}
+
+.xterm-viewport::-webkit-scrollbar {
+  width: 6px;
+}
+
+.xterm-viewport::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.xterm-viewport::-webkit-scrollbar-thumb {
+  background: var(--nex-border);
+  border-radius: 3px;
+}
+
+.xterm-viewport::-webkit-scrollbar-thumb:hover {
+  background: var(--nex-text-placeholder);
+}
+
 [data-sonner-toaster] {
   --normal-bg: var(--nex-bg-menu);
   --normal-text: var(--nex-text);

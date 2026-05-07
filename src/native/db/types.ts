@@ -138,6 +138,7 @@ export interface Session {
   verticalLayout: PanelLayout | null;
   horizontalLayout: PanelLayout | null;
   sortOrder: number;
+  width: number;
 }
 
 export interface CreateSessionInput {
@@ -160,6 +161,7 @@ export interface UpdateSessionInput {
   notesVisible?: boolean;
   verticalLayout?: PanelLayout | null;
   horizontalLayout?: PanelLayout | null;
+  width?: number;
 }
 
 export interface StartWorkInput {
@@ -174,4 +176,40 @@ export interface CloneAgentAccountInput {
   agentId: string;
   name: string;
   copyConfig?: boolean;
+}
+
+export type TerminalStatus = 'idle' | 'running';
+export type TerminalType = 'agent' | 'shell';
+
+export interface Terminal {
+  id: string;
+  sessionId: string;
+  name: string;
+  command: string | null;
+  args: string[];
+  cwd: string;
+  env: Record<string, string>;
+  isPrimary: boolean;
+  sortOrder: number;
+  status: TerminalStatus;
+  type: TerminalType;
+  runCommand: string | null;
+  createdAt: string;
+}
+
+export interface CreateTerminalInput {
+  sessionId: string;
+  name: string;
+  command?: string | null;
+  args?: string[];
+  cwd: string;
+  env?: Record<string, string>;
+  isPrimary?: boolean;
+  type?: TerminalType;
+  runCommand?: string | null;
+}
+
+export interface UpdateTerminalInput {
+  name?: string;
+  sortOrder?: number;
 }
