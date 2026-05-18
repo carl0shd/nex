@@ -72,11 +72,15 @@ interface NexAPI {
   detectBaseBranch: (repoPath: string) => Promise<string>;
   isGitRepo: (repoPath: string) => Promise<boolean>;
   listBranches: (repoPath: string) => Promise<string[]>;
+  listWorktreeFiles: (
+    worktreePath: string
+  ) => Promise<Array<{ path: string; type: 'file' | 'folder' }>>;
 
   pickImage: () => Promise<string | null>;
   pickDirectory: () => Promise<string | null>;
   saveWorkspaceIcon: (workspaceId: string, dataUrl: string) => Promise<string | null>;
   openInVSCode: (path: string) => Promise<boolean>;
+  openExternalUrl: (url: string) => Promise<boolean>;
 
   onFullscreenChange: (callback: (value: boolean) => void) => () => void;
 

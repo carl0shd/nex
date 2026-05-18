@@ -54,11 +54,14 @@ const api = {
   detectBaseBranch: (repoPath: string) => ipcRenderer.invoke('git:detect-base-branch', repoPath),
   isGitRepo: (repoPath: string) => ipcRenderer.invoke('git:is-repo', repoPath),
   listBranches: (repoPath: string) => ipcRenderer.invoke('git:list-branches', repoPath),
+  listWorktreeFiles: (worktreePath: string) =>
+    ipcRenderer.invoke(IPC.WORKTREE_LIST_FILES, worktreePath),
   pickImage: () => ipcRenderer.invoke('dialog:pick-image'),
   pickDirectory: () => ipcRenderer.invoke('dialog:pick-directory'),
   saveWorkspaceIcon: (workspaceId: string, dataUrl: string) =>
     ipcRenderer.invoke('workspace:save-icon', workspaceId, dataUrl),
   openInVSCode: (path: string) => ipcRenderer.invoke(IPC.IDE_OPEN_VSCODE, path),
+  openExternalUrl: (url: string) => ipcRenderer.invoke(IPC.EXTERNAL_OPEN_URL, url),
 
   onFullscreenChange: (callback: (value: boolean) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, value: boolean): void => callback(value);

@@ -73,7 +73,7 @@ function TabBar({
   );
 
   return (
-    <div className="flex items-center gap-1 border-b border-border-soft bg-bg-soft p-1">
+    <div className="flex h-9 shrink-0 items-center gap-1 border-b border-border-soft bg-bg-soft px-1">
       <div className="flex min-w-0 flex-1 items-center gap-1.5">
         {visibleTabs.map((tab) => (
           <TerminalTab

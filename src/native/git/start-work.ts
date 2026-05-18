@@ -53,7 +53,7 @@ export async function startWork(input: StartWorkInput): Promise<Session> {
   await mkdir(sessionsDir, { recursive: true });
 
   const notesPath = join(sessionsDir, 'TASK_NOTES.md');
-  await writeIfMissing(notesPath, '');
+  await writeFile(notesPath, '');
 
   const sharedPath = join(homedir(), '.nex', 'sessions', project.name, 'SHARED_CONTEXT.md');
   await writeIfMissing(sharedPath, `# ${project.name} - Shared Context\n`);

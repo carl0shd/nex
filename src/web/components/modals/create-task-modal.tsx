@@ -21,6 +21,7 @@ import Chip from '@/components/ui/chip';
 import { useWorkspaceStore } from '@/stores/workspace.store';
 import { useAgentStore } from '@/stores/agent.store';
 import { useSessionStore } from '@/stores/session.store';
+import { useTerminalStore } from '@/stores/terminal.store';
 import AgentIcon from '@/components/ui/agent-icon';
 
 const SYMLINK_OPTIONS = ['.env', 'node_modules'] as const;
@@ -57,6 +58,7 @@ function TaskForm({
   const agents = useAgentStore((s) => s.agents);
   const accounts = useAgentStore((s) => s.accounts);
   const loadSessions = useSessionStore((s) => s.loadSessions);
+  const loadTerminals = useTerminalStore((s) => s.loadTerminals);
 
   const activeWorkspaces = useMemo(() => workspaces.filter((ws) => !ws.archived), [workspaces]);
 
@@ -239,7 +241,7 @@ function TaskForm({
       });
       return;
     }
-    await loadSessions();
+    await Promise.all([loadSessions(), loadTerminals()]);
     setSaving(false);
     onClose();
     toast.success('Task created');

@@ -1,6 +1,7 @@
 import { app } from 'electron';
 import { electronApp, optimizer } from '@electron-toolkit/utils';
 import { createMainWindow, getMainWindow, setQuitting } from './app-window';
+import { createApplicationMenu } from './menu';
 import { registerIPCHandlers } from '@native/ipc/handlers';
 import { initAutoUpdater } from './updater';
 import { initDatabase, closeDatabase } from '@native/db/database';
@@ -21,6 +22,7 @@ app.whenReady().then(() => {
   initDatabase();
   resetAllStatus();
   registerIPCHandlers();
+  createApplicationMenu();
 
   createMainWindow();
   initAutoUpdater();

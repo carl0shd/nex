@@ -1,12 +1,15 @@
 import {
   memo,
   useCallback,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type CSSProperties,
   type HTMLAttributes,
   type Ref
 } from 'react';
+import { useMergedRef } from '@/hooks/use-merged-ref';
 import type { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
 import { Group, Panel, type Layout } from 'react-resizable-panels';
 import { useShallow } from 'zustand/react/shallow';
@@ -25,6 +28,7 @@ import NoTerminalsEmpty from '@/components/session/no-terminals-empty';
 import XtermView from '@/components/ui/xterm-view';
 import ResizeHandle from '@/components/ui/resize-handle';
 import CloseSessionModal from '@/components/modals/close-session-modal';
+import type { ChatEditorHandle } from '@/components/session/chat-editor';
 import type { SessionTab, QuickCommand } from '@/lib/session-view';
 
 interface SessionPanelChromeProps {
@@ -53,6 +57,22 @@ function SessionPanelChrome({
 }: SessionPanelChromeProps): React.JSX.Element {
   const session = useSessionStore((s) => s.sessions.find((x) => x.id === sessionId));
   const updateSession = useSessionStore((s) => s.updateSession);
+  const setActiveSession = useSessionStore((s) => s.setActiveSession);
+  const pendingFocusSessionId = useSessionStore((s) => s.pendingFocusSessionId);
+  const pendingCloseSessionId = useSessionStore((s) => s.pendingCloseSessionId);
+  const isActiveSession = useSessionStore((s) => s.activeSessionId === sessionId);
+
+  const localContainerRef = useRef<HTMLDivElement | null>(null);
+  const setContainerRef = useMergedRef(localContainerRef, containerRef);
+
+  useEffect(() => {
+    if (pendingFocusSessionId !== sessionId) return;
+    localContainerRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'center'
+    });
+  }, [pendingFocusSessionId, sessionId]);
 
   const branch = session?.branch ?? '';
   const name = session?.name ?? '';
@@ -98,15 +118,32 @@ function SessionPanelChrome({
     updateSession(sessionId, { notesVisible: !notesVisible });
   }, [sessionId, updateSession, notesVisible]);
 
-  const [closeModalOpen, setCloseModalOpen] = useState(false);
-  const openCloseModal = useCallback((): void => setCloseModalOpen(true), []);
-  const dismissCloseModal = useCallback((): void => setCloseModalOpen(false), []);
+  const [localCloseOpen, setLocalCloseOpen] = useState(false);
+  const closeModalOpen = localCloseOpen || pendingCloseSessionId === sessionId;
+  const openCloseModal = useCallback((): void => setLocalCloseOpen(true), []);
+  const dismissCloseModal = useCallback((): void => {
+    setLocalCloseOpen(false);
+    if (useSessionStore.getState().pendingCloseSessionId === sessionId) {
+      useSessionStore.getState().consumePendingClose();
+    }
+  }, [sessionId]);
 
   const worktreePath = session?.worktreePath;
   const handleOpenIDE = useCallback((): void => {
     if (!worktreePath) return;
     void window.api.openInVSCode(worktreePath);
   }, [worktreePath]);
+
+  const handleFocusIn = useCallback((): void => {
+    setActiveSession(sessionId);
+  }, [sessionId, setActiveSession]);
+
+  const chatEditorRef = useRef<ChatEditorHandle | null>(null);
+
+  const handleRedirectKey = useCallback((char: string): void => {
+    chatEditorRef.current?.focus();
+    chatEditorRef.current?.insertText(char);
+  }, []);
 
   const verticalDefault = topVisible && verticalLayout ? verticalLayout : undefined;
   const horizontalDefault =
@@ -126,6 +163,23 @@ function SessionPanelChrome({
 
   const activeTerminal = sessionTerminals.find((t) => t.id === activeTerminalId);
   const showAgentInput = activeTerminal?.type === 'agent';
+
+  const handleSubmitChat = useCallback(
+    (text: string): void => {
+      if (!activeTerminalId) return;
+      window.api.ptyWrite(activeTerminalId, `${text}\r`);
+    },
+    [activeTerminalId]
+  );
+
+  const handleForwardKey = useCallback(
+    (data: string): void => {
+      if (!activeTerminalId) return;
+      window.api.ptyWrite(activeTerminalId, data);
+      useSessionStore.getState().focusSession(sessionId);
+    },
+    [activeTerminalId, sessionId]
+  );
 
   const headerDotColor = 'var(--nex-text-muted)';
   const tabs = useMemo<SessionTab[]>(
@@ -193,9 +247,13 @@ function SessionPanelChrome({
 
   return (
     <div
-      ref={containerRef}
+      ref={setContainerRef}
       style={mergedStyle}
-      className={`relative flex h-full shrink-0 flex-col overflow-hidden rounded-lg border border-border-soft bg-bg ${extraClassName}`}
+      onFocus={handleFocusIn}
+      onMouseDown={handleFocusIn}
+      className={`relative flex h-full shrink-0 flex-col overflow-hidden rounded-lg border bg-bg ${
+        isActiveSession ? 'border-border' : 'border-border-soft'
+      } ${extraClassName}`}
     >
       <SessionHeader
         branch={branch || name}
@@ -273,17 +331,26 @@ function SessionPanelChrome({
                 ) : (
                   nearViewport &&
                   activeTerminalId && (
-                    <XtermView key={activeTerminalId} terminalId={activeTerminalId} />
+                    <XtermView
+                      key={activeTerminalId}
+                      terminalId={activeTerminalId}
+                      sessionId={sessionId}
+                      onRedirectKey={showAgentInput ? handleRedirectKey : undefined}
+                    />
                   )
                 )}
               </div>
               {showAgentInput && (
                 <TerminalInput
-                  placeholder="Ask the agent…"
+                  placeholder="Type a message / @ to reference"
                   diffVisible={diffVisible}
                   notesVisible={notesVisible}
+                  worktreePath={worktreePath}
+                  editorRef={chatEditorRef}
                   onToggleDiff={toggleDiff}
                   onToggleNotes={toggleNotes}
+                  onSubmit={handleSubmitChat}
+                  onForwardKey={handleForwardKey}
                 />
               )}
             </div>

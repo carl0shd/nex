@@ -5,6 +5,9 @@ import { clearXtermSnapshot } from '@/lib/xterm-snapshot-cache';
 
 interface SessionStore {
   sessions: Session[];
+  activeSessionId: string | null;
+  pendingFocusSessionId: string | null;
+  pendingCloseSessionId: string | null;
 
   loadSessions: () => Promise<void>;
 
@@ -12,6 +15,11 @@ interface SessionStore {
   updateSession: (id: string, input: UpdateSessionInput) => Promise<Session>;
   deleteSession: (id: string) => Promise<void>;
   reorderSessions: (orderedIds: string[]) => Promise<void>;
+  setActiveSession: (id: string | null) => void;
+  focusSession: (id: string) => void;
+  consumePendingFocus: () => void;
+  requestCloseSession: (id: string) => void;
+  consumePendingClose: () => void;
 
   getByProject: (projectId: string) => Session[];
   getActive: () => Session[];
@@ -19,6 +27,9 @@ interface SessionStore {
 
 export const useSessionStore = create<SessionStore>((set, get) => ({
   sessions: [],
+  activeSessionId: null,
+  pendingFocusSessionId: null,
+  pendingCloseSessionId: null,
 
   loadSessions: async () => {
     const sessions = await window.api.getSessions();
@@ -39,7 +50,10 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
 
   deleteSession: async (id) => {
     await window.api.deleteSession(id);
-    set((s) => ({ sessions: s.sessions.filter((sess) => sess.id !== id) }));
+    set((s) => ({
+      sessions: s.sessions.filter((sess) => sess.id !== id),
+      activeSessionId: s.activeSessionId === id ? null : s.activeSessionId
+    }));
     useTerminalStore.setState((s) => {
       const removed = s.terminals.filter((t) => t.sessionId === id);
       const terminals = s.terminals.filter((t) => t.sessionId !== id);
@@ -48,6 +62,26 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
       removed.forEach((t) => clearXtermSnapshot(t.id));
       return { terminals, activeBySession };
     });
+  },
+
+  setActiveSession: (id) => {
+    set((s) => (s.activeSessionId === id ? s : { activeSessionId: id }));
+  },
+
+  focusSession: (id) => {
+    set({ activeSessionId: id, pendingFocusSessionId: id });
+  },
+
+  consumePendingFocus: () => {
+    set((s) => (s.pendingFocusSessionId === null ? s : { pendingFocusSessionId: null }));
+  },
+
+  requestCloseSession: (id) => {
+    set({ pendingCloseSessionId: id });
+  },
+
+  consumePendingClose: () => {
+    set((s) => (s.pendingCloseSessionId === null ? s : { pendingCloseSessionId: null }));
   },
 
   reorderSessions: async (orderedIds) => {

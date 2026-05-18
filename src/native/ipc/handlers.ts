@@ -1,4 +1,4 @@
-import { ipcMain, dialog, BrowserWindow } from 'electron';
+import { ipcMain, dialog, shell, BrowserWindow } from 'electron';
 import { spawn } from 'child_process';
 import { statSync, readFileSync, mkdirSync, writeFileSync, existsSync } from 'fs';
 import { extname, join } from 'path';
@@ -22,7 +22,7 @@ import { detectAgents } from '@native/agents/detect';
 import { createTerminalForSession } from '@native/agents/agent-terminal';
 import { cloneAgentAccount } from '@native/agents/clone-account';
 import { startWork } from '@native/git/start-work';
-import { detectBaseBranch, isGitRepo, listBranches } from '@native/git/git';
+import { detectBaseBranch, isGitRepo, listBranches, listWorktreeFiles } from '@native/git/git';
 import { showMainWindow } from '@native/main/app-window';
 
 export function registerIPCHandlers(): void {
@@ -134,6 +134,9 @@ export function registerIPCHandlers(): void {
   ipcMain.handle(IPC.GIT_DETECT_BASE_BRANCH, (_, repoPath) => detectBaseBranch(repoPath));
   ipcMain.handle(IPC.GIT_IS_REPO, (_, repoPath) => isGitRepo(repoPath));
   ipcMain.handle(IPC.GIT_LIST_BRANCHES, (_, repoPath) => listBranches(repoPath));
+  ipcMain.handle(IPC.WORKTREE_LIST_FILES, (_, worktreePath: string) =>
+    listWorktreeFiles(worktreePath)
+  );
 
   ipcMain.handle(IPC.DIALOG_PICK_IMAGE, async (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
@@ -177,6 +180,18 @@ export function registerIPCHandlers(): void {
     child.on('error', () => {});
     child.unref();
     return true;
+  });
+
+  ipcMain.handle(IPC.EXTERNAL_OPEN_URL, (_, url: string): boolean => {
+    if (!url) return false;
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+      void shell.openExternal(url);
+      return true;
+    } catch {
+      return false;
+    }
   });
 
   ipcMain.handle(

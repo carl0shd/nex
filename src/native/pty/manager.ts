@@ -1,6 +1,6 @@
 import { spawn, type IPty } from 'node-pty';
-import { BrowserWindow } from 'electron';
 import { IPC } from '@native/ipc/channels';
+import { getMainWindow } from '@native/main/app-window';
 import * as terminalRepo from '@native/db/repositories/terminal.repo';
 import type { TerminalStatus } from '@native/db/types';
 
@@ -12,6 +12,8 @@ interface ManagedTerminal {
   rows: number;
   exited: boolean;
   status: TerminalStatus;
+  pendingData: string;
+  flushHandle: NodeJS.Immediate | null;
 }
 
 const MAX_BUFFER = 1_000_000;
@@ -34,10 +36,18 @@ function defaultShell(): string {
   return process.env.SHELL || '/bin/bash';
 }
 
-function broadcast(channel: string, payload: unknown): void {
-  for (const win of BrowserWindow.getAllWindows()) {
-    if (!win.isDestroyed()) win.webContents.send(channel, payload);
-  }
+function send(channel: string, payload: unknown): void {
+  const win = getMainWindow();
+  if (!win || win.isDestroyed()) return;
+  win.webContents.send(channel, payload);
+}
+
+function flushPending(term: ManagedTerminal): void {
+  term.flushHandle = null;
+  if (!term.pendingData) return;
+  const data = term.pendingData;
+  term.pendingData = '';
+  send(IPC.PTY_DATA, { id: term.id, data });
 }
 
 function setStatus(term: ManagedTerminal, status: TerminalStatus): void {
@@ -48,7 +58,7 @@ function setStatus(term: ManagedTerminal, status: TerminalStatus): void {
   } catch {
     // db may be closed at shutdown
   }
-  broadcast(IPC.TERMINAL_STATUS, { id: term.id, status });
+  send(IPC.TERMINAL_STATUS, { id: term.id, status });
 }
 
 export function spawnTerminal(opts: SpawnOptions): void {
@@ -75,7 +85,9 @@ export function spawnTerminal(opts: SpawnOptions): void {
     cols,
     rows,
     exited: false,
-    status: 'idle'
+    status: 'idle',
+    pendingData: '',
+    flushHandle: null
   };
   terminals.set(opts.id, term);
 
@@ -84,13 +96,17 @@ export function spawnTerminal(opts: SpawnOptions): void {
     if (term.buffer.length > MAX_BUFFER) {
       term.buffer = term.buffer.slice(term.buffer.length - MAX_BUFFER);
     }
-    broadcast(IPC.PTY_DATA, { id: opts.id, data });
+    term.pendingData += data;
+    if (!term.flushHandle) {
+      term.flushHandle = setImmediate(() => flushPending(term));
+    }
   });
 
   pty.onExit(({ exitCode, signal }) => {
     term.exited = true;
+    if (term.pendingData) flushPending(term);
     setStatus(term, 'idle');
-    broadcast(IPC.PTY_EXIT, { id: opts.id, exitCode, signal });
+    send(IPC.PTY_EXIT, { id: opts.id, exitCode, signal });
   });
 
   if (opts.runCommand) {

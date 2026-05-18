@@ -45,11 +45,13 @@ export const IPC = {
   GIT_DETECT_BASE_BRANCH: 'git:detect-base-branch',
   GIT_IS_REPO: 'git:is-repo',
   GIT_LIST_BRANCHES: 'git:list-branches',
+  WORKTREE_LIST_FILES: 'worktree:list-files',
   WINDOW_SHOW: 'window:show',
   DIALOG_PICK_IMAGE: 'dialog:pick-image',
   DIALOG_PICK_DIRECTORY: 'dialog:pick-directory',
   SAVE_WORKSPACE_ICON: 'workspace:save-icon',
   IDE_OPEN_VSCODE: 'ide:open-vscode',
+  EXTERNAL_OPEN_URL: 'external:open-url',
 
   TERMINAL_GET_ALL: 'terminal:get-all',
   TERMINAL_GET_BY_SESSION: 'terminal:get-by-session',

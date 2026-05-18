@@ -73,7 +73,14 @@ export function createMainWindow(): BrowserWindow {
   });
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url);
+    try {
+      const url = new URL(details.url);
+      if (url.protocol === 'http:' || url.protocol === 'https:') {
+        void shell.openExternal(details.url);
+      }
+    } catch {
+      /* ignore malformed urls (e.g. about:blank) */
+    }
     return { action: 'deny' };
   });
 

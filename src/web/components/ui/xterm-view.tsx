@@ -8,13 +8,21 @@ import { WebLinksAddon } from '@xterm/addon-web-links';
 import { ClipboardAddon } from '@xterm/addon-clipboard';
 import { SearchAddon } from '@xterm/addon-search';
 import { SerializeAddon } from '@xterm/addon-serialize';
+import { useSessionStore } from '@/stores/session.store';
+import { useLinkStore } from '@/stores/link.store';
 import { getXtermSnapshot, setXtermSnapshot } from '@/lib/xterm-snapshot-cache';
 import '@xterm/xterm/css/xterm.css';
 
 interface XtermViewProps {
   terminalId: string;
+  sessionId: string;
+  onRedirectKey?: (char: string) => void;
   className?: string;
 }
+
+const UNFOCUSED_FLUSH_MS = 250;
+
+type RendererKind = 'webgl' | 'canvas';
 
 function readTheme(): Record<string, string> {
   const styles = getComputedStyle(document.documentElement);
@@ -28,35 +36,72 @@ function readTheme(): Record<string, string> {
   };
 }
 
-function loadRenderer(term: Terminal): ITerminalAddon {
+function loadRenderer(term: Terminal, kind: RendererKind): ITerminalAddon | null {
+  if (kind === 'webgl') {
+    try {
+      const webgl = new WebglAddon();
+      let replaced = false;
+      webgl.onContextLoss(() => {
+        if (replaced) return;
+        replaced = true;
+        try {
+          webgl.dispose();
+        } catch {
+          /* */
+        }
+        try {
+          term.loadAddon(new CanvasAddon());
+        } catch {
+          /* */
+        }
+      });
+      term.loadAddon(webgl);
+      return webgl;
+    } catch {
+      /* fall through to canvas */
+    }
+  }
   try {
-    const webgl = new WebglAddon();
-    let replaced = false;
-    webgl.onContextLoss(() => {
-      if (replaced) return;
-      replaced = true;
-      try {
-        webgl.dispose();
-      } catch {
-        /* */
-      }
-      try {
-        term.loadAddon(new CanvasAddon());
-      } catch {
-        /* */
-      }
-    });
-    term.loadAddon(webgl);
-    return webgl;
-  } catch {
     const canvas = new CanvasAddon();
     term.loadAddon(canvas);
     return canvas;
+  } catch {
+    return null;
   }
 }
 
-function XtermView({ terminalId, className }: XtermViewProps): React.JSX.Element {
+function isPrintableKey(e: KeyboardEvent): boolean {
+  if (e.ctrlKey || e.metaKey || e.altKey) return false;
+  return e.key.length === 1;
+}
+
+function XtermView({
+  terminalId,
+  sessionId,
+  onRedirectKey,
+  className
+}: XtermViewProps): React.JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const isFocused = useSessionStore((s) => s.activeSessionId === sessionId);
+  const pendingFocusSessionId = useSessionStore((s) => s.pendingFocusSessionId);
+  const onRedirectKeyRef = useRef(onRedirectKey);
+
+  useEffect(() => {
+    onRedirectKeyRef.current = onRedirectKey;
+  }, [onRedirectKey]);
+
+  useEffect(() => {
+    if (pendingFocusSessionId !== sessionId) return;
+    termRef.current?.focus();
+    useSessionStore.getState().consumePendingFocus();
+  }, [pendingFocusSessionId, sessionId]);
+
+  const termRef = useRef<Terminal | null>(null);
+  const rendererRef = useRef<ITerminalAddon | null>(null);
+  const rendererKindRef = useRef<RendererKind | null>(null);
+  const writeQueueRef = useRef('');
+  const flushScheduleRef = useRef<{ kind: 'raf' | 'timeout'; handle: number } | null>(null);
+  const isFocusedRef = useRef(isFocused);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -66,25 +111,44 @@ function XtermView({ terminalId, className }: XtermViewProps): React.JSX.Element
     let term: Terminal | null = null;
     let fitAddon: FitAddon | null = null;
     let serializeAddon: SerializeAddon | null = null;
-    let rendererAddon: ITerminalAddon | null = null;
     let resizeObserver: ResizeObserver | null = null;
     let unsubscribeData: (() => void) | null = null;
     let unsubscribeExit: (() => void) | null = null;
     let inputDisposable: { dispose(): void } | null = null;
     let resizeRaf: number | null = null;
 
-    let writeQueue = '';
-    let writeRaf: number | null = null;
-    const flushWrites = (): void => {
-      writeRaf = null;
-      if (!term || !writeQueue) return;
-      const data = writeQueue;
-      writeQueue = '';
-      term.write(data);
+    const performFlush = (): void => {
+      flushScheduleRef.current = null;
+      const t = termRef.current;
+      if (!t || !writeQueueRef.current) return;
+      const data = writeQueueRef.current;
+      writeQueueRef.current = '';
+      t.write(data);
     };
+
+    const scheduleFlush = (): void => {
+      if (flushScheduleRef.current) return;
+      if (isFocusedRef.current) {
+        flushScheduleRef.current = { kind: 'raf', handle: requestAnimationFrame(performFlush) };
+      } else {
+        flushScheduleRef.current = {
+          kind: 'timeout',
+          handle: window.setTimeout(performFlush, UNFOCUSED_FLUSH_MS)
+        };
+      }
+    };
+
+    const cancelFlush = (): void => {
+      const scheduled = flushScheduleRef.current;
+      if (!scheduled) return;
+      if (scheduled.kind === 'raf') cancelAnimationFrame(scheduled.handle);
+      else clearTimeout(scheduled.handle);
+      flushScheduleRef.current = null;
+    };
+
     const queueWrite = (chunk: string): void => {
-      writeQueue += chunk;
-      if (writeRaf === null) writeRaf = requestAnimationFrame(flushWrites);
+      writeQueueRef.current += chunk;
+      scheduleFlush();
     };
 
     const theme = readTheme();
@@ -93,9 +157,14 @@ function XtermView({ terminalId, className }: XtermViewProps): React.JSX.Element
       fontFamily: '"JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace',
       fontSize: 12,
       lineHeight: 1.3,
-      cursorBlink: true,
+      cursorBlink: isFocusedRef.current,
       scrollback: 5000,
       allowProposedApi: true,
+      linkHandler: {
+        activate: (_event, uri) => {
+          useLinkStore.getState().requestOpen(uri);
+        }
+      },
       theme: {
         background: theme.background,
         foreground: theme.foreground,
@@ -104,6 +173,8 @@ function XtermView({ terminalId, className }: XtermViewProps): React.JSX.Element
         selectionBackground: theme.selectionBackground
       }
     });
+    // eslint-disable-next-line react-hooks/immutability
+    termRef.current = term;
 
     fitAddon = new FitAddon();
     serializeAddon = new SerializeAddon();
@@ -112,13 +183,26 @@ function XtermView({ terminalId, className }: XtermViewProps): React.JSX.Element
     term.loadAddon(fitAddon);
     term.loadAddon(serializeAddon);
     term.loadAddon(unicode11);
-    term.loadAddon(new WebLinksAddon());
+    term.loadAddon(
+      new WebLinksAddon((_e, uri) => {
+        useLinkStore.getState().requestOpen(uri);
+      })
+    );
     term.loadAddon(new ClipboardAddon());
     term.loadAddon(new SearchAddon());
 
     term.unicode.activeVersion = '11';
     term.open(container);
-    rendererAddon = loadRenderer(term);
+
+    term.attachCustomKeyEventHandler((e) => {
+      if (e.type !== 'keydown') return true;
+      const handler = onRedirectKeyRef.current;
+      if (!handler) return true;
+      if (!isPrintableKey(e)) return true;
+      e.preventDefault();
+      handler(e.key);
+      return false;
+    });
 
     const safeFit = (): void => {
       if (!term || !fitAddon) return;
@@ -192,8 +276,8 @@ function XtermView({ terminalId, className }: XtermViewProps): React.JSX.Element
 
     return () => {
       cancelled = true;
+      cancelFlush();
       if (resizeRaf !== null) cancelAnimationFrame(resizeRaf);
-      if (writeRaf !== null) cancelAnimationFrame(writeRaf);
       resizeObserver?.disconnect();
       unsubscribeData?.();
       unsubscribeExit?.();
@@ -210,7 +294,7 @@ function XtermView({ terminalId, className }: XtermViewProps): React.JSX.Element
         /* falls back to main's raw buffer on next mount */
       }
       try {
-        rendererAddon?.dispose();
+        rendererRef.current?.dispose();
       } catch {
         /* webgl dispose throws during fast unmount; swallow so term.dispose still runs */
       }
@@ -219,8 +303,33 @@ function XtermView({ terminalId, className }: XtermViewProps): React.JSX.Element
       } catch {
         /* */
       }
+
+      termRef.current = null;
+      rendererRef.current = null;
+      rendererKindRef.current = null;
+      writeQueueRef.current = '';
     };
   }, [terminalId]);
+
+  useEffect(() => {
+    isFocusedRef.current = isFocused;
+    const term = termRef.current;
+    if (!term) return;
+
+    // eslint-disable-next-line react-hooks/immutability
+    term.options.cursorBlink = isFocused;
+
+    const desired: RendererKind = isFocused ? 'webgl' : 'canvas';
+    if (rendererKindRef.current === desired) return;
+
+    try {
+      rendererRef.current?.dispose();
+    } catch {
+      /* */
+    }
+    rendererRef.current = loadRenderer(term, desired);
+    rendererKindRef.current = desired;
+  }, [isFocused]);
 
   return (
     <div ref={containerRef} className={className ?? 'flex h-full w-full flex-col justify-end'} />
