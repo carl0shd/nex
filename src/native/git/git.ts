@@ -89,6 +89,30 @@ export async function deleteBranch(repo: string, branch: string): Promise<void> 
   await gitSilent(repo, ['branch', '-D', branch]);
 }
 
+export interface WorktreeEntry {
+  path: string;
+  type: 'file' | 'folder';
+}
+
+export async function listWorktreeFiles(repo: string): Promise<WorktreeEntry[]> {
+  const output = await gitSilent(repo, ['ls-files', '--cached', '--others', '--exclude-standard']);
+  if (!output) return [];
+
+  const files = output.split('\n').filter(Boolean);
+  const folders = new Set<string>();
+  for (const file of files) {
+    const parts = file.split('/');
+    for (let i = 1; i < parts.length; i++) {
+      folders.add(parts.slice(0, i).join('/'));
+    }
+  }
+
+  const entries: WorktreeEntry[] = [];
+  for (const folder of folders) entries.push({ path: folder, type: 'folder' });
+  for (const file of files) entries.push({ path: file, type: 'file' });
+  return entries;
+}
+
 export function setupGitExclude(repo: string): void {
   const gitDir = join(repo, '.git');
   let realGitDir = gitDir;

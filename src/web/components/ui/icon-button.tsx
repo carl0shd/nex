@@ -9,6 +9,7 @@ interface IconButtonProps {
   /** @deprecated use variant="ghost" instead */
   ghost?: boolean;
   onClick?: (e: React.MouseEvent) => void;
+  disabled?: boolean;
   className?: string;
 }
 
@@ -24,13 +25,15 @@ function IconButton({
   variant,
   ghost = false,
   onClick,
+  disabled = false,
   className = ''
 }: IconButtonProps): React.JSX.Element {
   const resolved = variant ?? (ghost ? 'ghost' : 'default');
   return (
     <button
       onClick={onClick}
-      className={`flex cursor-pointer items-center justify-center rounded-md ${variantStyles[resolved]} ${className}`}
+      disabled={disabled}
+      className={`flex items-center justify-center rounded-md ${variantStyles[resolved]} ${disabled ? 'cursor-default opacity-40' : 'cursor-pointer'} ${className}`}
     >
       <Icon size={size} />
     </button>

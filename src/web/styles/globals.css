@@ -348,6 +348,72 @@ body {
   color: var(--nex-text) !important;
 }
 
+.ProseMirror,
+.ProseMirror:focus,
+.ProseMirror-focused {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.ProseMirror {
+  scrollbar-width: thin;
+  scrollbar-color: var(--nex-border) transparent;
+}
+
+.ProseMirror::-webkit-scrollbar {
+  width: 4px;
+}
+
+.ProseMirror::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ProseMirror::-webkit-scrollbar-thumb {
+  background: var(--nex-border);
+  border-radius: 2px;
+}
+
+.ProseMirror::-webkit-scrollbar-thumb:hover {
+  background: var(--nex-text-placeholder);
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  pointer-events: none;
+  float: left;
+  height: 0;
+  color: var(--nex-text-muted);
+  content: attr(data-placeholder);
+}
+
+.nex-mention {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: var(--nex-bg-hover);
+  color: var(--nex-text);
+  font-weight: 500;
+}
+
+.nex-mention-icon {
+  flex-shrink: 0;
+}
+
+.tippy-box[data-theme~='transparent'] {
+  background: transparent;
+  box-shadow: none;
+}
+
+.tippy-box[data-theme~='transparent'] .tippy-content {
+  padding: 0;
+}
+
+.tippy-box[data-theme~='transparent'] .tippy-arrow {
+  display: none;
+}
+
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
