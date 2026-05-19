@@ -1,8 +1,9 @@
 import { memo, useCallback, useRef, useState, type Ref } from 'react';
-import { Mic, ArrowUp, FileText, FileDiff } from 'lucide-react';
+import { ArrowUp, FileText, FileDiff } from 'lucide-react';
 import IconButton from '@/components/ui/icon-button';
 import { useMergedRef } from '@/hooks/use-merged-ref';
 import ChatEditor, { type ChatEditorHandle } from './chat-editor';
+import MicButton from './mic-button';
 
 interface TerminalInputProps {
   placeholder?: string;
@@ -39,6 +40,19 @@ function TerminalInput({
     localEditorRef.current?.submit();
   }, []);
 
+  const handleTranscript = useCallback((text: string): void => {
+    const editor = localEditorRef.current;
+    if (!editor) return;
+    // Drop any in-flight interim and commit the authoritative final text.
+    editor.clearInterim();
+    const prefix = editor.isEmpty() ? '' : ' ';
+    editor.insertText(prefix + text);
+  }, []);
+
+  const handlePartial = useCallback((text: string): void => {
+    localEditorRef.current?.setInterimText(text);
+  }, []);
+
   return (
     <div className="shrink-0 rounded-lg border border-border-soft bg-bg-chat-input hover:border-border focus-within:border-border">
       <div className="h-18 py-2.5 pl-3 pr-1">
@@ -57,7 +71,7 @@ function TerminalInput({
           {!diffVisible && <IconButton icon={FileDiff} size={14} onClick={onToggleDiff} />}
         </div>
         <div className="flex items-center gap-1">
-          <IconButton icon={Mic} size={14} />
+          <MicButton onTranscript={handleTranscript} onPartial={handlePartial} />
           <IconButton
             icon={ArrowUp}
             size={14}

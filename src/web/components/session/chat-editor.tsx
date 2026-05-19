@@ -14,6 +14,8 @@ import {
   ReactNodeViewRenderer,
   NodeViewWrapper,
   Extension,
+  Mark,
+  mergeAttributes,
   type Editor,
   type NodeViewProps
 } from '@tiptap/react';
@@ -53,6 +55,35 @@ function MentionChip({ node }: NodeViewProps): React.JSX.Element {
   );
 }
 
+/**
+ * Inline mark used to render live (interim) speech transcription as muted +
+ * italic text. The mark is stripped once the partial is committed as final.
+ */
+const InterimMark = Mark.create({
+  name: 'interim',
+  inclusive: true,
+  parseHTML() {
+    return [{ tag: 'span.nex-interim' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['span', mergeAttributes(HTMLAttributes, { class: 'nex-interim' }), 0];
+  }
+});
+
+function findInterimRange(editor: Editor): { from: number; to: number } | null {
+  let from = -1;
+  let to = -1;
+  editor.state.doc.descendants((node, pos) => {
+    if (!node.isText) return;
+    const hasInterim = node.marks.some((m) => m.type.name === 'interim');
+    if (hasInterim) {
+      if (from === -1) from = pos;
+      to = pos + node.nodeSize;
+    }
+  });
+  return from === -1 ? null : { from, to };
+}
+
 const MentionWithIcon = Mention.extend({
   addAttributes() {
     return {
@@ -75,6 +106,10 @@ export interface ChatEditorHandle {
   isEmpty: () => boolean;
   submit: () => void;
   insertText: (text: string) => void;
+  /** Replace any current interim span with `text` (or clear if empty). */
+  setInterimText: (text: string) => void;
+  /** Remove any current interim span from the doc. */
+  clearInterim: () => void;
 }
 
 interface ChatEditorProps {
@@ -102,6 +137,9 @@ function serializeEditorText(editor: Editor): string {
 }
 
 function flushSubmit(editor: Editor, onSubmit: ((text: string) => void) | undefined): boolean {
+  // Drop any uncommitted interim transcription before submitting.
+  const interim = findInterimRange(editor);
+  if (interim) editor.chain().deleteRange(interim).run();
   const text = serializeEditorText(editor).trim();
   if (!text) return false;
   onSubmit?.(text);
@@ -170,6 +208,7 @@ const ChatEditor = forwardRef<ChatEditorHandle, ChatEditorProps>(
         Paragraph,
         Text,
         HardBreak,
+        InterimMark,
         Placeholder.configure({ placeholder }),
         submitExtension,
         MentionWithIcon.configure({
@@ -266,6 +305,38 @@ const ChatEditor = forwardRef<ChatEditorHandle, ChatEditorProps>(
           if (!editor) return;
           editor.commands.focus('end');
           editor.commands.insertContent(text);
+        },
+        setInterimText: (text: string) => {
+          if (!editor) return;
+          const range = findInterimRange(editor);
+          if (!text) {
+            if (range) editor.chain().deleteRange(range).run();
+            return;
+          }
+          // Append inside the last block (docEnd - 1 sits inside the last paragraph,
+          // not after its closing token — avoids creating a stray new paragraph).
+          const insertPos = range
+            ? range.from
+            : Math.max(1, editor.state.doc.content.size - 1);
+          // Skip a leading space if there's already trailing whitespace before us,
+          // so we don't double-space after user-typed content.
+          const before = editor.state.doc.textBetween(0, insertPos, ' ');
+          const needsSpace =
+            before.length > 0 && !before.endsWith(' ') && !before.endsWith('\n');
+          const prefixed = (needsSpace ? ' ' : '') + text;
+          const chain = editor.chain();
+          if (range) chain.deleteRange(range);
+          chain.insertContentAt(insertPos, {
+            type: 'text',
+            text: prefixed,
+            marks: [{ type: 'interim' }]
+          });
+          chain.run();
+        },
+        clearInterim: () => {
+          if (!editor) return;
+          const range = findInterimRange(editor);
+          if (range) editor.chain().deleteRange(range).run();
         }
       }),
       [editor, submitNow]

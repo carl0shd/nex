@@ -110,6 +110,43 @@ interface NexAPI {
   onTerminalStatus: (
     callback: (info: { id: string; status: TerminalStatus }) => void
   ) => () => void;
+
+  speech: {
+    available: () => Promise<{
+      available: boolean;
+      reason?: string;
+      authStatus?: string;
+      micStatus?: string;
+      recognizerLocale?: string;
+      supportsOnDevice?: boolean;
+    }>;
+    listDevices: () => Promise<
+      Array<{ id: number; name: string; isDefault: boolean; isBuiltIn: boolean }>
+    >;
+    listLocales: () => Promise<
+      Array<{ identifier: string; displayName: string; supportsOnDevice: boolean }>
+    >;
+    requestAuth: () => Promise<{ authorized: boolean; status: string }>;
+    start: (opts: {
+      locale?: string;
+      deviceId?: number;
+      onDevice?: boolean;
+      continuous?: boolean;
+    }) => Promise<void>;
+    stop: () => Promise<void>;
+    cancel: () => Promise<void>;
+    onEvent: (
+      callback: (event: {
+        type: 'state' | 'partial' | 'final' | 'error' | 'end' | 'devicesChanged';
+        state?: string;
+        text?: string;
+        confidence?: number;
+        timestampMs?: number;
+        code?: string;
+        message?: string;
+      }) => void
+    ) => () => void;
+  };
 }
 
 declare global {
