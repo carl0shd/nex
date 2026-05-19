@@ -1,4 +1,7 @@
 import { spawn, type IPty } from 'node-pty';
+import { app } from 'electron';
+import { existsSync } from 'fs';
+import { isAbsolute, join } from 'path';
 import { IPC } from '@native/ipc/channels';
 import { getMainWindow } from '@native/main/app-window';
 import * as terminalRepo from '@native/db/repositories/terminal.repo';
@@ -36,6 +39,18 @@ function defaultShell(): string {
   return process.env.SHELL || '/bin/bash';
 }
 
+function resolveCommand(cmd: string, envPath: string): string {
+  if (isAbsolute(cmd)) return cmd;
+  if (cmd.includes('/')) return cmd;
+  if (process.platform === 'win32') return cmd;
+  for (const dir of envPath.split(':')) {
+    if (!dir) continue;
+    const full = join(dir, cmd);
+    if (existsSync(full)) return full;
+  }
+  return cmd;
+}
+
 function send(channel: string, payload: unknown): void {
   const win = getMainWindow();
   if (!win || win.isDestroyed()) return;
@@ -64,13 +79,31 @@ function setStatus(term: ManagedTerminal, status: TerminalStatus): void {
 export function spawnTerminal(opts: SpawnOptions): void {
   if (terminals.has(opts.id)) return;
 
-  const cmd = opts.command || defaultShell();
+  const useDefaultShell = !opts.command;
+  const rawCmd = opts.command || defaultShell();
+  const args =
+    useDefaultShell && opts.args.length === 0 && process.platform !== 'win32'
+      ? ['-l', '-i']
+      : opts.args;
   const cols = opts.cols ?? 80;
   const rows = opts.rows ?? 24;
 
-  const env = { ...process.env, ...(opts.env ?? {}) } as Record<string, string>;
+  const env = {
+    ...process.env,
+    LANG: process.env.LANG || 'en_US.UTF-8',
+    TERM: 'xterm-256color',
+    COLORTERM: 'truecolor',
+    FORCE_COLOR: '3',
+    CLICOLOR: '1',
+    CLICOLOR_FORCE: '1',
+    PAGER: process.env.PAGER || 'less -R',
+    TERM_PROGRAM: 'Nex',
+    TERM_PROGRAM_VERSION: app.getVersion(),
+    ...(opts.env ?? {})
+  } as Record<string, string>;
+  const cmd = resolveCommand(rawCmd, env.PATH ?? '');
 
-  const pty = spawn(cmd, opts.args, {
+  const pty = spawn(cmd, args, {
     name: 'xterm-256color',
     cols,
     rows,

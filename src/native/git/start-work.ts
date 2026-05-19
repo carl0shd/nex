@@ -1,8 +1,8 @@
 import { mkdir, writeFile, symlink } from 'fs/promises';
 import { join } from 'path';
-import { homedir } from 'os';
 import * as projectRepo from '@native/db/repositories/project.repo';
 import * as sessionRepo from '@native/db/repositories/session.repo';
+import { getNexDir } from '@native/paths';
 import {
   detectBaseBranch,
   fetchOrigin,
@@ -49,13 +49,13 @@ export async function startWork(input: StartWorkInput): Promise<Session> {
     throw new Error(`Active session '${input.name}' already exists for this project`);
   }
 
-  const sessionsDir = join(homedir(), '.nex', 'sessions', project.name, input.name);
+  const sessionsDir = join(getNexDir(), 'sessions', project.name, input.name);
   await mkdir(sessionsDir, { recursive: true });
 
   const notesPath = join(sessionsDir, 'TASK_NOTES.md');
   await writeFile(notesPath, '');
 
-  const sharedPath = join(homedir(), '.nex', 'sessions', project.name, 'SHARED_CONTEXT.md');
+  const sharedPath = join(getNexDir(), 'sessions', project.name, 'SHARED_CONTEXT.md');
   await writeIfMissing(sharedPath, `# ${project.name} - Shared Context\n`);
 
   if (!(await isGitRepo(project.path))) {

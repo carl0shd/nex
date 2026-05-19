@@ -8,6 +8,7 @@ import {
   ModalButton
 } from '@/components/ui/modal';
 import { useOnboardingStore } from '@/stores/onboarding.store';
+import { useAgentStore } from '@/stores/agent.store';
 import claudeLogo from '@/assets/images/claude-logo.svg';
 import type { Agent, AgentAccount } from '@native/db/types';
 
@@ -22,16 +23,16 @@ interface StepAgentProps {
 
 function StepAgent({ onFinish }: StepAgentProps): React.JSX.Element {
   const { agentId, setAgentId, setStep } = useOnboardingStore();
+  const loadAgents = useAgentStore((s) => s.loadAgents);
+  const loadAccounts = useAgentStore((s) => s.loadAccounts);
   const [detected, setDetected] = useState<DetectedAgent[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function detect(): Promise<void> {
       await window.api.detectAgents();
-      const [agents, accounts] = await Promise.all([
-        window.api.getAgents(),
-        window.api.getAgentAccounts()
-      ]);
+      await Promise.all([loadAgents(), loadAccounts()]);
+      const { agents, accounts } = useAgentStore.getState();
 
       const items: DetectedAgent[] = agents.map((a) => ({
         agent: a,
@@ -48,7 +49,7 @@ function StepAgent({ onFinish }: StepAgentProps): React.JSX.Element {
       setLoading(false);
     }
     detect();
-  }, [setAgentId]);
+  }, [setAgentId, loadAgents, loadAccounts]);
 
   return (
     <ModalPanel>

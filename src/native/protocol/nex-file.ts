@@ -1,8 +1,7 @@
 import { protocol, net } from 'electron';
-import { join } from 'path';
+import { getNexDir } from '@native/paths';
 
 const SCHEME = 'nex-file';
-const NEX_DIR = join(process.env.HOME!, '.nex');
 
 export function registerScheme(): void {
   protocol.registerSchemesAsPrivileged([
@@ -13,7 +12,7 @@ export function registerScheme(): void {
 export function registerHandler(): void {
   protocol.handle(SCHEME, (request) => {
     const filePath = decodeURIComponent(request.url.replace(`${SCHEME}://`, ''));
-    if (!filePath.startsWith(NEX_DIR)) {
+    if (!filePath.startsWith(getNexDir())) {
       return new Response('Forbidden', { status: 403 });
     }
     return net.fetch(`file://${filePath}`);
