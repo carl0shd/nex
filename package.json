@@ -15,7 +15,8 @@
     "dev": "electron-vite dev",
     "build": "npm run typecheck && electron-vite build",
     "postinstall": "git config core.hooksPath .githooks && electron-builder install-app-deps && node helpers/speech/scripts/postinstall.js",
-    "build:mac": "electron-vite build && electron-builder --mac --config build/electron-builder.yml"
+    "build:mac": "electron-vite build && electron-builder --mac --config build/electron-builder.yml",
+    "pack:mac": "electron-vite build && electron-builder --mac --dir --config build/electron-builder.yml"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

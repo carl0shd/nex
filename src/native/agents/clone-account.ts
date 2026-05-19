@@ -3,13 +3,14 @@ import { join } from 'path';
 import { homedir } from 'os';
 import * as agentRepo from '@native/db/repositories/agent.repo';
 import * as agentAccountRepo from '@native/db/repositories/agent-account.repo';
+import { getNexDir } from '@native/paths';
 import type { AgentAccount, CloneAgentAccountInput } from '@native/db/types';
 
 export function cloneAgentAccount(input: CloneAgentAccountInput): AgentAccount {
   const agent = agentRepo.getById(input.agentId);
   if (!agent) throw new Error(`Agent not found: ${input.agentId}`);
 
-  const accountDir = join(homedir(), '.nex', 'accounts', input.name);
+  const accountDir = join(getNexDir(), 'accounts', input.name);
   mkdirSync(accountDir, { recursive: true });
 
   if (input.copyConfig && agent.defaultConfigDir) {

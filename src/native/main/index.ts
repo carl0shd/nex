@@ -1,4 +1,5 @@
 import { app } from 'electron';
+import { join } from 'path';
 import { electronApp, optimizer } from '@electron-toolkit/utils';
 import { createMainWindow, getMainWindow, setQuitting } from './app-window';
 import { createApplicationMenu } from './menu';
@@ -9,11 +10,20 @@ import { registerScheme, registerHandler } from '@native/protocol/nex-file';
 import { killAllTerminals } from '@native/pty/manager';
 import { resetAllStatus } from '@native/db/repositories/terminal.repo';
 import { disposeSpeech, initSpeech } from '@native/speech/manager';
+import { isDev } from '@native/paths';
+import { fixEnv } from './fix-env';
+
+if (isDev()) {
+  app.setName('Nex Dev');
+  app.setPath('userData', join(app.getPath('appData'), 'Nex Dev'));
+} else {
+  fixEnv();
+}
 
 registerScheme();
 
 app.whenReady().then(() => {
-  electronApp.setAppUserModelId('com.nex.app');
+  electronApp.setAppUserModelId(isDev() ? 'com.nex.app.dev' : 'com.nex.app');
   registerHandler();
 
   app.on('browser-window-created', (_, window) => {

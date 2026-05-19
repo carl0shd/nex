@@ -22,6 +22,7 @@ import { detectAgents } from '@native/agents/detect';
 import { createTerminalForSession } from '@native/agents/agent-terminal';
 import { cloneAgentAccount } from '@native/agents/clone-account';
 import { startWork } from '@native/git/start-work';
+import { getNexDir } from '@native/paths';
 import { detectBaseBranch, isGitRepo, listBranches, listWorktreeFiles } from '@native/git/git';
 import { showMainWindow } from '@native/main/app-window';
 import {
@@ -225,7 +226,7 @@ export function registerIPCHandlers(): void {
       const ext = mimeType === 'svg+xml' ? 'svg' : mimeType;
       const buffer = Buffer.from(match[2], 'base64');
 
-      const dir = join(process.env.HOME!, '.nex', 'workspace-icons');
+      const dir = join(getNexDir(), 'workspace-icons');
       mkdirSync(dir, { recursive: true });
 
       const filePath = join(dir, `${workspaceId}.${ext}`);
