@@ -13,6 +13,7 @@ asarUnpack:
   - build/**
   - node_modules/node-pty/**
   - node_modules/better-sqlite3/**
+  - helpers/speech/bin/**
 win:
   executableName: nex
 nsis:
@@ -25,7 +26,8 @@ mac:
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
     - NSCameraUsageDescription: Application requests access to the device's camera.
-    - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
+    - NSMicrophoneUsageDescription: Nex uses the microphone to dictate messages to the agent.
+    - NSSpeechRecognitionUsageDescription: Nex uses speech recognition to transcribe dictated messages.
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
   notarize: false

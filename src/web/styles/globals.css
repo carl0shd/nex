@@ -401,6 +401,11 @@ body {
   flex-shrink: 0;
 }
 
+.nex-interim {
+  color: var(--nex-text-muted);
+  font-style: italic;
+}
+
 .tippy-box[data-theme~='transparent'] {
   background: transparent;
   box-shadow: none;

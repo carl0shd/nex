@@ -1,0 +1,12 @@
+{
+  "name": "@nex/speech",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Native macOS Speech recognition helper for Nex",
+  "scripts": {
+    "build": "bash scripts/build.sh"
+  },
+  "os": [
+    "darwin"
+  ]
+}

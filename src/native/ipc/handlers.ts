@@ -24,6 +24,15 @@ import { cloneAgentAccount } from '@native/agents/clone-account';
 import { startWork } from '@native/git/start-work';
 import { detectBaseBranch, isGitRepo, listBranches, listWorktreeFiles } from '@native/git/git';
 import { showMainWindow } from '@native/main/app-window';
+import {
+  speechAvailable,
+  listSpeechDevices,
+  listSpeechLocales,
+  requestSpeechAuth,
+  startSpeech,
+  stopSpeech,
+  cancelSpeech
+} from '@native/speech/manager';
 
 export function registerIPCHandlers(): void {
   ipcMain.handle(IPC.APP_GET_INFO, () => ({
@@ -181,6 +190,18 @@ export function registerIPCHandlers(): void {
     child.unref();
     return true;
   });
+
+  ipcMain.handle(IPC.SPEECH_AVAILABLE, () => speechAvailable());
+  ipcMain.handle(IPC.SPEECH_LIST_DEVICES, () => listSpeechDevices());
+  ipcMain.handle(IPC.SPEECH_LIST_LOCALES, () => listSpeechLocales());
+  ipcMain.handle(IPC.SPEECH_REQUEST_AUTH, () => requestSpeechAuth());
+  ipcMain.handle(
+    IPC.SPEECH_START,
+    (_, opts: { locale?: string; deviceId?: number; onDevice?: boolean; continuous?: boolean }) =>
+      startSpeech(opts)
+  );
+  ipcMain.handle(IPC.SPEECH_STOP, () => stopSpeech());
+  ipcMain.handle(IPC.SPEECH_CANCEL, () => cancelSpeech());
 
   ipcMain.handle(IPC.EXTERNAL_OPEN_URL, (_, url: string): boolean => {
     if (!url) return false;

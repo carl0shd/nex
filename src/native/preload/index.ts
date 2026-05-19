@@ -118,6 +118,39 @@ const api = {
     ): void => callback(payload);
     ipcRenderer.on(IPC.TERMINAL_STATUS, handler);
     return () => ipcRenderer.removeListener(IPC.TERMINAL_STATUS, handler);
+  },
+
+  speech: {
+    available: () => ipcRenderer.invoke(IPC.SPEECH_AVAILABLE),
+    listDevices: () => ipcRenderer.invoke(IPC.SPEECH_LIST_DEVICES),
+    listLocales: () => ipcRenderer.invoke(IPC.SPEECH_LIST_LOCALES),
+    requestAuth: () => ipcRenderer.invoke(IPC.SPEECH_REQUEST_AUTH),
+    start: (opts: {
+      locale?: string;
+      deviceId?: number;
+      onDevice?: boolean;
+      continuous?: boolean;
+    }) => ipcRenderer.invoke(IPC.SPEECH_START, opts),
+    stop: () => ipcRenderer.invoke(IPC.SPEECH_STOP),
+    cancel: () => ipcRenderer.invoke(IPC.SPEECH_CANCEL),
+    onEvent: (
+      callback: (event: {
+        type: 'state' | 'partial' | 'final' | 'error' | 'end' | 'devicesChanged';
+        state?: string;
+        text?: string;
+        confidence?: number;
+        timestampMs?: number;
+        code?: string;
+        message?: string;
+      }) => void
+    ) => {
+      const handler = (
+        _e: Electron.IpcRendererEvent,
+        payload: Parameters<typeof callback>[0]
+      ): void => callback(payload);
+      ipcRenderer.on(IPC.SPEECH_EVENT, handler);
+      return () => ipcRenderer.removeListener(IPC.SPEECH_EVENT, handler);
+    }
   }
 };
 

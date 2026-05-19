@@ -8,6 +8,7 @@ import { initDatabase, closeDatabase } from '@native/db/database';
 import { registerScheme, registerHandler } from '@native/protocol/nex-file';
 import { killAllTerminals } from '@native/pty/manager';
 import { resetAllStatus } from '@native/db/repositories/terminal.repo';
+import { disposeSpeech, initSpeech } from '@native/speech/manager';
 
 registerScheme();
 
@@ -22,6 +23,7 @@ app.whenReady().then(() => {
   initDatabase();
   resetAllStatus();
   registerIPCHandlers();
+  initSpeech();
   createApplicationMenu();
 
   createMainWindow();
@@ -43,6 +45,7 @@ app.on('before-quit', () => {
 
 app.on('will-quit', () => {
   killAllTerminals();
+  void disposeSpeech();
   closeDatabase();
 });
 

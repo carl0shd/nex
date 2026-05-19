@@ -66,7 +66,16 @@ export const IPC = {
   PTY_GET_SNAPSHOT: 'pty:get-snapshot',
   PTY_DATA: 'pty:data',
   PTY_EXIT: 'pty:exit',
-  TERMINAL_STATUS: 'terminal:status'
+  TERMINAL_STATUS: 'terminal:status',
+
+  SPEECH_AVAILABLE: 'speech:available',
+  SPEECH_LIST_DEVICES: 'speech:list-devices',
+  SPEECH_LIST_LOCALES: 'speech:list-locales',
+  SPEECH_REQUEST_AUTH: 'speech:request-auth',
+  SPEECH_START: 'speech:start',
+  SPEECH_STOP: 'speech:stop',
+  SPEECH_CANCEL: 'speech:cancel',
+  SPEECH_EVENT: 'speech:event'
 } as const;
 
 export type IPCChannel = (typeof IPC)[keyof typeof IPC];
