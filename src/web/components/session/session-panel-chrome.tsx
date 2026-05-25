@@ -43,7 +43,7 @@ interface SessionPanelChromeProps {
 }
 
 const EMPTY_FILES: never[] = [];
-const DEFAULT_SESSION_WIDTH = 600;
+const DEFAULT_SESSION_WIDTH = 630;
 
 function SessionPanelChrome({
   sessionId,
@@ -167,7 +167,8 @@ function SessionPanelChrome({
   const handleSubmitChat = useCallback(
     (text: string): void => {
       if (!activeTerminalId) return;
-      window.api.ptyWrite(activeTerminalId, `${text}\r`);
+      window.api.ptyWrite(activeTerminalId, `\x1b[200~${text}\x1b[201~`);
+      window.api.ptyWrite(activeTerminalId, '\r');
     },
     [activeTerminalId]
   );

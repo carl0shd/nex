@@ -44,7 +44,9 @@ export function createTerminalForSession(input: CreateForSessionInput): Terminal
   const account = session.accountId ? agentAccountRepo.getById(session.accountId) : null;
 
   const env: Record<string, string> = {};
-  if (account && agent.configEnvVar) env[agent.configEnvVar] = account.configDir;
+  if (account && agent.configEnvVar && account.configDir !== agent.defaultConfigDir) {
+    env[agent.configEnvVar] = account.configDir;
+  }
 
   return terminalRepo.create({
     sessionId: session.id,

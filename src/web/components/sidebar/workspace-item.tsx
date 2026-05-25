@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useRef } from 'react';
 import {
   ChevronDown,
   ChevronRight,
@@ -28,6 +28,49 @@ interface WorkspaceItemProps {
   onDeleteProject?: (projectId: string) => void;
 }
 
+interface ProjectRowProps {
+  project: Project;
+  onEditProject?: (projectId: string) => void;
+  onDeleteProject?: (projectId: string) => void;
+}
+
+function ProjectRow({
+  project,
+  onEditProject,
+  onDeleteProject
+}: ProjectRowProps): React.JSX.Element {
+  const rowRef = useRef<HTMLDivElement>(null);
+  return (
+    <div
+      ref={rowRef}
+      className="group flex h-7.5 w-full items-center gap-2 rounded px-2 select-none hover:bg-bg-mute/50"
+    >
+      <Folder size={13} className="shrink-0 text-text-muted" />
+      <span className="truncate text-[12px] text-text-secondary">{project.name}</span>
+      <span className="flex-1" />
+      <div className="opacity-0 group-hover:opacity-100">
+        <ContextMenu
+          rowRef={rowRef}
+          trigger={<IconButton icon={Ellipsis} size={13} />}
+          actions={[
+            {
+              label: 'Edit project',
+              icon: Pencil,
+              onClick: () => onEditProject?.(project.id)
+            },
+            {
+              label: 'Delete project',
+              icon: Trash2,
+              onClick: () => onDeleteProject?.(project.id),
+              destructive: true
+            }
+          ]}
+        />
+      </div>
+    </div>
+  );
+}
+
 function WorkspaceItem({
   workspace,
   projects = [],
@@ -41,10 +84,12 @@ function WorkspaceItem({
   onDeleteProject
 }: WorkspaceItemProps): React.JSX.Element {
   const Chevron = collapsed ? ChevronRight : ChevronDown;
+  const headerRef = useRef<HTMLDivElement>(null);
 
   return (
     <div className="flex flex-col gap-0.5">
       <div
+        ref={headerRef}
         onClick={() => onToggle?.(workspace.id)}
         className="flex w-full cursor-pointer items-center gap-1.5 rounded px-1.5 py-1.25 select-none"
       >
@@ -67,7 +112,8 @@ function WorkspaceItem({
           }}
         />
         <ContextMenu
-          trigger={<IconButton icon={Ellipsis} size={14} onClick={(e) => e.stopPropagation()} />}
+          rowRef={headerRef}
+          trigger={<IconButton icon={Ellipsis} size={14} />}
           actions={[
             {
               label: 'Edit workspace',
@@ -92,34 +138,12 @@ function WorkspaceItem({
       {!collapsed && projects.length > 0 && (
         <div className="flex flex-col gap-px pl-4.5">
           {projects.map((project) => (
-            <div
+            <ProjectRow
               key={project.id}
-              className="group flex h-7.5 w-full items-center gap-2 rounded px-2 select-none hover:bg-bg-mute/50"
-            >
-              <Folder size={13} className="shrink-0 text-text-muted" />
-              <span className="truncate text-[12px] text-text-secondary">{project.name}</span>
-              <span className="flex-1" />
-              <div className="opacity-0 group-hover:opacity-100">
-                <ContextMenu
-                  trigger={
-                    <IconButton icon={Ellipsis} size={13} onClick={(e) => e.stopPropagation()} />
-                  }
-                  actions={[
-                    {
-                      label: 'Edit project',
-                      icon: Pencil,
-                      onClick: () => onEditProject?.(project.id)
-                    },
-                    {
-                      label: 'Delete project',
-                      icon: Trash2,
-                      onClick: () => onDeleteProject?.(project.id),
-                      destructive: true
-                    }
-                  ]}
-                />
-              </div>
-            </div>
+              project={project}
+              onEditProject={onEditProject}
+              onDeleteProject={onDeleteProject}
+            />
           ))}
         </div>
       )}

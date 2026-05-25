@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Folder, GitBranch } from 'lucide-react';
+import { Folder, GitBranch, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Modal,
@@ -311,20 +311,40 @@ function TaskForm({
             rows={3}
           />
 
-          <AgentCardSelector
-            value={agentId}
-            onChange={handleAgentChange}
-            options={agentOptions}
-            label="// agent"
-          />
+          {agents.length === 0 ? (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-medium text-text-muted">{'// agent'}</label>
+              <div className="flex flex-col items-center gap-3 rounded-md border border-border-soft bg-bg-input px-3 py-5">
+                <div className="flex flex-col items-center gap-0.5">
+                  <span className="text-[12px] font-medium text-text">No agents configured</span>
+                  <span className="text-[11px] text-text-muted">
+                    Add an agent to use it in your tasks
+                  </span>
+                </div>
+                <ModalButton variant="ghost" size="sm" disabled>
+                  <Plus size={11} />
+                  add agent
+                </ModalButton>
+              </div>
+            </div>
+          ) : (
+            <>
+              <AgentCardSelector
+                value={agentId}
+                onChange={handleAgentChange}
+                options={agentOptions}
+                label="// agent"
+              />
 
-          <Dropdown
-            value={accountId}
-            onChange={setAccountId}
-            options={accountOptions}
-            label="// agent account"
-            placeholder="select an account..."
-          />
+              <Dropdown
+                value={accountId}
+                onChange={setAccountId}
+                options={accountOptions}
+                label="// agent account"
+                placeholder="select an account..."
+              />
+            </>
+          )}
         </div>
 
         {!gitDisabled && (

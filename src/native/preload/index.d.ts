@@ -21,6 +21,7 @@ import type {
   TerminalStatus,
   TerminalType
 } from '@native/db/types';
+import type { AvailableAgent, InstallAgentResult } from '@native/agents/detect';
 
 interface NexAPI {
   getAppInfo: () => Promise<{
@@ -66,7 +67,8 @@ interface NexAPI {
   writeSessionNotes: (sessionId: string, content: string) => Promise<void>;
 
   showWindow: () => Promise<void>;
-  detectAgents: () => Promise<Agent[]>;
+  detectAgents: () => Promise<AvailableAgent[]>;
+  installAgent: (slug: string) => Promise<InstallAgentResult>;
   cloneAgentAccount: (input: CloneAgentAccountInput) => Promise<AgentAccount>;
   startWork: (input: StartWorkInput) => Promise<Session>;
   detectBaseBranch: (repoPath: string) => Promise<string>;

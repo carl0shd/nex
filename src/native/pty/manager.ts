@@ -1,11 +1,10 @@
 import { spawn, type IPty } from 'node-pty';
 import { app } from 'electron';
-import { existsSync } from 'fs';
-import { isAbsolute, join } from 'path';
 import { IPC } from '@native/ipc/channels';
 import { getMainWindow } from '@native/main/app-window';
 import * as terminalRepo from '@native/db/repositories/terminal.repo';
 import type { TerminalStatus } from '@native/db/types';
+import { whichBinary } from '@native/which';
 
 interface ManagedTerminal {
   id: string;
@@ -40,15 +39,7 @@ function defaultShell(): string {
 }
 
 function resolveCommand(cmd: string, envPath: string): string {
-  if (isAbsolute(cmd)) return cmd;
-  if (cmd.includes('/')) return cmd;
-  if (process.platform === 'win32') return cmd;
-  for (const dir of envPath.split(':')) {
-    if (!dir) continue;
-    const full = join(dir, cmd);
-    if (existsSync(full)) return full;
-  }
-  return cmd;
+  return whichBinary(cmd, envPath) ?? cmd;
 }
 
 function send(channel: string, payload: unknown): void {
@@ -101,6 +92,10 @@ export function spawnTerminal(opts: SpawnOptions): void {
     TERM_PROGRAM_VERSION: app.getVersion(),
     ...(opts.env ?? {})
   } as Record<string, string>;
+
+  delete env.PREFIX;
+  delete env.npm_config_prefix;
+
   const cmd = resolveCommand(rawCmd, env.PATH ?? '');
 
   const pty = spawn(cmd, args, {

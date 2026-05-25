@@ -18,12 +18,19 @@ import {
   getSnapshot,
   isAlive
 } from '@native/pty/manager';
-import { detectAgents } from '@native/agents/detect';
+import { detectAvailableAgents, installAgent } from '@native/agents/detect';
 import { createTerminalForSession } from '@native/agents/agent-terminal';
 import { cloneAgentAccount } from '@native/agents/clone-account';
 import { startWork } from '@native/git/start-work';
 import { getNexDir } from '@native/paths';
-import { detectBaseBranch, isGitRepo, listBranches, listWorktreeFiles } from '@native/git/git';
+import {
+  detectBaseBranch,
+  isGitRepo,
+  listBranches,
+  listWorktreeFiles,
+  removeWorktree,
+  deleteBranch
+} from '@native/git/git';
 import { showMainWindow } from '@native/main/app-window';
 import {
   speechAvailable,
@@ -81,8 +88,16 @@ export function registerIPCHandlers(): void {
   ipcMain.handle(IPC.SESSION_GET_ACTIVE, () => sessionRepo.getActive());
   ipcMain.handle(IPC.SESSION_CREATE, (_, input) => sessionRepo.create(input));
   ipcMain.handle(IPC.SESSION_UPDATE, (_, id, input) => sessionRepo.update(id, input));
-  ipcMain.handle(IPC.SESSION_DELETE, (_, id: string) => {
+  ipcMain.handle(IPC.SESSION_DELETE, async (_, id: string) => {
+    const session = sessionRepo.getById(id);
     for (const term of terminalRepo.getBySession(id)) killTerminal(term.id);
+    if (session?.branch && session.worktreePath) {
+      const project = projectRepo.getById(session.projectId);
+      if (project && session.worktreePath !== project.path) {
+        await removeWorktree(project.path, session.worktreePath).catch(() => {});
+        await deleteBranch(project.path, session.branch).catch(() => {});
+      }
+    }
     sessionRepo.remove(id);
   });
   ipcMain.handle(IPC.SESSION_REORDER, (_, orderedIds: string[]) => sessionRepo.reorder(orderedIds));
@@ -138,7 +153,8 @@ export function registerIPCHandlers(): void {
   ipcMain.handle(IPC.PTY_GET_SNAPSHOT, (_, terminalId: string) => getSnapshot(terminalId));
 
   ipcMain.handle(IPC.WINDOW_SHOW, () => showMainWindow());
-  ipcMain.handle(IPC.DETECT_AGENTS, () => detectAgents());
+  ipcMain.handle(IPC.DETECT_AGENTS, () => detectAvailableAgents());
+  ipcMain.handle(IPC.AGENT_INSTALL, (_, slug: string) => installAgent(slug));
   ipcMain.handle(IPC.AGENT_ACCOUNT_CLONE, (_, input) => cloneAgentAccount(input));
   ipcMain.handle(IPC.WORK_START, (_, input) => startWork(input));
   ipcMain.handle(IPC.GIT_DETECT_BASE_BRANCH, (_, repoPath) => detectBaseBranch(repoPath));

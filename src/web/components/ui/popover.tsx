@@ -32,9 +32,8 @@ function Popover({
           <PopoverPanel
             portal
             anchor={anchor}
-            transition
             style={{ '--anchor-gap': `${gap}px` } as React.CSSProperties}
-            className={`z-50 transition-opacity duration-100 ease-out data-closed:opacity-0 ${className}`}
+            className={`z-50 ${className}`}
           >
             {children}
           </PopoverPanel>

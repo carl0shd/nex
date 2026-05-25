@@ -7,49 +7,60 @@ import {
   ModalFooter,
   ModalButton
 } from '@/components/ui/modal';
+import OptionCard from '@/components/ui/option-card';
 import { useOnboardingStore } from '@/stores/onboarding.store';
 import { useAgentStore } from '@/stores/agent.store';
 import claudeLogo from '@/assets/images/claude-logo.svg';
-import type { Agent, AgentAccount } from '@native/db/types';
-
-interface DetectedAgent {
-  agent: Agent;
-  account: AgentAccount | null;
-}
+import type { AvailableAgent } from '@native/agents/detect';
 
 interface StepAgentProps {
   onFinish: () => void;
 }
 
+const AGENT_LOGOS: Record<string, string> = {
+  'claude-code': claudeLogo
+};
+
 function StepAgent({ onFinish }: StepAgentProps): React.JSX.Element {
-  const { agentId, setAgentId, setStep } = useOnboardingStore();
+  const setStep = useOnboardingStore((s) => s.setStep);
+  const setAgentId = useOnboardingStore((s) => s.setAgentId);
   const loadAgents = useAgentStore((s) => s.loadAgents);
   const loadAccounts = useAgentStore((s) => s.loadAccounts);
-  const [detected, setDetected] = useState<DetectedAgent[]>([]);
+  const [available, setAvailable] = useState<AvailableAgent[]>([]);
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [installing, setInstalling] = useState(false);
 
   useEffect(() => {
     async function detect(): Promise<void> {
-      await window.api.detectAgents();
-      await Promise.all([loadAgents(), loadAccounts()]);
-      const { agents, accounts } = useAgentStore.getState();
-
-      const items: DetectedAgent[] = agents.map((a) => ({
-        agent: a,
-        account: accounts.find((acc) => acc.agentId === a.id && acc.isDefault) ?? null
-      }));
-
-      setDetected(items);
-      if (items.length > 0) {
-        setAgentId(items[0].agent.id);
-      } else {
-        setAgentId('skip');
+      try {
+        const list = await window.api.detectAgents();
+        const installed = list.filter((a) => a.installed);
+        setAvailable(installed);
+        setSelectedSlug(installed[0]?.slug ?? null);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     }
-    detect();
-  }, [setAgentId, loadAgents, loadAccounts]);
+    void detect();
+  }, []);
+
+  const handleFinish = async (): Promise<void> => {
+    if (selectedSlug === null) {
+      setAgentId('skip');
+      onFinish();
+      return;
+    }
+    setInstalling(true);
+    try {
+      const result = await window.api.installAgent(selectedSlug);
+      await Promise.all([loadAgents(), loadAccounts()]);
+      setAgentId(result.agent.id);
+      onFinish();
+    } finally {
+      setInstalling(false);
+    }
+  };
 
   return (
     <ModalPanel>
@@ -68,45 +79,34 @@ function StepAgent({ onFinish }: StepAgentProps): React.JSX.Element {
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          {detected.length > 0 && (
+          {available.length > 0 && (
             <div className="flex flex-col gap-1.5">
-              <span className="text-[10px] font-medium text-text-muted">{'// detected agent'}</span>
-              {detected.map(({ agent, account }) => {
-                const isSelected = agentId === agent.id;
+              <span className="text-[10px] font-medium text-text-muted">
+                {available.length > 1 ? '// detected agents' : '// detected agent'}
+              </span>
+              {available.map((a) => {
+                const logo = AGENT_LOGOS[a.slug];
                 return (
-                  <button
-                    key={agent.id}
-                    onClick={() => setAgentId(agent.id)}
-                    className={`flex w-full cursor-pointer items-center gap-3 rounded-md p-3 ${
-                      isSelected
-                        ? 'border border-border-hover bg-bg-input'
-                        : 'border border-border-soft bg-bg-input'
-                    }`}
-                  >
-                    <div
-                      className="flex h-10 w-10 items-center justify-center rounded-md"
-                      style={{ backgroundColor: 'var(--nex-border)' }}
-                    >
-                      <img src={claudeLogo} alt="" className="h-5 w-5" draggable={false} />
-                    </div>
-                    <div className="flex flex-1 flex-col items-start gap-0.5">
-                      <span className="text-[13px] font-medium text-text">{agent.name}</span>
-                      <span className="text-[11px] text-text-muted">
-                        {account ? account.name : 'not configured'}
-                      </span>
-                    </div>
-                    {isSelected && (
-                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-accent">
-                        <Check size={12} className="text-text" />
-                      </div>
-                    )}
-                  </button>
+                  <OptionCard
+                    key={a.slug}
+                    selected={selectedSlug === a.slug}
+                    onClick={() => setSelectedSlug(a.slug)}
+                    icon={
+                      logo ? (
+                        <img src={logo} alt="" className="h-5 w-5" draggable={false} />
+                      ) : (
+                        <Terminal size={18} className="text-text-secondary" />
+                      )
+                    }
+                    title={a.name}
+                    subtitle={a.suggestedAccount ? a.suggestedAccount.name : 'no account detected'}
+                  />
                 );
               })}
             </div>
           )}
 
-          {detected.length === 0 && (
+          {available.length === 0 && (
             <div className="flex flex-col items-center gap-2 py-4">
               <span className="text-[13px] text-text-secondary">No agents detected</span>
             </div>
@@ -114,32 +114,14 @@ function StepAgent({ onFinish }: StepAgentProps): React.JSX.Element {
 
           <ModalDivider />
 
-          <button
-            onClick={() => setAgentId('skip')}
-            className={`flex w-full cursor-pointer items-center gap-3 rounded-md p-3 ${
-              agentId === 'skip'
-                ? 'border border-border-hover bg-bg-input'
-                : 'border border-border-soft bg-bg-input hover:border-border-hover'
-            }`}
-          >
-            <div
-              className="flex h-10 w-10 items-center justify-center rounded-md"
-              style={{ backgroundColor: 'var(--nex-border)' }}
-            >
-              <Terminal size={18} className="text-text-secondary" />
-            </div>
-            <div className="flex flex-1 flex-col items-start gap-0.5">
-              <span className="text-[13px] font-medium text-text-secondary">Skip for now</span>
-              <span className="text-left text-[11px] text-text-muted">
-                Run your agent manually in the worktree session or configure one later in settings
-              </span>
-            </div>
-            {agentId === 'skip' && (
-              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-accent">
-                <Check size={12} className="text-text" />
-              </div>
-            )}
-          </button>
+          <OptionCard
+            selected={selectedSlug === null}
+            onClick={() => setSelectedSlug(null)}
+            icon={<Terminal size={18} className="text-text-secondary" />}
+            title="Skip for now"
+            subtitle="Run your agent manually in the worktree session or configure one later in settings"
+            titleClassName="text-[13px] font-medium text-text-secondary"
+          />
         </div>
       )}
 
@@ -147,9 +129,9 @@ function StepAgent({ onFinish }: StepAgentProps): React.JSX.Element {
         <ModalButton variant="ghost" onClick={() => setStep(3)}>
           back
         </ModalButton>
-        <ModalButton onClick={onFinish} disabled={loading}>
+        <ModalButton onClick={handleFinish} disabled={loading || installing}>
           <Check size={14} />
-          finish setup
+          {installing ? 'setting up...' : 'finish setup'}
         </ModalButton>
       </ModalFooter>
     </ModalPanel>
