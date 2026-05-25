@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Dialog, DialogPanel, DialogBackdrop } from '@headlessui/react';
 import SimpleBar from 'simplebar-react';
 import type { LucideIcon } from 'lucide-react';
@@ -20,23 +21,17 @@ function Modal({
   onClose,
   onAfterClose
 }: ModalProps): React.JSX.Element {
-  const handleTransitionEnd = (): void => {
-    if (!open && onAfterClose) onAfterClose();
-  };
+  const prevOpenRef = useRef(open);
+  useEffect(() => {
+    if (prevOpenRef.current && !open) onAfterClose?.();
+    prevOpenRef.current = open;
+  }, [open, onAfterClose]);
 
   return (
     <Dialog open={open} onClose={onClose ?? (() => {})} className="relative z-50">
-      <DialogBackdrop
-        transition
-        className="fixed inset-0 bg-black/80 duration-150 ease-out data-closed:opacity-0"
-        onTransitionEnd={handleTransitionEnd}
-      />
+      <DialogBackdrop className="fixed inset-0 bg-black/80" />
       <div className="fixed inset-0 flex items-center justify-center">
-        <DialogPanel
-          transition
-          className={`${PANEL_CLASS} duration-150 ease-out data-closed:scale-95 data-closed:opacity-0`}
-          style={{ width }}
-        >
+        <DialogPanel className={PANEL_CLASS} style={{ width }}>
           {children}
         </DialogPanel>
       </div>
@@ -58,11 +53,7 @@ function ModalPanel({
   style
 }: ModalPanelProps): React.JSX.Element {
   return (
-    <DialogPanel
-      transition
-      className={`${PANEL_CLASS} duration-200 ease-out data-closed:scale-95 data-closed:opacity-0 ${className ?? ''}`}
-      style={{ width, ...style }}
-    >
+    <DialogPanel className={`${PANEL_CLASS} ${className ?? ''}`} style={{ width, ...style }}>
       {children}
     </DialogPanel>
   );

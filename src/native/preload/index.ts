@@ -49,6 +49,7 @@ const api = {
 
   showWindow: () => ipcRenderer.invoke('window:show'),
   detectAgents: () => ipcRenderer.invoke('agents:detect'),
+  installAgent: (slug: string) => ipcRenderer.invoke('agents:install', slug),
   cloneAgentAccount: (input: unknown) => ipcRenderer.invoke('agent-account:clone', input),
   startWork: (input: unknown) => ipcRenderer.invoke('work:start', input),
   detectBaseBranch: (repoPath: string) => ipcRenderer.invoke('git:detect-base-branch', repoPath),

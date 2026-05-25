@@ -39,6 +39,9 @@ interface SidebarState {
   createTaskWorkspaceId: string;
   createTaskProjectId: string;
 
+  closeSessionOpen: boolean;
+  closeSessionId: string;
+
   load: () => Promise<void>;
   persist: (next: SidebarCollapsed) => void;
   toggle: (key: 'workspaces' | 'groups' | 'projects', id: string) => void;
@@ -61,6 +64,9 @@ interface SidebarState {
 
   openCreateTask: (opts?: { workspaceId?: string; projectId?: string }) => void;
   closeCreateTask: () => void;
+
+  openCloseSession: (sessionId: string) => void;
+  closeCloseSession: () => void;
 }
 
 export const useSidebarStore = create<SidebarState>((set, get) => ({
@@ -83,6 +89,9 @@ export const useSidebarStore = create<SidebarState>((set, get) => ({
   createTaskOpen: false,
   createTaskWorkspaceId: '',
   createTaskProjectId: '',
+
+  closeSessionOpen: false,
+  closeSessionId: '',
 
   load: async () => {
     const val = await window.api.getSetting<SidebarCollapsed>(
@@ -136,5 +145,8 @@ export const useSidebarStore = create<SidebarState>((set, get) => ({
       createTaskWorkspaceId: opts?.workspaceId ?? '',
       createTaskProjectId: opts?.projectId ?? ''
     }),
-  closeCreateTask: () => set({ createTaskOpen: false })
+  closeCreateTask: () => set({ createTaskOpen: false }),
+
+  openCloseSession: (sessionId) => set({ closeSessionOpen: true, closeSessionId: sessionId }),
+  closeCloseSession: () => set({ closeSessionOpen: false })
 }));

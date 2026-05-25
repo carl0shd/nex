@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Dialog, DialogBackdrop } from '@headlessui/react';
 import StepWelcome from '@/components/onboarding/step-welcome';
 import StepWorkspace from '@/components/onboarding/step-workspace';
@@ -57,12 +57,14 @@ function OnboardingModal({ onComplete }: OnboardingModalProps): React.JSX.Elemen
     setOpen(false);
   };
 
-  const handleTransitionEnd = (): void => {
-    if (!open) {
+  const prevOpenRef = useRef(open);
+  useEffect(() => {
+    if (prevOpenRef.current && !open) {
       reset();
       onComplete();
     }
-  };
+    prevOpenRef.current = open;
+  }, [open, reset, onComplete]);
 
   const renderStep = (): React.JSX.Element => {
     switch (step) {
@@ -81,11 +83,7 @@ function OnboardingModal({ onComplete }: OnboardingModalProps): React.JSX.Elemen
 
   return (
     <Dialog open={open} onClose={() => {}} className="relative z-50">
-      <DialogBackdrop
-        transition
-        className="fixed inset-0 bg-black/80 duration-600 ease-in-out data-closed:opacity-0"
-        onTransitionEnd={handleTransitionEnd}
-      />
+      <DialogBackdrop className="fixed inset-0 bg-black/80" />
       <div className="fixed inset-0 flex items-center justify-center">{renderStep()}</div>
     </Dialog>
   );

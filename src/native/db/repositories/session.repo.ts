@@ -7,6 +7,8 @@ import type {
   PanelLayout
 } from '@native/db/types';
 
+export const DEFAULT_SESSION_WIDTH = 630;
+
 interface SessionRow {
   id: string;
   project_id: string;
@@ -113,8 +115,8 @@ export function create(input: CreateSessionInput): Session {
 
   const row = getDb()
     .prepare(
-      `INSERT INTO sessions (id, project_id, agent_id, account_id, name, branch, base_branch, worktree_path, notes_path, symlinks, sort_order)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+      `INSERT INTO sessions (id, project_id, agent_id, account_id, name, branch, base_branch, worktree_path, notes_path, symlinks, sort_order, width)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
     )
     .get(
       randomUUID(),
@@ -127,7 +129,8 @@ export function create(input: CreateSessionInput): Session {
       input.worktreePath,
       input.notesPath ?? '',
       JSON.stringify(input.symlinks ?? []),
-      nextOrder
+      nextOrder,
+      DEFAULT_SESSION_WIDTH
     ) as SessionRow;
   return toSession(row);
 }

@@ -179,6 +179,7 @@ const ChatEditor = forwardRef<ChatEditorHandle, ChatEditorProps>(
     const onSubmitRef = useRef(onSubmit);
     const onChangeRef = useRef(onChange);
     const worktreePathRef = useRef(worktreePath);
+    const mentionOpenRef = useRef(false);
     useEffect(() => {
       onSubmitRef.current = onSubmit;
       onChangeRef.current = onChange;
@@ -244,6 +245,7 @@ const ChatEditor = forwardRef<ChatEditorHandle, ChatEditorProps>(
                     offset: [0, 8],
                     theme: 'transparent'
                   });
+                  mentionOpenRef.current = true;
                 },
                 onUpdate: (props: SuggestionProps<MentionItem>) => {
                   component?.updateProps({ items: props.items, command: props.command });
@@ -255,11 +257,15 @@ const ChatEditor = forwardRef<ChatEditorHandle, ChatEditorProps>(
                 onKeyDown: (props: SuggestionKeyDownProps) => {
                   if (props.event.key === 'Escape') {
                     props.event.preventDefault();
+                    props.event.stopPropagation();
                     popup?.hide();
                     return true;
                   }
                   const handled = component?.ref?.onKeyDown(props.event) ?? false;
-                  if (handled) props.event.preventDefault();
+                  if (handled) {
+                    props.event.preventDefault();
+                    props.event.stopPropagation();
+                  }
                   return handled;
                 },
                 onExit: () => {
@@ -267,6 +273,7 @@ const ChatEditor = forwardRef<ChatEditorHandle, ChatEditorProps>(
                   component?.destroy();
                   popup = null;
                   component = null;
+                  mentionOpenRef.current = false;
                 }
               };
             }
@@ -315,14 +322,11 @@ const ChatEditor = forwardRef<ChatEditorHandle, ChatEditorProps>(
           }
           // Append inside the last block (docEnd - 1 sits inside the last paragraph,
           // not after its closing token — avoids creating a stray new paragraph).
-          const insertPos = range
-            ? range.from
-            : Math.max(1, editor.state.doc.content.size - 1);
+          const insertPos = range ? range.from : Math.max(1, editor.state.doc.content.size - 1);
           // Skip a leading space if there's already trailing whitespace before us,
           // so we don't double-space after user-typed content.
           const before = editor.state.doc.textBetween(0, insertPos, ' ');
-          const needsSpace =
-            before.length > 0 && !before.endsWith(' ') && !before.endsWith('\n');
+          const needsSpace = before.length > 0 && !before.endsWith(' ') && !before.endsWith('\n');
           const prefixed = (needsSpace ? ' ' : '') + text;
           const chain = editor.chain();
           if (range) chain.deleteRange(range);
@@ -345,6 +349,12 @@ const ChatEditor = forwardRef<ChatEditorHandle, ChatEditorProps>(
     const handleKeyDown = useCallback(
       (e: KeyboardEvent<HTMLDivElement>): void => {
         if (!editor) return;
+        if (e.key === 'Escape') {
+          if (mentionOpenRef.current) return;
+          e.preventDefault();
+          onForwardKey?.('\x1b');
+          return;
+        }
         const escape = ARROW_ESCAPE[e.key];
         if (escape && editor.isEmpty) {
           e.preventDefault();

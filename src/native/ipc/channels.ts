@@ -40,6 +40,7 @@ export const IPC = {
   SESSION_NOTES_WRITE: 'session:notes-write',
 
   DETECT_AGENTS: 'agents:detect',
+  AGENT_INSTALL: 'agents:install',
   AGENT_ACCOUNT_CLONE: 'agent-account:clone',
   WORK_START: 'work:start',
   GIT_DETECT_BASE_BRANCH: 'git:detect-base-branch',
