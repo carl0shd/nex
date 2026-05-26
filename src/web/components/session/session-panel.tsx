@@ -35,7 +35,6 @@ function SessionPanel({ sessionId }: SessionPanelProps): React.JSX.Element {
   );
 
   const pendingFocusSessionId = useSessionStore((s) => s.pendingFocusSessionId);
-  const consumePendingFocus = useSessionStore((s) => s.consumePendingFocus);
 
   useEffect(() => {
     if (pendingFocusSessionId !== sessionId) return;
@@ -44,8 +43,7 @@ function SessionPanel({ sessionId }: SessionPanelProps): React.JSX.Element {
       block: 'nearest',
       inline: 'center'
     });
-    consumePendingFocus();
-  }, [pendingFocusSessionId, sessionId, consumePendingFocus]);
+  }, [pendingFocusSessionId, sessionId]);
 
   const sessionWidth = useSessionStore(
     (s) => s.sessions.find((sess) => sess.id === sessionId)?.width ?? DEFAULT_SESSION_WIDTH

@@ -68,6 +68,12 @@ function isPrintableKey(e: KeyboardEvent): boolean {
   return e.key.length === 1;
 }
 
+function isAppHotkey(e: KeyboardEvent): boolean {
+  if (e.altKey || e.shiftKey) return false;
+  if (!e.ctrlKey && !e.metaKey) return false;
+  return e.code.startsWith('Digit') || e.code === 'KeyW';
+}
+
 function XtermView({
   terminalId,
   sessionId,
@@ -159,6 +165,11 @@ function XtermView({
     // eslint-disable-next-line react-hooks/immutability
     termRef.current = term;
 
+    if (useSessionStore.getState().pendingFocusSessionId === sessionId) {
+      term.focus();
+      useSessionStore.getState().consumePendingFocus();
+    }
+
     fitAddon = new FitAddon();
     serializeAddon = new SerializeAddon();
     const unicode11 = new Unicode11Addon();
@@ -181,6 +192,7 @@ function XtermView({
 
     term.attachCustomKeyEventHandler((e) => {
       if (e.type !== 'keydown') return true;
+      if (isAppHotkey(e)) return false;
       const handler = onRedirectKeyRef.current;
       if (!handler) return true;
       if (!isPrintableKey(e)) return true;
