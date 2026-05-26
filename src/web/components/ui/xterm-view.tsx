@@ -240,7 +240,7 @@ function XtermView({
         window.api.ptyWrite(terminalId, data);
       });
 
-      term.focus();
+      if (isFocusedRef.current) term.focus();
     };
 
     void setup();

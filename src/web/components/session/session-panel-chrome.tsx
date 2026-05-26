@@ -1,7 +1,6 @@
 import {
   memo,
   useCallback,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -9,7 +8,6 @@ import {
   type HTMLAttributes,
   type Ref
 } from 'react';
-import { useMergedRef } from '@/hooks/use-merged-ref';
 import type { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
 import { Group, Panel, type Layout } from 'react-resizable-panels';
 import { useShallow } from 'zustand/react/shallow';
@@ -56,21 +54,8 @@ function SessionPanelChrome({
   const session = useSessionStore((s) => s.sessions.find((x) => x.id === sessionId));
   const updateSession = useSessionStore((s) => s.updateSession);
   const setActiveSession = useSessionStore((s) => s.setActiveSession);
-  const pendingFocusSessionId = useSessionStore((s) => s.pendingFocusSessionId);
   const pendingCloseSessionId = useSessionStore((s) => s.pendingCloseSessionId);
   const isActiveSession = useSessionStore((s) => s.activeSessionId === sessionId);
-
-  const localContainerRef = useRef<HTMLDivElement | null>(null);
-  const setContainerRef = useMergedRef(localContainerRef, containerRef);
-
-  useEffect(() => {
-    if (pendingFocusSessionId !== sessionId) return;
-    localContainerRef.current?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'nearest',
-      inline: 'center'
-    });
-  }, [pendingFocusSessionId, sessionId]);
 
   const branch = session?.branch ?? '';
   const name = session?.name ?? '';
@@ -246,7 +231,7 @@ function SessionPanelChrome({
 
   return (
     <div
-      ref={setContainerRef}
+      ref={containerRef}
       style={mergedStyle}
       onFocus={handleFocusIn}
       onMouseDown={handleFocusIn}
