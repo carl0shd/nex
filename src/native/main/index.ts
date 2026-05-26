@@ -7,8 +7,8 @@ import { registerIPCHandlers } from '@native/ipc/handlers';
 import { initAutoUpdater } from './updater';
 import { initDatabase, closeDatabase } from '@native/db/database';
 import { registerScheme, registerHandler } from '@native/protocol/nex-file';
-import { killAllTerminals } from '@native/pty/manager';
-import { resetAllStatus } from '@native/db/repositories/terminal.repo';
+import { flushAllBuffers, killAllTerminals, sweepOrphanBuffers } from '@native/pty/manager';
+import { getAllIds, resetAllStatus } from '@native/db/repositories/terminal.repo';
 import { disposeSpeech, initSpeech } from '@native/speech/manager';
 import { isDev } from '@native/paths';
 import { fixEnv } from './fix-env';
@@ -32,6 +32,7 @@ app.whenReady().then(() => {
 
   initDatabase();
   resetAllStatus();
+  sweepOrphanBuffers(new Set(getAllIds()));
   registerIPCHandlers();
   initSpeech();
   createApplicationMenu();
@@ -51,6 +52,7 @@ app.whenReady().then(() => {
 
 app.on('before-quit', () => {
   setQuitting(true);
+  flushAllBuffers();
 });
 
 app.on('will-quit', () => {

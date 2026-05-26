@@ -194,6 +194,7 @@ export interface Terminal {
   status: TerminalStatus;
   type: TerminalType;
   runCommand: string | null;
+  agentSessionId: string | null;
   createdAt: string;
 }
 
