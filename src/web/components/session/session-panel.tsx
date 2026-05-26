@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import SessionPanelChrome, {
@@ -23,14 +23,29 @@ function SessionPanel({ sessionId }: SessionPanelProps): React.JSX.Element {
   } = useSortable({ id: sessionId });
 
   const [nearViewport, setNearNode] = useNearViewport();
+  const localContainerRef = useRef<HTMLDivElement | null>(null);
 
   const setRef = useCallback(
     (node: HTMLDivElement | null) => {
+      localContainerRef.current = node;
       setNodeRef(node);
       setNearNode(node);
     },
     [setNodeRef, setNearNode]
   );
+
+  const pendingFocusSessionId = useSessionStore((s) => s.pendingFocusSessionId);
+  const consumePendingFocus = useSessionStore((s) => s.consumePendingFocus);
+
+  useEffect(() => {
+    if (pendingFocusSessionId !== sessionId) return;
+    localContainerRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'center'
+    });
+    consumePendingFocus();
+  }, [pendingFocusSessionId, sessionId, consumePendingFocus]);
 
   const sessionWidth = useSessionStore(
     (s) => s.sessions.find((sess) => sess.id === sessionId)?.width ?? DEFAULT_SESSION_WIDTH
