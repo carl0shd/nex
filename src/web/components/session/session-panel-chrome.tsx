@@ -39,11 +39,10 @@ interface SessionPanelChromeProps {
   dragRef?: Ref<HTMLDivElement>;
   dragAttributes?: HTMLAttributes<HTMLDivElement>;
   dragListeners?: SyntheticListenerMap;
-  nearViewport?: boolean;
 }
 
 const EMPTY_FILES: never[] = [];
-const DEFAULT_SESSION_WIDTH = 630;
+export const DEFAULT_SESSION_WIDTH = 630;
 
 function SessionPanelChrome({
   sessionId,
@@ -52,8 +51,7 @@ function SessionPanelChrome({
   extraClassName = '',
   dragRef,
   dragAttributes,
-  dragListeners,
-  nearViewport = true
+  dragListeners
 }: SessionPanelChromeProps): React.JSX.Element {
   const session = useSessionStore((s) => s.sessions.find((x) => x.id === sessionId));
   const updateSession = useSessionStore((s) => s.updateSession);
@@ -330,7 +328,6 @@ function SessionPanelChrome({
                     onCreateShell={handleAddTab}
                   />
                 ) : (
-                  nearViewport &&
                   activeTerminalId && (
                     <XtermView
                       key={activeTerminalId}

@@ -20,10 +20,6 @@ interface XtermViewProps {
   className?: string;
 }
 
-const UNFOCUSED_FLUSH_MS = 250;
-
-type RendererKind = 'webgl' | 'canvas';
-
 function readTheme(): Record<string, string> {
   const styles = getComputedStyle(document.documentElement);
   const get = (name: string): string => styles.getPropertyValue(name).trim();
@@ -36,37 +32,34 @@ function readTheme(): Record<string, string> {
   };
 }
 
-function loadRenderer(term: Terminal, kind: RendererKind): ITerminalAddon | null {
-  if (kind === 'webgl') {
-    try {
-      const webgl = new WebglAddon();
-      let replaced = false;
-      webgl.onContextLoss(() => {
-        if (replaced) return;
-        replaced = true;
-        try {
-          webgl.dispose();
-        } catch {
-          /* */
-        }
-        try {
-          term.loadAddon(new CanvasAddon());
-        } catch {
-          /* */
-        }
-      });
-      term.loadAddon(webgl);
-      return webgl;
-    } catch {
-      /* fall through to canvas */
-    }
-  }
+function loadWebglRenderer(term: Terminal): ITerminalAddon | null {
   try {
-    const canvas = new CanvasAddon();
-    term.loadAddon(canvas);
-    return canvas;
+    const webgl = new WebglAddon();
+    let replaced = false;
+    webgl.onContextLoss(() => {
+      if (replaced) return;
+      replaced = true;
+      try {
+        webgl.dispose();
+      } catch {
+        /* */
+      }
+      try {
+        term.loadAddon(new CanvasAddon());
+      } catch {
+        /* */
+      }
+    });
+    term.loadAddon(webgl);
+    return webgl;
   } catch {
-    return null;
+    try {
+      const canvas = new CanvasAddon();
+      term.loadAddon(canvas);
+      return canvas;
+    } catch {
+      return null;
+    }
   }
 }
 
@@ -98,9 +91,8 @@ function XtermView({
 
   const termRef = useRef<Terminal | null>(null);
   const rendererRef = useRef<ITerminalAddon | null>(null);
-  const rendererKindRef = useRef<RendererKind | null>(null);
   const writeQueueRef = useRef('');
-  const flushScheduleRef = useRef<{ kind: 'raf' | 'timeout'; handle: number } | null>(null);
+  const flushRafRef = useRef<number | null>(null);
   const isFocusedRef = useRef(isFocused);
 
   useEffect(() => {
@@ -118,7 +110,7 @@ function XtermView({
     let resizeRaf: number | null = null;
 
     const performFlush = (): void => {
-      flushScheduleRef.current = null;
+      flushRafRef.current = null;
       const t = termRef.current;
       if (!t || !writeQueueRef.current) return;
       const data = writeQueueRef.current;
@@ -127,23 +119,14 @@ function XtermView({
     };
 
     const scheduleFlush = (): void => {
-      if (flushScheduleRef.current) return;
-      if (isFocusedRef.current) {
-        flushScheduleRef.current = { kind: 'raf', handle: requestAnimationFrame(performFlush) };
-      } else {
-        flushScheduleRef.current = {
-          kind: 'timeout',
-          handle: window.setTimeout(performFlush, UNFOCUSED_FLUSH_MS)
-        };
-      }
+      if (flushRafRef.current !== null) return;
+      flushRafRef.current = requestAnimationFrame(performFlush);
     };
 
     const cancelFlush = (): void => {
-      const scheduled = flushScheduleRef.current;
-      if (!scheduled) return;
-      if (scheduled.kind === 'raf') cancelAnimationFrame(scheduled.handle);
-      else clearTimeout(scheduled.handle);
-      flushScheduleRef.current = null;
+      if (flushRafRef.current === null) return;
+      cancelAnimationFrame(flushRafRef.current);
+      flushRafRef.current = null;
     };
 
     const queueWrite = (chunk: string): void => {
@@ -193,6 +176,8 @@ function XtermView({
 
     term.unicode.activeVersion = '11';
     term.open(container);
+
+    rendererRef.current = loadWebglRenderer(term);
 
     term.attachCustomKeyEventHandler((e) => {
       if (e.type !== 'keydown') return true;
@@ -294,6 +279,16 @@ function XtermView({
         /* falls back to main's raw buffer on next mount */
       }
       try {
+        container.querySelectorAll('canvas').forEach((canvas) => {
+          const gl =
+            (canvas.getContext('webgl2') as WebGL2RenderingContext | null) ??
+            (canvas.getContext('webgl') as WebGLRenderingContext | null);
+          gl?.getExtension('WEBGL_lose_context')?.loseContext();
+        });
+      } catch {
+        /* */
+      }
+      try {
         rendererRef.current?.dispose();
       } catch {
         /* webgl dispose throws during fast unmount; swallow so term.dispose still runs */
@@ -306,7 +301,6 @@ function XtermView({
 
       termRef.current = null;
       rendererRef.current = null;
-      rendererKindRef.current = null;
       writeQueueRef.current = '';
     };
   }, [terminalId]);
@@ -315,20 +309,8 @@ function XtermView({
     isFocusedRef.current = isFocused;
     const term = termRef.current;
     if (!term) return;
-
     // eslint-disable-next-line react-hooks/immutability
     term.options.cursorBlink = isFocused;
-
-    const desired: RendererKind = isFocused ? 'webgl' : 'canvas';
-    if (rendererKindRef.current === desired) return;
-
-    try {
-      rendererRef.current?.dispose();
-    } catch {
-      /* */
-    }
-    rendererRef.current = loadRenderer(term, desired);
-    rendererKindRef.current = desired;
   }, [isFocused]);
 
   return (
