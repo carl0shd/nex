@@ -110,7 +110,9 @@ const migrations: string[] = [
 
   `ALTER TABLE terminals ADD COLUMN run_command TEXT;`,
 
-  `ALTER TABLE sessions ADD COLUMN width INTEGER NOT NULL DEFAULT 600;`
+  `ALTER TABLE sessions ADD COLUMN width INTEGER NOT NULL DEFAULT 600;`,
+
+  `ALTER TABLE terminals ADD COLUMN agent_session_id TEXT;`
 ];
 
 export function runMigrations(db: Database.Database): void {

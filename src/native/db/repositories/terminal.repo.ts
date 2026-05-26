@@ -21,6 +21,7 @@ interface TerminalRow {
   status: string;
   type: string;
   run_command: string | null;
+  agent_session_id: string | null;
   created_at: string;
 }
 
@@ -38,6 +39,7 @@ function toTerminal(row: TerminalRow): Terminal {
     status: (row.status as TerminalStatus) ?? 'idle',
     type: (row.type as TerminalType) ?? 'shell',
     runCommand: row.run_command,
+    agentSessionId: row.agent_session_id,
     createdAt: row.created_at
   };
 }
@@ -125,6 +127,15 @@ export function setStatus(id: string, status: TerminalStatus): void {
 
 export function clearRunCommand(id: string): void {
   getDb().prepare('UPDATE terminals SET run_command = NULL WHERE id = ?').run(id);
+}
+
+export function setAgentSessionId(id: string, sessionId: string | null): void {
+  getDb().prepare('UPDATE terminals SET agent_session_id = ? WHERE id = ?').run(sessionId, id);
+}
+
+export function getAllIds(): string[] {
+  const rows = getDb().prepare('SELECT id FROM terminals').all() as { id: string }[];
+  return rows.map((r) => r.id);
 }
 
 export function resetAllStatus(): void {

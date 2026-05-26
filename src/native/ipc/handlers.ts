@@ -16,8 +16,12 @@ import {
   resizeTerminal,
   killTerminal,
   getSnapshot,
-  isAlive
+  isAlive,
+  isTerminalFresh,
+  markTerminalFresh,
+  unmarkTerminalFresh
 } from '@native/pty/manager';
+import { getAgentResumeAdapter } from '@native/agents/resume';
 import { detectAvailableAgents, installAgent } from '@native/agents/detect';
 import { createTerminalForSession } from '@native/agents/agent-terminal';
 import { cloneAgentAccount } from '@native/agents/clone-account';
@@ -41,6 +45,74 @@ import {
   stopSpeech,
   cancelSpeech
 } from '@native/speech/manager';
+import type { Terminal } from '@native/db/types';
+import type { AgentResumeAdapter, SessionTrackerHandle } from '@native/agents/resume';
+
+interface AgentSpawnPlan {
+  args: string[];
+  trackerFactory?: () => SessionTrackerHandle | null;
+}
+
+function pickUnclaimedSessionId(terminal: Terminal, adapter: AgentResumeAdapter): string | null {
+  const claimed = new Set(
+    terminalRepo
+      .getBySession(terminal.sessionId)
+      .filter((t) => t.id !== terminal.id && t.agentSessionId)
+      .map((t) => t.agentSessionId as string)
+  );
+  const candidates = adapter.listSessionIds(terminal.cwd).filter((id) => !claimed.has(id));
+  return candidates.length === 1 ? candidates[0] : null;
+}
+
+function makeTrackerFactory(
+  terminal: Terminal,
+  adapter: AgentResumeAdapter
+): () => SessionTrackerHandle {
+  return () =>
+    adapter.watchForNewSession(terminal.cwd, (sessionId) => {
+      try {
+        terminalRepo.setAgentSessionId(terminal.id, sessionId);
+      } catch {
+        /* db may be closed at shutdown */
+      }
+    });
+}
+
+function planAgentSpawn(terminal: Terminal): AgentSpawnPlan | null {
+  if (terminal.type !== 'agent') return null;
+  const session = sessionRepo.getById(terminal.sessionId);
+  const agent = session?.agentId ? agentRepo.getById(session.agentId) : null;
+  const adapter = getAgentResumeAdapter(agent?.slug);
+  if (!agent || !adapter) return null;
+
+  if (isTerminalFresh(terminal.id)) {
+    if (terminal.agentSessionId) terminalRepo.setAgentSessionId(terminal.id, null);
+    return { args: terminal.args, trackerFactory: makeTrackerFactory(terminal, adapter) };
+  }
+
+  if (terminal.agentSessionId && adapter.sessionExists(terminal.cwd, terminal.agentSessionId)) {
+    return { args: adapter.buildResumeArgs(agent, terminal.agentSessionId) };
+  }
+
+  if (!terminal.agentSessionId) {
+    const adopted = pickUnclaimedSessionId(terminal, adapter);
+    if (adopted) {
+      terminalRepo.setAgentSessionId(terminal.id, adopted);
+      return { args: adapter.buildResumeArgs(agent, adopted) };
+    }
+  }
+
+  if (terminal.agentSessionId) terminalRepo.setAgentSessionId(terminal.id, null);
+  return { args: terminal.args, trackerFactory: makeTrackerFactory(terminal, adapter) };
+}
+
+function deleteAgentSessionFile(terminal: Terminal): void {
+  if (terminal.type !== 'agent' || !terminal.agentSessionId) return;
+  const session = sessionRepo.getById(terminal.sessionId);
+  const agent = session?.agentId ? agentRepo.getById(session.agentId) : null;
+  const adapter = getAgentResumeAdapter(agent?.slug);
+  adapter?.deleteSession(terminal.cwd, terminal.agentSessionId);
+}
 
 export function registerIPCHandlers(): void {
   ipcMain.handle(IPC.APP_GET_INFO, () => ({
@@ -90,7 +162,11 @@ export function registerIPCHandlers(): void {
   ipcMain.handle(IPC.SESSION_UPDATE, (_, id, input) => sessionRepo.update(id, input));
   ipcMain.handle(IPC.SESSION_DELETE, async (_, id: string) => {
     const session = sessionRepo.getById(id);
-    for (const term of terminalRepo.getBySession(id)) killTerminal(term.id);
+    for (const term of terminalRepo.getBySession(id)) {
+      deleteAgentSessionFile(term);
+      killTerminal(term.id);
+      unmarkTerminalFresh(term.id);
+    }
     if (session?.branch && session.worktreePath) {
       const project = projectRepo.getById(session.projectId);
       if (project && session.worktreePath !== project.path) {
@@ -118,10 +194,17 @@ export function registerIPCHandlers(): void {
   ipcMain.handle(IPC.TERMINAL_GET_BY_SESSION, (_, sessionId: string) =>
     terminalRepo.getBySession(sessionId)
   );
-  ipcMain.handle(IPC.TERMINAL_CREATE, (_, input) => terminalRepo.create(input));
+  ipcMain.handle(IPC.TERMINAL_CREATE, (_, input) => {
+    const terminal = terminalRepo.create(input);
+    markTerminalFresh(terminal.id);
+    return terminal;
+  });
   ipcMain.handle(IPC.TERMINAL_CREATE_FOR_SESSION, (_, input) => createTerminalForSession(input));
   ipcMain.handle(IPC.TERMINAL_DELETE, (_, id: string) => {
+    const terminal = terminalRepo.getById(id);
+    if (terminal) deleteAgentSessionFile(terminal);
     killTerminal(id);
+    unmarkTerminalFresh(id);
     terminalRepo.remove(id);
   });
 
@@ -129,15 +212,20 @@ export function registerIPCHandlers(): void {
     if (isAlive(terminalId)) return true;
     const terminal = terminalRepo.getById(terminalId);
     if (!terminal) return false;
+
+    const plan = planAgentSpawn(terminal);
+
     spawnTerminal({
       id: terminal.id,
+      type: terminal.type,
       command: terminal.command,
-      args: terminal.args,
+      args: plan?.args ?? terminal.args,
       cwd: terminal.cwd,
       env: terminal.env,
       cols,
       rows,
-      runCommand: terminal.runCommand
+      runCommand: terminal.runCommand,
+      trackerFactory: plan?.trackerFactory
     });
     return true;
   });

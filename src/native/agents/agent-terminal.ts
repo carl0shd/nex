@@ -3,6 +3,7 @@ import * as agentAccountRepo from '@native/db/repositories/agent-account.repo';
 import * as sessionRepo from '@native/db/repositories/session.repo';
 import * as terminalRepo from '@native/db/repositories/terminal.repo';
 import { agentDisplayName } from '@native/agents/agent-display';
+import { markTerminalFresh } from '@native/pty/manager';
 import type { Terminal, TerminalType } from '@native/db/types';
 
 export interface CreateForSessionInput {
@@ -26,7 +27,7 @@ export function createTerminalForSession(input: CreateForSessionInput): Terminal
       const shellCount = existing.filter((t) => t.type === 'shell').length;
       name = shellCount === 0 ? 'Shell' : `Shell ${shellCount + 1}`;
     }
-    return terminalRepo.create({
+    const terminal = terminalRepo.create({
       sessionId: session.id,
       name,
       command: null,
@@ -37,6 +38,8 @@ export function createTerminalForSession(input: CreateForSessionInput): Terminal
       type: 'shell',
       runCommand: input.runCommand ?? null
     });
+    markTerminalFresh(terminal.id);
+    return terminal;
   }
 
   const agent = session.agentId ? agentRepo.getById(session.agentId) : null;
@@ -48,7 +51,7 @@ export function createTerminalForSession(input: CreateForSessionInput): Terminal
     env[agent.configEnvVar] = account.configDir;
   }
 
-  return terminalRepo.create({
+  const terminal = terminalRepo.create({
     sessionId: session.id,
     name: agentDisplayName(agent.slug, agent.name),
     command: agent.command,
@@ -58,4 +61,6 @@ export function createTerminalForSession(input: CreateForSessionInput): Terminal
     isPrimary,
     type: 'agent'
   });
+  markTerminalFresh(terminal.id);
+  return terminal;
 }
