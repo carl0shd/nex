@@ -1,6 +1,22 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { IPC } from '@native/ipc/channels';
 
+type SpeechEvent = {
+  type: 'state' | 'partial' | 'final' | 'error' | 'end' | 'devicesChanged';
+  state?: string;
+  text?: string;
+  confidence?: number;
+  timestampMs?: number;
+  code?: string;
+  message?: string;
+};
+type SpeechCallback = (event: SpeechEvent) => void;
+
+const speechSubscribers = new Set<SpeechCallback>();
+ipcRenderer.on(IPC.SPEECH_EVENT, (_e, payload: SpeechEvent) => {
+  for (const cb of speechSubscribers) cb(payload);
+});
+
 const api = {
   getAppInfo: () => ipcRenderer.invoke('app:get-info'),
 
@@ -134,23 +150,11 @@ const api = {
     }) => ipcRenderer.invoke(IPC.SPEECH_START, opts),
     stop: () => ipcRenderer.invoke(IPC.SPEECH_STOP),
     cancel: () => ipcRenderer.invoke(IPC.SPEECH_CANCEL),
-    onEvent: (
-      callback: (event: {
-        type: 'state' | 'partial' | 'final' | 'error' | 'end' | 'devicesChanged';
-        state?: string;
-        text?: string;
-        confidence?: number;
-        timestampMs?: number;
-        code?: string;
-        message?: string;
-      }) => void
-    ) => {
-      const handler = (
-        _e: Electron.IpcRendererEvent,
-        payload: Parameters<typeof callback>[0]
-      ): void => callback(payload);
-      ipcRenderer.on(IPC.SPEECH_EVENT, handler);
-      return () => ipcRenderer.removeListener(IPC.SPEECH_EVENT, handler);
+    onEvent: (callback: SpeechCallback) => {
+      speechSubscribers.add(callback);
+      return () => {
+        speechSubscribers.delete(callback);
+      };
     }
   }
 };

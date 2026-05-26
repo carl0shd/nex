@@ -1,4 +1,5 @@
-import { useEffect, useState, type RefObject } from 'react';
+import { useEffect, useState } from 'react';
+import { findScrollableAncestor } from '@/lib/scroll';
 
 interface Options {
   rootMargin?: string;
@@ -6,17 +7,17 @@ interface Options {
 }
 
 export function useNearViewport(
-  ref: RefObject<HTMLElement | null>,
   options: Options = {}
-): boolean {
-  const { rootMargin = '0px 600px 0px 600px', unmountDelayMs = 500 } = options;
+): [boolean, (node: HTMLElement | null) => void] {
+  const { rootMargin = '0px 628px 0px 628px', unmountDelayMs = 300 } = options;
   const [near, setNear] = useState(true);
+  const [node, setNode] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
-    const node = ref.current;
     if (!node) return;
 
     let unmountTimer: number | null = null;
+    const root = findScrollableAncestor(node);
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -36,7 +37,7 @@ export function useNearViewport(
           }, unmountDelayMs);
         }
       },
-      { rootMargin, threshold: 0 }
+      { root, rootMargin, threshold: 0 }
     );
 
     observer.observe(node);
@@ -45,7 +46,7 @@ export function useNearViewport(
       observer.disconnect();
       if (unmountTimer !== null) clearTimeout(unmountTimer);
     };
-  }, [ref, rootMargin, unmountDelayMs]);
+  }, [node, rootMargin, unmountDelayMs]);
 
-  return near;
+  return [near, setNode];
 }
