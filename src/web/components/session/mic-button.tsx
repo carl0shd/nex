@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Mic, ChevronDown, Check } from 'lucide-react';
 import SimpleBar from 'simplebar-react';
-import Popover from '@/components/ui/popover';
-import Toggle from '@/components/ui/toggle';
+import PopoverMenu from '@/components/ui/popover-menu';
+import { Switch } from '@/components/ui/switch';
 import { useMicStore } from '@/stores/mic.store';
 import { useSpeechRecognition } from '@/hooks/use-speech-recognition';
 
@@ -112,7 +112,7 @@ function MicButton({ onTranscript, onPartial }: MicButtonProps): React.JSX.Eleme
       >
         <Mic size={14} />
       </button>
-      <Popover
+      <PopoverMenu
         anchor="top end"
         gap={6}
         trigger={
@@ -197,11 +197,11 @@ function MicButton({ onTranscript, onPartial }: MicButtonProps): React.JSX.Eleme
             <div className="my-1 h-px bg-border-soft" />
             <div className="flex items-center justify-between gap-2 px-2 py-1">
               <span className="text-[12px] text-text-secondary select-none">Hold to record</span>
-              <Toggle checked={holdToRecord} onChange={setHoldToRecord} />
+              <Switch checked={holdToRecord} onCheckedChange={setHoldToRecord} />
             </div>
           </div>
         )}
-      </Popover>
+      </PopoverMenu>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { MoreHorizontal, Square, RotateCcw } from 'lucide-react';
-import Badge from '@/components/ui/badge';
+import { Badge } from '@/components/ui/badge';
 import { statusToVariant } from '@/lib/status';
 import type { Status } from '@/lib/status';
 import IconButton from '@/components/ui/icon-button';
@@ -29,7 +29,7 @@ function TerminalBox({
         <div className="flex items-center gap-2">
           <span className="text-[13px] font-semibold text-text">{title}</span>
           {branch && <span className="text-[11px] text-text-muted">({branch})</span>}
-          <Badge label={status} variant={statusToVariant[status]} />
+          <Badge variant={statusToVariant[status]}>{status}</Badge>
         </div>
         <div className="flex items-center gap-0.5">
           <IconButton icon={RotateCcw} size={13} />

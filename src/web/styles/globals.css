@@ -1,17 +1,58 @@
 @import 'tailwindcss';
+@import 'tw-animate-css';
+
+/*
+ * Two token layers, one palette:
+ *   1. `--nex-*` (below, in :root) is the source of truth. Themes override these only.
+ *   2. shadcn semantic tokens (--background, --primary, …) alias the nex palette so
+ *      shadcn/ui components inherit the app theme without any per-component styling.
+ */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
 
 @theme {
   --color-bg: var(--nex-bg);
   --color-bg-soft: var(--nex-bg-soft);
   --color-bg-mute: var(--nex-bg-mute);
   --color-bg-card: var(--nex-bg-card);
-  --color-border: var(--nex-border);
   --color-border-soft: var(--nex-border-soft);
   --color-text: var(--nex-text);
   --color-text-secondary: var(--nex-text-secondary);
   --color-text-muted: var(--nex-text-muted);
   --color-text-placeholder: var(--nex-text-placeholder);
-  --color-accent: var(--nex-accent);
   --color-accent-hover: var(--nex-accent-hover);
   --color-badge-success-bg: var(--nex-badge-success-bg);
   --color-badge-success-text: var(--nex-badge-success-text);
@@ -23,6 +64,13 @@
   --color-badge-default-text: var(--nex-badge-default-text);
   --color-badge-count-bg: var(--nex-badge-count-bg);
   --color-badge-count-text: var(--nex-badge-count-text);
+  --color-badge-info-bg: var(--nex-badge-info-bg);
+  --color-badge-info-text: var(--nex-badge-info-text);
+  --color-badge-success-bg-soft: var(--nex-badge-success-bg-soft);
+  --color-badge-warning-bg-soft: var(--nex-badge-warning-bg-soft);
+  --color-badge-error-bg-soft: var(--nex-badge-error-bg-soft);
+  --color-badge-default-bg-soft: var(--nex-badge-default-bg-soft);
+  --color-badge-info-bg-soft: var(--nex-badge-info-bg-soft);
   --color-bg-raised: var(--nex-bg-raised);
   --color-bg-input: var(--nex-bg-input);
   --color-bg-notes: var(--nex-bg-notes);
@@ -35,7 +83,6 @@
   --color-border-hover: var(--nex-border-hover);
 
   /* Destructive */
-  --color-destructive: var(--nex-destructive);
   --color-destructive-hover: var(--nex-destructive-hover);
   --color-destructive-text: var(--nex-destructive-text);
 
@@ -50,9 +97,16 @@
   --color-selected: var(--nex-selected);
   --color-selected-bg: var(--nex-selected-bg);
   --color-selected-border: var(--nex-selected-border);
+  --color-selected-text: var(--nex-selected-text);
+
+  /* Dialog backdrop */
+  --color-overlay: var(--nex-overlay);
 }
 
 :root {
+  /* Native UI (scrollbars, form controls) follows the app theme, not the OS. */
+  color-scheme: dark;
+
   /* Backgrounds */
   --nex-bg: #0c0b0b;
   --nex-bg-soft: #131212;
@@ -105,6 +159,22 @@
   --nex-badge-count-bg: #e2e0de;
   --nex-badge-count-text: #171615;
 
+  /* Badge - info (modified) */
+  --nex-badge-info-bg: #11243d;
+  --nex-badge-info-text: #69b1ff;
+
+  /* Badge - soft (translucent tint of each variant's accent) */
+  --nex-badge-success-bg-soft: color-mix(in srgb, var(--nex-badge-success-text) 15%, transparent);
+  --nex-badge-warning-bg-soft: color-mix(in srgb, var(--nex-badge-warning-text) 15%, transparent);
+  --nex-badge-error-bg-soft: color-mix(in srgb, var(--nex-badge-error-text) 15%, transparent);
+  --nex-badge-default-bg-soft: color-mix(in srgb, var(--nex-badge-default-text) 12%, transparent);
+  --nex-badge-info-bg-soft: color-mix(in srgb, var(--nex-badge-info-text) 15%, transparent);
+
+  /* Diff tints — same hue family as the +N/-N badges, but lighter: these are
+     mixed into the background as a wash, not read as text. */
+  --nex-diff-added: #4ba85e;
+  --nex-diff-removed: #f87171;
+
   /* Destructive */
   --nex-destructive: #e62e2e;
   --nex-destructive-hover: #cc2929;
@@ -121,10 +191,145 @@
   --nex-selected: #175f52;
   --nex-selected-bg: #112b26;
   --nex-selected-border: #175f52;
+  /* Foreground on top of --nex-selected fills (checkbox tick). Light in both themes. */
+  --nex-selected-text: #ffffff;
+
+  /* Dialog backdrop */
+  --nex-overlay: rgb(0 0 0 / 0.8);
 
   /* Shadows */
   --nex-shadow-dropdown: 0 6px 16px 1px rgb(0 0 0 / 0.25);
   --nex-shadow-popover: 0 4px 12px rgb(0 0 0 / 0.4);
+
+  /*
+   * shadcn/ui semantic tokens — aliases over the nex palette above.
+   * Never give these literal colors: a new theme only overrides `--nex-*`.
+   * `--radius: 0.5rem` keeps rounded-sm/md/lg/xl at Tailwind's default 4/6/8/12px.
+   */
+  --radius: 0.5rem;
+
+  --background: var(--nex-bg);
+  --foreground: var(--nex-text);
+  --card: var(--nex-bg-card);
+  --card-foreground: var(--nex-text);
+  --popover: var(--nex-bg-menu);
+  --popover-foreground: var(--nex-text);
+  --primary: var(--nex-accent);
+  --primary-foreground: var(--nex-text);
+  --secondary: var(--nex-bg-mute);
+  --secondary-foreground: var(--nex-text-secondary);
+  --muted: var(--nex-bg-mute);
+  --muted-foreground: var(--nex-text-muted);
+  --accent: var(--nex-accent);
+  --accent-foreground: var(--nex-text);
+  --destructive: var(--nex-destructive);
+  --destructive-foreground: #ffffff;
+  --border: var(--nex-border);
+  --input: var(--nex-border-soft);
+  --ring: var(--nex-border-hover);
+
+  --sidebar: var(--nex-bg-soft);
+  --sidebar-foreground: var(--nex-text-secondary);
+  --sidebar-primary: var(--nex-accent);
+  --sidebar-primary-foreground: var(--nex-text);
+  --sidebar-accent: var(--nex-bg-hover);
+  --sidebar-accent-foreground: var(--nex-text);
+  --sidebar-border: var(--nex-border-soft);
+  --sidebar-ring: var(--nex-border-hover);
+}
+
+/*
+ * Light theme. Overrides `--nex-*` only — every Tailwind class and shadcn token above
+ * is an alias over these, so nothing else in the app needs to know a theme exists.
+ * Note the elevation flips direction: on a light page a "raised" surface reads as a
+ * slightly darker tint, not a lighter one.
+ */
+[data-theme='light'] {
+  color-scheme: light;
+
+  /* Backgrounds */
+  --nex-bg: #f6f5f3;
+  --nex-bg-soft: #f1efec;
+  --nex-bg-mute: #e8e5e1;
+  --nex-bg-card: #ffffff;
+
+  /* Backgrounds - elevated */
+  --nex-bg-raised: #eae7e3;
+  --nex-bg-input: #ffffff;
+  --nex-bg-notes: #ffffff;
+  --nex-bg-chat: #ffffff;
+  --nex-bg-chat-input: #ffffff;
+  --nex-bg-panel: #ffffff;
+  --nex-bg-hover: #ece9e5;
+  --nex-bg-item-active: #e0dcd7;
+
+  /* Borders */
+  --nex-border: #d8d4cf;
+  --nex-border-soft: #e6e2dd;
+  --nex-border-strong: #c2bdb7;
+  --nex-border-hover: #a8a29b;
+
+  /* Text */
+  --nex-text: #1c1a19;
+  --nex-text-secondary: #4d4944;
+  --nex-text-muted: #6b665f;
+  --nex-text-placeholder: #8f8a84;
+
+  /* Accent */
+  --nex-accent: #e4e0db;
+  --nex-accent-hover: #dbd6d0;
+
+  /* Badge - success */
+  --nex-badge-success-bg: #dcf0e0;
+  --nex-badge-success-text: #1f7a37;
+
+  /* Badge - warning */
+  --nex-badge-warning-bg: #fdefd6;
+  --nex-badge-warning-text: #8a5600;
+
+  /* Badge - error */
+  --nex-badge-error-bg: #fde3e3;
+  --nex-badge-error-text: #c02626;
+
+  /* Diff tints — darker here, since they wash into a light background. */
+  --nex-diff-added: #1f7a37;
+  --nex-diff-removed: #c02626;
+
+  /* Badge - default */
+  --nex-badge-default-bg: #e6e2dd;
+  --nex-badge-default-text: #4d4944;
+
+  /* Badge - count */
+  --nex-badge-count-bg: #2a2724;
+  --nex-badge-count-text: #f6f5f3;
+
+  /* Badge - info (modified) */
+  --nex-badge-info-bg: #dceafc;
+  --nex-badge-info-text: #1a5fb4;
+
+  /* Destructive */
+  --nex-destructive: #dc2626;
+  --nex-destructive-hover: #b91c1c;
+  --nex-destructive-text: #c02626;
+
+  /* Context menu */
+  --nex-bg-menu: #ffffff;
+  --nex-border-menu: #ddd8d2;
+
+  /* Archived */
+  --nex-archived: #6f6a63;
+
+  /* Selected */
+  --nex-selected: #0f766e;
+  --nex-selected-bg: #d8efea;
+  --nex-selected-border: #0f766e;
+
+  /* Dialog backdrop */
+  --nex-overlay: rgb(28 26 25 / 0.35);
+
+  /* Shadows */
+  --nex-shadow-dropdown: 0 6px 16px 1px rgb(28 26 25 / 0.12);
+  --nex-shadow-popover: 0 4px 12px rgb(28 26 25 / 0.14);
 }
 
 ::selection {
@@ -287,7 +492,7 @@ body {
   border: 1px solid var(--nex-border-menu) !important;
   border-radius: 8px !important;
   padding: 12px 14px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+  box-shadow: var(--nex-shadow-popover) !important;
 }
 
 [data-sonner-toast] [data-icon] {
@@ -433,4 +638,61 @@ body {
   background: var(--nex-bg);
   border-radius: 10px;
   overflow: hidden;
+}
+
+/* @pierre/diffs CodeView — each file diff reads as a card, matching session panels.
+   Custom properties cross into the shadow root, so setting them on the host is
+   what reaches the rendered diff. Pierre derives every diff colour from these
+   `-override` hooks; its defaults mix the tint at 80% of the background, which
+   reads far louder than the rest of the app. */
+.diff-codeview diffs-container {
+  --diffs-dark-bg: var(--nex-bg);
+  --diffs-light-bg: var(--nex-bg);
+
+  --diffs-addition-color-override: var(--nex-diff-added);
+  --diffs-deletion-color-override: var(--nex-diff-removed);
+  --diffs-bg-addition-override: color-mix(in lab, var(--nex-bg) 88%, var(--nex-diff-added));
+  --diffs-bg-deletion-override: color-mix(in lab, var(--nex-bg) 88%, var(--nex-diff-removed));
+
+  /* Word-level highlight stays stronger than the line wash, otherwise the
+     changed tokens disappear into it. */
+  --diffs-bg-addition-emphasis-override: rgb(from var(--nex-diff-added) r g b / 0.2);
+  --diffs-bg-deletion-emphasis-override: rgb(from var(--nex-diff-removed) r g b / 0.2);
+
+  border: 1px solid var(--nex-border-soft);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+/* CodeView virtualizes against its own root: it reads `root.scrollTop` and sets
+   `overflow-anchor: none` there, but leaves the overflow itself to the consumer.
+   Without this the surrounding panel scrolls instead, every file renders at once,
+   and the scrollbar belongs to an element we do not style. Horizontal scrolling
+   stays inside each file, where Pierre owns it. */
+.diff-codeview {
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* Inside the scroller, so the cards clear the scrollbar instead of running
+     under it. `CodeViewLayout` only exposes vertical padding. */
+  padding-inline: 12px;
+}
+
+/* The app's scrollbar look, matching `.session-scroll`. Do not add
+   `scrollbar-width`/`scrollbar-color`: either one makes Chromium ignore these. */
+.diff-codeview::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.diff-codeview::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.diff-codeview::-webkit-scrollbar-thumb {
+  background: var(--nex-border);
+  border-radius: 3px;
+}
+
+.diff-codeview::-webkit-scrollbar-thumb:hover {
+  background: var(--nex-text-placeholder);
 }

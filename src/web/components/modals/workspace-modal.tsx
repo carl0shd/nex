@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Modal, ModalHeader, ModalDivider, ModalFooter, ModalButton } from '@/components/ui/modal';
-import Input from '@/components/ui/input';
+import { TextField } from '@/components/ui/text-field';
 import ColorPicker from '@/components/ui/color-picker';
 import IconSelector from '@/components/ui/icon-selector';
 import { getWorkspaceIconOptions } from '@/lib/workspace-icons';
@@ -104,7 +104,7 @@ function WorkspaceForm({ existing, onClose }: WorkspaceFormProps): React.JSX.Ele
       </div>
 
       <div className="flex flex-col gap-4">
-        <Input
+        <TextField
           value={name}
           onChange={(v) => setName(v.replace(/[^a-zA-Z0-9\s-]/g, ''))}
           placeholder="new-workspace"
@@ -130,7 +130,7 @@ function WorkspaceForm({ existing, onClose }: WorkspaceFormProps): React.JSX.Ele
       <ModalDivider />
 
       <ModalFooter>
-        <ModalButton variant="ghost" onClick={onClose}>
+        <ModalButton variant="outline" onClick={onClose}>
           cancel
         </ModalButton>
         <ModalButton onClick={handleSave} disabled={!canSave}>

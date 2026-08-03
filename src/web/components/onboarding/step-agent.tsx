@@ -126,7 +126,7 @@ function StepAgent({ onFinish }: StepAgentProps): React.JSX.Element {
       )}
 
       <ModalFooter>
-        <ModalButton variant="ghost" onClick={() => setStep(3)}>
+        <ModalButton variant="outline" onClick={() => setStep(3)}>
           back
         </ModalButton>
         <ModalButton onClick={handleFinish} disabled={loading || installing}>

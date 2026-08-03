@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import IconButton from '@/components/ui/icon-button';
 import WorkspaceBadge from '@/components/ui/workspace-badge';
-import ContextMenu from '@/components/ui/context-menu';
+import ActionMenu from '@/components/ui/action-menu';
 import type { Workspace, Project } from '@native/db/types';
 
 interface WorkspaceItemProps {
@@ -49,7 +49,7 @@ function ProjectRow({
       <span className="truncate text-[12px] text-text-secondary">{project.name}</span>
       <span className="flex-1" />
       <div className="opacity-0 group-hover:opacity-100">
-        <ContextMenu
+        <ActionMenu
           rowRef={rowRef}
           trigger={<IconButton icon={Ellipsis} size={13} />}
           actions={[
@@ -111,7 +111,7 @@ function WorkspaceItem({
             onAddProject?.(workspace.id);
           }}
         />
-        <ContextMenu
+        <ActionMenu
           rowRef={headerRef}
           trigger={<IconButton icon={Ellipsis} size={14} />}
           actions={[

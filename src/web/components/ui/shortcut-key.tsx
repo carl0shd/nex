@@ -1,4 +1,4 @@
-import Kbd from '@/components/ui/kbd';
+import { Kbd } from '@/components/ui/kbd';
 
 interface ShortcutKeyProps {
   keys: string;

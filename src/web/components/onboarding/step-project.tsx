@@ -6,7 +6,7 @@ import {
   ModalFooter,
   ModalButton
 } from '@/components/ui/modal';
-import Input from '@/components/ui/input';
+import { TextField } from '@/components/ui/text-field';
 import FolderPicker from '@/components/ui/folder-picker';
 import QuickCommandList from '@/components/ui/quick-command-list';
 import WorkspaceBadge from '@/components/ui/workspace-badge';
@@ -56,7 +56,7 @@ function StepProject(): React.JSX.Element {
           </div>
         </div>
 
-        <Input
+        <TextField
           value={name}
           onChange={(v) => setProject({ name: v })}
           placeholder="my-first-project"
@@ -66,7 +66,7 @@ function StepProject(): React.JSX.Element {
 
         <FolderPicker value={path} onBrowse={handleBrowse} />
 
-        <Input
+        <TextField
           value={branchPrefix}
           onChange={(v) => setProject({ branchPrefix: v })}
           placeholder="feature/"
@@ -85,7 +85,7 @@ function StepProject(): React.JSX.Element {
       <ModalDivider />
 
       <ModalFooter>
-        <ModalButton variant="ghost" onClick={() => setStep(2)}>
+        <ModalButton variant="outline" onClick={() => setStep(2)}>
           back
         </ModalButton>
         <ModalButton onClick={() => setStep(4)} disabled={!canContinue}>

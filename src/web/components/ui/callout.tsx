@@ -1,5 +1,6 @@
 import { Info, AlertTriangle, AlertCircle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 type CalloutVariant = 'info' | 'warning' | 'error';
 
@@ -9,11 +10,11 @@ interface CalloutProps {
   children: React.ReactNode;
 }
 
-const variantStyles: Record<CalloutVariant, string> = {
-  info: 'border-border-soft bg-bg-raised text-text-secondary',
-  warning: 'border-badge-warning-text/30 bg-badge-warning-bg/40 text-badge-warning-text',
-  error: 'border-destructive/30 bg-destructive/10 text-destructive-text'
-};
+const alertVariant = {
+  info: 'default',
+  warning: 'warning',
+  error: 'destructive'
+} as const;
 
 const defaultIcon: Record<CalloutVariant, LucideIcon> = {
   info: Info,
@@ -23,13 +24,12 @@ const defaultIcon: Record<CalloutVariant, LucideIcon> = {
 
 function Callout({ variant = 'info', icon, children }: CalloutProps): React.JSX.Element {
   const Icon = icon ?? defaultIcon[variant];
+
   return (
-    <div
-      className={`flex items-start gap-2 rounded-md border px-2.5 py-2 text-[11px] leading-relaxed ${variantStyles[variant]}`}
-    >
-      <Icon size={13} className="mt-0.5 shrink-0" />
-      <div className="flex-1">{children}</div>
-    </div>
+    <Alert variant={alertVariant[variant]}>
+      <Icon size={13} />
+      <AlertDescription>{children}</AlertDescription>
+    </Alert>
   );
 }
 

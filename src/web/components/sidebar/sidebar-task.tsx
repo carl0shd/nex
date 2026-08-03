@@ -1,7 +1,7 @@
 import { memo, useRef } from 'react';
 import { GitBranch, Ellipsis, Trash2 } from 'lucide-react';
 import IconButton from '@/components/ui/icon-button';
-import ContextMenu from '@/components/ui/context-menu';
+import ActionMenu from '@/components/ui/action-menu';
 
 type SidebarTaskStatus = 'active' | 'running';
 
@@ -54,7 +54,7 @@ function SidebarTask({
         )}
         {onDelete && (
           <div className="opacity-0 group-hover:opacity-100">
-            <ContextMenu
+            <ActionMenu
               rowRef={rowRef}
               trigger={<IconButton icon={Ellipsis} size={12} />}
               actions={[

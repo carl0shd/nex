@@ -1,5 +1,5 @@
 import { execFile } from 'child_process';
-import { readFileSync, appendFileSync, mkdirSync } from 'fs';
+import { readFileSync, appendFileSync, mkdirSync, rmSync, statSync } from 'fs';
 import { join } from 'path';
 
 function git(cwd: string, args: string[]): Promise<string> {
@@ -17,6 +17,55 @@ function gitSilent(cwd: string, args: string[]): Promise<string> {
       resolve((stdout || '').trim());
     });
   });
+}
+
+// Returns stdout regardless of exit code or trimming. Used for `git diff`,
+// where `--no-index` exits non-zero by design and trailing newlines matter.
+function gitDiffRaw(cwd: string, args: string[]): Promise<string> {
+  return new Promise((resolve) => {
+    execFile('git', args, { cwd, maxBuffer: 64 * 1024 * 1024 }, (_err, stdout) => {
+      resolve(stdout || '');
+    });
+  });
+}
+
+// Raw stdout, or null when the command failed. Trailing newlines are preserved
+// because they are part of the file contents.
+function gitReadRaw(cwd: string, args: string[]): Promise<string | null> {
+  return new Promise((resolve) => {
+    execFile('git', args, { cwd, maxBuffer: 64 * 1024 * 1024 }, (err, stdout) => {
+      resolve(err ? null : stdout);
+    });
+  });
+}
+
+function gitOk(cwd: string, args: string[]): Promise<boolean> {
+  return new Promise((resolve) => {
+    execFile('git', args, { cwd }, (err) => resolve(err == null));
+  });
+}
+
+/** Reads a NUL-separated path list, which is the only form safe for odd filenames. */
+async function listPaths(cwd: string, args: string[]): Promise<string[]> {
+  const output = await gitDiffRaw(cwd, args);
+  return output.split('\0').filter(Boolean);
+}
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let next = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (next < items.length) {
+      const index = next++;
+      results[index] = await fn(items[index]);
+    }
+  });
+  await Promise.all(workers);
+  return results;
 }
 
 export async function isGitRepo(path: string): Promise<boolean> {
@@ -111,6 +160,170 @@ export async function listWorktreeFiles(repo: string): Promise<WorktreeEntry[]> 
   for (const folder of folders) entries.push({ path: folder, type: 'folder' });
   for (const file of files) entries.push({ path: file, type: 'file' });
   return entries;
+}
+
+export interface WorktreeDiffOptions {
+  /** Branch the session was created from. The diff starts at its merge base. */
+  baseBranch?: string;
+  ignoreWhitespace?: boolean;
+}
+
+/**
+ * Largest untracked file inlined into the patch. Anything bigger is almost
+ * always a build artifact that escaped .gitignore, and rendering it would
+ * stall the viewer for no benefit.
+ */
+const MAX_UNTRACKED_BYTES = 2 * 1024 * 1024;
+const UNTRACKED_CONCURRENCY = 8;
+
+/**
+ * Resolves where the session's diff starts: the merge base with its base
+ * branch, so the diff covers every commit made in the worktree plus whatever
+ * is still uncommitted. Falls back to HEAD (uncommitted changes only) when the
+ * base branch is unknown or unrelated.
+ */
+async function resolveDiffBase(worktreePath: string, baseBranch?: string): Promise<string> {
+  if (!baseBranch) return 'HEAD';
+  for (const ref of [`origin/${baseBranch}`, baseBranch]) {
+    const mergeBase = await gitSilent(worktreePath, ['merge-base', ref, 'HEAD']);
+    if (mergeBase) return mergeBase;
+  }
+  return 'HEAD';
+}
+
+/**
+ * Builds a unified diff of everything the session changed — commits since the
+ * base branch plus staged and unstaged work — including untracked files. The
+ * renderer parses this once with `@pierre/diffs` to derive both the
+ * changed-files list and the rendered diff.
+ */
+export async function getWorktreeDiff(
+  worktreePath: string,
+  options: WorktreeDiffOptions = {}
+): Promise<string> {
+  const base = await resolveDiffBase(worktreePath, options.baseBranch);
+  const whitespace = options.ignoreWhitespace ? ['-w'] : [];
+
+  const tracked = await gitDiffRaw(worktreePath, [
+    '-c',
+    'core.quotepath=false',
+    'diff',
+    ...whitespace,
+    base
+  ]);
+
+  // A path staged as deleted and then recreated shows up in both passes; the
+  // renderer keys files by path, so it has to appear exactly once.
+  const changed = new Set(
+    await listPaths(worktreePath, ['-c', 'core.quotepath=false', 'diff', '--name-only', '-z', base])
+  );
+  const untracked = await listPaths(worktreePath, [
+    '-c',
+    'core.quotepath=false',
+    'ls-files',
+    '--others',
+    '--exclude-standard',
+    '-z'
+  ]);
+  const files = untracked.filter((file) => !changed.has(file));
+
+  const patches = await mapWithConcurrency(files, UNTRACKED_CONCURRENCY, async (file) => {
+    try {
+      if (statSync(join(worktreePath, file)).size > MAX_UNTRACKED_BYTES) return '';
+    } catch {
+      return '';
+    }
+    return gitDiffRaw(worktreePath, [
+      '-c',
+      'core.quotepath=false',
+      'diff',
+      ...whitespace,
+      '--no-index',
+      '--',
+      '/dev/null',
+      file
+    ]);
+  });
+
+  let result = tracked;
+  for (const patch of patches) {
+    if (!patch) continue;
+    if (result && !result.endsWith('\n')) result += '\n';
+    result += patch;
+  }
+
+  return result;
+}
+
+export interface WorktreeFileVersionsInput {
+  worktreePath: string;
+  /** Path as it exists now. */
+  path: string;
+  /** Original path, when the file was renamed. */
+  prevPath?: string;
+  baseBranch?: string;
+}
+
+export interface WorktreeFileVersions {
+  oldContents: string | null;
+  newContents: string | null;
+}
+
+/**
+ * Reads both sides of a file in full so the viewer can expand the unchanged
+ * context around a hunk, which a patch alone does not carry.
+ */
+export async function readWorktreeFileVersions(
+  input: WorktreeFileVersionsInput
+): Promise<WorktreeFileVersions> {
+  const { worktreePath, path, prevPath, baseBranch } = input;
+  const base = await resolveDiffBase(worktreePath, baseBranch);
+
+  const oldContents = await gitReadRaw(worktreePath, ['show', `${base}:${prevPath ?? path}`]);
+
+  let newContents: string | null = null;
+  try {
+    newContents = readFileSync(join(worktreePath, path), 'utf-8');
+  } catch {
+    newContents = null;
+  }
+
+  return { oldContents, newContents };
+}
+
+/**
+ * Restores a file to its committed state. Only uncommitted work is discarded —
+ * commits already made in the worktree are left alone, so this can never throw
+ * away more than what the working tree shows as pending.
+ */
+export async function discardWorktreeFileChanges(
+  worktreePath: string,
+  path: string,
+  prevPath?: string
+): Promise<void> {
+  const paths = prevPath && prevPath !== path ? [path, prevPath] : [path];
+
+  for (const target of paths) {
+    const existsInHead = await gitOk(worktreePath, ['cat-file', '-e', `HEAD:${target}`]);
+    if (existsInHead) {
+      await gitSilent(worktreePath, [
+        'restore',
+        '--staged',
+        '--worktree',
+        '--source=HEAD',
+        '--',
+        target
+      ]);
+      continue;
+    }
+
+    await gitSilent(worktreePath, ['rm', '-f', '--cached', '--ignore-unmatch', '--', target]);
+    try {
+      rmSync(join(worktreePath, target), { force: true });
+    } catch {
+      /* already gone */
+    }
+  }
 }
 
 export function setupGitExclude(repo: string): void {

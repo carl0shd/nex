@@ -1,45 +1,17 @@
-import type { LucideIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-interface InputProps {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  label?: string;
-  icon?: LucideIcon;
-  trailing?: React.ReactNode;
-  disabled?: boolean;
-  className?: string;
-}
-
-function Input({
-  value,
-  onChange,
-  placeholder,
-  label,
-  icon: Icon,
-  trailing,
-  disabled = false,
-  className = ''
-}: InputProps): React.JSX.Element {
+function Input({ className, type, ...props }: React.ComponentProps<'input'>): React.JSX.Element {
   return (
-    <div className={`flex flex-col gap-1.5 ${className}`}>
-      {label && <label className="text-[10px] font-medium text-text-muted">{label}</label>}
-      <div
-        className={`flex items-center gap-2 rounded-[5px] border border-border-soft bg-bg-input px-2.5 py-2 not-focus-within:hover:border-border focus-within:border-border ${disabled ? 'opacity-50' : ''}`}
-      >
-        {Icon && <Icon size={14} className="shrink-0 text-text-muted" />}
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          disabled={disabled}
-          className="flex-1 bg-transparent text-[12px] text-text-secondary placeholder:text-text-placeholder outline-none focus:text-text"
-        />
-        {trailing}
-      </div>
-    </div>
+    <input
+      type={type}
+      data-slot="input"
+      className={cn(
+        'flex w-full min-w-0 rounded-[5px] border border-input bg-bg-input px-2.5 py-2 text-[12px] text-text-secondary outline-none placeholder:text-text-placeholder not-focus:hover:border-border focus:border-border focus:text-text disabled:pointer-events-none disabled:opacity-50',
+        className
+      )}
+      {...props}
+    />
   );
 }
 
-export default Input;
+export { Input };

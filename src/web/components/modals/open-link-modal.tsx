@@ -42,10 +42,10 @@ function OpenLinkModal(): React.JSX.Element {
       <ModalDivider />
 
       <ModalFooter>
-        <ModalButton variant="ghost" onClick={dismiss}>
+        <ModalButton variant="outline" onClick={dismiss}>
           cancel
         </ModalButton>
-        <ModalButton variant="primary" onClick={handleConfirm}>
+        <ModalButton variant="default" onClick={handleConfirm}>
           open in browser
         </ModalButton>
       </ModalFooter>

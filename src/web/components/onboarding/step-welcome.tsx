@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Terminal, GitBranch, LayoutDashboard } from 'lucide-react';
-import { DialogPanel } from '@headlessui/react';
-import { ModalHeader, ModalDivider, ModalFooter, ModalButton } from '@/components/ui/modal';
+import {
+  ModalPanel,
+  ModalHeader,
+  ModalDivider,
+  ModalFooter,
+  ModalButton
+} from '@/components/ui/modal';
 import nexLogo from '@/assets/images/logo.svg';
 import { useOnboardingStore } from '@/stores/onboarding.store';
 import type { LucideIcon } from 'lucide-react';
@@ -68,7 +73,7 @@ function StepWelcome(): React.JSX.Element {
     <>
       {visible && !introPlayed && (
         <div
-          className="pointer-events-none fixed inset-0"
+          className="pointer-events-none fixed inset-0 z-50"
           style={{
             opacity: leaving ? 0 : 1,
             transition: 'opacity 400ms ease-out'
@@ -89,14 +94,15 @@ function StepWelcome(): React.JSX.Element {
           100% { opacity: 0; }
         }
       `}</style>
-      <DialogPanel
-        className="relative flex w-110 flex-col gap-5 rounded-lg border border-border-soft bg-bg-panel p-6 shadow-2xl"
+      <ModalPanel
+        width={440}
         style={
           introPlayed
             ? undefined
             : {
                 opacity: visible ? 1 : 0,
-                transform: visible ? 'translateY(0)' : 'translateY(50px)',
+                // Composed with the panel's own centering, which lives in a `-translate-*` class.
+                transform: visible ? 'translate(-50%, -50%)' : 'translate(-50%, calc(-50% + 50px))',
                 transition:
                   'opacity 700ms ease-out 400ms, transform 1100ms cubic-bezier(0.22, 1, 0.36, 1) 400ms'
               }
@@ -142,7 +148,7 @@ function StepWelcome(): React.JSX.Element {
             Get Started
           </ModalButton>
         </ModalFooter>
-      </DialogPanel>
+      </ModalPanel>
     </>
   );
 }

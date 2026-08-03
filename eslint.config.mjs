@@ -29,5 +29,12 @@ export default defineConfig(
       'react/prop-types': 'off'
     }
   },
+  {
+    // shadcn/ui primitives export their cva variant maps alongside the component.
+    files: ['src/web/components/ui/**/*.tsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off'
+    }
+  },
   eslintConfigPrettier
 );

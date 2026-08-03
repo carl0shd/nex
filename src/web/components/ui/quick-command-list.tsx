@@ -1,6 +1,12 @@
 import { Plus, X, Play } from 'lucide-react';
 import SimpleBar from 'simplebar-react';
 import type { QuickCommand } from '@native/db/types';
+import { Button } from '@/components/ui/button';
+import { FieldLabel } from '@/components/ui/field';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
+import { Separator } from '@/components/ui/separator';
+
+const MONO_FONT = 'JetBrains Mono Variable, JetBrains Mono, monospace';
 
 interface QuickCommandRowProps {
   cmd: QuickCommand;
@@ -10,10 +16,11 @@ interface QuickCommandRowProps {
 
 function QuickCommandRow({ cmd, onChange, onRemove }: QuickCommandRowProps): React.JSX.Element {
   return (
-    <div className="flex items-center gap-2 rounded border border-border-soft px-2.5 py-1 hover:border-border">
-      <Play size={10} className="shrink-0 text-badge-success-text" />
-      <input
-        type="text"
+    <InputGroup className="rounded border-border-soft bg-transparent py-1 hover:border-border">
+      <InputGroupAddon>
+        <Play size={10} className="text-badge-success-text" />
+      </InputGroupAddon>
+      <InputGroupInput
         value={cmd.name}
         onChange={(e) => onChange('name', e.target.value)}
         placeholder="name"
@@ -21,31 +28,26 @@ function QuickCommandRow({ cmd, onChange, onRemove }: QuickCommandRowProps): Rea
         spellCheck={false}
         autoCorrect="off"
         autoCapitalize="off"
-        className="max-w-32 min-w-8 bg-transparent text-[11px] text-text-secondary placeholder:text-text-placeholder outline-none"
-        style={{
-          fontFamily: 'JetBrains Mono Variable, JetBrains Mono, monospace',
-          fontWeight: 500
-        }}
+        className="max-w-32 min-w-8 flex-none text-[11px]"
+        style={{ fontFamily: MONO_FONT, fontWeight: 500 }}
       />
-      <div className="h-3 w-px bg-border-soft" />
-      <input
-        type="text"
+      <Separator orientation="vertical" className="h-3" />
+      <InputGroupInput
         value={cmd.command}
         onChange={(e) => onChange('command', e.target.value)}
         placeholder="npm run dev"
         spellCheck={false}
         autoCorrect="off"
         autoCapitalize="off"
-        className="flex-1 bg-transparent text-[11px] text-text-secondary placeholder:text-text-placeholder outline-none"
-        style={{ fontFamily: 'JetBrains Mono Variable, JetBrains Mono, monospace' }}
+        className="text-[11px]"
+        style={{ fontFamily: MONO_FONT }}
       />
-      <button
-        onClick={onRemove}
-        className="-mr-1 -mb-px cursor-pointer p-1 text-text-muted hover:text-text-secondary"
-      >
-        <X size={12} />
-      </button>
-    </div>
+      <InputGroupAddon align="inline-end">
+        <Button variant="ghost" size="icon-sm" onClick={onRemove} className="-mr-1 -mb-px">
+          <X size={12} />
+        </Button>
+      </InputGroupAddon>
+    </InputGroup>
   );
 }
 
@@ -75,15 +77,17 @@ function QuickCommandList({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-1">
-        <span className="text-[10px] font-medium text-text-muted">{label}</span>
+        <FieldLabel>{label}</FieldLabel>
         <span className="flex-1" />
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={add}
-          className="flex cursor-pointer items-center gap-1 rounded-[3px] bg-bg-raised px-2 py-0.5 text-[10px] font-medium text-text-muted hover:bg-bg-hover hover:text-text-secondary"
+          className="gap-1 rounded-[3px] bg-bg-raised px-2 py-0.5 text-[10px] hover:bg-bg-hover"
         >
           <Plus size={10} />
           add
-        </button>
+        </Button>
       </div>
 
       <SimpleBar style={{ maxHeight: 128 }} autoHide={false}>
@@ -91,7 +95,7 @@ function QuickCommandList({
           {commands.length === 0 && (
             <div
               className="rounded border border-dashed border-border-soft px-2.5 py-1.25 text-left text-[11px] text-text-placeholder"
-              style={{ fontFamily: 'JetBrains Mono Variable, JetBrains Mono, monospace' }}
+              style={{ fontFamily: MONO_FONT }}
             >
               No commands yet
             </div>

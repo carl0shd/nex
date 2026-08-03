@@ -1,46 +1,25 @@
+import { Checkbox as CheckboxPrimitive } from 'radix-ui';
 import { Check } from 'lucide-react';
-
-interface CheckboxProps {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  label?: React.ReactNode;
-  trailing?: React.ReactNode;
-  monospace?: boolean;
-  disabled?: boolean;
-}
+import { cn } from '@/lib/utils';
 
 function Checkbox({
-  checked,
-  onChange,
-  label,
-  trailing,
-  monospace = false,
-  disabled = false
-}: CheckboxProps): React.JSX.Element {
+  className,
+  ...props
+}: React.ComponentProps<typeof CheckboxPrimitive.Root>): React.JSX.Element {
   return (
-    <button
-      type="button"
-      onClick={() => !disabled && onChange(!checked)}
-      disabled={disabled}
-      className={`flex w-full cursor-pointer select-none items-center gap-2 ${disabled ? 'pointer-events-none opacity-40' : ''}`}
-    >
-      <span
-        className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-[3px] border ${
-          checked ? 'border-transparent bg-selected' : 'border-border-soft bg-transparent'
-        }`}
-      >
-        {checked && <Check size={10} className="text-text" strokeWidth={3} />}
-      </span>
-      {label !== undefined && (
-        <span
-          className={`flex-1 truncate text-left text-[11px] text-text-secondary ${monospace ? 'font-mono' : ''}`}
-        >
-          {label}
-        </span>
+    <CheckboxPrimitive.Root
+      data-slot="checkbox"
+      className={cn(
+        'flex size-3.5 shrink-0 cursor-pointer items-center justify-center rounded-[3px] border border-input bg-transparent outline-none data-[state=checked]:border-transparent data-[state=checked]:bg-selected disabled:pointer-events-none disabled:opacity-40',
+        className
       )}
-      {trailing}
-    </button>
+      {...props}
+    >
+      <CheckboxPrimitive.Indicator data-slot="checkbox-indicator" className="text-selected-text">
+        <Check size={10} strokeWidth={3} />
+      </CheckboxPrimitive.Indicator>
+    </CheckboxPrimitive.Root>
   );
 }
 
-export default Checkbox;
+export { Checkbox };

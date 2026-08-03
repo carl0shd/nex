@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Dialog, DialogBackdrop } from '@headlessui/react';
+import { Dialog, DialogOverlay, DialogPortal } from '@/components/ui/dialog';
 import StepWelcome from '@/components/onboarding/step-welcome';
 import StepWorkspace from '@/components/onboarding/step-workspace';
 import StepProject from '@/components/onboarding/step-project';
@@ -82,9 +82,11 @@ function OnboardingModal({ onComplete }: OnboardingModalProps): React.JSX.Elemen
   };
 
   return (
-    <Dialog open={open} onClose={() => {}} className="relative z-50">
-      <DialogBackdrop className="fixed inset-0 bg-black/80" />
-      <div className="fixed inset-0 flex items-center justify-center">{renderStep()}</div>
+    <Dialog open={open}>
+      <DialogPortal>
+        <DialogOverlay />
+        {renderStep()}
+      </DialogPortal>
     </Dialog>
   );
 }

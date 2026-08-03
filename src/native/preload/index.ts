@@ -73,6 +73,27 @@ const api = {
   listBranches: (repoPath: string) => ipcRenderer.invoke('git:list-branches', repoPath),
   listWorktreeFiles: (worktreePath: string) =>
     ipcRenderer.invoke(IPC.WORKTREE_LIST_FILES, worktreePath),
+  getWorktreeDiff: (worktreePath: string, options?: unknown) =>
+    ipcRenderer.invoke(IPC.GIT_WORKTREE_DIFF, worktreePath, options),
+  readWorktreeFileVersions: (input: unknown) =>
+    ipcRenderer.invoke(IPC.GIT_WORKTREE_FILE_VERSIONS, input),
+  discardWorktreeFile: (worktreePath: string, path: string, prevPath?: string) =>
+    ipcRenderer.invoke(IPC.GIT_DISCARD_FILE, worktreePath, path, prevPath),
+
+  watchWorktree: (worktreePath: string, callback: () => void) => {
+    void ipcRenderer.invoke(IPC.GIT_WATCH_START, worktreePath);
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      payload: { worktreePath: string }
+    ): void => {
+      if (payload.worktreePath === worktreePath) callback();
+    };
+    ipcRenderer.on(IPC.GIT_WORKTREE_CHANGED, handler);
+    return () => {
+      ipcRenderer.removeListener(IPC.GIT_WORKTREE_CHANGED, handler);
+      void ipcRenderer.invoke(IPC.GIT_WATCH_STOP, worktreePath);
+    };
+  },
   pickImage: () => ipcRenderer.invoke('dialog:pick-image'),
   pickDirectory: () => ipcRenderer.invoke('dialog:pick-directory'),
   saveWorkspaceIcon: (workspaceId: string, dataUrl: string) =>

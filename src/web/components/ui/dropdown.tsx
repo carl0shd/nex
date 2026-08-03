@@ -1,6 +1,6 @@
-import { Listbox, ListboxButton, ListboxOptions, ListboxOption } from '@headlessui/react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
 import Chip from '@/components/ui/chip';
+import { Field, FieldLabel } from '@/components/ui/field';
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 
 interface DropdownOption {
   value: string;
@@ -15,69 +15,55 @@ interface DropdownProps {
   options: DropdownOption[];
   label?: string;
   placeholder?: string;
+  disabled?: boolean;
 }
+
+/** Radix rejects `""` as an item value, so blank options round-trip through a sentinel. */
+const EMPTY_VALUE = '__nex_empty__';
+
+const toRadix = (value: string): string => (value === '' ? EMPTY_VALUE : value);
+const fromRadix = (value: string): string => (value === EMPTY_VALUE ? '' : value);
 
 function Dropdown({
   value,
   onChange,
   options,
   label,
-  placeholder
+  placeholder,
+  disabled = false
 }: DropdownProps): React.JSX.Element {
   const selected = options.find((o) => o.value === value) ?? null;
 
   return (
-    <div className="flex flex-col gap-1.5">
-      {label && <label className="text-[10px] font-medium text-text-muted">{label}</label>}
-      <Listbox value={value} onChange={onChange}>
-        {({ open }) => (
-          <>
-            <ListboxButton
-              className={`flex h-9 w-full cursor-pointer items-center gap-2 rounded border px-2.5 ${
-                open ? 'border-border' : 'border-border-soft'
-              } bg-bg-input`}
-            >
-              {selected?.icon}
-              <span className="flex-1 truncate text-left text-[12px] text-text">
-                {selected?.label ?? (
-                  <span className="text-text-placeholder">{placeholder ?? 'Select...'}</span>
-                )}
-              </span>
-              {selected?.badge && <Chip>{selected.badge}</Chip>}
-              {open ? (
-                <ChevronUp size={12} className="shrink-0 text-text-muted" />
-              ) : (
-                <ChevronDown size={12} className="shrink-0 text-text-muted" />
-              )}
-            </ListboxButton>
-            <ListboxOptions
-              portal
-              anchor={{ to: 'bottom start', gap: 4 }}
-              transition
-              className="z-50 flex w-[var(--button-width)] flex-col gap-1 rounded-md border border-border-soft bg-bg-input p-1 shadow-[var(--nex-shadow-dropdown)] transition-opacity duration-100 ease-out data-closed:opacity-0"
-            >
-              {options.map((option) => (
-                <ListboxOption
-                  key={option.value}
-                  value={option.value}
-                  className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 data-[focus]:bg-bg-item-active"
-                >
-                  {option.icon}
-                  <span
-                    className={`flex-1 text-[12px] ${
-                      option.value === value ? 'text-text' : 'text-text-secondary'
-                    }`}
-                  >
-                    {option.label}
-                  </span>
-                  {option.badge && <Chip>{option.badge}</Chip>}
-                </ListboxOption>
-              ))}
-            </ListboxOptions>
-          </>
-        )}
-      </Listbox>
-    </div>
+    <Field>
+      {label && <FieldLabel>{label}</FieldLabel>}
+      <Select
+        value={toRadix(value)}
+        onValueChange={(next) => onChange(fromRadix(next))}
+        disabled={disabled}
+      >
+        <SelectTrigger>
+          {selected?.icon}
+          <span className="flex-1 truncate text-left">
+            {selected ? (
+              selected.label
+            ) : (
+              <span className="text-text-placeholder">{placeholder ?? 'Select...'}</span>
+            )}
+          </span>
+          {selected?.badge && <Chip>{selected.badge}</Chip>}
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((option) => (
+            <SelectItem key={option.value} value={toRadix(option.value)} showIndicator={false}>
+              {option.icon}
+              <span className="flex-1 truncate">{option.label}</span>
+              {option.badge && <Chip>{option.badge}</Chip>}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </Field>
   );
 }
 

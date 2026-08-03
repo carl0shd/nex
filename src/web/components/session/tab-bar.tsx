@@ -5,8 +5,8 @@ import TerminalTab from '@/components/session/terminal-tab';
 import QuickCommand from '@/components/session/quick-command';
 import OverflowBadge from '@/components/ui/overflow-badge';
 import IconButton from '@/components/ui/icon-button';
-import ContextMenu, { type ContextMenuAction } from '@/components/ui/context-menu';
-import Popover from '@/components/ui/popover';
+import ActionMenu, { type ActionMenuAction } from '@/components/ui/action-menu';
+import PopoverMenu from '@/components/ui/popover-menu';
 import AgentIcon from '@/components/ui/agent-icon';
 
 interface TabBarProps {
@@ -48,7 +48,7 @@ function TabBar({
     () => tabs.filter((t) => !visibleTabs.includes(t)),
     [tabs, visibleTabs]
   );
-  const hiddenTabActions = useMemo<ContextMenuAction[]>(
+  const hiddenTabActions = useMemo<ActionMenuAction[]>(
     () =>
       hiddenTabs.map((tab) => ({
         label: tab.name,
@@ -61,7 +61,7 @@ function TabBar({
   const visibleCommands = commands.slice(0, maxVisibleCommands);
   const hiddenCommands = commands.slice(maxVisibleCommands);
 
-  const hiddenCommandActions = useMemo<ContextMenuAction[]>(
+  const hiddenCommandActions = useMemo<ActionMenuAction[]>(
     () =>
       hiddenCommands.map((cmd) => ({
         label: cmd.label,
@@ -86,12 +86,12 @@ function TabBar({
           />
         ))}
         {hiddenTabs.length > 0 && (
-          <ContextMenu
+          <ActionMenu
             trigger={<OverflowBadge count={hiddenTabs.length} />}
             actions={hiddenTabActions}
           />
         )}
-        <Popover
+        <PopoverMenu
           anchor="bottom start"
           gap={4}
           trigger={<IconButton icon={Plus} size={12} variant="ghost" className="shrink-0" />}
@@ -123,7 +123,7 @@ function TabBar({
               </button>
             </>
           )}
-        </Popover>
+        </PopoverMenu>
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
@@ -131,7 +131,7 @@ function TabBar({
           <QuickCommand key={cmd.label} label={cmd.label} onClick={() => onRunCommand?.(cmd)} />
         ))}
         {hiddenCommands.length > 0 && (
-          <ContextMenu
+          <ActionMenu
             trigger={<OverflowBadge count={hiddenCommands.length} />}
             actions={hiddenCommandActions}
           />

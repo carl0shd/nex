@@ -1,10 +1,21 @@
 import { useEffect, useRef } from 'react';
-import { Dialog, DialogPanel, DialogBackdrop } from '@headlessui/react';
 import SimpleBar from 'simplebar-react';
 import type { LucideIcon } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogPanel,
+  DialogTitle
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
-const PANEL_CLASS =
-  'relative flex max-h-[calc(100vh-64px)] flex-col gap-5 rounded-lg border border-border-soft bg-bg-panel p-6 shadow-2xl';
+/** Matches the panel exit animation in `dialog.tsx` so `onAfterClose` fires once it is hidden. */
+const EXIT_DURATION = 150;
 
 interface ModalProps {
   children: React.ReactNode;
@@ -22,19 +33,25 @@ function Modal({
   onAfterClose
 }: ModalProps): React.JSX.Element {
   const prevOpenRef = useRef(open);
+
   useEffect(() => {
-    if (prevOpenRef.current && !open) onAfterClose?.();
+    const wasOpen = prevOpenRef.current;
     prevOpenRef.current = open;
+    if (!wasOpen || open) return;
+    const timer = setTimeout(() => onAfterClose?.(), EXIT_DURATION);
+    return () => clearTimeout(timer);
   }, [open, onAfterClose]);
 
   return (
-    <Dialog open={open} onClose={onClose ?? (() => {})} className="relative z-50">
-      <DialogBackdrop className="fixed inset-0 bg-black/80" />
-      <div className="fixed inset-0 flex items-center justify-center">
-        <DialogPanel className={PANEL_CLASS} style={{ width }}>
-          {children}
-        </DialogPanel>
-      </div>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) onClose?.();
+      }}
+    >
+      <DialogContent showCloseButton={false} style={{ width }}>
+        {children}
+      </DialogContent>
     </Dialog>
   );
 }
@@ -53,7 +70,7 @@ function ModalPanel({
   style
 }: ModalPanelProps): React.JSX.Element {
   return (
-    <DialogPanel className={`${PANEL_CLASS} ${className ?? ''}`} style={{ width, ...style }}>
+    <DialogPanel showCloseButton={false} className={className} style={{ width, ...style }}>
       {children}
     </DialogPanel>
   );
@@ -74,21 +91,24 @@ function ModalHeader({
   icon: Icon,
   align = 'left'
 }: ModalHeaderProps): React.JSX.Element {
-  const textAlign = align === 'center' ? 'text-center' : '';
-
   return (
-    <div className={`flex flex-col gap-1 ${textAlign}`}>
+    <DialogHeader className={cn(align === 'center' && 'text-center')}>
       {Icon && (
         <div
-          className={`flex h-12 w-12 items-center justify-center rounded-full bg-bg-mute ${align === 'center' ? 'self-center' : ''}`}
+          className={cn(
+            'flex size-12 items-center justify-center rounded-full bg-bg-mute',
+            align === 'center' && 'self-center'
+          )}
         >
           <Icon size={20} className="text-text-secondary" />
         </div>
       )}
       {label && <span className="text-[11px] font-medium text-text-muted">{label}</span>}
-      {title && <h2 className="text-lg font-semibold text-text">{title}</h2>}
-      {subtitle && <p className="text-[13px] text-text-secondary">{subtitle}</p>}
-    </div>
+      <DialogTitle className={cn(!title && 'sr-only')}>{title ?? label ?? 'Dialog'}</DialogTitle>
+      <DialogDescription className={cn(!subtitle && 'sr-only')}>
+        {subtitle ?? title ?? ''}
+      </DialogDescription>
+    </DialogHeader>
   );
 }
 
@@ -101,14 +121,12 @@ function ModalBody({ children }: { children: React.ReactNode }): React.JSX.Eleme
 }
 
 function ModalDivider(): React.JSX.Element {
-  return <div className="h-px bg-border-soft" />;
+  return <Separator />;
 }
 
 function ModalFooter({ children }: { children: React.ReactNode }): React.JSX.Element {
-  return <div className="flex items-center justify-end gap-2">{children}</div>;
+  return <DialogFooter>{children}</DialogFooter>;
 }
-
-import Button from '@/components/ui/button';
 
 const ModalButton = Button;
 

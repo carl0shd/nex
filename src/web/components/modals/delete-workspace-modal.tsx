@@ -73,7 +73,7 @@ function DeleteWorkspaceModal({
       <ModalDivider />
 
       <ModalFooter>
-        <ModalButton variant="ghost" onClick={onClose}>
+        <ModalButton variant="outline" onClick={onClose}>
           cancel
         </ModalButton>
         <ModalButton variant="destructive" onClick={handleDelete} disabled={deleting}>

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Folder, GitBranch } from 'lucide-react';
 import { Modal, ModalHeader, ModalDivider, ModalFooter, ModalButton } from '@/components/ui/modal';
-import Input from '@/components/ui/input';
+import { TextField } from '@/components/ui/text-field';
 import Dropdown from '@/components/ui/dropdown';
 import FolderPicker from '@/components/ui/folder-picker';
 import QuickCommandList from '@/components/ui/quick-command-list';
@@ -111,7 +111,7 @@ function ProjectForm({ workspaceId, onClose }: ProjectFormProps): React.JSX.Elem
           label="// workspace"
         />
 
-        <Input
+        <TextField
           value={name}
           onChange={setName}
           placeholder="new-project-name"
@@ -128,7 +128,7 @@ function ProjectForm({ workspaceId, onClose }: ProjectFormProps): React.JSX.Elem
           </Callout>
         )}
 
-        <Input
+        <TextField
           value={branchPrefix}
           onChange={setBranchPrefix}
           placeholder="feature/"
@@ -145,7 +145,7 @@ function ProjectForm({ workspaceId, onClose }: ProjectFormProps): React.JSX.Elem
       <ModalDivider />
 
       <ModalFooter>
-        <ModalButton variant="ghost" onClick={onClose}>
+        <ModalButton variant="outline" onClick={onClose}>
           cancel
         </ModalButton>
         <ModalButton onClick={handleCreate} disabled={!canCreate}>

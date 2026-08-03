@@ -3,6 +3,9 @@ import { X } from 'lucide-react';
 import SimpleBar from 'simplebar-react';
 import type { ChangedFile } from '@/lib/session-view';
 import IconButton from '@/components/ui/icon-button';
+import DiffStat from '@/components/diff/diff-stat';
+import DiffStatusLetter from '@/components/diff/diff-status-letter';
+import { cn } from '@/lib/utils';
 
 interface ChangedFilesPanelProps {
   files: ChangedFile[];
@@ -10,25 +13,29 @@ interface ChangedFilesPanelProps {
   totalAdded: number;
   totalRemoved: number;
   onClose?: () => void;
+  onOpenDiff?: () => void;
+  onSelectFile?: (name: string) => void;
 }
-
-const statusLabel: Record<ChangedFile['status'], { letter: string; className: string }> = {
-  modified: { letter: 'M', className: 'text-badge-warning-text' },
-  added: { letter: 'A', className: 'text-badge-success-text' },
-  deleted: { letter: 'D', className: 'text-destructive-text' }
-};
 
 function ChangedFilesPanel({
   files,
   totalFiles,
   totalAdded,
   totalRemoved,
-  onClose
+  onClose,
+  onOpenDiff,
+  onSelectFile
 }: ChangedFilesPanelProps): React.JSX.Element {
   return (
     <div className="flex h-full min-w-0 flex-col">
-      <div className="flex shrink-0 items-center justify-between border-b border-border-soft bg-bg-soft px-2.5 py-1.5">
-        <span className="text-[11px] text-text-muted">{'// changed files'}</span>
+      <div className="flex shrink-0 items-center justify-between gap-1 border-b border-border-soft bg-bg-soft px-2.5 py-1.5">
+        <button
+          type="button"
+          onClick={onOpenDiff}
+          className="cursor-pointer select-none text-[11px] text-text-muted hover:text-text"
+        >
+          {'// changed files'}
+        </button>
         <IconButton icon={X} size={10} ghost onClick={onClose} />
       </div>
 
@@ -36,48 +43,45 @@ function ChangedFilesPanel({
         {files.length === 0 ? (
           <div className="flex h-full items-center justify-center">
             <span className="font-mono text-[11px] text-text-placeholder opacity-60">
-              no changes
+              no changes yet
             </span>
           </div>
         ) : (
           <SimpleBar style={{ maxHeight: '100%', width: '100%' }} autoHide={false}>
             <div className="flex flex-col py-1">
-              {files.map((file) => {
-                const label = statusLabel[file.status];
-                return (
-                  <div key={file.name} className="flex items-center gap-2 px-2.5 py-1.25">
-                    <span
-                      className={`w-3 shrink-0 text-center font-mono text-[9px] font-semibold ${label.className}`}
-                    >
-                      {label.letter}
-                    </span>
-                    <span
-                      className={`truncate font-mono text-[11px] ${file.status === 'deleted' ? 'text-text-muted' : 'text-text'}`}
-                    >
-                      {file.name}
-                    </span>
-                    <span className="flex-1" />
-                    <span className="shrink-0 font-mono text-[9px] font-medium text-badge-success-text">
-                      +{file.added}
-                    </span>
-                    <span
-                      className={`shrink-0 font-mono text-[9px] font-medium ${file.removed > 0 ? 'text-badge-error-text' : 'text-text-muted'}`}
-                    >
-                      -{file.removed}
-                    </span>
-                  </div>
-                );
-              })}
+              {files.map((file) => (
+                <button
+                  type="button"
+                  key={file.name}
+                  onClick={() => onSelectFile?.(file.name)}
+                  className="flex cursor-pointer select-none items-center gap-2 px-2.5 py-1.25 text-left hover:bg-bg-hover"
+                >
+                  <DiffStatusLetter status={file.status} />
+                  <span
+                    className={cn(
+                      'truncate font-mono text-[11px]',
+                      file.status === 'deleted' ? 'text-text-muted' : 'text-text'
+                    )}
+                  >
+                    {file.name}
+                  </span>
+                  <span className="flex-1" />
+                  <DiffStat added={file.added} removed={file.removed} />
+                </button>
+              ))}
             </div>
           </SimpleBar>
         )}
       </div>
 
-      <div className="flex shrink-0 items-center gap-1.5 border-t border-border-soft bg-bg-soft px-2.5 py-1.5 font-mono text-[10px]">
+      <button
+        type="button"
+        onClick={onOpenDiff}
+        className="flex shrink-0 cursor-pointer select-none items-center gap-1.5 border-t border-border-soft bg-bg-soft px-2.5 py-1.5 font-mono text-[10px] hover:bg-bg-hover"
+      >
         <span className="text-text-muted">{totalFiles} files,</span>
-        <span className="font-semibold text-badge-success-text">+{totalAdded}</span>
-        <span className="font-semibold text-badge-error-text">-{totalRemoved}</span>
-      </div>
+        <DiffStat added={totalAdded} removed={totalRemoved} />
+      </button>
     </div>
   );
 }

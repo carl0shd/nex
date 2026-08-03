@@ -1,3 +1,5 @@
+import { Button } from '@/components/ui/button';
+
 interface OverflowBadgeProps {
   count: number;
   onClick?: () => void;
@@ -5,12 +7,14 @@ interface OverflowBadgeProps {
 
 function OverflowBadge({ count, onClick }: OverflowBadgeProps): React.JSX.Element {
   return (
-    <button
+    <Button
+      variant="outline"
+      size="sm"
       onClick={onClick}
-      className="cursor-pointer rounded border border-border-soft px-1.5 py-0.75 font-mono text-[10px] font-medium text-text-secondary select-none hover:border-border hover:bg-bg-hover hover:text-text"
+      className="rounded px-1.5 py-0.75 font-mono text-[10px] hover:bg-bg-hover"
     >
       +{count}
-    </button>
+    </Button>
   );
 }
 

@@ -1,6 +1,7 @@
 import {
   memo,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -8,11 +9,14 @@ import {
   type HTMLAttributes,
   type Ref
 } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
 import { Group, Panel, type Layout } from 'react-resizable-panels';
 import { useShallow } from 'zustand/react/shallow';
 import { useResizableWidth } from '@/hooks/use-resizable-width';
 import { useSessionStore } from '@/stores/session.store';
+import { useDiffStore, EMPTY_SESSION_DIFF } from '@/stores/diff.store';
+import { useWorktreeDiff } from '@/hooks/use-worktree-diff';
 import { useWorkspaceStore } from '@/stores/workspace.store';
 import { useTerminalStore } from '@/stores/terminal.store';
 import { useAgentStore } from '@/stores/agent.store';
@@ -39,7 +43,6 @@ interface SessionPanelChromeProps {
   dragListeners?: SyntheticListenerMap;
 }
 
-const EMPTY_FILES: never[] = [];
 export const DEFAULT_SESSION_WIDTH = 630;
 
 function SessionPanelChrome({
@@ -116,6 +119,30 @@ function SessionPanelChrome({
     if (!worktreePath) return;
     void window.api.openInVSCode(worktreePath);
   }, [worktreePath]);
+
+  const navigate = useNavigate();
+  const diff = useDiffStore((s) => s.bySession[sessionId]) ?? EMPTY_SESSION_DIFF;
+  const loadDiff = useDiffStore((s) => s.load);
+
+  useWorktreeDiff(sessionId, worktreePath, { baseBranch: session?.baseBranch }, diffVisible);
+
+  // Refresh immediately whenever this session gains focus.
+  useEffect(() => {
+    if (isActiveSession && diffVisible && worktreePath) {
+      void loadDiff(sessionId, worktreePath, { baseBranch: session?.baseBranch });
+    }
+  }, [isActiveSession, diffVisible, worktreePath, sessionId, session?.baseBranch, loadDiff]);
+
+  const handleOpenDiff = useCallback((): void => {
+    navigate(`/diff/${sessionId}`);
+  }, [navigate, sessionId]);
+
+  const handleSelectFile = useCallback(
+    (name: string): void => {
+      navigate(`/diff/${sessionId}`, { state: { file: name } });
+    },
+    [navigate, sessionId]
+  );
 
   const handleFocusIn = useCallback((): void => {
     setActiveSession(sessionId);
@@ -270,11 +297,13 @@ function SessionPanelChrome({
                 {diffVisible && (
                   <Panel id="diff" defaultSize="50%" minSize="20%">
                     <ChangedFilesPanel
-                      files={EMPTY_FILES}
-                      totalFiles={0}
-                      totalAdded={0}
-                      totalRemoved={0}
+                      files={diff.files}
+                      totalFiles={diff.files.length}
+                      totalAdded={diff.totalAdded}
+                      totalRemoved={diff.totalRemoved}
                       onClose={toggleDiff}
+                      onOpenDiff={handleOpenDiff}
+                      onSelectFile={handleSelectFile}
                     />
                   </Panel>
                 )}

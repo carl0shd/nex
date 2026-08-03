@@ -32,9 +32,15 @@ import {
   isGitRepo,
   listBranches,
   listWorktreeFiles,
+  getWorktreeDiff,
+  readWorktreeFileVersions,
+  discardWorktreeFileChanges,
   removeWorktree,
-  deleteBranch
+  deleteBranch,
+  type WorktreeDiffOptions,
+  type WorktreeFileVersionsInput
 } from '@native/git/git';
+import { watchWorktree } from '@native/git/watcher';
 import { showMainWindow } from '@native/main/app-window';
 import {
   speechAvailable,
@@ -112,6 +118,21 @@ function deleteAgentSessionFile(terminal: Terminal): void {
   const agent = session?.agentId ? agentRepo.getById(session.agentId) : null;
   const adapter = getAgentResumeAdapter(agent?.slug);
   adapter?.deleteSession(terminal.cwd, terminal.agentSessionId);
+}
+
+/**
+ * Active worktree watchers, keyed by `${webContentsId}:${worktreePath}`.
+ * Counted because several views can watch the same worktree at once.
+ */
+const worktreeWatchers = new Map<string, { stop: () => void; count: number }>();
+
+function stopWorktreeWatchersFor(senderId: number): void {
+  const prefix = `${senderId}:`;
+  for (const [key, entry] of worktreeWatchers) {
+    if (!key.startsWith(prefix)) continue;
+    entry.stop();
+    worktreeWatchers.delete(key);
+  }
 }
 
 export function registerIPCHandlers(): void {
@@ -251,6 +272,42 @@ export function registerIPCHandlers(): void {
   ipcMain.handle(IPC.WORKTREE_LIST_FILES, (_, worktreePath: string) =>
     listWorktreeFiles(worktreePath)
   );
+  ipcMain.handle(
+    IPC.GIT_WORKTREE_DIFF,
+    (_, worktreePath: string, options: WorktreeDiffOptions = {}) =>
+      getWorktreeDiff(worktreePath, options)
+  );
+  ipcMain.handle(IPC.GIT_WORKTREE_FILE_VERSIONS, (_, input: WorktreeFileVersionsInput) =>
+    readWorktreeFileVersions(input)
+  );
+  ipcMain.handle(IPC.GIT_DISCARD_FILE, (_, worktreePath: string, path: string, prevPath?: string) =>
+    discardWorktreeFileChanges(worktreePath, path, prevPath)
+  );
+
+  ipcMain.handle(IPC.GIT_WATCH_START, (event, worktreePath: string) => {
+    const key = `${event.sender.id}:${worktreePath}`;
+    const existing = worktreeWatchers.get(key);
+    if (existing) {
+      existing.count += 1;
+      return;
+    }
+    const stop = watchWorktree(worktreePath, () => {
+      if (event.sender.isDestroyed()) return;
+      event.sender.send(IPC.GIT_WORKTREE_CHANGED, { worktreePath });
+    });
+    worktreeWatchers.set(key, { stop, count: 1 });
+    event.sender.once('destroyed', () => stopWorktreeWatchersFor(event.sender.id));
+  });
+
+  ipcMain.handle(IPC.GIT_WATCH_STOP, (event, worktreePath: string) => {
+    const key = `${event.sender.id}:${worktreePath}`;
+    const entry = worktreeWatchers.get(key);
+    if (!entry) return;
+    entry.count -= 1;
+    if (entry.count > 0) return;
+    entry.stop();
+    worktreeWatchers.delete(key);
+  });
 
   ipcMain.handle(IPC.DIALOG_PICK_IMAGE, async (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);

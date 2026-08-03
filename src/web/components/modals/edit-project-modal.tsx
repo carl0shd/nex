@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Folder, GitBranch } from 'lucide-react';
 import { Modal, ModalHeader, ModalDivider, ModalFooter, ModalButton } from '@/components/ui/modal';
-import Input from '@/components/ui/input';
+import { TextField } from '@/components/ui/text-field';
 import FolderPicker from '@/components/ui/folder-picker';
 import QuickCommandList from '@/components/ui/quick-command-list';
 import Callout from '@/components/ui/callout';
@@ -71,7 +71,7 @@ function EditProjectForm({ project, onClose }: EditProjectFormProps): React.JSX.
       <ModalDivider />
 
       <div className="flex flex-col gap-3.5">
-        <Input
+        <TextField
           value={name}
           onChange={setName}
           placeholder="project-name"
@@ -88,7 +88,7 @@ function EditProjectForm({ project, onClose }: EditProjectFormProps): React.JSX.
           </Callout>
         )}
 
-        <Input
+        <TextField
           value={branchPrefix}
           onChange={setBranchPrefix}
           placeholder="feature/"
@@ -105,7 +105,7 @@ function EditProjectForm({ project, onClose }: EditProjectFormProps): React.JSX.
       <ModalDivider />
 
       <ModalFooter>
-        <ModalButton variant="ghost" onClick={onClose}>
+        <ModalButton variant="outline" onClick={onClose}>
           cancel
         </ModalButton>
         <ModalButton onClick={handleSave} disabled={!canSave}>
