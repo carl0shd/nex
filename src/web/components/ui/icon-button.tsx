@@ -1,22 +1,21 @@
 import type { LucideIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 type IconButtonVariant = 'ghost' | 'default' | 'filled';
 
-interface IconButtonProps {
+interface IconButtonProps extends Omit<React.ComponentProps<typeof Button>, 'variant' | 'size'> {
   icon: LucideIcon;
   size?: number;
   variant?: IconButtonVariant;
   /** @deprecated use variant="ghost" instead */
   ghost?: boolean;
-  onClick?: (e: React.MouseEvent) => void;
-  disabled?: boolean;
-  className?: string;
 }
 
 const variantStyles: Record<IconButtonVariant, string> = {
-  ghost: 'p-1 text-text-muted hover:text-text-secondary',
-  default: 'p-1.5 text-text-muted hover:bg-bg-mute hover:text-text-secondary',
-  filled: 'p-1.5 bg-accent text-text hover:bg-accent-hover'
+  ghost: 'text-text-muted hover:bg-transparent hover:text-text-secondary',
+  default: 'text-text-muted hover:bg-bg-mute hover:text-text-secondary',
+  filled: 'bg-accent text-text hover:bg-accent-hover'
 };
 
 function IconButton({
@@ -24,19 +23,22 @@ function IconButton({
   size = 14,
   variant,
   ghost = false,
-  onClick,
   disabled = false,
-  className = ''
+  className,
+  ...props
 }: IconButtonProps): React.JSX.Element {
   const resolved = variant ?? (ghost ? 'ghost' : 'default');
+
   return (
-    <button
-      onClick={onClick}
+    <Button
+      variant="ghost"
+      size={resolved === 'ghost' ? 'icon-sm' : 'icon'}
       disabled={disabled}
-      className={`flex items-center justify-center rounded-md ${variantStyles[resolved]} ${disabled ? 'cursor-default opacity-40' : 'cursor-pointer'} ${className}`}
+      className={cn(variantStyles[resolved], disabled && 'cursor-default', className)}
+      {...props}
     >
       <Icon size={size} />
-    </button>
+    </Button>
   );
 }
 

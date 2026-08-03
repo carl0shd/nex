@@ -1,5 +1,5 @@
 import { TerminalSquare } from 'lucide-react';
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import AgentIcon from '@/components/ui/agent-icon';
 
 interface NoTerminalsEmptyProps {
@@ -23,12 +23,12 @@ function NoTerminalsEmpty({
       </div>
       <div className="flex items-center gap-2">
         {agentName && (
-          <Button variant="primary" onClick={onCreateAgent}>
+          <Button variant="default" onClick={onCreateAgent}>
             <AgentIcon slug={agentSlug} size={14} />
             {agentName}
           </Button>
         )}
-        <Button variant="ghost" onClick={onCreateShell}>
+        <Button variant="outline" onClick={onCreateShell}>
           <TerminalSquare size={13} />
           Shell
         </Button>

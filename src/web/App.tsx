@@ -5,10 +5,12 @@ import ErrorBoundary from '@/components/layout/error-boundary';
 import Titlebar from '@/components/layout/titlebar';
 import Sidebar from '@/components/layout/sidebar';
 import Home from '@/routes/home';
+import DiffView from '@/routes/diff-view';
 import OnboardingModal from '@/components/onboarding/onboarding-modal';
 import OpenLinkModal from '@/components/modals/open-link-modal';
 import SessionHotkeys from '@/components/session/session-hotkeys';
 import SessionTerminalHotkeys from '@/components/session/session-terminal-hotkeys';
+import { getTheme } from '@/lib/theme';
 import { useAppData } from '@/hooks/use-app-data';
 import { useOnboarding } from '@/hooks/use-onboarding';
 import { useSidebarStore } from '@/stores/sidebar.store';
@@ -30,6 +32,7 @@ function App(): React.JSX.Element {
             <MemoryRouter>
               <Routes>
                 <Route path="/" element={<Home />} />
+                <Route path="/diff/:sessionId" element={<DiffView />} />
               </Routes>
             </MemoryRouter>
           </div>
@@ -37,7 +40,7 @@ function App(): React.JSX.Element {
           <OpenLinkModal />
           <Toaster
             position="bottom-center"
-            theme="dark"
+            theme={getTheme()}
             closeButton
             expand
             duration={10000}

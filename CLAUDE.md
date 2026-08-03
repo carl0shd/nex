@@ -13,7 +13,7 @@ Multi-IDE desktop app for managing git worktrees with integrated terminals, note
 - **Scrollbar:** simplebar-react
 - **Routing:** react-router-dom with `MemoryRouter` (not BrowserRouter)
 - **State:** Zustand (hook-based stores in `web/stores/`)
-- **UI primitives:** @headlessui/react (Dialog, Menu, Listbox — for modals, context menus, dropdowns)
+- **Design system:** shadcn/ui (new-york) on Radix UI + `class-variance-authority` + `clsx` + `tailwind-merge`
 - **Database:** better-sqlite3 (SQLite in main process)
 - **Package Manager:** yarn 1.x
 
@@ -65,6 +65,7 @@ src/
 │   │   ├── worktree.store.ts  # Worktrees
 │   │   └── task.store.ts      # Tasks
 │   ├── lib/                   # Utilities
+│   │   ├── utils.ts           # `cn()` — clsx + tailwind-merge (used by every ui/ component)
 │   │   └── status.ts          # Status types and badge mappings
 │   ├── assets/                # Images, SVGs
 │   │   └── logo.svg     # Nex logo
@@ -84,6 +85,9 @@ src/
 │
 └── .claude/skills/            # Agent skills (frontend-design, vercel patterns, etc.)
 ```
+
+`components.json` at the repo root is the shadcn CLI config (aliases point at `src/web`), so
+`npx shadcn@latest add <component>` drops new primitives straight into `src/web/components/ui/`.
 
 ## Commands
 
@@ -123,9 +127,49 @@ yarn typecheck        # TypeScript check (node + web)
 - Shell skeleton in `index.html` renders before React for instant visual load
 - `user-select: none`, `cursor: default`, `-webkit-user-drag: none` on body for native feel
 
+### Design system (shadcn/ui)
+
+`src/web/components/ui/` holds the shadcn primitives. They are vendored source — edit them freely,
+but keep the shadcn shape: named exports, `data-slot` attributes, `cva` variant maps, `cn()` for
+class merging, and `React.ComponentProps<...>` prop types spread onto the underlying element.
+
+**Primitives** (shadcn API — compose them): `button`, `input`, `textarea`, `label`, `field`,
+`input-group`, `badge`, `checkbox`, `switch`, `separator`, `card`, `alert`, `kbd`, `dialog`,
+`dropdown-menu`, `select`, `popover`, `hover-card`, `tooltip`, `toggle`, `toggle-group`.
+
+**App composites** (ergonomic wrappers built on those primitives, default exports):
+`modal`, `text-field`, `dropdown`, `branch-picker`, `action-menu`, `popover-menu`, `icon-button`,
+`icon-toggle`, `segmented-control`, `section-header`, `tree-group-label`, `callout`, `chip`,
+`option-card`, `folder-picker`, `color-picker`, `icon-selector`, `agent-card-selector`,
+`quick-command-list`, `command-bar`, `tip-box`, `overflow-badge`.
+
+The root `tsconfig.json` carries `paths` purely so `npx shadcn@latest add <component>` can resolve
+`@/` — without it the CLI writes into a literal `@/` folder at the repo root.
+
+Rules:
+
+- **Build on shadcn first.** New UI goes through a primitive (`Button`, `Select`, `Dialog`, …) or a
+  composite made of primitives. Never hand-roll a button, input, menu, or popover.
+- **Add missing primitives with the CLI:** `npx shadcn@latest add tabs`, then restyle it with theme
+  tokens (see below) — do not leave shadcn's default `slate` palette classes in place.
+- **Overlays are Radix.** Anything portalled (dialog, menu, popover, select, tooltip) must come from
+  Radix so focus trapping, collision detection, and dismiss layers are handled for us.
+- **Nested overlays inside a `Dialog` must be modal** (`<DropdownMenu modal>`, `<Popover modal>`).
+  A non-modal layer is not the top-most dismissable layer, so clicking inside it dismisses the
+  dialog underneath. `action-menu` and `branch-picker` already do this.
+
 ### Theming
 
 All colors use CSS variables defined in `globals.css`. Never hardcode colors in components.
+
+There are two token layers, one palette:
+
+1. `--nex-*` in `:root` is the source of truth. **A theme only overrides these.**
+2. shadcn semantic tokens (`--background`, `--primary`, `--muted`, `--border`, `--input`, `--ring`,
+   `--radius`, sidebar tokens…) are aliases over `--nex-*`, re-exported through `@theme inline`.
+   Never give them literal colors — that would break theming.
+
+`--radius: 0.5rem` is chosen so `rounded-sm/md/lg/xl` keep Tailwind's default 4/6/8/12px.
 
 **Theme tokens available as Tailwind classes:**
 
@@ -139,11 +183,15 @@ All colors use CSS variables defined in `globals.css`. Never hardcode colors in 
 
 **NEVER hardcode hex colors in components.** All colors must come from `--nex-*` CSS variables exposed as Tailwind classes. If a needed color doesn't exist as a token, add it to `globals.css` first (both in `@theme` and `:root`), then use the Tailwind class. The only exception is inline `style` for dynamic colors passed as props (e.g. workspace color). This ensures all themes work by overriding variables only.
 
-To add a new theme, create a `[data-theme="name"]` block in `globals.css` overriding the `--nex-*` variables. No component changes needed.
+**Themes.** The active theme is the `data-theme` attribute on `<html>` in `src/web/index.html`.
+`globals.css` ships `dark` (the `:root` defaults) and `light` (`[data-theme='light']`). To add another,
+copy the light block and override the `--nex-*` variables — no component changes needed.
 
-### Scrollbar
+Two things must be kept in sync when adding a theme:
 
-Uses `simplebar-react` for custom scrollbars. Styles in `globals.css`. Use `useSimplebarVisible` hook to detect when scrollbar is active (adds padding to avoid content overlap).
+- The pre-React skeleton in `index.html` repeats `#shell` colors inline (it paints before Tailwind loads).
+- `lib/theme.ts` `getTheme()` feeds the theme to third-party renderers that can't read CSS variables
+  (sonner, the `@pierre/diffs` viewer). xterm reads `--nex-*` directly and needs nothing.
 
 ### Titlebar
 
@@ -157,17 +205,44 @@ All interactive elements inside the titlebar must have `WebkitAppRegion: 'no-dra
 
 ### Modals
 
-Modals use Headless UI `Dialog` via the `Modal` component (`ui/modal.tsx`). Key patterns:
+Modals use the `Modal` component (`ui/modal.tsx`), a wrapper over the shadcn `Dialog` (Radix). Key patterns:
 
 - **Always mounted:** Modals stay in the DOM with `open` prop controlling visibility. This enables close animations (fade + scale). Never conditionally render a modal (`{show && <Modal/>}`).
 - **`onAfterClose`:** Fires after the close transition ends. Use for deferred actions (e.g. delete after animation).
 - **Form reset:** Extract form into a child component with `key` prop to reset state on reopen. E.g. `<MyForm key={entityId ?? 'new'} />` inside the `Modal`. **Never include `open` in the key** — that remounts the form mid-close-animation, so the user sees inputs/dropdowns reset to defaults during the fade-out. Instead, bump a `resetCount` from `onAfterClose` and use it in the key, so the remount happens _after_ the modal is hidden.
-- **`ModalPanel`:** Use inside a shared `Dialog` (e.g. onboarding steps) when multiple panels share one backdrop.
-- **`ModalButton` variants:** `primary` (accent), `ghost` (border), `destructive` (red).
+- **`ModalPanel`:** Use inside a shared `Dialog` (e.g. onboarding steps) when multiple panels share one overlay. It is centered with `-translate-*` classes, so any inline `transform` must include `translate(-50%, -50%)` itself.
+- **`ModalHeader`** renders the Radix `DialogTitle`/`DialogDescription` (falling back to `sr-only` text), which is what keeps the dialog accessible — prefer it over a hand-rolled header.
+- **`ModalButton`** is the shadcn `Button`: `default` (accent), `outline` (border), `destructive` (red), plus `ghost`/`secondary`/`link`.
+- For anything outside the app's modal chrome, compose the primitives directly (`Dialog`, `DialogContent`, …).
 
-### Context Menu
+### Action Menu
 
-`ContextMenu` (`ui/context-menu.tsx`) uses Headless UI `Menu` with portal rendering. Takes a `trigger` element and `actions` array. Actions with `destructive: true` are auto-separated with a divider.
+`ActionMenu` (`ui/action-menu.tsx`) wraps the shadcn `DropdownMenu`. Takes a `trigger` element and an `actions` array; actions with `destructive: true` are auto-separated with a divider. It supports both left-click on the trigger and right-click (on the trigger, or anywhere inside `rowRef`), anchoring the menu to the pointer via a zero-size fixed trigger so Radix keeps collision handling and keyboard navigation.
+
+### Diff viewer
+
+The diff is rendered by `@pierre/diffs` (`CodeView`) in `components/diff/`, with the route in
+`routes/diff-view.tsx`.
+
+- **What it shows:** everything the session changed — `merge-base(baseBranch, HEAD)` through the
+  working tree, so commits made inside the worktree count, plus staged, unstaged and untracked
+  files. Built in `native/git/git.ts` (`getWorktreeDiff`). A path staged as deleted and then
+  recreated would otherwise appear twice, so untracked files already present in the tracked diff
+  are filtered out — the renderer keys files by path and needs them unique.
+- **Refresh:** `native/git/watcher.ts` watches the worktree (recursive, skipping `node_modules` and
+  build dirs) plus its git dir for commits, debounced, and pushes `GIT_WORKTREE_CHANGED`. The
+  renderer subscribes through `hooks/use-worktree-diff.ts`. There is no polling.
+- **Re-render contract:** `CodeView` only re-reads an item when its `version` changes, and Pierre
+  only re-highlights when the `cacheKey` changes. `diff.store.ts` therefore hashes each file's
+  content into a version and derives the cache key from it; `diff-viewer.tsx` folds the collapsed
+  flag into that same number. Passing a fresh `FileDiffMetadata` with an unchanged version renders
+  **stale content** — the version is what makes an edit visible.
+- **Expanding context:** a patch only carries the lines around each hunk, so `loadDiffFiles` reads
+  both full versions of the file back through IPC. Unchanged files keep their previous metadata
+  object so already-hydrated context survives a reload.
+- **View state:** `diff-view.store.ts` holds the persisted prefs (split/unified, word diff,
+  whitespace, file tree) and the per-session set of collapsed files. Collapsing is per file,
+  driven by clicking its header.
 
 ### Sidebar Store
 
@@ -192,7 +267,9 @@ Uses `MemoryRouter` from react-router-dom. This is required for Electron (no rea
 - **Transitions:** No CSS transitions on hover states. All interactions are instant.
 - **No hardcoded colors:** NEVER use hardcoded hex colors in components. All colors must use theme tokens from `globals.css`. If a color doesn't exist as a token, create it first. Only exception: inline `style` for dynamic colors passed as props (e.g. workspace color).
 - **Native feel:** Global `user-select: none`, `cursor: default`, `-webkit-user-drag: none`. The app should never feel like a website.
-- **No inline markup:** Never leave repeated inline JSX when a component can be extracted. If a pattern appears more than once, create a component. Use existing components (`IconButton`, `Badge`, `Dropdown`, `Input`, etc.) instead of raw `<button>` or `<span>` with manual styling. Any new UI pattern (dropdowns, selectors, toggles, etc.) MUST be built as a reusable component in `ui/` first, then consumed in modals/pages. Never write raw dropdown/select/picker markup inline — always wrap it in a component.
+- **shadcn by default:** Every piece of UI is built from the shadcn primitives in `ui/`. Reach for `npx shadcn@latest add <component>` before writing a new primitive by hand.
+- **No inline markup:** Never leave repeated inline JSX when a component can be extracted. If a pattern appears more than once, create a component. Use existing components (`Button`, `IconButton`, `Badge`, `Dropdown`, `TextField`, etc.) instead of raw `<button>` or `<span>` with manual styling. Any new UI pattern (dropdowns, selectors, toggles, etc.) MUST be built as a reusable component in `ui/` first, then consumed in modals/pages. Never write raw dropdown/select/picker markup inline — always wrap it in a component.
+- **Class merging:** Components that accept a `className` must merge it with `cn()` so callers can override, never with template-string concatenation.
 - **No shared folders:** Never create `shared/`, `common/`, or similar catch-all directories for types or utilities. Types live where they are defined and get imported where needed (e.g. DB entity types live in `native/db/types.ts`, preload types in `native/preload/index.d.ts`).
 - **No generic IPC:** Never expose raw `ipcRenderer.invoke` or a generic `invoke(channel, ...args)` to the renderer. All IPC must go through explicit functions in the preload bridge (`window.api.*`).
 - **Migrations are append-only:** Never modify an existing migration in `migrations.ts`. Always add a new entry to the array. Existing DBs may already have run previous migrations.
@@ -204,7 +281,7 @@ Components are organized by function, not dumped into a flat `ui/` folder:
 - **`layout/`** — App structure components (titlebar, sidebar, empty-state, active-badge)
 - **`sidebar/`** — Sidebar-specific components (workspace-item, task-group-header, project-label, sidebar-task, count-badge, workspace-badge, task-icon, task-item, project-item)
 - **`terminal/`** — Terminal-related components (terminal-box)
-- **`ui/`** — Generic reusable primitives (modal, context-menu, dropdown, icon-button, input, color-picker, icon-selector, badge, section-header, shortcut-key, tip-box, command-bar, folder-picker)
+- **`ui/`** — shadcn primitives + the app composites built on them (see “Design system” above)
 - **`modals/`** — Modal dialogs (workspace-modal, create-project-modal, delete-workspace-modal, manage-workspaces-modal)
 
 When creating a new component, place it in the folder that matches its scope. If it's only used within the sidebar, it goes in `sidebar/`. If it's a generic primitive, it goes in `ui/`. If it's part of the app shell, it goes in `layout/`. Modals go in `modals/`.

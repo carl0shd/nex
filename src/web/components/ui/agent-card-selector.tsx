@@ -1,5 +1,7 @@
 import { Terminal } from 'lucide-react';
 import Chip from '@/components/ui/chip';
+import { Field, FieldLabel } from '@/components/ui/field';
+import { cn } from '@/lib/utils';
 
 interface AgentCardOption {
   value: string;
@@ -23,34 +25,33 @@ function AgentCardSelector({
   label
 }: AgentCardSelectorProps): React.JSX.Element {
   const columns = Math.min(Math.max(options.length, 1), 5);
+
   return (
-    <div className="flex flex-col gap-1.5">
-      {label && <label className="text-[10px] font-medium text-text-muted">{label}</label>}
+    <Field>
+      {label && <FieldLabel>{label}</FieldLabel>}
       <div
         className="grid gap-2"
         style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
       >
         {options.map((opt) => {
           const selected = opt.value === value;
-          const iconColor = selected ? 'text-text' : 'text-text-secondary';
+          const tone = selected ? 'text-text' : 'text-text-secondary';
           return (
             <button
               key={opt.value}
               type="button"
               disabled={opt.disabled}
               onClick={() => onChange(opt.value)}
-              className={`flex h-18 cursor-pointer select-none flex-col items-center justify-center gap-1.5 rounded-md border px-2 py-2.5 ${
+              className={cn(
+                'flex h-18 cursor-pointer select-none flex-col items-center justify-center gap-1.5 rounded-md border px-2 py-2.5',
                 selected
                   ? 'border-selected-border bg-selected/10'
-                  : 'border-border-soft bg-bg-input hover:border-border'
-              } ${opt.disabled ? 'pointer-events-none opacity-40' : ''}`}
+                  : 'border-border-soft bg-bg-input hover:border-border',
+                opt.disabled && 'pointer-events-none opacity-40'
+              )}
             >
-              {opt.icon ?? <Terminal size={18} className={iconColor} />}
-              <span
-                className={`text-center text-[10px] font-medium leading-tight ${
-                  selected ? 'text-text' : 'text-text-secondary'
-                }`}
-              >
+              {opt.icon ?? <Terminal size={18} className={tone} />}
+              <span className={cn('text-center text-[10px] leading-tight font-medium', tone)}>
                 {opt.label}
               </span>
               {opt.badge && <Chip>{opt.badge}</Chip>}
@@ -58,7 +59,7 @@ function AgentCardSelector({
           );
         })}
       </div>
-    </div>
+    </Field>
   );
 }
 

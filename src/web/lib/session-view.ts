@@ -1,8 +1,9 @@
 export interface ChangedFile {
   name: string;
+  prevName?: string;
   added: number;
   removed: number;
-  status: 'modified' | 'added' | 'deleted';
+  status: 'modified' | 'added' | 'deleted' | 'renamed';
 }
 
 export interface SessionTab {

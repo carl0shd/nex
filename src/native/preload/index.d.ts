@@ -22,6 +22,7 @@ import type {
   TerminalType
 } from '@native/db/types';
 import type { AvailableAgent, InstallAgentResult } from '@native/agents/detect';
+import type { WorktreeDiffOptions, WorktreeFileVersionsInput } from '@native/git/git';
 
 interface NexAPI {
   getAppInfo: () => Promise<{
@@ -77,6 +78,12 @@ interface NexAPI {
   listWorktreeFiles: (
     worktreePath: string
   ) => Promise<Array<{ path: string; type: 'file' | 'folder' }>>;
+  getWorktreeDiff: (worktreePath: string, options?: WorktreeDiffOptions) => Promise<string>;
+  readWorktreeFileVersions: (
+    input: WorktreeFileVersionsInput
+  ) => Promise<{ oldContents: string | null; newContents: string | null }>;
+  discardWorktreeFile: (worktreePath: string, path: string, prevPath?: string) => Promise<void>;
+  watchWorktree: (worktreePath: string, callback: () => void) => () => void;
 
   pickImage: () => Promise<string | null>;
   pickDirectory: () => Promise<string | null>;

@@ -6,7 +6,7 @@ import {
   ModalFooter,
   ModalButton
 } from '@/components/ui/modal';
-import Input from '@/components/ui/input';
+import { TextField } from '@/components/ui/text-field';
 import ColorPicker from '@/components/ui/color-picker';
 import IconSelector from '@/components/ui/icon-selector';
 import { getWorkspaceIconOptions } from '@/lib/workspace-icons';
@@ -59,7 +59,7 @@ function StepWorkspace(): React.JSX.Element {
       </div>
 
       <div className="flex flex-col gap-4">
-        <Input
+        <TextField
           value={name}
           onChange={(v) => setWorkspace({ name: v.replace(/[^a-zA-Z0-9\s-]/g, '') })}
           placeholder="my-workspace"
@@ -85,7 +85,7 @@ function StepWorkspace(): React.JSX.Element {
       <ModalDivider />
 
       <ModalFooter>
-        <ModalButton variant="ghost" onClick={() => setStep(1)}>
+        <ModalButton variant="outline" onClick={() => setStep(1)}>
           Back
         </ModalButton>
         <ModalButton onClick={() => setStep(3)} disabled={!canContinue}>

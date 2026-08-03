@@ -1,28 +1,43 @@
-interface ToggleProps {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  disabled?: boolean;
-}
+import { Toggle as TogglePrimitive } from 'radix-ui';
+import { cva, type VariantProps } from 'class-variance-authority';
 
-function Toggle({ checked, onChange, disabled = false }: ToggleProps): React.JSX.Element {
+import { cn } from '@/lib/utils';
+
+const toggleVariants = cva(
+  'inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-md text-[12px] font-medium whitespace-nowrap text-text-muted outline-none select-none hover:bg-bg-hover hover:text-text-secondary data-[state=on]:bg-bg-item-active data-[state=on]:text-text disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0',
+  {
+    variants: {
+      variant: {
+        default: 'bg-transparent',
+        outline: 'border border-border-soft bg-transparent'
+      },
+      size: {
+        default: 'h-7 min-w-7 px-2',
+        sm: 'h-6 min-w-6 px-1.5',
+        lg: 'h-8 min-w-8 px-2.5'
+      }
+    },
+    defaultVariants: {
+      variant: 'default',
+      size: 'default'
+    }
+  }
+);
+
+function Toggle({
+  className,
+  variant,
+  size,
+  ...props
+}: React.ComponentProps<typeof TogglePrimitive.Root> &
+  VariantProps<typeof toggleVariants>): React.JSX.Element {
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      disabled={disabled}
-      onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors ${
-        disabled ? 'cursor-default opacity-40' : 'cursor-pointer'
-      } ${checked ? 'bg-badge-success-text' : 'bg-border'}`}
-    >
-      <span
-        className={`inline-block h-3 w-3 rounded-full bg-text shadow-sm transition-transform ${
-          checked ? 'translate-x-3.5' : 'translate-x-0.5'
-        }`}
-      />
-    </button>
+    <TogglePrimitive.Root
+      data-slot="toggle"
+      className={cn(toggleVariants({ variant, size, className }))}
+      {...props}
+    />
   );
 }
 
-export default Toggle;
+export { Toggle, toggleVariants };

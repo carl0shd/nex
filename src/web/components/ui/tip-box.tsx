@@ -1,3 +1,5 @@
+import { Card, CardTitle } from '@/components/ui/card';
+
 interface TipBoxProps {
   title?: string;
   children: React.ReactNode;
@@ -5,10 +7,10 @@ interface TipBoxProps {
 
 function TipBox({ title = '// tips & shortcuts', children }: TipBoxProps): React.JSX.Element {
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-border-soft p-3">
-      <span className="select-none text-[11px] font-medium text-text-muted">{title}</span>
+    <Card className="bg-transparent">
+      <CardTitle className="select-none text-[11px] text-text-muted">{title}</CardTitle>
       <div className="flex flex-col gap-2">{children}</div>
-    </div>
+    </Card>
   );
 }
 

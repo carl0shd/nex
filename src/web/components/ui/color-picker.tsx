@@ -1,3 +1,6 @@
+import { Field, FieldLabel } from '@/components/ui/field';
+import { cn } from '@/lib/utils';
+
 const DEFAULT_COLORS = [
   '#33843F',
   '#1e40af',
@@ -24,15 +27,19 @@ function ColorPicker({
   disabled = false
 }: ColorPickerProps): React.JSX.Element {
   return (
-    <div className={`flex flex-col gap-2 ${disabled ? 'pointer-events-none opacity-30' : ''}`}>
-      {label && <label className="text-[10px] font-medium text-text-muted">{label}</label>}
+    <Field className={cn('gap-2', disabled && 'pointer-events-none opacity-30')}>
+      {label && <FieldLabel>{label}</FieldLabel>}
       <div className="flex gap-2.5">
         {colors.map((c) => (
           <button
             key={c}
+            type="button"
             onClick={() => onChange(c)}
             disabled={disabled}
-            className={`h-6 w-6 cursor-pointer rounded-full ${!disabled && value === c ? 'ring-2' : ''}`}
+            className={cn(
+              'size-6 cursor-pointer rounded-full',
+              !disabled && value === c && 'ring-2'
+            )}
             style={{
               backgroundColor: c,
               ...(!disabled && value === c
@@ -44,7 +51,7 @@ function ColorPicker({
           />
         ))}
       </div>
-    </div>
+    </Field>
   );
 }
 

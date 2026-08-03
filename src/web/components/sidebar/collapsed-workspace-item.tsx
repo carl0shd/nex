@@ -1,11 +1,11 @@
-import { memo, useRef } from 'react';
+import { memo, useRef, useState } from 'react';
 import { Folder, Plus, Ellipsis, GitBranch, ChevronRight, Settings } from 'lucide-react';
-import HoverCard from '@/components/ui/hover-card';
-import Popover from '@/components/ui/popover';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import PopoverMenu from '@/components/ui/popover-menu';
 import WorkspaceBadge from '@/components/ui/workspace-badge';
 import IconButton from '@/components/ui/icon-button';
-import ContextMenu from '@/components/ui/context-menu';
-import Badge from '@/components/ui/badge';
+import ActionMenu from '@/components/ui/action-menu';
+import { Badge } from '@/components/ui/badge';
 import type { Workspace, Project, Session } from '@native/db/types';
 import { Archive, Trash2 } from 'lucide-react';
 
@@ -40,47 +40,17 @@ function CollapsedWorkspaceItem({
   );
   const projectById = new Map(projects.map((p) => [p.id, p] as const));
 
-  const hoverCard = (
-    <div className="flex w-44 flex-col gap-1.5 rounded-lg border border-border-menu bg-bg-menu px-3 py-2.5 shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
-      <div className="flex items-center gap-2">
-        <WorkspaceBadge
-          name={workspace.name}
-          color={workspace.color}
-          icon={workspace.icon}
-          customImage={workspace.customImage}
-          size={14}
-          fontSize={8}
-          rounded="rounded-sm"
-        />
-        <span className="truncate text-[13px] font-semibold text-text">{workspace.name}</span>
-        <span className="flex-1" />
-        <Badge label="active" variant="success" size="sm" />
-      </div>
-      <span className="text-[11px] text-text-muted">
-        {projects.length} project{projects.length === 1 ? '' : 's'} · {workspaceSessions.length}{' '}
-        task{workspaceSessions.length === 1 ? '' : 's'}
-      </span>
-    </div>
-  );
-
   return (
-    <Popover
+    <PopoverMenu
       anchor="right start"
       gap={8}
       trigger={(open) => (
-        <HoverCard disabled={open} content={hoverCard}>
-          <div className="flex size-8 items-center justify-center">
-            <WorkspaceBadge
-              name={workspace.name}
-              color={workspace.color}
-              icon={workspace.icon}
-              customImage={workspace.customImage}
-              size={32}
-              fontSize={11}
-              rounded="rounded-md"
-            />
-          </div>
-        </HoverCard>
+        <WorkspaceHoverBadge
+          workspace={workspace}
+          projectCount={projects.length}
+          taskCount={workspaceSessions.length}
+          disabled={open}
+        />
       )}
     >
       {({ close }) => (
@@ -99,7 +69,64 @@ function CollapsedWorkspaceItem({
           onDeleteProject={onDeleteProject}
         />
       )}
-    </Popover>
+    </PopoverMenu>
+  );
+}
+
+interface WorkspaceHoverBadgeProps {
+  workspace: Workspace;
+  projectCount: number;
+  taskCount: number;
+  /** The workspace popover is open, so the hover preview would only get in the way. */
+  disabled: boolean;
+}
+
+function WorkspaceHoverBadge({
+  workspace,
+  projectCount,
+  taskCount,
+  disabled
+}: WorkspaceHoverBadgeProps): React.JSX.Element {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <HoverCard open={open && !disabled} onOpenChange={setOpen}>
+      <HoverCardTrigger asChild>
+        <div className="flex size-8 items-center justify-center">
+          <WorkspaceBadge
+            name={workspace.name}
+            color={workspace.color}
+            icon={workspace.icon}
+            customImage={workspace.customImage}
+            size={32}
+            fontSize={11}
+            rounded="rounded-md"
+          />
+        </div>
+      </HoverCardTrigger>
+      <HoverCardContent className="flex w-44 flex-col gap-1.5 rounded-lg border border-border-menu bg-bg-menu px-3 py-2.5 shadow-[var(--nex-shadow-popover)]">
+        <div className="flex items-center gap-2">
+          <WorkspaceBadge
+            name={workspace.name}
+            color={workspace.color}
+            icon={workspace.icon}
+            customImage={workspace.customImage}
+            size={14}
+            fontSize={8}
+            rounded="rounded-sm"
+          />
+          <span className="truncate text-[13px] font-semibold text-text">{workspace.name}</span>
+          <span className="flex-1" />
+          <Badge variant="success" size="sm">
+            active
+          </Badge>
+        </div>
+        <span className="text-[11px] text-text-muted">
+          {projectCount} project{projectCount === 1 ? '' : 's'} · {taskCount} task
+          {taskCount === 1 ? '' : 's'}
+        </span>
+      </HoverCardContent>
+    </HoverCard>
   );
 }
 
@@ -134,7 +161,7 @@ function CollapsedWorkspaceCard({
 }: CollapsedWorkspaceCardProps): React.JSX.Element {
   const headerRef = useRef<HTMLDivElement>(null);
   return (
-    <div className="flex w-56 flex-col overflow-hidden rounded-lg border border-border-menu bg-bg-menu shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
+    <div className="flex w-56 flex-col overflow-hidden rounded-lg border border-border-menu bg-bg-menu shadow-[var(--nex-shadow-popover)]">
       <div ref={headerRef} className="flex items-center gap-1.5 px-2.5 py-2">
         <WorkspaceBadge
           name={workspace.name}
@@ -156,7 +183,7 @@ function CollapsedWorkspaceCard({
             onAddProject?.();
           }}
         />
-        <ContextMenu
+        <ActionMenu
           rowRef={headerRef}
           trigger={<IconButton icon={Ellipsis} size={14} />}
           actions={[
@@ -224,7 +251,9 @@ function CollapsedWorkspaceCard({
                   <GitBranch size={12} className="shrink-0 text-text-muted" />
                   <span className="truncate text-[11px] text-text">{s.name}</span>
                   <span className="flex-1" />
-                  <Badge label="active" variant="success" size="sm" />
+                  <Badge variant="success" size="sm">
+                    active
+                  </Badge>
                   {project && (
                     <span className="truncate text-[10px] text-text-muted">{project.name}</span>
                   )}
@@ -286,7 +315,7 @@ function CollapsedProjectRow({
       <span className="truncate text-[11px] text-text-secondary">{project.name}</span>
       <span className="flex-1" />
       <div className="opacity-0 group-hover:opacity-100">
-        <ContextMenu
+        <ActionMenu
           rowRef={rowRef}
           trigger={<IconButton icon={Ellipsis} size={12} />}
           actions={[

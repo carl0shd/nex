@@ -1,4 +1,8 @@
 import { FolderOpen } from 'lucide-react';
+import Chip from '@/components/ui/chip';
+import { Field, FieldLabel } from '@/components/ui/field';
+import { InputGroup, InputGroupAddon } from '@/components/ui/input-group';
+import { cn } from '@/lib/utils';
 
 interface FolderPickerProps {
   value: string;
@@ -14,23 +18,27 @@ function FolderPicker({
   placeholder = 'select project folder...'
 }: FolderPickerProps): React.JSX.Element {
   return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-[10px] font-medium text-text-muted">{label}</label>
-      <button
-        onClick={onBrowse}
-        className="flex cursor-pointer items-center gap-2 rounded-[5px] border border-border-soft bg-bg-input px-2.5 py-2 hover:border-border"
-      >
-        <FolderOpen size={14} className="shrink-0 text-text-muted" />
-        <span
-          className={`flex-1 truncate text-left text-[12px] ${value ? 'text-text-secondary' : 'text-text-placeholder'}`}
-        >
-          {value || placeholder}
-        </span>
-        <span className="rounded-[3px] bg-bg-raised px-2 py-0.5 text-[10px] font-medium text-text-muted">
-          browse
-        </span>
-      </button>
-    </div>
+    <Field>
+      <FieldLabel>{label}</FieldLabel>
+      <InputGroup asChild>
+        <button type="button" onClick={onBrowse} className="cursor-pointer hover:border-border">
+          <InputGroupAddon>
+            <FolderOpen size={14} />
+          </InputGroupAddon>
+          <span
+            className={cn(
+              'flex-1 truncate text-left text-[12px]',
+              value ? 'text-text-secondary' : 'text-text-placeholder'
+            )}
+          >
+            {value || placeholder}
+          </span>
+          <InputGroupAddon align="inline-end">
+            <Chip className="px-2 text-[10px]">browse</Chip>
+          </InputGroupAddon>
+        </button>
+      </InputGroup>
+    </Field>
   );
 }
 

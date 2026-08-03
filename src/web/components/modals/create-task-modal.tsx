@@ -9,10 +9,12 @@ import {
   ModalFooter,
   ModalButton
 } from '@/components/ui/modal';
-import Input from '@/components/ui/input';
+import { TextField } from '@/components/ui/text-field';
 import Dropdown from '@/components/ui/dropdown';
-import Textarea from '@/components/ui/textarea';
-import Checkbox from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Field, FieldLabel } from '@/components/ui/field';
+import { Label } from '@/components/ui/label';
 import AgentCardSelector from '@/components/ui/agent-card-selector';
 import WorkspaceBadge from '@/components/ui/workspace-badge';
 import Callout from '@/components/ui/callout';
@@ -278,7 +280,7 @@ function TaskForm({
           )}
 
           <div className="flex flex-col gap-1">
-            <Input
+            <TextField
               value={branchName}
               onChange={setBranchName}
               placeholder={gitDisabled ? 'task-name' : 'feat-new-feature'}
@@ -289,7 +291,7 @@ function TaskForm({
           </div>
 
           {!gitDisabled && (
-            <Input
+            <TextField
               value={prefixValue}
               onChange={handlePrefixChange}
               placeholder="feature/"
@@ -303,13 +305,15 @@ function TaskForm({
         <ModalDivider />
 
         <div className="flex flex-col gap-3">
-          <Textarea
-            value={prompt}
-            onChange={setPrompt}
-            placeholder="Implement the new authentication middleware with JWT tokens and role-based access control..."
-            label="// initial prompt (optional)"
-            rows={3}
-          />
+          <Field>
+            <FieldLabel>{'// initial prompt (optional)'}</FieldLabel>
+            <Textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Implement the new authentication middleware with JWT tokens and role-based access control..."
+              rows={3}
+            />
+          </Field>
 
           {agents.length === 0 ? (
             <div className="flex flex-col gap-1.5">
@@ -321,7 +325,7 @@ function TaskForm({
                     Add an agent to use it in your tasks
                   </span>
                 </div>
-                <ModalButton variant="ghost" size="sm" disabled>
+                <ModalButton variant="outline" size="sm" disabled>
                   <Plus size={11} />
                   add agent
                 </ModalButton>
@@ -353,19 +357,21 @@ function TaskForm({
             <div className="flex flex-col gap-2.5">
               <span className="text-[10px] font-medium text-text-muted">{'// options'}</span>
 
-              <Checkbox
-                checked={defaultBranch}
-                onChange={setDefaultBranch}
-                label="Start worktree from default branch"
-                trailing={
-                  defaultBranch && baseBranch ? (
-                    <Chip>
-                      <GitBranch size={9} />
-                      {baseBranch}
-                    </Chip>
-                  ) : undefined
-                }
-              />
+              <Label className="w-full cursor-pointer text-[11px] text-text-secondary">
+                <Checkbox
+                  checked={defaultBranch}
+                  onCheckedChange={(checked) => setDefaultBranch(checked === true)}
+                />
+                <span className="flex-1 truncate text-left">
+                  Start worktree from default branch
+                </span>
+                {defaultBranch && baseBranch && (
+                  <Chip>
+                    <GitBranch size={9} />
+                    {baseBranch}
+                  </Chip>
+                )}
+              </Label>
 
               {!defaultBranch && (
                 <BranchPicker
@@ -382,13 +388,16 @@ function TaskForm({
                   {'// symlink into worktree'}
                 </span>
                 {SYMLINK_OPTIONS.map((name) => (
-                  <Checkbox
+                  <Label
                     key={name}
-                    checked={symlinks.includes(name)}
-                    onChange={() => toggleSymlink(name)}
-                    label={name}
-                    monospace
-                  />
+                    className="w-full cursor-pointer text-[11px] text-text-secondary"
+                  >
+                    <Checkbox
+                      checked={symlinks.includes(name)}
+                      onCheckedChange={() => toggleSymlink(name)}
+                    />
+                    <span className="flex-1 truncate text-left font-mono">{name}</span>
+                  </Label>
                 ))}
               </div>
             </div>
@@ -399,7 +408,7 @@ function TaskForm({
       <ModalDivider />
 
       <ModalFooter>
-        <ModalButton variant="ghost" onClick={onClose}>
+        <ModalButton variant="outline" onClick={onClose}>
           cancel
         </ModalButton>
         <ModalButton onClick={handleCreate} disabled={!canCreate}>

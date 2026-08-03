@@ -1,5 +1,5 @@
 import nexLogo from '@/assets/images/logo.svg';
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import ShortcutKey from '@/components/ui/shortcut-key';
 import { useWorkspaceStore } from '@/stores/workspace.store';
 import { useSidebarStore } from '@/stores/sidebar.store';

@@ -2,10 +2,10 @@ import { useMemo, useState } from 'react';
 import SimpleBar from 'simplebar-react';
 import { Archive, ArchiveRestore, Ellipsis, Plus, Search, Settings, Trash2 } from 'lucide-react';
 import { Modal, ModalDivider, ModalFooter, ModalButton } from '@/components/ui/modal';
-import Input from '@/components/ui/input';
+import { TextField } from '@/components/ui/text-field';
 import IconButton from '@/components/ui/icon-button';
 import WorkspaceBadge from '@/components/ui/workspace-badge';
-import ContextMenu from '@/components/ui/context-menu';
+import ActionMenu from '@/components/ui/action-menu';
 import { useWorkspaceStore } from '@/stores/workspace.store';
 import { useSessionStore } from '@/stores/session.store';
 import { useSidebarStore } from '@/stores/sidebar.store';
@@ -67,7 +67,7 @@ function WorkspaceRow({
               size={13}
               onClick={() => updateWorkspace(workspace.id, { archived: true })}
             />
-            <ContextMenu
+            <ActionMenu
               trigger={<IconButton icon={Ellipsis} size={13} />}
               actions={[
                 {
@@ -141,7 +141,7 @@ function ManageWorkspacesModal({ open, onClose }: ManageWorkspacesModalProps): R
           </p>
         </div>
 
-        <Input
+        <TextField
           value={search}
           onChange={setSearch}
           placeholder="Search workspaces..."
@@ -209,7 +209,7 @@ function ManageWorkspacesModal({ open, onClose }: ManageWorkspacesModalProps): R
       <ModalDivider />
 
       <ModalFooter>
-        <ModalButton variant="ghost" onClick={onClose}>
+        <ModalButton variant="outline" onClick={onClose}>
           close
         </ModalButton>
         <ModalButton onClick={openCreateWorkspace}>
