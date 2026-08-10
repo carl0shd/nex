@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { LucideIcon } from 'lucide-react';
 import {
   DropdownMenu,
@@ -75,13 +76,19 @@ function ActionMenu({ trigger, actions, rowRef }: ActionMenuProps): React.JSX.El
     // Modal: keeps the menu the top-most dismissable layer, so clicking an item inside a
     // dialog (e.g. manage workspaces) doesn't dismiss the dialog underneath it.
     <DropdownMenu open={open} onOpenChange={setOpen} modal>
-      <DropdownMenuTrigger asChild>
-        <span
-          aria-hidden
-          className="pointer-events-none fixed"
-          style={{ left: pos.x, top: pos.y, width: 0, height: 0 }}
-        />
-      </DropdownMenuTrigger>
+      {/* Portalled to the body: a transformed ancestor (the dialog panel is translated to
+          center itself) would become the containing block for the fixed anchor and shift the
+          menu away from the pointer. */}
+      {createPortal(
+        <DropdownMenuTrigger asChild>
+          <span
+            aria-hidden
+            className="pointer-events-none fixed"
+            style={{ left: pos.x, top: pos.y, width: 0, height: 0 }}
+          />
+        </DropdownMenuTrigger>,
+        document.body
+      )}
       <div onClick={openFromTrigger} onContextMenu={openFromContext} className="inline-flex">
         {trigger}
       </div>

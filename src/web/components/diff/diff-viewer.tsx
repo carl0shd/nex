@@ -6,8 +6,10 @@ import {
   type FileDiffLoadedFiles,
   type FileDiffMetadata
 } from '@pierre/diffs/react';
+import type { CodeViewLineSelection } from '@pierre/diffs';
 import { resolveDiffTheme } from './diff-theme';
 import DiffFileHeader from './diff-file-header';
+import { readTextSelection, type DiffTextSelection } from '@/lib/diff-text-selection';
 
 export interface DiffViewerHandle {
   scrollToFile: (name: string) => void;
@@ -22,6 +24,9 @@ interface DiffViewerProps {
   diffStyle?: 'split' | 'unified';
   wordDiff?: boolean;
   scrollToFile?: string | null;
+  selectedLines?: CodeViewLineSelection | null;
+  onSelectedLinesChange?: (selection: CodeViewLineSelection | null) => void;
+  onTextSelection?: (selection: DiffTextSelection | null) => void;
   onVisibleFileChange?: (name: string) => void;
   onToggleCollapse?: (name: string) => void;
   ref?: React.Ref<DiffViewerHandle>;
@@ -33,12 +38,35 @@ interface DiffViewerProps {
 // Do not add `scrollbar-width`/`scrollbar-color` here: setting either makes
 // Chromium drop the `::-webkit-scrollbar` rules Pierre relies on to hide the
 // code's vertical scrollbar and size its gutter.
+// `user-select: none` on <body> inherits through the shadow boundary, so the
+// code has to opt back in — this is why selection works on Pierre's own demo
+// page and not here. Opt the whole subtree in rather than betting on one
+// attribute, then take the chrome back out so it never lands in a copy.
 const DIFF_UNSAFE_CSS = `
   [data-content-buffer] { background-image: none; background-color: var(--diffs-bg-context); }
+  :host, [data-code], [data-content], [data-line] { user-select: text; cursor: text; }
+  [data-gutter],
+  [data-gutter-buffer],
+  [data-column-number],
+  [data-line-number-content],
+  [data-separator],
+  [data-diffs-header],
+  [data-no-newline] { user-select: none; cursor: default; }
 `;
 
 /** Distance below the sticky header at which a file counts as "the one you're reading". */
 const ACTIVE_FILE_OFFSET = 8;
+
+/**
+ * Vertical spacing around the file list — CodeView applies it as the scroll
+ * container's top/bottom margin. Matches the 12px `padding-inline` on
+ * `.diff-codeview`, which is where the horizontal side is set.
+ *
+ * Hoisted because CodeView compares its options shallowly: a fresh object here
+ * makes every React render look like an option change, which re-renders every
+ * row and wipes any in-progress text selection.
+ */
+const DIFF_LAYOUT = { gap: 16, paddingTop: 12, paddingBottom: 12 };
 
 function DiffViewer({
   diffs,
@@ -49,11 +77,15 @@ function DiffViewer({
   diffStyle = 'split',
   wordDiff = true,
   scrollToFile,
+  selectedLines,
+  onSelectedLinesChange,
+  onTextSelection,
   onVisibleFileChange,
   onToggleCollapse,
   ref
 }: DiffViewerProps): React.JSX.Element {
   const viewRef = useRef<CodeViewHandle<undefined>>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const activeFileRef = useRef<string | null>(null);
   const handledScrollRef = useRef<string | null>(null);
 
@@ -128,6 +160,62 @@ function DiffViewer({
     scrollToFileById(scrollToFile);
   }, [scrollToFile, items, scrollToFileById]);
 
+  /**
+   * Each file renders into its own shadow root, so there is no single document
+   * selection to read — every host has to be asked for its own.
+   */
+  useEffect(() => {
+    if (!onTextSelection) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleMouseUp = (): void => {
+      const view = viewRef.current?.getInstance();
+      if (!view) return;
+      for (const item of view.getRenderedItems()) {
+        const found = readTextSelection(item.element, item.id);
+        if (found) {
+          onTextSelection(found);
+          return;
+        }
+      }
+      onTextSelection(null);
+    };
+
+    container.addEventListener('mouseup', handleMouseUp);
+    return () => container.removeEventListener('mouseup', handleMouseUp);
+  }, [onTextSelection]);
+
+  const options = useMemo(
+    () => ({
+      theme,
+      themeType,
+      diffStyle,
+      diffIndicators: 'classic' as const,
+      stickyHeaders: true,
+      preferredHighlighter: 'shiki-js' as const,
+      lineDiffType: (wordDiff ? 'word' : 'none') as 'word' | 'none',
+      hunkSeparators: 'line-info' as const,
+      enableLineSelection: true,
+      loadDiffFiles,
+      unsafeCSS: DIFF_UNSAFE_CSS,
+      layout: DIFF_LAYOUT
+    }),
+    [theme, themeType, diffStyle, wordDiff, loadDiffFiles]
+  );
+
+  const renderHeader = useCallback(
+    (item: CodeViewItem): React.ReactNode =>
+      item.type === 'diff' ? (
+        <DiffFileHeader
+          fileDiff={item.fileDiff}
+          collapsed={item.collapsed}
+          onToggle={onToggleCollapse}
+        />
+      ) : null,
+    [onToggleCollapse]
+  );
+
   const handleScroll = useCallback(
     (scrollTop: number): void => {
       if (!onVisibleFileChange) return;
@@ -151,32 +239,15 @@ function DiffViewer({
   return (
     <CodeView
       ref={viewRef}
+      containerRef={containerRef}
       items={items}
       disableWorkerPool
       className="diff-codeview h-full w-full"
       onScroll={handleScroll}
-      renderCustomHeader={(item) =>
-        item.type === 'diff' ? (
-          <DiffFileHeader
-            fileDiff={item.fileDiff}
-            collapsed={item.collapsed}
-            onToggle={onToggleCollapse}
-          />
-        ) : null
-      }
-      options={{
-        theme,
-        themeType,
-        diffStyle,
-        diffIndicators: 'classic',
-        stickyHeaders: true,
-        preferredHighlighter: 'shiki-js',
-        lineDiffType: wordDiff ? 'word' : 'none',
-        hunkSeparators: 'line-info',
-        loadDiffFiles,
-        unsafeCSS: DIFF_UNSAFE_CSS,
-        layout: { gap: 16, paddingTop: 20, paddingBottom: 20 }
-      }}
+      selectedLines={selectedLines}
+      onSelectedLinesChange={onSelectedLinesChange}
+      renderCustomHeader={renderHeader}
+      options={options}
     />
   );
 }
