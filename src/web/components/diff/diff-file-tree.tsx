@@ -53,7 +53,7 @@ function DiffFileTree({
     );
 
   return (
-    <div className="flex h-full min-w-0 flex-col bg-bg">
+    <div className="flex h-full min-w-0 flex-col bg-bg-soft">
       <div className="flex shrink-0 flex-col gap-0.5 p-4 pb-0">
         <SectionHeader title="// files" badge={<CountBadge count={files.length} />} />
       </div>

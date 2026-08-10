@@ -4,8 +4,16 @@ import { Group, Panel } from 'react-resizable-panels';
 import { useHotkey } from '@tanstack/react-hotkeys';
 import { toast } from 'sonner';
 import type { ChangedFile } from '@/lib/session-view';
+import type { CodeViewLineSelection } from '@pierre/diffs';
 import { useSessionStore } from '@/stores/session.store';
 import { useWorkspaceStore } from '@/stores/workspace.store';
+import { useTerminalStore } from '@/stores/terminal.store';
+import { useAgentStore } from '@/stores/agent.store';
+import { useDiffChatStore, snippetId, type DiffSnippet } from '@/stores/diff-chat.store';
+import { composeAgentMessage, normalizeRange, sliceLines } from '@/lib/diff-snippet';
+import DiffChatBar, { type PendingSelection } from '@/components/diff/diff-chat-bar';
+import type { DiffTextSelection } from '@/lib/diff-text-selection';
+import { agentDisplayName } from '@native/agents/agent-display';
 import { useDiffStore, EMPTY_SESSION_DIFF } from '@/stores/diff.store';
 import { useDiffViewStore } from '@/stores/diff-view.store';
 import { useWorktreeDiff } from '@/hooks/use-worktree-diff';
@@ -16,6 +24,7 @@ import DiffViewer, { type DiffViewerHandle } from '@/components/diff/diff-viewer
 import DiscardFileModal from '@/components/modals/discard-file-modal';
 
 const NO_FILES: string[] = [];
+const NO_SNIPPETS: DiffSnippet[] = [];
 
 function DiffView(): React.JSX.Element {
   const navigate = useNavigate();
@@ -33,7 +42,24 @@ function DiffView(): React.JSX.Element {
   const collapsedFiles = useDiffViewStore((s) => s.collapsed[sessionId]) ?? NO_FILES;
   const toggleCollapsed = useDiffViewStore((s) => s.toggleCollapsed);
 
+  const snippets = useDiffChatStore((s) => s.bySession[sessionId]) ?? NO_SNIPPETS;
+  const addSnippet = useDiffChatStore((s) => s.add);
+  const removeSnippet = useDiffChatStore((s) => s.remove);
+  const clearSnippets = useDiffChatStore((s) => s.clear);
+
+  const activeTerminalId = useTerminalStore((s) => s.activeBySession[sessionId]);
+  const activeTerminal = useTerminalStore((s) =>
+    s.terminals.find((t) => t.id === activeTerminalId)
+  );
+  const agent = useAgentStore((s) =>
+    session?.agentId ? s.agents.find((a) => a.id === session.agentId) : null
+  );
+  const agentName =
+    activeTerminal?.type === 'agent' && agent ? agentDisplayName(agent.slug, agent.name) : null;
+
   const viewerRef = useRef<DiffViewerHandle>(null);
+  const [selection, setSelection] = useState<CodeViewLineSelection | null>(null);
+  const [textSelection, setTextSelection] = useState<DiffTextSelection | null>(null);
   const [activeFile, setActiveFile] = useState<string | null>(requestedFile);
   const [pendingDiscard, setPendingDiscard] = useState<ChangedFile | null>(null);
   const [discardOpen, setDiscardOpen] = useState(false);
@@ -90,6 +116,64 @@ function DiffView(): React.JSX.Element {
     [worktreePath]
   );
 
+  // A range can come from Pierre's gutter selection or from dragging over the
+  // code; the text selection wins because it is the more recent gesture.
+  const pending = useMemo<PendingSelection | null>(() => {
+    if (textSelection) return textSelection;
+    if (!selection) return null;
+    const [start, end] = normalizeRange(selection.range.start, selection.range.end);
+    const side = selection.range.side === 'deletions' ? 'deletions' : 'additions';
+    return { file: selection.id, start, end, side };
+  }, [textSelection, selection]);
+
+  /**
+   * The patch only carries the lines around each hunk, so the snippet is sliced
+   * from the file itself — the same source the hunk expansion reads.
+   */
+  const handleAddPending = useCallback(async (): Promise<void> => {
+    if (!pending || !worktreePath) return;
+    let code = pending.code;
+
+    if (code == null) {
+      const { oldContents, newContents } = await window.api.readWorktreeFileVersions({
+        worktreePath,
+        path: pending.file,
+        baseBranch
+      });
+      const contents = pending.side === 'deletions' ? oldContents : newContents;
+      if (contents == null) {
+        toast.error(`Could not read ${pending.file}`);
+        return;
+      }
+      code = sliceLines(contents, pending.start, pending.end);
+    }
+
+    addSnippet(sessionId, {
+      id: snippetId(pending.file, pending.side, pending.start, pending.end),
+      file: pending.file,
+      side: pending.side,
+      start: pending.start,
+      end: pending.end,
+      code
+    });
+    setSelection(null);
+    setTextSelection(null);
+  }, [pending, worktreePath, baseBranch, addSnippet, sessionId]);
+
+  const handleSendToAgent = useCallback(
+    (text: string): void => {
+      if (!activeTerminalId || !agentName) return;
+      const message = composeAgentMessage(snippets, text);
+      // Bracketed paste keeps multi-line snippets from being run line by line.
+      window.api.ptyWrite(activeTerminalId, `\x1b[200~${message}\x1b[201~`);
+      window.api.ptyWrite(activeTerminalId, '\r');
+      clearSnippets(sessionId);
+      navigate('/');
+      useSessionStore.getState().focusSession(sessionId);
+    },
+    [activeTerminalId, agentName, snippets, clearSnippets, sessionId, navigate]
+  );
+
   const handleDiscardRequest = useCallback((file: ChangedFile): void => {
     setPendingDiscard(file);
     setDiscardOpen(true);
@@ -128,7 +212,7 @@ function DiffView(): React.JSX.Element {
           onIgnoreWhitespaceChange={(value) => setPref('ignoreWhitespace', value)}
         />
 
-        <div className="min-h-0 flex-1 overflow-hidden">
+        <div className="relative min-h-0 flex-1 overflow-hidden">
           {diff.error ? (
             <div className="flex h-full items-center justify-center px-6 text-center">
               <span className="font-mono text-[12px] text-destructive-text">{diff.error}</span>
@@ -168,6 +252,9 @@ function DiffView(): React.JSX.Element {
                     diffStyle={prefs.diffStyle}
                     wordDiff={prefs.wordDiff}
                     scrollToFile={requestedFile}
+                    selectedLines={selection}
+                    onSelectedLinesChange={setSelection}
+                    onTextSelection={setTextSelection}
                     onVisibleFileChange={setActiveFile}
                     onToggleCollapse={handleToggleCollapse}
                   />
@@ -175,6 +262,16 @@ function DiffView(): React.JSX.Element {
               </Panel>
             </Group>
           )}
+
+          <DiffChatBar
+            snippets={snippets}
+            pending={pending}
+            worktreePath={worktreePath}
+            agentName={agentName}
+            onAddPending={() => void handleAddPending()}
+            onRemoveSnippet={(id) => removeSnippet(sessionId, id)}
+            onSubmit={handleSendToAgent}
+          />
         </div>
       </div>
 

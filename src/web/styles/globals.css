@@ -101,6 +101,9 @@
 
   /* Dialog backdrop */
   --color-overlay: var(--nex-overlay);
+
+  /* Elevation, as a `shadow-popover` utility */
+  --shadow-popover: var(--nex-shadow-popover);
 }
 
 :root {
@@ -645,7 +648,8 @@ body {
    what reaches the rendered diff. Pierre derives every diff colour from these
    `-override` hooks; its defaults mix the tint at 80% of the background, which
    reads far louder than the rest of the app. */
-.diff-codeview diffs-container {
+.diff-codeview diffs-container,
+.diff-snippet diffs-container {
   --diffs-dark-bg: var(--nex-bg);
   --diffs-light-bg: var(--nex-bg);
 
@@ -658,7 +662,15 @@ body {
      changed tokens disappear into it. */
   --diffs-bg-addition-emphasis-override: rgb(from var(--nex-diff-added) r g b / 0.2);
   --diffs-bg-deletion-emphasis-override: rgb(from var(--nex-diff-removed) r g b / 0.2);
+}
 
+/* Snippet previews sit inside the chat card, which already draws the frame. */
+.diff-snippet diffs-container {
+  --diffs-dark-bg: transparent;
+  --diffs-light-bg: transparent;
+}
+
+.diff-codeview diffs-container {
   border: 1px solid var(--nex-border-soft);
   border-radius: var(--radius);
   overflow: hidden;
