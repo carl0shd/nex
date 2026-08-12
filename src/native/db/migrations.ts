@@ -112,7 +112,35 @@ const migrations: string[] = [
 
   `ALTER TABLE sessions ADD COLUMN width INTEGER NOT NULL DEFAULT 600;`,
 
-  `ALTER TABLE terminals ADD COLUMN agent_session_id TEXT;`
+  `ALTER TABLE terminals ADD COLUMN agent_session_id TEXT;`,
+
+  // SQLite can't widen a CHECK constraint in place, so the table is rebuilt to admit 'waiting'.
+  `CREATE TABLE terminals_new (
+    id TEXT PRIMARY KEY,
+    session_id TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    command TEXT,
+    args TEXT NOT NULL DEFAULT '[]',
+    cwd TEXT NOT NULL,
+    env TEXT NOT NULL DEFAULT '{}',
+    is_primary INTEGER NOT NULL DEFAULT 0,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    status TEXT NOT NULL DEFAULT 'idle' CHECK(status IN ('idle','running','waiting')),
+    type TEXT NOT NULL DEFAULT 'shell' CHECK(type IN ('agent','shell')),
+    run_command TEXT,
+    agent_session_id TEXT
+  );
+
+  INSERT INTO terminals_new
+    (id, session_id, name, command, args, cwd, env, is_primary, sort_order, created_at, status, type, run_command, agent_session_id)
+  SELECT
+    id, session_id, name, command, args, cwd, env, is_primary, sort_order, created_at, status, type, run_command, agent_session_id
+  FROM terminals;
+
+  DROP TABLE terminals;
+  ALTER TABLE terminals_new RENAME TO terminals;
+  CREATE INDEX idx_terminals_session ON terminals(session_id);`
 ];
 
 export function runMigrations(db: Database.Database): void {

@@ -178,7 +178,7 @@ export interface CloneAgentAccountInput {
   copyConfig?: boolean;
 }
 
-export type TerminalStatus = 'idle' | 'running';
+export type TerminalStatus = 'idle' | 'running' | 'waiting';
 export type TerminalType = 'agent' | 'shell';
 
 export interface Terminal {

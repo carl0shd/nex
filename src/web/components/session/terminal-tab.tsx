@@ -1,8 +1,10 @@
 import { X } from 'lucide-react';
+import type { TerminalStatus } from '@native/db/types';
+import StatusDot from '@/components/ui/status-dot';
 
 interface TerminalTabProps {
   name: string;
-  dotColor: string;
+  status: TerminalStatus;
   active?: boolean;
   onClick?: () => void;
   onClose?: () => void;
@@ -10,7 +12,7 @@ interface TerminalTabProps {
 
 function TerminalTab({
   name,
-  dotColor,
+  status,
   active = false,
   onClick,
   onClose
@@ -24,7 +26,7 @@ function TerminalTab({
           : 'border border-border-soft hover:border-border text-text-secondary hover:text-text'
       }`}
     >
-      <span className="size-2 rounded-full" style={{ backgroundColor: dotColor }} />
+      <StatusDot status={status} />
       <span className={`text-[11px] ${active ? 'font-medium' : 'font-normal'}`}>{name}</span>
       {active && (
         <button

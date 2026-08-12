@@ -79,7 +79,7 @@ function TabBar({
           <TerminalTab
             key={tab.id}
             name={tab.name}
-            dotColor={tab.dotColor}
+            status={tab.status}
             active={tab.active}
             onClick={() => onSelectTab?.(tab.id)}
             onClose={() => onCloseTab?.(tab.id)}

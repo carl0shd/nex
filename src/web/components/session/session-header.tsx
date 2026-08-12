@@ -1,12 +1,14 @@
 import { memo, type HTMLAttributes, type Ref } from 'react';
 import { ExternalLink, X } from 'lucide-react';
 import type { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
+import type { TerminalStatus } from '@native/db/types';
 import IconButton from '@/components/ui/icon-button';
+import StatusDot from '@/components/ui/status-dot';
 
 interface SessionHeaderProps {
   branch: string;
   projectName: string;
-  dotColor: string;
+  status: TerminalStatus;
   onClose?: () => void;
   onOpenIDE?: () => void;
   dragRef?: Ref<HTMLDivElement>;
@@ -17,7 +19,7 @@ interface SessionHeaderProps {
 function SessionHeader({
   branch,
   projectName,
-  dotColor,
+  status,
   onClose,
   onOpenIDE,
   dragRef,
@@ -32,7 +34,7 @@ function SessionHeader({
       className="flex cursor-grab items-center justify-between border-b border-border-soft bg-bg-soft px-3 py-2 select-none active:cursor-grabbing"
     >
       <div className="flex items-center gap-2 overflow-hidden">
-        <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: dotColor }} />
+        <StatusDot status={status} />
         <span className="text-[13px] font-semibold text-text">{branch}</span>
         <span className="text-[12px] text-text-muted">{projectName}</span>
         <IconButton icon={ExternalLink} size={11} onClick={onOpenIDE} />
