@@ -1,3 +1,5 @@
+import type { TerminalStatus } from '@native/db/types';
+
 export interface ChangedFile {
   name: string;
   prevName?: string;
@@ -9,7 +11,7 @@ export interface ChangedFile {
 export interface SessionTab {
   id: string;
   name: string;
-  dotColor: string;
+  status: TerminalStatus;
   active?: boolean;
 }
 

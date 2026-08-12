@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { IPC } from '@native/ipc/channels';
+import type { TerminalStatus } from '@native/db/types';
 
 type SpeechEvent = {
   type: 'state' | 'partial' | 'final' | 'error' | 'end' | 'devicesChanged';
@@ -149,10 +150,10 @@ const api = {
     return () => ipcRenderer.removeListener(IPC.PTY_EXIT, handler);
   },
 
-  onTerminalStatus: (callback: (info: { id: string; status: 'idle' | 'running' }) => void) => {
+  onTerminalStatus: (callback: (info: { id: string; status: TerminalStatus }) => void) => {
     const handler = (
       _event: Electron.IpcRendererEvent,
-      payload: { id: string; status: 'idle' | 'running' }
+      payload: { id: string; status: TerminalStatus }
     ): void => callback(payload);
     ipcRenderer.on(IPC.TERMINAL_STATUS, handler);
     return () => ipcRenderer.removeListener(IPC.TERMINAL_STATUS, handler);

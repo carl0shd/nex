@@ -9,6 +9,7 @@ interface OptionCardProps {
   title: string;
   subtitle: string;
   titleClassName?: string;
+  className?: string;
 }
 
 function OptionCard({
@@ -17,14 +18,16 @@ function OptionCard({
   icon,
   title,
   subtitle,
-  titleClassName
+  titleClassName,
+  className
 }: OptionCardProps): React.JSX.Element {
   return (
     <Card
       asChild
       className={cn(
         'w-full cursor-pointer flex-row items-center gap-3 rounded-md bg-bg-input p-3',
-        selected ? 'border-border-hover' : 'hover:border-border-hover'
+        selected ? 'border-border-hover' : 'hover:border-border-hover',
+        className
       )}
     >
       <button type="button" onClick={onClick}>

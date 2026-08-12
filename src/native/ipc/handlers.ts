@@ -1,4 +1,4 @@
-import { ipcMain, dialog, shell, BrowserWindow } from 'electron';
+import { app, ipcMain, dialog, shell, BrowserWindow } from 'electron';
 import { spawn } from 'child_process';
 import { statSync, readFileSync, mkdirSync, writeFileSync, existsSync } from 'fs';
 import { extname, join } from 'path';
@@ -22,6 +22,7 @@ import {
   unmarkTerminalFresh
 } from '@native/pty/manager';
 import { getAgentResumeAdapter } from '@native/agents/resume';
+import { getStatusMarkers } from '@native/agents/status-markers';
 import { detectAvailableAgents, installAgent } from '@native/agents/detect';
 import { createTerminalForSession } from '@native/agents/agent-terminal';
 import { cloneAgentAccount } from '@native/agents/clone-account';
@@ -84,6 +85,13 @@ function makeTrackerFactory(
     });
 }
 
+function agentSlugFor(terminal: Terminal): string | null {
+  if (terminal.type !== 'agent') return null;
+  const session = sessionRepo.getById(terminal.sessionId);
+  const agent = session?.agentId ? agentRepo.getById(session.agentId) : null;
+  return agent?.slug ?? null;
+}
+
 function planAgentSpawn(terminal: Terminal): AgentSpawnPlan | null {
   if (terminal.type !== 'agent') return null;
   const session = sessionRepo.getById(terminal.sessionId);
@@ -138,6 +146,7 @@ function stopWorktreeWatchersFor(senderId: number): void {
 export function registerIPCHandlers(): void {
   ipcMain.handle(IPC.APP_GET_INFO, () => ({
     platform: process.platform,
+    version: app.getVersion(),
     versions: {
       electron: process.versions.electron,
       chrome: process.versions.chrome,
@@ -246,7 +255,8 @@ export function registerIPCHandlers(): void {
       cols,
       rows,
       runCommand: terminal.runCommand,
-      trackerFactory: plan?.trackerFactory
+      trackerFactory: plan?.trackerFactory,
+      statusMarkers: getStatusMarkers(agentSlugFor(terminal))
     });
     return true;
   });

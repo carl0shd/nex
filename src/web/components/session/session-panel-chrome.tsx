@@ -32,6 +32,7 @@ import ResizeHandle from '@/components/ui/resize-handle';
 import CloseSessionModal from '@/components/modals/close-session-modal';
 import type { ChatEditorHandle } from '@/components/session/chat-editor';
 import type { SessionTab, QuickCommand } from '@/lib/session-view';
+import { aggregateTerminalStatus } from '@/lib/status';
 
 interface SessionPanelChromeProps {
   sessionId: string;
@@ -192,16 +193,19 @@ function SessionPanelChrome({
     [activeTerminalId, sessionId]
   );
 
-  const headerDotColor = 'var(--nex-text-muted)';
+  const sessionStatus = useMemo(
+    () => aggregateTerminalStatus(sessionTerminals),
+    [sessionTerminals]
+  );
   const tabs = useMemo<SessionTab[]>(
     () =>
       sessionTerminals.map((t) => ({
         id: t.id,
         name: t.name,
-        dotColor: headerDotColor,
+        status: t.status,
         active: t.id === activeTerminalId
       })),
-    [sessionTerminals, activeTerminalId, headerDotColor]
+    [sessionTerminals, activeTerminalId]
   );
 
   const handleSelectTab = useCallback(
@@ -269,7 +273,7 @@ function SessionPanelChrome({
       <SessionHeader
         branch={branch || name}
         projectName={projectName}
-        dotColor={headerDotColor}
+        status={sessionStatus}
         onClose={openCloseModal}
         onOpenIDE={handleOpenIDE}
         dragRef={dragRef}

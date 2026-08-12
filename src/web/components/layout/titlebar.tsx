@@ -1,11 +1,14 @@
 import { PanelLeft, Bell, Smartphone, LayoutGrid, Settings } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useFullscreen } from '@/hooks/use-fullscreen';
+import { cn } from '@/lib/utils';
 import IconButton from '@/components/ui/icon-button';
 import CommandBar from '@/components/ui/command-bar';
 import ActiveBadge from '@/components/layout/active-badge';
 import TokensBadge from '@/components/layout/tokens-badge';
 import CostBadge from '@/components/layout/cost-badge';
 import { useSidebarStore } from '@/stores/sidebar.store';
+import { useTerminalStore } from '@/stores/terminal.store';
 
 interface TitlebarProps {
   onToggleSidebar?: () => void;
@@ -13,7 +16,16 @@ interface TitlebarProps {
 
 function Titlebar({ onToggleSidebar }: TitlebarProps): React.JSX.Element {
   const isFullscreen = useFullscreen();
+  const activeSessions = useTerminalStore((s) => {
+    const sessions = new Set<string>();
+    for (const terminal of s.terminals) {
+      if (terminal.status !== 'idle') sessions.add(terminal.sessionId);
+    }
+    return sessions.size;
+  });
   const sidebarCollapsed = useSidebarStore((s) => s.collapsed.full);
+  const navigate = useNavigate();
+  const onSettings = useLocation().pathname === '/settings';
 
   const spacerClass = sidebarCollapsed ? 'pl-2' : isFullscreen ? 'pl-58.25' : 'pl-41.25';
 
@@ -36,7 +48,7 @@ function Titlebar({ onToggleSidebar }: TitlebarProps): React.JSX.Element {
         style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
       >
         <CommandBar />
-        <ActiveBadge count={0} />
+        <ActiveBadge count={activeSessions} />
         <TokensBadge percent={65} />
         <CostBadge amount={0.08} />
       </div>
@@ -50,7 +62,13 @@ function Titlebar({ onToggleSidebar }: TitlebarProps): React.JSX.Element {
         <IconButton icon={Bell} size={15} />
         <IconButton icon={Smartphone} size={15} />
         <IconButton icon={LayoutGrid} size={15} />
-        <IconButton icon={Settings} size={15} />
+        <IconButton
+          icon={Settings}
+          size={15}
+          title="Settings"
+          onClick={() => navigate(onSettings ? '/' : '/settings')}
+          className={cn(onSettings && 'text-text')}
+        />
       </div>
     </div>
   );

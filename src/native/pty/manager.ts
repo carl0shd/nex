@@ -7,6 +7,8 @@ import { getMainWindow } from '@native/main/app-window';
 import * as terminalRepo from '@native/db/repositories/terminal.repo';
 import type { TerminalStatus, TerminalType } from '@native/db/types';
 import type { SessionTrackerHandle } from '@native/agents/resume';
+import type { AgentStatusMarkers } from '@native/agents/status-markers';
+import { createStatusDetector, type StatusDetectorHandle } from '@native/pty/status-detector';
 import { whichBinary } from '@native/which';
 import { getNexDir } from '@native/paths';
 
@@ -24,6 +26,7 @@ interface ManagedTerminal {
   diskDirty: boolean;
   diskFlushTimer: NodeJS.Timeout | null;
   sessionTracker: SessionTrackerHandle | null;
+  statusDetector: StatusDetectorHandle | null;
 }
 
 const MAX_BUFFER = 1_000_000;
@@ -41,6 +44,7 @@ interface SpawnOptions {
   rows?: number;
   runCommand?: string | null;
   trackerFactory?: () => SessionTrackerHandle | null;
+  statusMarkers?: AgentStatusMarkers | null;
 }
 
 function bufferDir(): string {
@@ -225,9 +229,16 @@ export function spawnTerminal(opts: SpawnOptions): void {
     flushHandle: null,
     diskDirty: false,
     diskFlushTimer: null,
-    sessionTracker: null
+    sessionTracker: null,
+    statusDetector: null
   };
   terminals.set(opts.id, term);
+
+  if (opts.statusMarkers) {
+    term.statusDetector = createStatusDetector(opts.statusMarkers, (status) =>
+      setStatus(term, status)
+    );
+  }
 
   pty.onData((data) => {
     term.buffer += data;
@@ -238,12 +249,15 @@ export function spawnTerminal(opts: SpawnOptions): void {
     if (!term.flushHandle) {
       term.flushHandle = setImmediate(() => flushPending(term));
     }
+    term.statusDetector?.push(data);
     scheduleDiskFlush(term);
   });
 
   pty.onExit(({ exitCode, signal }) => {
     term.exited = true;
     if (term.pendingData) flushPending(term);
+    term.statusDetector?.stop();
+    term.statusDetector = null;
     setStatus(term, 'idle');
     send(IPC.PTY_EXIT, { id: opts.id, exitCode, signal });
   });
@@ -292,6 +306,8 @@ export function killTerminal(id: string): void {
     flushDiskSync(term);
     term.sessionTracker?.stop();
     term.sessionTracker = null;
+    term.statusDetector?.stop();
+    term.statusDetector = null;
     try {
       if (!term.exited) term.pty.kill();
     } catch {
@@ -319,6 +335,8 @@ export function killAllTerminals(): void {
   for (const term of terminals.values()) {
     term.sessionTracker?.stop();
     term.sessionTracker = null;
+    term.statusDetector?.stop();
+    term.statusDetector = null;
     try {
       if (!term.exited) term.pty.kill();
     } catch {

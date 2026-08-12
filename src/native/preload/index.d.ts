@@ -27,6 +27,7 @@ import type { WorktreeDiffOptions, WorktreeFileVersionsInput } from '@native/git
 interface NexAPI {
   getAppInfo: () => Promise<{
     platform: string;
+    version: string;
     versions: { electron: string; chrome: string; node: string };
   }>;
 
