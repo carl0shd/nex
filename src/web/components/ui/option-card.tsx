@@ -26,7 +26,7 @@ function OptionCard({
       asChild
       className={cn(
         'w-full cursor-pointer flex-row items-center gap-3 rounded-md bg-bg-input p-3',
-        selected ? 'border-border-hover' : 'hover:border-border-hover',
+        selected ? 'border-border' : 'hover:border-border',
         className
       )}
     >

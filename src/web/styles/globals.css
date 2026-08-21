@@ -54,6 +54,7 @@
   --color-text-muted: var(--nex-text-muted);
   --color-text-placeholder: var(--nex-text-placeholder);
   --color-accent-hover: var(--nex-accent-hover);
+  --color-switch-thumb: var(--nex-switch-thumb);
   --color-badge-success-bg: var(--nex-badge-success-bg);
   --color-badge-success-text: var(--nex-badge-success-text);
   --color-badge-warning-bg: var(--nex-badge-warning-bg);
@@ -141,6 +142,9 @@
   /* Accent */
   --nex-accent: #1e1d1c;
   --nex-accent-hover: #232221;
+
+  /* Switch knob — rides on a saturated track, so it never follows --nex-text */
+  --nex-switch-thumb: #eeeceb;
 
   /* Badge - success */
   --nex-badge-success-bg: #1a3d20;
@@ -282,6 +286,8 @@
   --nex-accent: #e4e0db;
   --nex-accent-hover: #dbd6d0;
 
+  --nex-switch-thumb: #ffffff;
+
   /* Badge - success */
   --nex-badge-success-bg: #dcf0e0;
   --nex-badge-success-text: #1f7a37;
@@ -303,8 +309,8 @@
   --nex-badge-default-text: #4d4944;
 
   /* Badge - count */
-  --nex-badge-count-bg: #2a2724;
-  --nex-badge-count-text: #f6f5f3;
+  --nex-badge-count-bg: #dcd7d1;
+  --nex-badge-count-text: #3d3935;
 
   /* Badge - info (modified) */
   --nex-badge-info-bg: #dceafc;
