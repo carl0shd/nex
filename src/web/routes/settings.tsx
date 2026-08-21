@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import SimpleBar from 'simplebar-react';
 import SettingsHeader from '@/components/settings/settings-header';
 import SettingsNav, { type SettingsNavOption } from '@/components/settings/settings-nav';
@@ -17,6 +18,7 @@ const NAV_OPTIONS: SettingsNavOption<SettingsTab>[] = [
 
 function Settings(): React.JSX.Element {
   const [tab, setTab] = useState<SettingsTab>('appearance');
+  const navigate = useNavigate();
 
   return (
     <div className="min-w-0 flex-1 overflow-hidden bg-bg">
@@ -25,6 +27,7 @@ function Settings(): React.JSX.Element {
           <SettingsHeader
             title="Settings"
             description="Manage how Nex looks and behaves. Preferences apply to every project."
+            onBack={() => navigate('/')}
           />
 
           <Separator className="my-6" />

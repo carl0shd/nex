@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import nexLogo from '@/assets/images/logo.svg';
-import licenses from '@/assets/licenses.json';
 import SettingsSection from '@/components/settings/settings-section';
-import LicensesModal from '@/components/modals/licenses-modal';
+import LicensesView from '@/components/settings/licenses-view';
 import SettingRow, { SettingValue } from '@/components/ui/setting-row';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -21,7 +20,7 @@ const PLATFORM_NAMES: Record<string, string> = {
 
 function AboutPanel(): React.JSX.Element {
   const [info, setInfo] = useState<AppInfo | null>(null);
-  const [licensesOpen, setLicensesOpen] = useState(false);
+  const [viewingLicenses, setViewingLicenses] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -32,6 +31,8 @@ function AboutPanel(): React.JSX.Element {
       active = false;
     };
   }, []);
+
+  if (viewingLicenses) return <LicensesView onBack={() => setViewingLicenses(false)} />;
 
   return (
     <SettingsSection>
@@ -45,7 +46,7 @@ function AboutPanel(): React.JSX.Element {
         </div>
       </div>
 
-      <Card className="gap-0 divide-y divide-border-soft bg-bg-soft p-0">
+      <Card className="gap-0 divide-y divide-border-soft overflow-hidden bg-bg-soft p-0">
         <SettingRow
           variant="plain"
           title="Version"
@@ -75,19 +76,17 @@ function AboutPanel(): React.JSX.Element {
           title="Node"
           control={<SettingValue>{info?.versions.node ?? '—'}</SettingValue>}
         />
+        <SettingRow
+          variant="plain"
+          title="Open source licenses"
+          className="py-1.5"
+          control={
+            <Button variant="outline" size="sm" onClick={() => setViewingLicenses(true)}>
+              View
+            </Button>
+          }
+        />
       </Card>
-
-      <SettingRow
-        title="Open source licenses"
-        description={`Nex ships ${licenses.length} open source packages.`}
-        control={
-          <Button variant="outline" size="sm" onClick={() => setLicensesOpen(true)}>
-            View
-          </Button>
-        }
-      />
-
-      <LicensesModal open={licensesOpen} onClose={() => setLicensesOpen(false)} />
     </SettingsSection>
   );
 }

@@ -26,7 +26,7 @@ function LicenseItem({
         type="button"
         onClick={onToggle}
         disabled={!text}
-        className="flex items-center gap-2 rounded px-2 py-1.5 text-left select-none enabled:cursor-pointer enabled:hover:bg-bg-hover"
+        className="flex items-center gap-2 px-3 py-2 text-left select-none enabled:cursor-pointer enabled:hover:bg-bg-hover"
       >
         <Chevron size={12} className={text ? 'shrink-0 text-text-muted' : 'shrink-0 opacity-0'} />
         <span className="truncate text-[12px] text-text">{name}</span>
@@ -36,7 +36,7 @@ function LicenseItem({
       </button>
 
       {expanded && text && (
-        <pre className="mx-2 mb-1 max-h-60 overflow-auto rounded border border-border-soft bg-bg-input p-2.5 font-mono text-[10px] leading-relaxed whitespace-pre-wrap text-text-muted select-text">
+        <pre className="mx-3 mb-2.5 max-h-60 overflow-auto rounded border border-border-soft bg-bg-input p-2.5 font-mono text-[10px] leading-relaxed whitespace-pre-wrap text-text-muted select-text">
           {text}
         </pre>
       )}
