@@ -26,6 +26,7 @@ interface SidebarState {
   workspaceModalId: string;
   createProjectWorkspaceId: string;
   createProjectOpen: boolean;
+  importGithubOpen: boolean;
   deleteWorkspaceId: string;
   deleteWorkspaceOpen: boolean;
   manageWorkspacesOpen: boolean;
@@ -52,6 +53,8 @@ interface SidebarState {
   closeWorkspaceModal: () => void;
   openCreateProject: (workspaceId: string) => void;
   closeCreateProject: () => void;
+  openImportGithub: () => void;
+  closeImportGithub: () => void;
   openDeleteWorkspace: (workspaceId: string) => void;
   closeDeleteWorkspace: () => void;
   openManageWorkspaces: () => void;
@@ -77,6 +80,7 @@ export const useSidebarStore = create<SidebarState>((set, get) => ({
   workspaceModalId: '',
   createProjectWorkspaceId: '',
   createProjectOpen: false,
+  importGithubOpen: false,
   deleteWorkspaceId: '',
   deleteWorkspaceOpen: false,
   manageWorkspacesOpen: false,
@@ -126,6 +130,8 @@ export const useSidebarStore = create<SidebarState>((set, get) => ({
   openCreateProject: (workspaceId) =>
     set({ createProjectOpen: true, createProjectWorkspaceId: workspaceId }),
   closeCreateProject: () => set({ createProjectOpen: false }),
+  openImportGithub: () => set({ importGithubOpen: true, createProjectOpen: false }),
+  closeImportGithub: () => set({ importGithubOpen: false }),
 
   openDeleteWorkspace: (workspaceId) =>
     set({ deleteWorkspaceOpen: true, deleteWorkspaceId: workspaceId }),

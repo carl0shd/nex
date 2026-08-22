@@ -11,6 +11,9 @@ interface OnboardingWorkspace {
 interface OnboardingProject {
   name: string;
   path: string;
+  source: 'local' | 'git';
+  repoUrl: string;
+  cloneDir: string;
   branchPrefix: string;
   quickCommands: QuickCommand[];
 }
@@ -40,6 +43,9 @@ const INITIAL_WORKSPACE: OnboardingWorkspace = {
 const INITIAL_PROJECT: OnboardingProject = {
   name: '',
   path: '',
+  source: 'local',
+  repoUrl: '',
+  cloneDir: '',
   branchPrefix: '',
   quickCommands: []
 };

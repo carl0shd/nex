@@ -69,6 +69,28 @@ const api = {
   installAgent: (slug: string) => ipcRenderer.invoke('agents:install', slug),
   cloneAgentAccount: (input: unknown) => ipcRenderer.invoke('agent-account:clone', input),
   startWork: (input: unknown) => ipcRenderer.invoke('work:start', input),
+  detectGit: () => ipcRenderer.invoke('git:detect'),
+  cloneRepository: (url: string, parentDir: string) =>
+    ipcRenderer.invoke('git:clone', url, parentDir),
+  detectGh: () => ipcRenderer.invoke('gh:detect'),
+  listGithubOwners: () => ipcRenderer.invoke('gh:list-owners'),
+  listGithubRepos: (owner: string) => ipcRenderer.invoke('gh:list-repos', owner),
+  cloneGithubRepo: (nameWithOwner: string, parentDir: string) =>
+    ipcRenderer.invoke('gh:clone', nameWithOwner, parentDir),
+  onCloneProgress: (
+    callback: (progress: { phase: string; percent: number | null; repo?: string }) => void
+  ) => {
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      progress: { phase: string; percent: number | null; repo?: string }
+    ): void => {
+      callback(progress);
+    };
+    ipcRenderer.on(IPC.GIT_CLONE_PROGRESS, handler);
+    return () => {
+      ipcRenderer.removeListener(IPC.GIT_CLONE_PROGRESS, handler);
+    };
+  },
   detectBaseBranch: (repoPath: string) => ipcRenderer.invoke('git:detect-base-branch', repoPath),
   isGitRepo: (repoPath: string) => ipcRenderer.invoke('git:is-repo', repoPath),
   listBranches: (repoPath: string) => ipcRenderer.invoke('git:list-branches', repoPath),
