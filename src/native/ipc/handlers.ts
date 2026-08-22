@@ -27,6 +27,8 @@ import { detectAvailableAgents, installAgent } from '@native/agents/detect';
 import { createTerminalForSession } from '@native/agents/agent-terminal';
 import { cloneAgentAccount } from '@native/agents/clone-account';
 import { startWork } from '@native/git/start-work';
+import { detectGit, cloneRepository } from '@native/git/clone';
+import { detectGh, listGithubOwners, listGithubRepos, cloneGithubRepo } from '@native/git/github';
 import { getNexDir } from '@native/paths';
 import {
   detectBaseBranch,
@@ -276,6 +278,22 @@ export function registerIPCHandlers(): void {
   ipcMain.handle(IPC.AGENT_INSTALL, (_, slug: string) => installAgent(slug));
   ipcMain.handle(IPC.AGENT_ACCOUNT_CLONE, (_, input) => cloneAgentAccount(input));
   ipcMain.handle(IPC.WORK_START, (_, input) => startWork(input));
+  ipcMain.handle(IPC.GIT_DETECT, () => detectGit());
+  ipcMain.handle(IPC.GIT_CLONE, (event, url: string, parentDir: string) =>
+    cloneRepository(url, parentDir, (progress) => {
+      if (!event.sender.isDestroyed()) event.sender.send(IPC.GIT_CLONE_PROGRESS, progress);
+    })
+  );
+  ipcMain.handle(IPC.GH_DETECT, () => detectGh());
+  ipcMain.handle(IPC.GH_LIST_OWNERS, () => listGithubOwners());
+  ipcMain.handle(IPC.GH_LIST_REPOS, (_, owner: string) => listGithubRepos(owner));
+  ipcMain.handle(IPC.GH_CLONE, (event, nameWithOwner: string, parentDir: string) =>
+    cloneGithubRepo(nameWithOwner, parentDir, (progress) => {
+      if (!event.sender.isDestroyed()) {
+        event.sender.send(IPC.GIT_CLONE_PROGRESS, { ...progress, repo: nameWithOwner });
+      }
+    })
+  );
   ipcMain.handle(IPC.GIT_DETECT_BASE_BRANCH, (_, repoPath) => detectBaseBranch(repoPath));
   ipcMain.handle(IPC.GIT_IS_REPO, (_, repoPath) => isGitRepo(repoPath));
   ipcMain.handle(IPC.GIT_LIST_BRANCHES, (_, repoPath) => listBranches(repoPath));
