@@ -10,7 +10,6 @@ interface TreeGroupLabelProps {
   className?: string;
 }
 
-/** Collapsible label for a group of rows in a tree (projects, diff folders). */
 function TreeGroupLabel({
   id,
   name,

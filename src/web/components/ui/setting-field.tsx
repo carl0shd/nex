@@ -6,7 +6,6 @@ interface SettingFieldProps {
   children: React.ReactNode;
 }
 
-/** Label over a full-width control, with the help text underneath — the shadcn form field shape. */
 function SettingField({ label, description, children }: SettingFieldProps): React.JSX.Element {
   return (
     <Field className="gap-2">

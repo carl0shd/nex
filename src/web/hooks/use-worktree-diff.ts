@@ -1,11 +1,8 @@
 import { useEffect } from 'react';
 import { useDiffStore, type LoadDiffOptions } from '@/stores/diff.store';
 
-/**
- * Loads a session's diff and keeps it current from the worktree watcher in the
- * main process. The store skips reparsing when the patch itself is unchanged,
- * so a noisy filesystem costs one `git diff` and nothing more.
- */
+// The store skips reparsing when the patch is unchanged, so a noisy filesystem
+// costs one `git diff` and nothing more.
 export function useWorktreeDiff(
   sessionId: string,
   worktreePath: string | undefined,

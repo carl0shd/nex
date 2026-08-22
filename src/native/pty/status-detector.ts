@@ -1,18 +1,50 @@
 import type { TerminalStatus } from '@native/db/types';
 import type { AgentStatusMarkers } from '@native/agents/status-markers';
 
-const EVAL_INTERVAL_MS = 250;
-const RUNNING_EXPIRY_MS = 1_200;
-const QUIET_CONFIRM_MS = 400;
+const EVAL_INTERVAL_MS = 1_000;
 const MAX_BURST = 32_000;
+const TRIM_AT = MAX_BURST * 2;
 
 /* eslint-disable no-control-regex */
-const OSC_SEQUENCE = /\x1b\][\s\S]*?(?:\x07|\x1b\\)/g;
-const ESC_SEQUENCE = /\x1b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g;
+const CURSOR_COLUMN = /\x1b\[\d*[GC]/g;
+const ANSI_SEQUENCE = /\x1b\][\s\S]*?(?:\x07|\x1b\\)|\x1b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g;
 /* eslint-enable no-control-regex */
 
+// A TUI spaces words with cursor jumps rather than spaces, so deleting them
+// welds the hint line into `esctointerrupt` and no marker can match it.
 function stripAnsi(text: string): string {
-  return text.replace(OSC_SEQUENCE, '').replace(ESC_SEQUENCE, '');
+  return text.replace(CURSOR_COLUMN, ' ').replace(ANSI_SEQUENCE, '');
+}
+
+function toGlobal(pattern: RegExp): RegExp {
+  return pattern.global ? pattern : new RegExp(pattern.source, `${pattern.flags}g`);
+}
+
+function toStateless(pattern: RegExp): RegExp {
+  return pattern.global ? new RegExp(pattern.source, pattern.flags.replace('g', '')) : pattern;
+}
+
+function isLineBreak(char: string): boolean {
+  return char === '\n' || char === '\r';
+}
+
+// Widened from the hit instead of matched as a line: a line-spanning pattern
+// retries from every column, ~160x the cost over a burst this size.
+function lastMarkedLine(pattern: RegExp, text: string): string | null {
+  pattern.lastIndex = 0;
+  let at = -1;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(text)) !== null) {
+    at = match.index;
+    if (match.index === pattern.lastIndex) pattern.lastIndex++;
+  }
+  if (at < 0) return null;
+
+  let start = at;
+  while (start > 0 && !isLineBreak(text[start - 1])) start--;
+  let end = at;
+  while (end < text.length && !isLineBreak(text[end])) end++;
+  return text.slice(start, end);
 }
 
 export interface StatusDetectorHandle {
@@ -20,45 +52,20 @@ export interface StatusDetectorHandle {
   stop: () => void;
 }
 
-/**
- * Infers what an agent is doing from the output it paints, without emulating a
- * screen.
- *
- * Output is evaluated in bursts rather than as an append-only log, so a spinner
- * from two turns ago can't hold the terminal green. Idle is never asserted by a
- * marker of its own: a burst can straddle the end of a turn, carrying both the
- * last spinner frames and the frame that replaced them, and any within-burst
- * ordering rule reads one of those two cases backwards. So `running` instead
- * expires RUNNING_EXPIRY_MS after the last frame that claimed it — a working
- * agent ticks its spinner, and one that stopped simply stops saying so.
- *
- * `waiting` is the exception that must survive silence: a permission prompt is
- * painted once and then nothing happens until the user answers. It is held
- * until some other frame arrives, and a frame with no marker at all only
- * releases it after QUIET_CONFIRM_MS.
- */
+// Status is sticky because silence carries no signal: a turn was observed
+// holding the status line untouched for 89 seconds while it worked.
 export function createStatusDetector(
   markers: AgentStatusMarkers,
   onStatus: (status: TerminalStatus) => void
 ): StatusDetectorHandle {
+  const statusLinePattern = toGlobal(markers.statusLine);
+  const runningPattern = toStateless(markers.running);
+  const waitingPattern = toStateless(markers.waiting);
+
   let pending = '';
   let current: TerminalStatus = 'idle';
   let evalTimer: NodeJS.Timeout | null = null;
-  let expiryTimer: NodeJS.Timeout | null = null;
-  let quietTimer: NodeJS.Timeout | null = null;
   let stopped = false;
-
-  const cancelExpiry = (): void => {
-    if (!expiryTimer) return;
-    clearTimeout(expiryTimer);
-    expiryTimer = null;
-  };
-
-  const cancelQuiet = (): void => {
-    if (!quietTimer) return;
-    clearTimeout(quietTimer);
-    quietTimer = null;
-  };
 
   const apply = (status: TerminalStatus): void => {
     if (current === status) return;
@@ -72,36 +79,22 @@ export function createStatusDetector(
     const text = stripAnsi(pending);
     pending = '';
 
-    if (markers.waiting.test(text)) {
-      cancelQuiet();
-      cancelExpiry();
+    if (waitingPattern.test(text)) {
       apply('waiting');
       return;
     }
 
-    if (markers.running.test(text)) {
-      cancelQuiet();
-      cancelExpiry();
-      apply('running');
-      expiryTimer = setTimeout(() => {
-        expiryTimer = null;
-        apply('idle');
-      }, RUNNING_EXPIRY_MS);
-      return;
-    }
+    const line = lastMarkedLine(statusLinePattern, text);
+    if (line === null) return;
 
-    if (current !== 'waiting' || quietTimer) return;
-    quietTimer = setTimeout(() => {
-      quietTimer = null;
-      apply('idle');
-    }, QUIET_CONFIRM_MS);
+    apply(runningPattern.test(line) ? 'running' : 'idle');
   };
 
   return {
     push(data: string): void {
       if (stopped) return;
       pending += data;
-      if (pending.length > MAX_BURST) pending = pending.slice(-MAX_BURST);
+      if (pending.length > TRIM_AT) pending = pending.slice(-MAX_BURST);
       if (!evalTimer) evalTimer = setTimeout(evaluate, EVAL_INTERVAL_MS);
     },
     stop(): void {
@@ -109,8 +102,6 @@ export function createStatusDetector(
       pending = '';
       if (evalTimer) clearTimeout(evalTimer);
       evalTimer = null;
-      cancelExpiry();
-      cancelQuiet();
     }
   };
 }

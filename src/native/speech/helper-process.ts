@@ -1,6 +1,4 @@
-// Launches SpeechHelper.app via `/usr/bin/open` and talks to it over a
-// localhost TCP socket using newline-delimited JSON. The .app bundle is
-// required so macOS TCC attributes the mic/speech permission prompts to
+// The .app bundle is required so macOS TCC attributes the mic/speech prompts to
 // the helper's own Info.plist usage descriptions.
 
 import { spawn, type ChildProcess } from 'child_process';
@@ -206,9 +204,8 @@ export class HelperProcess extends EventEmitter {
       this.ready = false;
       this.socket = null;
       this.starting = null;
-      // If connection died unexpectedly while we had pending work, switch to
-      // the LaunchServices mode for the next start — this typically signals
-      // a sandboxing / activation issue with the standard `open -n` path.
+      // Dying with work pending usually means `open -n` hit a sandboxing or
+      // activation issue, so the next start goes through LaunchServices.
       if (this.pending.size > 0 && this.launchMode === 'standard') {
         this.launchMode = 'launchservices-fallback';
         this.emit('log', {

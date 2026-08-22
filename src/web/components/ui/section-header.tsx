@@ -12,7 +12,6 @@ interface SectionHeaderProps {
   collapsed?: boolean;
   onToggle?: () => void;
   actions?: Action[];
-  /** Trailing slot, typically a count badge. */
   badge?: React.ReactNode;
 }
 

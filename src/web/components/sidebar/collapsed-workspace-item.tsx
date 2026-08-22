@@ -77,7 +77,6 @@ interface WorkspaceHoverBadgeProps {
   workspace: Workspace;
   projectCount: number;
   taskCount: number;
-  /** The workspace popover is open, so the hover preview would only get in the way. */
   disabled: boolean;
 }
 

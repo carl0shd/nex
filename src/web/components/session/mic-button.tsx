@@ -51,7 +51,6 @@ function MicButton({ onTranscript, onPartial }: MicButtonProps): React.JSX.Eleme
     setLocales(list);
   }, []);
 
-  // Initial load + react to OS-pushed device changes (mic plug/unplug).
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadDevices();
@@ -63,9 +62,8 @@ function MicButton({ onTranscript, onPartial }: MicButtonProps): React.JSX.Eleme
     return unsubscribe;
   }, [loadDevices, loadLocales]);
 
-  // In hold-to-record mode, a short tap (release < 300ms) acts like a toggle:
-  // the session stays active until the next click. A long press behaves like
-  // push-to-talk: recording stops when the user releases the mouse.
+  // In hold-to-record mode a short tap toggles and stays on; a long press is
+  // push-to-talk and stops on release.
   const pressStartRef = useRef<number | null>(null);
   const HOLD_THRESHOLD_MS = 300;
 

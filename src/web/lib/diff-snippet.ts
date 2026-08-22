@@ -12,10 +12,6 @@ export function sliceLines(contents: string, start: number, end: number): string
     .join('\n');
 }
 
-/**
- * Formats the batch for an agent prompt: each snippet as a fenced block tagged
- * with its path and line range, so the agent can locate it without guessing.
- */
 export function composeAgentMessage(snippets: DiffSnippet[], text: string): string {
   if (snippets.length === 0) return text;
 

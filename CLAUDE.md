@@ -263,7 +263,7 @@ Uses `MemoryRouter` from react-router-dom. This is required for Electron (no rea
 - **Linting:** ESLint with TypeScript + React + Prettier integration. `eslint --fix` applies both ESLint and Prettier rules.
 - **Interactive elements:** Must have `cursor-pointer` and `select-none`
 - **Path aliases:** `@/` → `src/web/`, `@native/` → `src/native/`. Always use aliases instead of relative imports when crossing boundaries (e.g. `@native/db/types` not `../../native/db/types`)
-- **Comments:** Only add comments for non-obvious business logic or workarounds. Never comment what the code does (e.g. `// Divider`, `// Footer`). Well-named components and variables are self-documenting.
+- **Comments:** See the [Comments](#comments) section. The default is none, and the hard limit is 2 lines.
 - **Transitions:** No CSS transitions on hover states. All interactions are instant.
 - **No hardcoded colors:** NEVER use hardcoded hex colors in components. All colors must use theme tokens from `globals.css`. If a color doesn't exist as a token, create it first. Only exception: inline `style` for dynamic colors passed as props (e.g. workspace color).
 - **Native feel:** Global `user-select: none`, `cursor: default`, `-webkit-user-drag: none`. The app should never feel like a website.
@@ -273,6 +273,66 @@ Uses `MemoryRouter` from react-router-dom. This is required for Electron (no rea
 - **No shared folders:** Never create `shared/`, `common/`, or similar catch-all directories for types or utilities. Types live where they are defined and get imported where needed (e.g. DB entity types live in `native/db/types.ts`, preload types in `native/preload/index.d.ts`).
 - **No generic IPC:** Never expose raw `ipcRenderer.invoke` or a generic `invoke(channel, ...args)` to the renderer. All IPC must go through explicit functions in the preload bridge (`window.api.*`).
 - **Migrations are append-only:** Never modify an existing migration in `migrations.ts`. Always add a new entry to the array. Existing DBs may already have run previous migrations.
+
+## Comments
+
+**The default is no comment.** This is not a style preference to be traded off against
+"thoroughness" — a comment is a last resort, used only when the code genuinely cannot carry the
+information itself. Assume the reader can read TypeScript.
+
+**Hard limit: 2 lines.** Enforced by `nex/max-comment-lines` in `eslint.config.mjs`, which fails the
+build. Consecutive `//` lines count as one comment. If an explanation does not fit in 2 lines, the
+comment is not the fix — rename things, extract a function, or let it go.
+
+**Before writing one, try these first, in order:**
+
+1. Rename the variable, function, or component so the name says it.
+2. Extract the confusing expression into a named constant or helper.
+3. Accept that the reader will read the code.
+
+**Only these earn a comment:**
+
+- A workaround for a third-party bug or constraint, naming the thing worked around.
+- A non-obvious ordering or timing requirement that looks safe to change but is not.
+- A business rule with no other home in the repo.
+
+**Never comment a prop.** No exceptions. Not the props of a component, not the fields of an
+interface or type. If a prop needs prose to be understood, the prop is wrong — rename it, narrow its
+type, or split it in two. A union beats a comment (`variant?: 'card' | 'plain'` needs no note),
+a named type beats a comment (`anchor?: PopoverAnchor` beats explaining a string format), and two
+booleans beat one that means different things in different states. This is enforced by
+`nex/no-prop-comments`.
+
+```ts
+// wrong — every one of these restates the name or the type
+interface Props {
+  /** Trailing slot, typically a count badge. */
+  trailing?: React.ReactNode;
+  /** `card` stands on its own; `plain` is meant for a divided list. */
+  variant?: 'card' | 'plain';
+  /** Control aligned to the right of the label. */
+  control?: React.ReactNode;
+}
+
+// right
+interface Props {
+  trailing?: React.ReactNode;
+  variant?: 'card' | 'plain';
+  control?: React.ReactNode;
+}
+```
+
+**Never write:**
+
+- What the code does — `// Divider`, `// Footer`, `// Fetch the user`, `// Loop over items`.
+- What a component is — `/** Title row for a panel sub-view. */` above `BackHeader`.
+- Section banners, decorative dividers, or `// ---- helpers ----`.
+- Commented-out code. Delete it; git remembers.
+- Restating a type in prose, or JSDoc `@param`/`@returns` that add nothing to the signature.
+- Narration of a change — `// now uses X instead of Y`. That belongs in the commit message.
+
+**Editing existing code:** when a comment near your change is wrong, stale, or explains what the
+code does, delete it. Leaving it because "it was already there" is how they accumulate.
 
 ## Components
 

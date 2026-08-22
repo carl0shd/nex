@@ -29,8 +29,7 @@ function gitDiffRaw(cwd: string, args: string[]): Promise<string> {
   });
 }
 
-// Raw stdout, or null when the command failed. Trailing newlines are preserved
-// because they are part of the file contents.
+// Trailing newlines are preserved: they are part of the file contents.
 function gitReadRaw(cwd: string, args: string[]): Promise<string | null> {
   return new Promise((resolve) => {
     execFile('git', args, { cwd, maxBuffer: 64 * 1024 * 1024 }, (err, stdout) => {
@@ -163,25 +162,17 @@ export async function listWorktreeFiles(repo: string): Promise<WorktreeEntry[]> 
 }
 
 export interface WorktreeDiffOptions {
-  /** Branch the session was created from. The diff starts at its merge base. */
   baseBranch?: string;
   ignoreWhitespace?: boolean;
 }
 
-/**
- * Largest untracked file inlined into the patch. Anything bigger is almost
- * always a build artifact that escaped .gitignore, and rendering it would
- * stall the viewer for no benefit.
- */
+// Anything bigger is almost always a build artifact that escaped .gitignore,
+// and rendering it would stall the viewer for no benefit.
 const MAX_UNTRACKED_BYTES = 2 * 1024 * 1024;
 const UNTRACKED_CONCURRENCY = 8;
 
-/**
- * Resolves where the session's diff starts: the merge base with its base
- * branch, so the diff covers every commit made in the worktree plus whatever
- * is still uncommitted. Falls back to HEAD (uncommitted changes only) when the
- * base branch is unknown or unrelated.
- */
+// The merge base, so the diff covers commits made in the worktree as well as
+// uncommitted work. HEAD alone would hide the commits.
 async function resolveDiffBase(worktreePath: string, baseBranch?: string): Promise<string> {
   if (!baseBranch) return 'HEAD';
   for (const ref of [`origin/${baseBranch}`, baseBranch]) {
@@ -191,12 +182,8 @@ async function resolveDiffBase(worktreePath: string, baseBranch?: string): Promi
   return 'HEAD';
 }
 
-/**
- * Builds a unified diff of everything the session changed — commits since the
- * base branch plus staged and unstaged work — including untracked files. The
- * renderer parses this once with `@pierre/diffs` to derive both the
- * changed-files list and the rendered diff.
- */
+// One patch covering commits, staged, unstaged and untracked work. The renderer
+// parses it once to derive both the file list and the rendered diff.
 export async function getWorktreeDiff(
   worktreePath: string,
   options: WorktreeDiffOptions = {}
@@ -257,9 +244,7 @@ export async function getWorktreeDiff(
 
 export interface WorktreeFileVersionsInput {
   worktreePath: string;
-  /** Path as it exists now. */
   path: string;
-  /** Original path, when the file was renamed. */
   prevPath?: string;
   baseBranch?: string;
 }
@@ -291,11 +276,8 @@ export async function readWorktreeFileVersions(
   return { oldContents, newContents };
 }
 
-/**
- * Restores a file to its committed state. Only uncommitted work is discarded —
- * commits already made in the worktree are left alone, so this can never throw
- * away more than what the working tree shows as pending.
- */
+// Only uncommitted work is discarded: commits already made in the worktree are
+// left alone, so this can never throw away more than the tree shows as pending.
 export async function discardWorktreeFileChanges(
   worktreePath: string,
   path: string,

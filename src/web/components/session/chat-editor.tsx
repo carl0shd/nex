@@ -106,9 +106,7 @@ export interface ChatEditorHandle {
   isEmpty: () => boolean;
   submit: () => void;
   insertText: (text: string) => void;
-  /** Replace any current interim span with `text` (or clear if empty). */
   setInterimText: (text: string) => void;
-  /** Remove any current interim span from the doc. */
   clearInterim: () => void;
 }
 

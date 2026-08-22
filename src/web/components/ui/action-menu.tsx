@@ -21,7 +21,6 @@ interface ActionMenuAction {
 interface ActionMenuProps {
   trigger: React.ReactNode;
   actions: ActionMenuAction[];
-  /** Right-clicking anywhere in this element opens the menu at the pointer. */
   rowRef?: React.RefObject<HTMLElement | null>;
 }
 
@@ -76,9 +75,8 @@ function ActionMenu({ trigger, actions, rowRef }: ActionMenuProps): React.JSX.El
     // Modal: keeps the menu the top-most dismissable layer, so clicking an item inside a
     // dialog (e.g. manage workspaces) doesn't dismiss the dialog underneath it.
     <DropdownMenu open={open} onOpenChange={setOpen} modal>
-      {/* Portalled to the body: a transformed ancestor (the dialog panel is translated to
-          center itself) would become the containing block for the fixed anchor and shift the
-          menu away from the pointer. */}
+      {/* Portalled: a transformed ancestor becomes the containing block for the
+          fixed anchor and would shift the menu away from the pointer. */}
       {createPortal(
         <DropdownMenuTrigger asChild>
           <span

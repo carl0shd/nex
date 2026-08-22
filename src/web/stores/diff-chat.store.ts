@@ -3,7 +3,6 @@ import { create } from 'zustand';
 export type SnippetSide = 'additions' | 'deletions';
 
 export interface DiffSnippet {
-  /** `${file}:${side}:${start}-${end}` — re-adding the same range is a no-op. */
   id: string;
   file: string;
   side: SnippetSide;
