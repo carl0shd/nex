@@ -10,9 +10,7 @@ interface UseSpeechRecognitionOptions {
 
 interface UseSpeechRecognitionReturn {
   isRecording: boolean;
-  /** Live transcription as it's being typed. Cleared on stop. */
   interimText: string;
-  /** Confidence of the most recent result (0..1), if available. */
   confidence: number | null;
   start: () => Promise<void>;
   stop: () => void;

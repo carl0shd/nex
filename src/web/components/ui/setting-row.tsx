@@ -5,9 +5,7 @@ type SettingRowVariant = 'card' | 'plain';
 interface SettingRowProps {
   title: string;
   description?: string;
-  /** Control aligned to the right of the label (switch, dropdown, segmented control). */
   control?: React.ReactNode;
-  /** `card` stands on its own; `plain` is meant for a divided list. */
   variant?: SettingRowVariant;
   className?: string;
 }

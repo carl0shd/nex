@@ -6,8 +6,7 @@ export interface DiffTheme {
   themeType: ThemeTypes;
 }
 
-// Mirrors the app theme into the diff renderer. Only syntax tokens come from
-// here — the diff's own colours (backgrounds, +/- markers) are driven by the
+// Only syntax tokens come from here; the diff's own colours are driven by the
 // `--diffs-*-override` variables in globals.css.
 export function resolveDiffTheme(): DiffTheme {
   return {

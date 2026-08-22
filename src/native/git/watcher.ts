@@ -3,11 +3,8 @@ import { execFile } from 'child_process';
 
 const DEBOUNCE_MS = 250;
 
-/**
- * fs.watch fires for directories git never looks at, and a single `yarn
- * install` or build would otherwise reset the debounce timer forever. Skipping
- * them here keeps the watcher quiet without a full gitignore evaluation.
- */
+// A single `yarn install` or build would otherwise reset the debounce timer
+// forever. Cheaper than a full gitignore evaluation.
 const IGNORED_SEGMENTS = new Set([
   'node_modules',
   '.git',
@@ -75,10 +72,7 @@ async function startWatchers(worktreePath: string, entry: WorktreeWatch): Promis
   addWatcher(entry, gitDir, false);
 }
 
-/**
- * Calls `onChange` (debounced) whenever anything in the worktree or its git dir
- * changes. Watches are shared per worktree and torn down with the last listener.
- */
+// Watches are shared per worktree and torn down with the last listener.
 export function watchWorktree(worktreePath: string, onChange: () => void): () => void {
   let entry = watches.get(worktreePath);
 

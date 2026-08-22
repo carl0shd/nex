@@ -3,19 +3,13 @@ import { cn } from '@/lib/utils';
 
 interface FloatingPanelProps {
   children: React.ReactNode;
-  /** Omit to render a panel that cannot be collapsed. */
   onToggleCollapse?: () => void;
   collapsed?: boolean;
   label?: string;
-  /** Stays reachable next to the label while collapsed. */
   collapsedAction?: React.ReactNode;
   className?: string;
 }
 
-/**
- * Bottom-centered dock that floats over the content it belongs to, and folds
- * into a labelled pill so the content underneath stays reviewable.
- */
 function FloatingPanel({
   children,
   onToggleCollapse,

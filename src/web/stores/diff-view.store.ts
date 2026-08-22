@@ -21,7 +21,6 @@ const DEFAULT_PREFS: DiffViewPrefs = {
 interface DiffViewStore {
   prefs: DiffViewPrefs;
   loaded: boolean;
-  /** Collapsed file paths, per session. */
   collapsed: Record<string, string[]>;
 
   load: () => Promise<void>;

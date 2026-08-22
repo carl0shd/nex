@@ -4,25 +4,22 @@ import { cn } from '@/lib/utils';
 
 type Side = 'top' | 'right' | 'bottom' | 'left';
 type Align = 'start' | 'center' | 'end';
+type Anchor = `${Side} ${Align}`;
 
 interface PopoverMenuProps {
   trigger: React.ReactNode | ((open: boolean) => React.ReactNode);
   children: React.ReactNode | ((ctx: { close: () => void }) => React.ReactNode);
-  /** `"<side> <align>"`, e.g. `"right start"`. */
-  anchor?: string;
+  anchor?: Anchor;
   gap?: number;
   className?: string;
 }
 
-function parseAnchor(anchor: string): { side: Side; align: Align } {
-  const [side, align] = anchor.split(' ');
-  return { side: (side as Side) ?? 'bottom', align: (align as Align) ?? 'center' };
+function parseAnchor(anchor: Anchor): { side: Side; align: Align } {
+  const [side, align] = anchor.split(' ') as [Side, Align];
+  return { side, align };
 }
 
-/**
- * Popover that owns its open state and renders bare content — the caller styles the surface.
- * For a standard shadcn popover surface, compose `Popover`/`PopoverContent` directly.
- */
+// For a standard shadcn popover surface, compose `Popover`/`PopoverContent`.
 function PopoverMenu({
   trigger,
   children,

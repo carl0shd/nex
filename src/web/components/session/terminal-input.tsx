@@ -43,7 +43,6 @@ function TerminalInput({
   const handleTranscript = useCallback((text: string): void => {
     const editor = localEditorRef.current;
     if (!editor) return;
-    // Drop any in-flight interim and commit the authoritative final text.
     editor.clearInterim();
     const prefix = editor.isEmpty() ? '' : ' ';
     editor.insertText(prefix + text);

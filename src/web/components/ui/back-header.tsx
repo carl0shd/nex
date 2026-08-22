@@ -7,7 +7,6 @@ interface BackHeaderProps {
   onBack: () => void;
 }
 
-/** Title row for a panel sub-view, with the control that returns to the parent view. */
 function BackHeader({ title, description, onBack }: BackHeaderProps): React.JSX.Element {
   return (
     <div className="flex items-center gap-1.5 select-none">

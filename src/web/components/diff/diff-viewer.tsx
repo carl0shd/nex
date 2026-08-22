@@ -32,16 +32,8 @@ interface DiffViewerProps {
   ref?: React.Ref<DiffViewerHandle>;
 }
 
-// Injected into the CodeView shadow root (highest-priority `unsafe` layer).
-// Pierre fills the empty side of a split diff with a diagonal hatch pattern;
-// we flatten it so missing-line gutters read as a calm solid fill.
-// Do not add `scrollbar-width`/`scrollbar-color` here: setting either makes
-// Chromium drop the `::-webkit-scrollbar` rules Pierre relies on to hide the
-// code's vertical scrollbar and size its gutter.
-// `user-select: none` on <body> inherits through the shadow boundary, so the
-// code has to opt back in — this is why selection works on Pierre's own demo
-// page and not here. Opt the whole subtree in rather than betting on one
-// attribute, then take the chrome back out so it never lands in a copy.
+// Never add `scrollbar-width`/`scrollbar-color`: either one makes Chromium drop
+// the `::-webkit-scrollbar` rules Pierre needs to size and hide its gutter.
 const DIFF_UNSAFE_CSS = `
   [data-content-buffer] { background-image: none; background-color: var(--diffs-bg-context); }
   :host, [data-code], [data-content], [data-line] { user-select: text; cursor: text; }
@@ -57,15 +49,8 @@ const DIFF_UNSAFE_CSS = `
 /** Distance below the sticky header at which a file counts as "the one you're reading". */
 const ACTIVE_FILE_OFFSET = 8;
 
-/**
- * Vertical spacing around the file list — CodeView applies it as the scroll
- * container's top/bottom margin. Matches the 12px `padding-inline` on
- * `.diff-codeview`, which is where the horizontal side is set.
- *
- * Hoisted because CodeView compares its options shallowly: a fresh object here
- * makes every React render look like an option change, which re-renders every
- * row and wipes any in-progress text selection.
- */
+// Hoisted because CodeView compares options shallowly: a fresh object every
+// render re-renders every row and wipes any in-progress text selection.
 const DIFF_LAYOUT = { gap: 16, paddingTop: 12, paddingBottom: 12 };
 
 function DiffViewer({
@@ -108,10 +93,8 @@ function DiffViewer({
 
   const { theme, themeType } = useMemo(() => resolveDiffTheme(), []);
 
-  /**
-   * A patch only carries the lines around each hunk, so expanding the
-   * unchanged context means going back to the file itself.
-   */
+  // A patch only carries the lines around each hunk, so expanding the context
+  // means going back to the file itself.
   const loadDiffFiles = useCallback(
     async (fileDiff: FileDiffMetadata): Promise<FileDiffLoadedFiles> => {
       const { oldContents, newContents } = await window.api.readWorktreeFileVersions({

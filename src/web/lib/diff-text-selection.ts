@@ -33,11 +33,8 @@ function sideOf(row: HTMLElement | null): SnippetSide {
     : 'additions';
 }
 
-/**
- * Reads a native text selection out of one file's shadow root and maps it onto
- * line numbers. Pierre's own line selection only starts from the number column,
- * so dragging across the code is handled here instead.
- */
+// Pierre's own line selection only starts from the number column, so dragging
+// across the code is handled here instead.
 export function readTextSelection(host: HTMLElement, file: string): DiffTextSelection | null {
   const root = host.shadowRoot as SelectableShadowRoot | null;
   const selection = root?.getSelection?.();

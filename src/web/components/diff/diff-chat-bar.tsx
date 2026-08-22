@@ -11,7 +11,6 @@ export interface PendingSelection {
   start: number;
   end: number;
   side: 'additions' | 'deletions';
-  /** Present when the range came from a text selection, which already has it. */
   code?: string;
 }
 
@@ -19,7 +18,6 @@ interface DiffChatBarProps {
   snippets: DiffSnippet[];
   pending: PendingSelection | null;
   worktreePath?: string;
-  /** Null when the session has no agent terminal to send to. */
   agentName: string | null;
   onAddPending: () => void;
   onRemoveSnippet: (id: string) => void;
