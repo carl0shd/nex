@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/immutability, react-hooks/use-memo -- merged-ref hooks
+   intentionally write to forwarded refs and spread them as deps. */
 import { useCallback, type MutableRefObject, type Ref } from 'react';
 
 export function useMergedRef<T>(...refs: (Ref<T> | undefined)[]): (node: T | null) => void {
