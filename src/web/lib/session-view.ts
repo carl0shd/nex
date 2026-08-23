@@ -11,7 +11,7 @@ export interface ChangedFile {
 export interface SessionTab {
   id: string;
   name: string;
-  status: TerminalStatus;
+  status: TerminalStatus | null;
   active?: boolean;
 }
 

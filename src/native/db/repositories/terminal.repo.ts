@@ -26,6 +26,7 @@ interface TerminalRow {
 }
 
 function toTerminal(row: TerminalRow): Terminal {
+  const type = (row.type as TerminalType) ?? 'shell';
   return {
     id: row.id,
     sessionId: row.session_id,
@@ -36,8 +37,9 @@ function toTerminal(row: TerminalRow): Terminal {
     env: JSON.parse(row.env),
     isPrimary: row.is_primary === 1,
     sortOrder: row.sort_order,
-    status: (row.status as TerminalStatus) ?? 'idle',
-    type: (row.type as TerminalType) ?? 'shell',
+    // Only agents run a status detector, so a shell's stored status is meaningless.
+    status: type === 'agent' ? ((row.status as TerminalStatus) ?? 'idle') : null,
+    type,
     runCommand: row.run_command,
     agentSessionId: row.agent_session_id,
     createdAt: row.created_at
@@ -89,6 +91,15 @@ export function create(input: CreateTerminalInput): Terminal {
       input.runCommand ?? null
     ) as TerminalRow;
   return toTerminal(row);
+}
+
+export function reorder(sessionId: string, orderedIds: string[]): void {
+  const db = getDb();
+  const stmt = db.prepare('UPDATE terminals SET sort_order = ? WHERE id = ? AND session_id = ?');
+  const tx = db.transaction((ids: string[]) => {
+    ids.forEach((id, idx) => stmt.run(idx, id, sessionId));
+  });
+  tx(orderedIds);
 }
 
 export function update(id: string, input: UpdateTerminalInput): Terminal {

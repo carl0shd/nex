@@ -1,6 +1,10 @@
-import { memo, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Plus, Play, TerminalSquare } from 'lucide-react';
+import { DndContext, DragOverlay } from '@dnd-kit/core';
+import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
+import { useSortableList } from '@/hooks/use-sortable-list';
 import type { SessionTab, QuickCommand as QuickCommandType } from '@/lib/session-view';
+import SortableTerminalTab from '@/components/session/sortable-terminal-tab';
 import TerminalTab from '@/components/session/terminal-tab';
 import QuickCommand from '@/components/session/quick-command';
 import OverflowBadge from '@/components/ui/overflow-badge';
@@ -21,6 +25,7 @@ interface TabBarProps {
   onAddAgentTab?: () => void;
   onAddShellTab?: () => void;
   onRunCommand?: (command: QuickCommandType) => void;
+  onReorderTabs?: (orderedIds: string[]) => void;
 }
 
 function TabBar({
@@ -34,7 +39,8 @@ function TabBar({
   onCloseTab,
   onAddAgentTab,
   onAddShellTab,
-  onRunCommand
+  onRunCommand,
+  onReorderTabs
 }: TabBarProps): React.JSX.Element {
   const visibleTabs = useMemo(() => {
     if (tabs.length <= maxVisibleTabs) return tabs;
@@ -58,6 +64,16 @@ function TabBar({
     [hiddenTabs, onSelectTab]
   );
 
+  const tabIds = useMemo(() => tabs.map((t) => t.id), [tabs]);
+  const visibleTabIds = useMemo(() => visibleTabs.map((t) => t.id), [visibleTabs]);
+
+  const handleReorder = useCallback(
+    (orderedIds: string[]): void => onReorderTabs?.(orderedIds),
+    [onReorderTabs]
+  );
+  const { activeId, dndContextProps } = useSortableList(tabIds, handleReorder);
+  const draggingTab = tabs.find((t) => t.id === activeId);
+
   const visibleCommands = commands.slice(0, maxVisibleCommands);
   const hiddenCommands = commands.slice(maxVisibleCommands);
 
@@ -75,16 +91,28 @@ function TabBar({
   return (
     <div className="flex h-9 shrink-0 items-center gap-1 border-b border-border-soft bg-bg-soft px-1">
       <div className="flex min-w-0 flex-1 items-center gap-1.5">
-        {visibleTabs.map((tab) => (
-          <TerminalTab
-            key={tab.id}
-            name={tab.name}
-            status={tab.status}
-            active={tab.active}
-            onClick={() => onSelectTab?.(tab.id)}
-            onClose={() => onCloseTab?.(tab.id)}
-          />
-        ))}
+        <DndContext {...dndContextProps}>
+          <SortableContext items={visibleTabIds} strategy={horizontalListSortingStrategy}>
+            {visibleTabs.map((tab) => (
+              <SortableTerminalTab
+                key={tab.id}
+                tab={tab}
+                onClick={() => onSelectTab?.(tab.id)}
+                onClose={() => onCloseTab?.(tab.id)}
+              />
+            ))}
+          </SortableContext>
+          <DragOverlay>
+            {draggingTab && (
+              <TerminalTab
+                name={draggingTab.name}
+                status={draggingTab.status}
+                active={draggingTab.active}
+                dragging
+              />
+            )}
+          </DragOverlay>
+        </DndContext>
         {hiddenTabs.length > 0 && (
           <ActionMenu
             trigger={<OverflowBadge count={hiddenTabs.length} />}

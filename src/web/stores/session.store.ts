@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { Session, CreateSessionInput, UpdateSessionInput } from '@native/db/types';
 import { useTerminalStore } from '@/stores/terminal.store';
 import { clearXtermSnapshot } from '@/lib/xterm-snapshot-cache';
+import { applyOrder } from '@/lib/sort-order';
 
 interface SessionStore {
   sessions: Session[];
@@ -85,17 +86,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
   },
 
   reorderSessions: async (orderedIds) => {
-    set((s) => {
-      const orderMap = new Map(orderedIds.map((id, idx) => [id, idx]));
-      const sessions = s.sessions
-        .map((sess) =>
-          orderMap.has(sess.id)
-            ? { ...sess, sortOrder: orderMap.get(sess.id) ?? sess.sortOrder }
-            : sess
-        )
-        .sort((a, b) => a.sortOrder - b.sortOrder);
-      return { sessions };
-    });
+    set((s) => ({ sessions: applyOrder(s.sessions, orderedIds) }));
     await window.api.reorderSessions(orderedIds);
   },
 

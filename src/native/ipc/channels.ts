@@ -72,6 +72,7 @@ export const IPC = {
   TERMINAL_CREATE: 'terminal:create',
   TERMINAL_CREATE_FOR_SESSION: 'terminal:create-for-session',
   TERMINAL_DELETE: 'terminal:delete',
+  TERMINAL_REORDER: 'terminal:reorder',
 
   PTY_ENSURE: 'pty:ensure',
   PTY_WRITE: 'pty:write',

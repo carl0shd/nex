@@ -239,6 +239,9 @@ export function registerIPCHandlers(): void {
     unmarkTerminalFresh(id);
     terminalRepo.remove(id);
   });
+  ipcMain.handle(IPC.TERMINAL_REORDER, (_, sessionId: string, orderedIds: string[]) =>
+    terminalRepo.reorder(sessionId, orderedIds)
+  );
 
   ipcMain.handle(IPC.PTY_ENSURE, (_, terminalId: string, cols?: number, rows?: number): boolean => {
     if (isAlive(terminalId)) return true;

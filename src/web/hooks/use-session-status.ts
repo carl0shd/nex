@@ -4,13 +4,13 @@ import { aggregateTerminalStatus } from '@/lib/status';
 
 // Selecting a string rather than the terminal list keeps a row from re-rendering
 // when some other session's status moves.
-export function useSessionStatus(sessionId: string): TerminalStatus {
+export function useSessionStatus(sessionId: string): TerminalStatus | null {
   return useTerminalStore((s) =>
     aggregateTerminalStatus(s.terminals.filter((t) => t.sessionId === sessionId))
   );
 }
 
-export function useSessionsStatus(sessionIds: string[]): TerminalStatus {
+export function useSessionsStatus(sessionIds: string[]): TerminalStatus | null {
   return useTerminalStore((s) =>
     aggregateTerminalStatus(s.terminals.filter((t) => sessionIds.includes(t.sessionId)))
   );

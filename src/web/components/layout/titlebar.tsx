@@ -19,7 +19,7 @@ function Titlebar({ onToggleSidebar }: TitlebarProps): React.JSX.Element {
   const activeSessions = useTerminalStore((s) => {
     const sessions = new Set<string>();
     for (const terminal of s.terminals) {
-      if (terminal.status !== 'idle') sessions.add(terminal.sessionId);
+      if (terminal.status && terminal.status !== 'idle') sessions.add(terminal.sessionId);
     }
     return sessions.size;
   });

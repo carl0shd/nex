@@ -191,7 +191,7 @@ export interface Terminal {
   env: Record<string, string>;
   isPrimary: boolean;
   sortOrder: number;
-  status: TerminalStatus;
+  status: TerminalStatus | null;
   type: TerminalType;
   runCommand: string | null;
   agentSessionId: string | null;

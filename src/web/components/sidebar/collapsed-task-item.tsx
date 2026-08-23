@@ -31,7 +31,7 @@ function CollapsedTaskItem({
           className="group relative flex size-8 cursor-pointer items-center justify-center rounded-md select-none hover:bg-bg-mute"
         >
           <GitBranch size={16} className="text-text-muted group-hover:text-text" />
-          {status !== 'idle' && (
+          {status && status !== 'idle' && (
             <StatusDot status={status} className="absolute top-0.5 right-0.5 size-1.5" />
           )}
         </button>
@@ -41,7 +41,7 @@ function CollapsedTaskItem({
           <GitBranch size={12} className="shrink-0 text-text-muted" />
           <span className="truncate text-[12px] font-semibold text-text">{session.name}</span>
           <span className="flex-1" />
-          {status !== 'idle' && <StatusDot status={status} />}
+          {status && status !== 'idle' && <StatusDot status={status} />}
           {isActive && (
             <Badge variant="success" size="sm">
               active

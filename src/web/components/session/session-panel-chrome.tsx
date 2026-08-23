@@ -167,6 +167,7 @@ function SessionPanelChrome({
   const setActiveTerminal = useTerminalStore((s) => s.setActive);
   const createSessionTerminal = useTerminalStore((s) => s.createSessionTerminal);
   const deleteTerminal = useTerminalStore((s) => s.deleteTerminal);
+  const reorderTerminals = useTerminalStore((s) => s.reorderTerminals);
 
   const agentId = session?.agentId ?? null;
   const agent = useAgentStore((s) => (agentId ? s.agents.find((a) => a.id === agentId) : null));
@@ -236,6 +237,13 @@ function SessionPanelChrome({
       void deleteTerminal(id);
     },
     [deleteTerminal]
+  );
+
+  const handleReorderTabs = useCallback(
+    (orderedIds: string[]): void => {
+      void reorderTerminals(sessionId, orderedIds);
+    },
+    [sessionId, reorderTerminals]
   );
 
   const sessionWidth = session?.width ?? DEFAULT_SESSION_WIDTH;
@@ -335,6 +343,7 @@ function SessionPanelChrome({
               onAddAgentTab={handleCreateAgentTab}
               onAddShellTab={handleAddTab}
               onRunCommand={handleRunCommand}
+              onReorderTabs={handleReorderTabs}
             />
             <div className="flex min-h-0 flex-1 flex-col gap-3 p-3.5 pt-3">
               <div className="min-h-0 flex-1 overflow-hidden">
