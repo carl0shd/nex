@@ -10,6 +10,7 @@ interface TaskGroupHeaderProps {
   customImage?: string | null;
   collapsed?: boolean;
   onToggle?: (id: string) => void;
+  trailing?: React.ReactNode;
 }
 
 function TaskGroupHeader({
@@ -19,7 +20,8 @@ function TaskGroupHeader({
   icon,
   customImage,
   collapsed = false,
-  onToggle
+  onToggle,
+  trailing
 }: TaskGroupHeaderProps): React.JSX.Element {
   const Chevron = collapsed ? ChevronRight : ChevronDown;
 
@@ -39,6 +41,7 @@ function TaskGroupHeader({
         rounded="rounded-sm"
       />
       <span className="truncate text-[12px] font-semibold text-text-secondary">{name}</span>
+      {trailing}
     </button>
   );
 }
