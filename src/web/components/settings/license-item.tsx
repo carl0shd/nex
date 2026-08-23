@@ -1,4 +1,5 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import SimpleBar from 'simplebar-react';
 import Chip from '@/components/ui/chip';
 
 interface LicenseItemProps {
@@ -36,9 +37,15 @@ function LicenseItem({
       </button>
 
       {expanded && text && (
-        <pre className="mx-3 mb-2.5 max-h-60 overflow-auto rounded border border-border-soft bg-bg-input p-2.5 font-mono text-[10px] leading-relaxed whitespace-pre-wrap text-text-muted select-text">
-          {text}
-        </pre>
+        <SimpleBar
+          style={{ maxHeight: '15rem' }}
+          autoHide={false}
+          className="mx-3 mb-2.5 rounded border border-border-soft bg-bg-input"
+        >
+          <pre className="p-2.5 pr-4 font-mono text-[10px] leading-relaxed whitespace-pre-wrap text-text-muted select-text">
+            {text}
+          </pre>
+        </SimpleBar>
       )}
     </div>
   );

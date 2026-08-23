@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Columns2, Rows3 } from 'lucide-react';
-import SettingsSection from '@/components/settings/settings-section';
+import SettingsPanel from '@/components/settings/settings-panel';
 import SettingField from '@/components/ui/setting-field';
 import SettingRow from '@/components/ui/setting-row';
 import SegmentedControl from '@/components/ui/segmented-control';
@@ -22,7 +22,7 @@ function DiffPanel(): React.JSX.Element {
   }, [loadPrefs]);
 
   return (
-    <SettingsSection>
+    <SettingsPanel>
       <SettingField
         label="Default view"
         description="Side by side, or a single column with the changes inline."
@@ -67,7 +67,7 @@ function DiffPanel(): React.JSX.Element {
           }
         />
       </div>
-    </SettingsSection>
+    </SettingsPanel>
   );
 }
 

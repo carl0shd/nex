@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import SimpleBar from 'simplebar-react';
 import SettingsHeader from '@/components/settings/settings-header';
 import SettingsNav, { type SettingsNavOption } from '@/components/settings/settings-nav';
 import AppearancePanel from '@/components/settings/appearance-panel';
@@ -21,28 +20,26 @@ function Settings(): React.JSX.Element {
   const navigate = useNavigate();
 
   return (
-    <div className="min-w-0 flex-1 overflow-hidden bg-bg">
-      <SimpleBar style={{ maxHeight: '100%' }} autoHide={false}>
-        <div className="mx-auto flex w-full max-w-300 flex-col px-10 py-8">
-          <SettingsHeader
-            title="Settings"
-            description="Manage how Nex looks and behaves. Preferences apply to every project."
-            onBack={() => navigate('/')}
-          />
+    <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-bg">
+      <div className="mx-auto w-full max-w-300 shrink-0 px-10 pt-8">
+        <SettingsHeader
+          title="Settings"
+          description="Manage how Nex looks and behaves. Preferences apply to every project."
+          onBack={() => navigate('/')}
+        />
 
-          <Separator className="my-6" />
+        <Separator className="mt-6" />
+      </div>
 
-          <div className="flex gap-12">
-            <SettingsNav value={tab} options={NAV_OPTIONS} onChange={setTab} />
+      <div className="mx-auto flex min-h-0 w-full max-w-300 flex-1 gap-12 px-10 pt-6 pb-8">
+        <SettingsNav value={tab} options={NAV_OPTIONS} onChange={setTab} />
 
-            <div className="min-w-0 max-w-225 flex-1 pb-10">
-              {tab === 'appearance' && <AppearancePanel />}
-              {tab === 'diff' && <DiffPanel />}
-              {tab === 'about' && <AboutPanel />}
-            </div>
-          </div>
+        <div className="flex min-h-0 min-w-0 max-w-225 flex-1 flex-col">
+          {tab === 'appearance' && <AppearancePanel />}
+          {tab === 'diff' && <DiffPanel />}
+          {tab === 'about' && <AboutPanel />}
         </div>
-      </SimpleBar>
+      </div>
     </div>
   );
 }
