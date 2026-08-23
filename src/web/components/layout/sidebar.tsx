@@ -10,6 +10,7 @@ import TaskGroupHeader from '@/components/sidebar/task-group-header';
 import TreeGroupLabel from '@/components/ui/tree-group-label';
 import CountBadge from '@/components/sidebar/count-badge';
 import SidebarTask from '@/components/sidebar/sidebar-task';
+import SessionGroupDot from '@/components/sidebar/session-group-dot';
 import WorkspaceModal from '@/components/modals/workspace-modal';
 import CreateProjectModal from '@/components/modals/create-project-modal';
 import DeleteWorkspaceModal from '@/components/modals/delete-workspace-modal';
@@ -45,6 +46,7 @@ function Sidebar(): React.JSX.Element {
   );
 
   const focusSession = useSessionStore((s) => s.focusSession);
+  const activeSessionId = useSessionStore((s) => s.activeSessionId);
   const collapsed = useSidebarStore((s) => s.collapsed);
   const workspaceModalOpen = useSidebarStore((s) => s.workspaceModalOpen);
   const workspaceModalId = useSidebarStore((s) => s.workspaceModalId);
@@ -251,6 +253,9 @@ function Sidebar(): React.JSX.Element {
                 const projectsWithTasks = wsProjects.filter((p) =>
                   activeSessions.some((s) => s.projectId === p.id)
                 );
+                const wsSessionIds = activeSessions
+                  .filter((s) => projectsWithTasks.some((p) => p.id === s.projectId))
+                  .map((s) => s.id);
 
                 return (
                   <div key={ws.id} className="flex flex-col gap-0.5">
@@ -262,6 +267,9 @@ function Sidebar(): React.JSX.Element {
                       customImage={ws.customImage}
                       collapsed={groupCollapsed}
                       onToggle={toggleGroup}
+                      trailing={
+                        groupCollapsed ? <SessionGroupDot sessionIds={wsSessionIds} /> : null
+                      }
                     />
                     {!groupCollapsed && (
                       <div className="flex flex-col gap-1 pl-4">
@@ -277,17 +285,28 @@ function Sidebar(): React.JSX.Element {
                                 name={project.name}
                                 collapsed={projectCollapsed}
                                 onToggle={toggleProject}
+                                trailing={
+                                  projectCollapsed ? (
+                                    <SessionGroupDot
+                                      sessionIds={projectSessions.map((s) => s.id)}
+                                    />
+                                  ) : null
+                                }
                               />
-                              {!projectCollapsed &&
-                                projectSessions.map((s) => (
-                                  <SidebarTask
-                                    key={s.id}
-                                    id={s.id}
-                                    name={s.name}
-                                    onClick={() => focusSession(s.id)}
-                                    onDelete={openCloseSession}
-                                  />
-                                ))}
+                              {!projectCollapsed && (
+                                <div className="ml-2.5 flex flex-col pl-1">
+                                  {projectSessions.map((s) => (
+                                    <SidebarTask
+                                      key={s.id}
+                                      id={s.id}
+                                      name={s.name}
+                                      active={s.id === activeSessionId}
+                                      onClick={() => focusSession(s.id)}
+                                      onDelete={openCloseSession}
+                                    />
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           );
                         })}

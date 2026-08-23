@@ -7,6 +7,7 @@ interface TreeGroupLabelProps {
   name: string;
   collapsed?: boolean;
   onToggle?: (id: string) => void;
+  trailing?: React.ReactNode;
   className?: string;
 }
 
@@ -15,6 +16,7 @@ function TreeGroupLabel({
   name,
   collapsed = false,
   onToggle,
+  trailing,
   className
 }: TreeGroupLabelProps): React.JSX.Element {
   const Chevron = collapsed ? ChevronRight : ChevronDown;
@@ -30,6 +32,7 @@ function TreeGroupLabel({
     >
       <Chevron size={12} className="shrink-0 text-text-muted" />
       <span className="truncate text-[12px] font-medium text-text-muted">{name}</span>
+      {trailing}
     </button>
   );
 }
