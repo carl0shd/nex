@@ -101,10 +101,11 @@ function StepWelcome(): React.JSX.Element {
             ? undefined
             : {
                 opacity: visible ? 1 : 0,
-                // Composed with the panel's own centering, which lives in a `-translate-*` class.
-                transform: visible ? 'translate(-50%, -50%)' : 'translate(-50%, calc(-50% + 50px))',
+                // Overrides the `translate` property the panel's `-translate-*` centering classes
+                // set — an inline `transform` would stack on top of it and shift the panel off-center.
+                translate: visible ? '-50% -50%' : '-50% calc(-50% + 50px)',
                 transition:
-                  'opacity 700ms ease-out 400ms, transform 1100ms cubic-bezier(0.22, 1, 0.36, 1) 400ms'
+                  'opacity 700ms ease-out 400ms, translate 1100ms cubic-bezier(0.22, 1, 0.36, 1) 400ms'
               }
         }
       >

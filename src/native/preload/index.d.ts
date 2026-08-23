@@ -23,6 +23,8 @@ import type {
 } from '@native/db/types';
 import type { AvailableAgent, InstallAgentResult } from '@native/agents/detect';
 import type { WorktreeDiffOptions, WorktreeFileVersionsInput } from '@native/git/git';
+import type { GitInfo, CloneProgress, CloneResult } from '@native/git/clone';
+import type { GhInfo, GithubOwner, GithubRepo } from '@native/git/github';
 
 interface NexAPI {
   getAppInfo: () => Promise<{
@@ -73,6 +75,13 @@ interface NexAPI {
   installAgent: (slug: string) => Promise<InstallAgentResult>;
   cloneAgentAccount: (input: CloneAgentAccountInput) => Promise<AgentAccount>;
   startWork: (input: StartWorkInput) => Promise<Session>;
+  detectGit: () => Promise<GitInfo>;
+  cloneRepository: (url: string, parentDir: string) => Promise<CloneResult>;
+  detectGh: () => Promise<GhInfo>;
+  listGithubOwners: () => Promise<GithubOwner[]>;
+  listGithubRepos: (owner: string) => Promise<GithubRepo[]>;
+  cloneGithubRepo: (nameWithOwner: string, parentDir: string) => Promise<CloneResult>;
+  onCloneProgress: (callback: (progress: CloneProgress & { repo?: string }) => void) => () => void;
   detectBaseBranch: (repoPath: string) => Promise<string>;
   isGitRepo: (repoPath: string) => Promise<boolean>;
   listBranches: (repoPath: string) => Promise<string[]>;

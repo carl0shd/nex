@@ -210,6 +210,7 @@ const ChatEditor = forwardRef<ChatEditorHandle, ChatEditorProps>(
         InterimMark,
         Placeholder.configure({ placeholder }),
         submitExtension,
+        // eslint-disable-next-line react-hooks/refs -- suggestion callbacks read refs at suggestion time, not during render
         MentionWithIcon.configure({
           HTMLAttributes: { class: 'nex-mention' },
           renderText: ({ node }) => `@${mentionAttrs(node.attrs).label}`,
