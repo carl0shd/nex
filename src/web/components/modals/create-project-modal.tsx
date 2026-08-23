@@ -13,9 +13,14 @@ import type { QuickCommand } from '@native/db/types';
 interface ProjectFormProps {
   workspaceId: string;
   onClose: () => void;
+  onImportFromGithub?: () => void;
 }
 
-function ProjectForm({ workspaceId, onClose }: ProjectFormProps): React.JSX.Element {
+function ProjectForm({
+  workspaceId,
+  onClose,
+  onImportFromGithub
+}: ProjectFormProps): React.JSX.Element {
   const workspaces = useWorkspaceStore((s) => s.workspaces);
   const createProject = useWorkspaceStore((s) => s.createProject);
 
@@ -145,6 +150,12 @@ function ProjectForm({ workspaceId, onClose }: ProjectFormProps): React.JSX.Elem
       <ModalDivider />
 
       <ModalFooter>
+        {onImportFromGithub && (
+          <ModalButton variant="ghost" className="mr-auto" onClick={onImportFromGithub}>
+            <GitBranch size={14} />
+            import from github
+          </ModalButton>
+        )}
         <ModalButton variant="outline" onClick={onClose}>
           cancel
         </ModalButton>
@@ -160,12 +171,14 @@ interface CreateProjectModalProps {
   open: boolean;
   workspaceId: string;
   onClose: () => void;
+  onImportFromGithub?: () => void;
 }
 
 function CreateProjectModal({
   open,
   workspaceId,
-  onClose
+  onClose,
+  onImportFromGithub
 }: CreateProjectModalProps): React.JSX.Element {
   const [resetCount, setResetCount] = useState(0);
   return (
@@ -179,6 +192,7 @@ function CreateProjectModal({
         key={`${workspaceId}-${resetCount}`}
         workspaceId={workspaceId}
         onClose={onClose}
+        onImportFromGithub={onImportFromGithub}
       />
     </Modal>
   );

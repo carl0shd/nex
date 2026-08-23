@@ -13,6 +13,7 @@ import SidebarTask from '@/components/sidebar/sidebar-task';
 import SessionGroupDot from '@/components/sidebar/session-group-dot';
 import WorkspaceModal from '@/components/modals/workspace-modal';
 import CreateProjectModal from '@/components/modals/create-project-modal';
+import ImportGithubModal from '@/components/modals/import-github-modal';
 import DeleteWorkspaceModal from '@/components/modals/delete-workspace-modal';
 import EditProjectModal from '@/components/modals/edit-project-modal';
 import DeleteProjectModal from '@/components/modals/delete-project-modal';
@@ -62,6 +63,9 @@ function Sidebar(): React.JSX.Element {
   const closeWorkspaceModal = useSidebarStore((s) => s.closeWorkspaceModal);
   const openCreateProject = useSidebarStore((s) => s.openCreateProject);
   const closeCreateProject = useSidebarStore((s) => s.closeCreateProject);
+  const importGithubOpen = useSidebarStore((s) => s.importGithubOpen);
+  const openImportGithub = useSidebarStore((s) => s.openImportGithub);
+  const closeImportGithub = useSidebarStore((s) => s.closeImportGithub);
   const openDeleteWorkspace = useSidebarStore((s) => s.openDeleteWorkspace);
   const closeDeleteWorkspace = useSidebarStore((s) => s.closeDeleteWorkspace);
   const manageWorkspacesOpen = useSidebarStore((s) => s.manageWorkspacesOpen);
@@ -157,7 +161,9 @@ function Sidebar(): React.JSX.Element {
         open={createProjectOpen}
         workspaceId={createProjectWorkspaceId}
         onClose={closeCreateProject}
+        onImportFromGithub={openImportGithub}
       />
+      <ImportGithubModal open={importGithubOpen} onClose={closeImportGithub} />
       <DeleteWorkspaceModal
         open={deleteWorkspaceOpen}
         workspaceId={deleteWorkspaceId}
