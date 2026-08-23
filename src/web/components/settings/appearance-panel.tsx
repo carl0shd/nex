@@ -1,4 +1,4 @@
-import SettingsSection from '@/components/settings/settings-section';
+import SettingsPanel from '@/components/settings/settings-panel';
 import ThemePicker from '@/components/settings/theme-picker';
 import SettingField from '@/components/ui/setting-field';
 import SettingRow from '@/components/ui/setting-row';
@@ -13,7 +13,7 @@ function AppearancePanel(): React.JSX.Element {
   const toggleSidebar = useSidebarStore((s) => s.toggleFull);
 
   return (
-    <SettingsSection>
+    <SettingsPanel>
       <SettingField label="Theme" description="Nex does not follow the system appearance.">
         <ThemePicker value={theme} onChange={setTheme} />
       </SettingField>
@@ -23,7 +23,7 @@ function AppearancePanel(): React.JSX.Element {
         description="Workspaces, projects and active tasks."
         control={<Switch checked={!sidebarCollapsed} onCheckedChange={toggleSidebar} />}
       />
-    </SettingsSection>
+    </SettingsPanel>
   );
 }
 

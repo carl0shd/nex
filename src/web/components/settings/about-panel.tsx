@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import nexLogo from '@/assets/images/logo.svg';
-import SettingsSection from '@/components/settings/settings-section';
+import SettingsPanel from '@/components/settings/settings-panel';
 import LicensesView from '@/components/settings/licenses-view';
 import SettingRow, { SettingValue } from '@/components/ui/setting-row';
 import { Button } from '@/components/ui/button';
@@ -35,7 +35,7 @@ function AboutPanel(): React.JSX.Element {
   if (viewingLicenses) return <LicensesView onBack={() => setViewingLicenses(false)} />;
 
   return (
-    <SettingsSection>
+    <SettingsPanel>
       <div className="flex items-center gap-3">
         <img src={nexLogo} alt="Nex" className="size-8" draggable={false} />
         <div className="flex flex-col gap-0.5">
@@ -87,7 +87,7 @@ function AboutPanel(): React.JSX.Element {
           }
         />
       </Card>
-    </SettingsSection>
+    </SettingsPanel>
   );
 }
 
