@@ -113,6 +113,7 @@ interface NexAPI {
     runCommand?: string;
   }) => Promise<Terminal>;
   deleteTerminal: (id: string) => Promise<void>;
+  reorderTerminals: (sessionId: string, orderedIds: string[]) => Promise<void>;
 
   ptyEnsure: (terminalId: string, cols?: number, rows?: number) => Promise<boolean>;
   ptyWrite: (terminalId: string, data: string) => void;

@@ -10,7 +10,7 @@ interface SessionGroupDotProps {
 // agent waiting on the user is never folded out of sight.
 function SessionGroupDot({ sessionIds }: SessionGroupDotProps): React.JSX.Element | null {
   const status = useSessionsStatus(sessionIds);
-  if (status === 'idle') return null;
+  if (!status || status === 'idle') return null;
   return <StatusDot status={status} className="size-1.5" />;
 }
 

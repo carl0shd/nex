@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { Terminal, CreateTerminalInput, TerminalStatus, TerminalType } from '@native/db/types';
 import { clearXtermSnapshot } from '@/lib/xterm-snapshot-cache';
+import { applyOrder } from '@/lib/sort-order';
 
 interface TerminalStore {
   terminals: Terminal[];
@@ -14,6 +15,7 @@ interface TerminalStore {
     options?: { name?: string; runCommand?: string }
   ) => Promise<Terminal>;
   deleteTerminal: (id: string) => Promise<void>;
+  reorderTerminals: (sessionId: string, orderedIds: string[]) => Promise<void>;
   setActive: (sessionId: string, terminalId: string) => void;
   setStatus: (id: string, status: TerminalStatus) => void;
 }
@@ -80,6 +82,11 @@ export const useTerminalStore = create<TerminalStore>((set) => ({
       }
       return { terminals, activeBySession };
     });
+  },
+
+  reorderTerminals: async (sessionId, orderedIds) => {
+    set((s) => ({ terminals: applyOrder(s.terminals, orderedIds) }));
+    await window.api.reorderTerminals(sessionId, orderedIds);
   },
 
   setActive: (sessionId, terminalId) => {

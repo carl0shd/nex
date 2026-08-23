@@ -8,7 +8,7 @@ import StatusDot from '@/components/ui/status-dot';
 interface SessionHeaderProps {
   branch: string;
   projectName: string;
-  status: TerminalStatus;
+  status: TerminalStatus | null;
   onClose?: () => void;
   onOpenIDE?: () => void;
   dragRef?: Ref<HTMLDivElement>;
@@ -34,7 +34,7 @@ function SessionHeader({
       className="flex cursor-grab items-center justify-between border-b border-border-soft bg-bg-soft px-3 py-2 select-none active:cursor-grabbing"
     >
       <div className="flex items-center gap-2 overflow-hidden">
-        <StatusDot status={status} />
+        {status && <StatusDot status={status} />}
         <span className="text-[13px] font-semibold text-text">{branch}</span>
         <span className="text-[12px] text-text-muted">{projectName}</span>
         <IconButton icon={ExternalLink} size={11} onClick={onOpenIDE} />

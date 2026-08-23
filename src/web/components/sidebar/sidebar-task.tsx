@@ -40,7 +40,7 @@ function SidebarTask({
       <span className={cn('truncate text-[12px]', active ? 'text-text' : 'text-text-muted')}>
         {name}
       </span>
-      {status !== 'idle' && <StatusDot status={status} className="size-1.5 shrink-0" />}
+      {status && status !== 'idle' && <StatusDot status={status} className="size-1.5 shrink-0" />}
       <span className="flex-1" />
       {onDelete && (
         <div className="opacity-0 group-hover:opacity-100">

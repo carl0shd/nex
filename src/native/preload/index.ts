@@ -137,6 +137,8 @@ const api = {
   createSessionTerminal: (input: unknown) =>
     ipcRenderer.invoke(IPC.TERMINAL_CREATE_FOR_SESSION, input),
   deleteTerminal: (id: string) => ipcRenderer.invoke(IPC.TERMINAL_DELETE, id),
+  reorderTerminals: (sessionId: string, orderedIds: string[]) =>
+    ipcRenderer.invoke(IPC.TERMINAL_REORDER, sessionId, orderedIds),
 
   ptyEnsure: (terminalId: string, cols?: number, rows?: number) =>
     ipcRenderer.invoke(IPC.PTY_ENSURE, terminalId, cols, rows),

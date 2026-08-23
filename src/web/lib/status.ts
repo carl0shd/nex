@@ -11,15 +11,17 @@ export const statusToVariant: Record<Status, BadgeVariant> = {
   error: 'destructive'
 };
 
-/**
- * A session reports the state of the tab that most needs the user: one waiting
- * on a permission prompt outranks one that is still working on its own.
- */
-export function aggregateTerminalStatus(terminals: { status: TerminalStatus }[]): TerminalStatus {
-  let running = false;
+// A session with nothing that reports a status has none itself. Among the ones
+// that do, waiting on a permission prompt outranks still working.
+export function aggregateTerminalStatus(
+  terminals: { status: TerminalStatus | null }[]
+): TerminalStatus | null {
+  let status: TerminalStatus | null = null;
   for (const terminal of terminals) {
+    if (terminal.status === null) continue;
     if (terminal.status === 'waiting') return 'waiting';
-    if (terminal.status === 'running') running = true;
+    if (terminal.status === 'running') status = 'running';
+    else status ??= 'idle';
   }
-  return running ? 'running' : 'idle';
+  return status;
 }
