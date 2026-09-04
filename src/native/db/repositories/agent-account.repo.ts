@@ -12,6 +12,7 @@ interface AgentAccountRow {
   name: string;
   config_dir: string;
   is_default: number;
+  keychain_service: string | null;
   created_at: string;
 }
 
@@ -22,6 +23,7 @@ function toAgentAccount(row: AgentAccountRow): AgentAccount {
     name: row.name,
     configDir: row.config_dir,
     isDefault: row.is_default === 1,
+    keychainService: row.keychain_service,
     createdAt: row.created_at
   };
 }
@@ -49,15 +51,13 @@ export function getDefault(agentId: string): AgentAccount | null {
 
 export function getById(id: string): AgentAccount | null {
   const row = getDb().prepare('SELECT * FROM agent_accounts WHERE id = ?').get(id) as
-    | AgentAccountRow
-    | undefined;
+    AgentAccountRow | undefined;
   return row ? toAgentAccount(row) : null;
 }
 
 export function getByName(name: string): AgentAccount | null {
   const row = getDb().prepare('SELECT * FROM agent_accounts WHERE name = ?').get(name) as
-    | AgentAccountRow
-    | undefined;
+    AgentAccountRow | undefined;
   return row ? toAgentAccount(row) : null;
 }
 
@@ -103,6 +103,10 @@ export function update(id: string, input: UpdateAgentAccountInput): AgentAccount
   if (input.configDir !== undefined) {
     fields.push('config_dir = ?');
     values.push(input.configDir);
+  }
+  if (input.keychainService !== undefined) {
+    fields.push('keychain_service = ?');
+    values.push(input.keychainService);
   }
 
   if (fields.length === 0) {

@@ -7,8 +7,14 @@ import CommandBar from '@/components/ui/command-bar';
 import ActiveBadge from '@/components/layout/active-badge';
 import TokensBadge from '@/components/layout/tokens-badge';
 import CostBadge from '@/components/layout/cost-badge';
+import SessionsPopover from '@/components/session/sessions-popover';
+import CostPopover from '@/components/usage/cost-popover';
+import LimitsPopover from '@/components/usage/limits-popover';
+import { useUsage } from '@/hooks/use-usage';
+import { limitTone } from '@/lib/usage-tone';
 import { useSidebarStore } from '@/stores/sidebar.store';
 import { useTerminalStore } from '@/stores/terminal.store';
+import { useUsageStore } from '@/stores/usage.store';
 
 interface TitlebarProps {
   onToggleSidebar?: () => void;
@@ -26,6 +32,9 @@ function Titlebar({ onToggleSidebar }: TitlebarProps): React.JSX.Element {
   const sidebarCollapsed = useSidebarStore((s) => s.collapsed.full);
   const navigate = useNavigate();
   const onSettings = useLocation().pathname === '/settings';
+
+  useUsage();
+  const summary = useUsageStore((s) => s.summary);
 
   const spacerClass = sidebarCollapsed ? 'pl-2' : isFullscreen ? 'pl-58.25' : 'pl-41.25';
 
@@ -48,9 +57,18 @@ function Titlebar({ onToggleSidebar }: TitlebarProps): React.JSX.Element {
         style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
       >
         <CommandBar />
-        <ActiveBadge count={activeSessions} />
-        <TokensBadge percent={65} />
-        <CostBadge amount={0.08} />
+        <SessionsPopover>
+          <ActiveBadge count={activeSessions} />
+        </SessionsPopover>
+        <LimitsPopover summary={summary}>
+          <TokensBadge
+            percent={summary?.worstPercent ?? null}
+            tone={limitTone(summary?.worstPercent ?? null)}
+          />
+        </LimitsPopover>
+        <CostPopover summary={summary}>
+          <CostBadge amount={summary?.today.total.costUsd ?? 0} />
+        </CostPopover>
       </div>
 
       <div className="flex-1" />

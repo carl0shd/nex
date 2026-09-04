@@ -62,8 +62,7 @@ export function getBySession(sessionId: string): Terminal[] {
 
 export function getById(id: string): Terminal | null {
   const row = getDb().prepare('SELECT * FROM terminals WHERE id = ?').get(id) as
-    | TerminalRow
-    | undefined;
+    TerminalRow | undefined;
   return row ? toTerminal(row) : null;
 }
 

@@ -28,8 +28,7 @@ function toProject(row: ProjectRow): Project {
 
 export function getById(id: string): Project | null {
   const row = getDb().prepare('SELECT * FROM projects WHERE id = ?').get(id) as
-    | ProjectRow
-    | undefined;
+    ProjectRow | undefined;
   return row ? toProject(row) : null;
 }
 

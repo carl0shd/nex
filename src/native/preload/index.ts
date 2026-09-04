@@ -18,6 +18,11 @@ ipcRenderer.on(IPC.SPEECH_EVENT, (_e, payload: SpeechEvent) => {
   for (const cb of speechSubscribers) cb(payload);
 });
 
+const usageSubscribers = new Set<() => void>();
+ipcRenderer.on(IPC.USAGE_CHANGED, () => {
+  for (const cb of usageSubscribers) cb();
+});
+
 const api = {
   getAppInfo: () => ipcRenderer.invoke('app:get-info'),
 
@@ -200,6 +205,20 @@ const api = {
       speechSubscribers.add(callback);
       return () => {
         speechSubscribers.delete(callback);
+      };
+    }
+  },
+
+  usage: {
+    getSummary: () => ipcRenderer.invoke(IPC.USAGE_GET_SUMMARY),
+    getStats: (granularity: string) => ipcRenderer.invoke(IPC.USAGE_GET_STATS, granularity),
+    refresh: () => ipcRenderer.invoke(IPC.USAGE_REFRESH),
+    watchStart: () => ipcRenderer.invoke(IPC.USAGE_WATCH_START),
+    watchStop: () => ipcRenderer.invoke(IPC.USAGE_WATCH_STOP),
+    onChanged: (callback: () => void) => {
+      usageSubscribers.add(callback);
+      return () => {
+        usageSubscribers.delete(callback);
       };
     }
   }

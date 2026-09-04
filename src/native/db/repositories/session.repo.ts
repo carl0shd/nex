@@ -93,8 +93,7 @@ export function getByName(name: string, projectId?: string): Session | null {
 
 export function getById(id: string): Session | null {
   const row = getDb().prepare('SELECT * FROM sessions WHERE id = ?').get(id) as
-    | SessionRow
-    | undefined;
+    SessionRow | undefined;
   return row ? toSession(row) : null;
 }
 

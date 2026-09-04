@@ -7,7 +7,7 @@ interface OptionCardProps {
   onClick: () => void;
   icon: React.ReactNode;
   title: string;
-  subtitle: string;
+  subtitle?: string;
   titleClassName?: string;
   className?: string;
 }
@@ -34,7 +34,7 @@ function OptionCard({
         <div className="flex size-10 items-center justify-center rounded-md bg-border">{icon}</div>
         <div className="flex flex-1 flex-col items-start gap-0.5">
           <span className={titleClassName ?? 'text-[13px] font-medium text-text'}>{title}</span>
-          <span className="text-left text-[11px] text-text-muted">{subtitle}</span>
+          {subtitle && <span className="text-left text-[11px] text-text-muted">{subtitle}</span>}
         </div>
         {selected && (
           <div className="flex size-5 items-center justify-center rounded-full bg-accent">

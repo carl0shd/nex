@@ -25,6 +25,7 @@ import type { AvailableAgent, InstallAgentResult } from '@native/agents/detect';
 import type { WorktreeDiffOptions, WorktreeFileVersionsInput } from '@native/git/git';
 import type { GitInfo, CloneProgress, CloneResult } from '@native/git/clone';
 import type { GhInfo, GithubOwner, GithubRepo } from '@native/git/github';
+import type { UsageGranularity, UsageStats, UsageSummary } from '@native/usage/types';
 
 interface NexAPI {
   getAppInfo: () => Promise<{
@@ -166,6 +167,15 @@ interface NexAPI {
         message?: string;
       }) => void
     ) => () => void;
+  };
+
+  usage: {
+    getSummary: () => Promise<UsageSummary>;
+    getStats: (granularity: UsageGranularity) => Promise<UsageStats>;
+    refresh: () => Promise<void>;
+    watchStart: () => Promise<void>;
+    watchStop: () => Promise<void>;
+    onChanged: (callback: () => void) => () => void;
   };
 }
 

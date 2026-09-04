@@ -6,6 +6,7 @@ import { createApplicationMenu } from './menu';
 import { registerIPCHandlers } from '@native/ipc/handlers';
 import { initAutoUpdater } from './updater';
 import { initDatabase, closeDatabase } from '@native/db/database';
+import { scanAllTranscripts } from '@native/usage/ingest';
 import { registerScheme, registerHandler } from '@native/protocol/nex-file';
 import { flushAllBuffers, killAllTerminals, sweepOrphanBuffers } from '@native/pty/manager';
 import { getAllIds, resetAllStatus } from '@native/db/repositories/terminal.repo';
@@ -39,6 +40,10 @@ app.whenReady().then(() => {
 
   createMainWindow();
   initAutoUpdater();
+
+  // Catches up on anything the agents wrote while Nex was closed. Deferred so
+  // the first paint is never blocked by a cold full scan.
+  setImmediate(() => scanAllTranscripts());
 
   app.on('activate', () => {
     const win = getMainWindow();

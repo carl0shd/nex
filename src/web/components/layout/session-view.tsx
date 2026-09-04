@@ -26,7 +26,7 @@ function SessionView({ sessionIds }: SessionViewProps): React.JSX.Element {
   const { activeId, dndContextProps } = useSortableList(sessionIds, reorderSessions);
 
   return (
-    <div className="session-scroll flex-1 overflow-x-auto overflow-y-hidden px-3">
+    <div className="flex-1 overflow-x-auto overflow-y-hidden px-3">
       <DndContext {...dndContextProps}>
         <SortableContext items={sessionIds} strategy={horizontalListSortingStrategy}>
           <SessionList sessionIds={sessionIds} />
