@@ -98,6 +98,7 @@ export interface AgentAccount {
   name: string;
   configDir: string;
   isDefault: boolean;
+  keychainService: string | null;
   createdAt: string;
 }
 
@@ -112,6 +113,7 @@ export interface UpdateAgentAccountInput {
   name?: string;
   configDir?: string;
   isDefault?: boolean;
+  keychainService?: string | null;
 }
 
 export type SessionStatus = 'active' | 'done' | 'pr';

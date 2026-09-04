@@ -44,6 +44,9 @@ import {
   type WorktreeFileVersionsInput
 } from '@native/git/git';
 import { watchWorktree } from '@native/git/watcher';
+import { scanAllTranscripts, watchTranscripts } from '@native/usage/ingest';
+import { getUsageStats, getUsageSummary, invalidateLimitsCache } from '@native/usage/service';
+import type { UsageGranularity } from '@native/usage/types';
 import { showMainWindow } from '@native/main/app-window';
 import {
   speechAvailable,
@@ -135,6 +138,15 @@ function deleteAgentSessionFile(terminal: Terminal): void {
  * Counted because several views can watch the same worktree at once.
  */
 const worktreeWatchers = new Map<string, { stop: () => void; count: number }>();
+
+const usageWatchers = new Map<number, () => void>();
+
+function stopUsageWatcherFor(senderId: number): void {
+  const stop = usageWatchers.get(senderId);
+  if (!stop) return;
+  stop();
+  usageWatchers.delete(senderId);
+}
 
 function stopWorktreeWatchersFor(senderId: number): void {
   const prefix = `${senderId}:`;
@@ -427,4 +439,29 @@ export function registerIPCHandlers(): void {
       return filePath;
     }
   );
+
+  ipcMain.handle(IPC.USAGE_GET_SUMMARY, () => getUsageSummary());
+
+  ipcMain.handle(IPC.USAGE_GET_STATS, (_, granularity: UsageGranularity) =>
+    getUsageStats(granularity)
+  );
+
+  ipcMain.handle(IPC.USAGE_REFRESH, () => {
+    scanAllTranscripts();
+    invalidateLimitsCache();
+  });
+
+  ipcMain.handle(IPC.USAGE_WATCH_START, (event) => {
+    const senderId = event.sender.id;
+    if (usageWatchers.has(senderId)) return;
+
+    const stop = watchTranscripts(() => {
+      if (event.sender.isDestroyed()) return;
+      event.sender.send(IPC.USAGE_CHANGED);
+    });
+    usageWatchers.set(senderId, stop);
+    event.sender.once('destroyed', () => stopUsageWatcherFor(senderId));
+  });
+
+  ipcMain.handle(IPC.USAGE_WATCH_STOP, (event) => stopUsageWatcherFor(event.sender.id));
 }

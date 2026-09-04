@@ -14,7 +14,7 @@ function AppearancePanel(): React.JSX.Element {
 
   return (
     <SettingsPanel>
-      <SettingField label="Theme" description="Nex does not follow the system appearance.">
+      <SettingField label="Theme">
         <ThemePicker value={theme} onChange={setTheme} />
       </SettingField>
 

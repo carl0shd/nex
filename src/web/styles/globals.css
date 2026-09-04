@@ -94,6 +94,21 @@
   /* Archived */
   --color-archived: var(--nex-archived);
 
+  /* Stat tiles */
+  --color-bg-tile: var(--nex-bg-tile);
+  --color-border-tile: var(--nex-border-tile);
+  --color-bg-tile-menu: var(--nex-bg-tile-menu);
+  --color-border-tile-menu: var(--nex-border-tile-menu);
+
+  /* Charts */
+  --color-chart-cost: var(--nex-chart-cost);
+  --color-chart-1: var(--nex-chart-1);
+  --color-chart-2: var(--nex-chart-2);
+  --color-chart-3: var(--nex-chart-3);
+  --color-chart-4: var(--nex-chart-4);
+  --color-chart-5: var(--nex-chart-5);
+  --color-chart-grid: var(--nex-chart-grid);
+
   /* Selected */
   --color-selected: var(--nex-selected);
   --color-selected-bg: var(--nex-selected-bg);
@@ -132,6 +147,10 @@
   --nex-border-soft: #1f1e1d;
   --nex-border-strong: #353432;
   --nex-border-hover: #464543;
+
+  /* Scrollbars */
+  --nex-scrollbar: #1f1e1d;
+  --nex-scrollbar-hover: #353432;
 
   /* Text */
   --nex-text: #eeeceb;
@@ -193,6 +212,24 @@
 
   /* Archived */
   --nex-archived: #908d8a;
+
+  /* Stat tiles — the theme option card's fill and border on the app background;
+     the menu pair mirrors that step upward, since popovers sit on a lighter surface. */
+  --nex-bg-tile: #121110;
+  --nex-border-tile: #1f1e1d;
+  --nex-bg-tile-menu: #1c1b1a;
+  --nex-border-tile-menu: #2b2a28;
+
+  /* Charts — cost is the brand green, one hue for a single measure; chart-1..5
+     is the fixed categorical order, validated for CVD and contrast on both
+     themes. Green sits last so it never lands beside the cost bars. */
+  --nex-chart-cost: #33843f;
+  --nex-chart-1: #c08411;
+  --nex-chart-2: #2c6fc4;
+  --nex-chart-3: #d4658f;
+  --nex-chart-4: #7a5ad4;
+  --nex-chart-5: #40a565;
+  --nex-chart-grid: #232221;
 
   /* Selected */
   --nex-selected: #175f52;
@@ -276,6 +313,10 @@
   --nex-border-strong: #c2bdb7;
   --nex-border-hover: #a8a29b;
 
+  /* Scrollbars */
+  --nex-scrollbar: #e6e2dd;
+  --nex-scrollbar-hover: #c2bdb7;
+
   /* Text */
   --nex-text: #1c1a19;
   --nex-text-secondary: #4d4944;
@@ -328,6 +369,14 @@
   /* Archived */
   --nex-archived: #6f6a63;
 
+  --nex-bg-tile: #f4f2f0;
+  --nex-border-tile: #e6e2dd;
+  --nex-bg-tile-menu: #f4f2f0;
+  --nex-border-tile-menu: #e6e2dd;
+
+  --nex-chart-cost: #1f7a37;
+  --nex-chart-grid: #e2ded8;
+
   /* Selected */
   --nex-selected: #0f766e;
   --nex-selected-bg: #d8efea;
@@ -362,22 +411,25 @@ input:focus-visible {
   outline: none;
 }
 
-textarea {
-  scrollbar-width: thin;
-  scrollbar-color: var(--nex-border) transparent;
+/* Every native scrollbar in the app. Do not add `scrollbar-width`/`scrollbar-color`
+   anywhere: either one makes Chromium ignore these rules for that element. */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-textarea::-webkit-scrollbar {
-  width: 4px;
-}
-
-textarea::-webkit-scrollbar-track {
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
   background: transparent;
 }
 
-textarea::-webkit-scrollbar-thumb {
-  background: var(--nex-border);
-  border-radius: 2px;
+::-webkit-scrollbar-thumb {
+  background: var(--nex-scrollbar);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--nex-scrollbar-hover);
 }
 
 html,
@@ -396,13 +448,18 @@ body {
 }
 
 .simplebar-scrollbar::before {
-  background: var(--nex-border);
+  background: var(--nex-scrollbar);
   border-radius: 3px;
 }
 
-.simplebar-scrollbar.simplebar-hover::before,
+/* SimpleBar paints the thumb at 0.5 alpha, which washes the token out into a
+   lighter grey than every native bar. */
 .simplebar-scrollbar.simplebar-visible::before {
-  background: var(--nex-text-placeholder);
+  opacity: 1;
+}
+
+.simplebar-scrollbar.simplebar-hover::before {
+  background: var(--nex-scrollbar-hover);
 }
 
 .simplebar-content-wrapper:focus-visible {
@@ -431,44 +488,8 @@ body {
   bottom: 0 !important;
 }
 
-.session-scroll::-webkit-scrollbar {
-  height: 6px;
-}
-
-.session-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.session-scroll::-webkit-scrollbar-thumb {
-  background: var(--nex-border);
-  border-radius: 3px;
-}
-
-.session-scroll::-webkit-scrollbar-thumb:hover {
-  background: var(--nex-text-placeholder);
-}
-
 .xterm-viewport {
-  scrollbar-width: thin;
-  scrollbar-color: var(--nex-border) transparent;
   right: -2px !important;
-}
-
-.xterm-viewport::-webkit-scrollbar {
-  width: 6px;
-}
-
-.xterm-viewport::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.xterm-viewport::-webkit-scrollbar-thumb {
-  background: var(--nex-border);
-  border-radius: 3px;
-}
-
-.xterm-viewport::-webkit-scrollbar-thumb:hover {
-  background: var(--nex-text-placeholder);
 }
 
 [data-sonner-toaster] {
@@ -570,28 +591,6 @@ body {
   box-shadow: none !important;
 }
 
-.ProseMirror {
-  scrollbar-width: thin;
-  scrollbar-color: var(--nex-border) transparent;
-}
-
-.ProseMirror::-webkit-scrollbar {
-  width: 4px;
-}
-
-.ProseMirror::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.ProseMirror::-webkit-scrollbar-thumb {
-  background: var(--nex-border);
-  border-radius: 2px;
-}
-
-.ProseMirror::-webkit-scrollbar-thumb:hover {
-  background: var(--nex-text-placeholder);
-}
-
 .ProseMirror p.is-editor-empty:first-child::before {
   pointer-events: none;
   float: left;
@@ -684,9 +683,7 @@ body {
 
 /* CodeView virtualizes against its own root: it reads `root.scrollTop` and sets
    `overflow-anchor: none` there, but leaves the overflow itself to the consumer.
-   Without this the surrounding panel scrolls instead, every file renders at once,
-   and the scrollbar belongs to an element we do not style. Horizontal scrolling
-   stays inside each file, where Pierre owns it. */
+   Without this the surrounding panel scrolls instead and every file renders at once. */
 .diff-codeview {
   overflow-x: hidden;
   overflow-y: auto;
@@ -695,22 +692,3 @@ body {
   padding-inline: 12px;
 }
 
-/* The app's scrollbar look, matching `.session-scroll`. Do not add
-   `scrollbar-width`/`scrollbar-color`: either one makes Chromium ignore these. */
-.diff-codeview::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.diff-codeview::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.diff-codeview::-webkit-scrollbar-thumb {
-  background: var(--nex-border);
-  border-radius: 3px;
-}
-
-.diff-codeview::-webkit-scrollbar-thumb:hover {
-  background: var(--nex-text-placeholder);
-}

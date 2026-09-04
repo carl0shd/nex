@@ -37,8 +37,7 @@ export function getAll(): Workspace[] {
 
 export function getById(id: string): Workspace | null {
   const row = getDb().prepare('SELECT * FROM workspaces WHERE id = ?').get(id) as
-    | WorkspaceRow
-    | undefined;
+    WorkspaceRow | undefined;
   return row ? toWorkspace(row) : null;
 }
 

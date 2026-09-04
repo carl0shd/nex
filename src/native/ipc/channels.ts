@@ -90,7 +90,14 @@ export const IPC = {
   SPEECH_START: 'speech:start',
   SPEECH_STOP: 'speech:stop',
   SPEECH_CANCEL: 'speech:cancel',
-  SPEECH_EVENT: 'speech:event'
+  SPEECH_EVENT: 'speech:event',
+
+  USAGE_GET_SUMMARY: 'usage:get-summary',
+  USAGE_GET_STATS: 'usage:get-stats',
+  USAGE_REFRESH: 'usage:refresh',
+  USAGE_WATCH_START: 'usage:watch-start',
+  USAGE_WATCH_STOP: 'usage:watch-stop',
+  USAGE_CHANGED: 'usage:changed'
 } as const;
 
 export type IPCChannel = (typeof IPC)[keyof typeof IPC];

@@ -15,7 +15,7 @@ function SettingsPanel({ header, children }: SettingsPanelProps): React.JSX.Elem
       {header}
       <div className="min-h-0 flex-1">
         <SimpleBar ref={scrollRef} style={{ maxHeight: '100%' }} autoHide={false}>
-          <div className={cn('flex flex-col gap-5', isScrollable && 'pr-3')}>{children}</div>
+          <div className={cn('flex flex-col gap-5', isScrollable && 'pr-5')}>{children}</div>
         </SimpleBar>
       </div>
     </div>

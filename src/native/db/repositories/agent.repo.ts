@@ -39,8 +39,7 @@ export function getAll(): Agent[] {
 
 export function getBySlug(slug: string): Agent | null {
   const row = getDb().prepare('SELECT * FROM agents WHERE slug = ?').get(slug) as
-    | AgentRow
-    | undefined;
+    AgentRow | undefined;
   return row ? toAgent(row) : null;
 }
 

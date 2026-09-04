@@ -12,15 +12,17 @@ import OpenLinkModal from '@/components/modals/open-link-modal';
 import SessionHotkeys from '@/components/session/session-hotkeys';
 import SessionTerminalHotkeys from '@/components/session/session-terminal-hotkeys';
 import { useAppData } from '@/hooks/use-app-data';
+import { useSystemTheme } from '@/hooks/use-system-theme';
 import { useOnboarding } from '@/hooks/use-onboarding';
 import { useSidebarStore } from '@/stores/sidebar.store';
 import { useSettingsStore } from '@/stores/settings.store';
 
 function App(): React.JSX.Element {
   useAppData();
+  useSystemTheme();
   const onboarding = useOnboarding();
   const toggleFull = useSidebarStore((s) => s.toggleFull);
-  const theme = useSettingsStore((s) => s.theme);
+  const theme = useSettingsStore((s) => s.resolvedTheme);
 
   return (
     <ErrorBoundary>

@@ -140,7 +140,39 @@ const migrations: string[] = [
 
   DROP TABLE terminals;
   ALTER TABLE terminals_new RENAME TO terminals;
-  CREATE INDEX idx_terminals_session ON terminals(session_id);`
+  CREATE INDEX idx_terminals_session ON terminals(session_id);`,
+
+  // Claude Code prunes its own transcripts after `cleanupPeriodDays`, so usage is
+  // mirrored here at ingest to keep history the CLI no longer has.
+  `ALTER TABLE agent_accounts ADD COLUMN keychain_service TEXT;
+
+  CREATE TABLE usage_events (
+    key TEXT PRIMARY KEY,
+    account_id TEXT REFERENCES agent_accounts(id) ON DELETE SET NULL,
+    agent_session_id TEXT NOT NULL DEFAULT '',
+    cwd TEXT NOT NULL DEFAULT '',
+    model TEXT NOT NULL,
+    speed TEXT NOT NULL DEFAULT 'standard',
+    ts TEXT NOT NULL,
+    input_tokens INTEGER NOT NULL DEFAULT 0,
+    output_tokens INTEGER NOT NULL DEFAULT 0,
+    cache_write_5m INTEGER NOT NULL DEFAULT 0,
+    cache_write_1h INTEGER NOT NULL DEFAULT 0,
+    cache_read INTEGER NOT NULL DEFAULT 0,
+    web_searches INTEGER NOT NULL DEFAULT 0
+  );
+
+  CREATE INDEX idx_usage_events_ts ON usage_events(ts);
+  CREATE INDEX idx_usage_events_session ON usage_events(agent_session_id);
+  CREATE INDEX idx_usage_events_account_ts ON usage_events(account_id, ts);
+
+  CREATE TABLE usage_scan (
+    file_path TEXT PRIMARY KEY,
+    account_id TEXT,
+    size INTEGER NOT NULL DEFAULT 0,
+    byte_offset INTEGER NOT NULL DEFAULT 0,
+    scanned_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );`
 ];
 
 export function runMigrations(db: Database.Database): void {

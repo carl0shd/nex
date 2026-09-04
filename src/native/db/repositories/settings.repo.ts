@@ -2,8 +2,7 @@ import { getDb } from '@native/db/database';
 
 export function get<T>(key: string, fallback: T): T {
   const row = getDb().prepare('SELECT value FROM settings WHERE key = ?').get(key) as
-    | { value: string }
-    | undefined;
+    { value: string } | undefined;
   return row ? JSON.parse(row.value) : fallback;
 }
 
