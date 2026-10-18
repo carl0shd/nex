@@ -1,7 +1,7 @@
-import { execFile } from 'child_process';
-import { join } from 'path';
-import { homedir } from 'os';
-import { whichBinary } from '@native/which';
+import { execFile } from "child_process";
+import { join } from "path";
+import { homedir } from "os";
+import { whichBinary } from "@native/which";
 
 export interface SuggestedAccount {
   name: string;
@@ -35,9 +35,9 @@ function runCommand(cmd: string, args: string[]): Promise<string | null> {
 
 async function detectClaudeAccount(
   command: string,
-  configDir: string
+  configDir: string,
 ): Promise<SuggestedAccount | null> {
-  const text = await runCommand(command, ['auth', 'status']);
+  const text = await runCommand(command, ["auth", "status"]);
   if (!text) return null;
   try {
     const parsed = JSON.parse(text);
@@ -50,15 +50,15 @@ async function detectClaudeAccount(
 
 export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
-    slug: 'claude-code',
-    name: 'Anthropic Claude Code',
-    bin: 'claude',
-    configDirRel: '.claude',
-    configEnvVar: 'CLAUDE_CONFIG_DIR',
-    resumeArgs: ['--resume'],
-    skipPermissionsArgs: ['--dangerously-skip-permissions'],
-    detectAccount: detectClaudeAccount
-  }
+    slug: "claude-code",
+    name: "Anthropic Claude Code",
+    bin: "claude",
+    configDirRel: ".claude",
+    configEnvVar: "CLAUDE_CONFIG_DIR",
+    resumeArgs: ["--resume"],
+    skipPermissionsArgs: ["--dangerously-skip-permissions"],
+    detectAccount: detectClaudeAccount,
+  },
 ];
 
 export function getCatalogEntry(slug: string): AgentCatalogEntry | null {

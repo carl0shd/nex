@@ -1,19 +1,19 @@
-import { Dialog as DialogPrimitive } from 'radix-ui';
-import { X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Dialog as DialogPrimitive } from "radix-ui";
+import { X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 function Dialog(props: React.ComponentProps<typeof DialogPrimitive.Root>): React.JSX.Element {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
 }
 
 function DialogTrigger(
-  props: React.ComponentProps<typeof DialogPrimitive.Trigger>
+  props: React.ComponentProps<typeof DialogPrimitive.Trigger>,
 ): React.JSX.Element {
   return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />;
 }
 
 function DialogPortal(
-  props: React.ComponentProps<typeof DialogPrimitive.Portal>
+  props: React.ComponentProps<typeof DialogPrimitive.Portal>,
 ): React.JSX.Element {
   return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />;
 }
@@ -30,8 +30,8 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        'fixed inset-0 z-50 bg-overlay backdrop-blur-[3px] duration-200 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0',
-        className
+        "fixed inset-0 z-50 bg-overlay backdrop-blur-[3px] duration-200 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0",
+        className,
       )}
       {...props}
     />
@@ -54,8 +54,8 @@ function DialogPanel({
     <DialogPrimitive.Content
       data-slot="dialog-panel"
       className={cn(
-        'fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100vh-64px)] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-5 rounded-window bg-surface-raised p-6 text-ink shadow-overlay duration-200 ease-out-strong outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-[0.97] data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-[0.97] data-[state=closed]:duration-150',
-        className
+        "fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100vh-64px)] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-5 rounded-window bg-surface-raised p-6 text-ink shadow-overlay duration-200 ease-out-strong outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-[0.97] data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-[0.97] data-[state=closed]:duration-150",
+        className,
       )}
       {...props}
     >
@@ -85,17 +85,17 @@ function DialogContent({
   );
 }
 
-function DialogHeader({ className, ...props }: React.ComponentProps<'div'>): React.JSX.Element {
+function DialogHeader({ className, ...props }: React.ComponentProps<"div">): React.JSX.Element {
   return (
-    <div data-slot="dialog-header" className={cn('flex flex-col gap-1', className)} {...props} />
+    <div data-slot="dialog-header" className={cn("flex flex-col gap-1", className)} {...props} />
   );
 }
 
-function DialogFooter({ className, ...props }: React.ComponentProps<'div'>): React.JSX.Element {
+function DialogFooter({ className, ...props }: React.ComponentProps<"div">): React.JSX.Element {
   return (
     <div
       data-slot="dialog-footer"
-      className={cn('flex items-center justify-end gap-2', className)}
+      className={cn("flex items-center justify-end gap-2", className)}
       {...props}
     />
   );
@@ -108,7 +108,7 @@ function DialogTitle({
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn('text-lg font-semibold text-ink', className)}
+      className={cn("text-lg font-semibold text-ink", className)}
       {...props}
     />
   );
@@ -121,7 +121,7 @@ function DialogDescription({
   return (
     <DialogPrimitive.Description
       data-slot="dialog-description"
-      className={cn('text-sm text-ink-3', className)}
+      className={cn("text-sm text-ink-3", className)}
       {...props}
     />
   );
@@ -138,5 +138,5 @@ export {
   DialogPanel,
   DialogPortal,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
 };

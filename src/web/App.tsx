@@ -1,59 +1,28 @@
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import { Toaster } from 'sonner';
-import { HotkeysProvider } from '@tanstack/react-hotkeys';
-import ErrorBoundary from '@/components/layout/error-boundary';
-import Titlebar from '@/components/layout/titlebar';
-import Sidebar from '@/components/layout/sidebar';
-import Home from '@/routes/home';
-import DiffView from '@/routes/diff-view';
-import Settings from '@/routes/settings';
-import DesignSystem from '@/routes/design-system';
-import OnboardingModal from '@/components/onboarding/onboarding-modal';
-import OpenLinkModal from '@/components/modals/open-link-modal';
-import SessionHotkeys from '@/components/session/session-hotkeys';
-import SessionTerminalHotkeys from '@/components/session/session-terminal-hotkeys';
-import { useAppData } from '@/hooks/use-app-data';
-import { useSystemTheme } from '@/hooks/use-system-theme';
-import { useOnboarding } from '@/hooks/use-onboarding';
-import { useSettingsStore } from '@/stores/settings.store';
+import { useEffect } from "react";
+import { createMemoryRouter, RouterProvider, type RouteObject } from "react-router";
+import ErrorBoundary from "@/components/error-boundary";
+import AppShell from "@/components/layout/app-shell";
+import Home from "@/routes/home";
+import DesignSystem from "@/routes/design-system";
+import { useSystemTheme } from "@/hooks/use-system-theme";
+import { useSettingsStore } from "@/stores/settings.store";
+
+const routes: RouteObject[] = [{ index: true, element: <Home /> }];
+if (import.meta.env.DEV) routes.push({ path: "design-system", element: <DesignSystem /> });
+
+const router = createMemoryRouter([{ path: "/", element: <AppShell />, children: routes }]);
 
 function App(): React.JSX.Element {
-  useAppData();
   useSystemTheme();
-  const onboarding = useOnboarding();
-  const theme = useSettingsStore((s) => s.resolvedTheme);
+  const loadSettings = useSettingsStore((s) => s.load);
+
+  useEffect(() => {
+    void loadSettings().then(() => window.api.showWindow());
+  }, [loadSettings]);
 
   return (
     <ErrorBoundary>
-      <HotkeysProvider defaultOptions={{ hotkey: { preventDefault: true } }}>
-        <SessionHotkeys />
-        <SessionTerminalHotkeys />
-        {/* The router wraps the whole shell so the titlebar can navigate too. */}
-        <MemoryRouter>
-          <div className="relative isolate flex h-screen flex-col overflow-hidden bg-page">
-            <Titlebar />
-            <div className="relative flex flex-1 overflow-hidden">
-              <Sidebar />
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/diff/:sessionId" element={<DiffView />} />
-                <Route path="/settings" element={<Settings />} />
-                {import.meta.env.DEV && <Route path="/design-system" element={<DesignSystem />} />}
-              </Routes>
-            </div>
-            {onboarding.show && <OnboardingModal onComplete={onboarding.complete} />}
-            <OpenLinkModal />
-            <Toaster
-              position="bottom-center"
-              theme={theme}
-              closeButton
-              expand
-              duration={10000}
-              style={{ zIndex: 9999 }}
-            />
-          </div>
-        </MemoryRouter>
-      </HotkeysProvider>
+      <RouterProvider router={router} />
     </ErrorBoundary>
   );
 }

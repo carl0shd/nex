@@ -1,50 +1,50 @@
-import { execFileSync } from 'child_process';
-import { appendFileSync, mkdirSync } from 'fs';
-import { join } from 'path';
-import { getNexDir } from '@native/paths';
+import { execFileSync } from "child_process";
+import { appendFileSync, mkdirSync } from "fs";
+import { join } from "path";
+import { getNexDir } from "@native/paths";
 
 const KEYS_TO_INHERIT = [
-  'PATH',
-  'MANPATH',
-  'INFOPATH',
-  'HOMEBREW_PREFIX',
-  'HOMEBREW_CELLAR',
-  'HOMEBREW_REPOSITORY',
-  'LANG',
-  'LC_ALL',
-  'LC_CTYPE',
-  'XDG_CONFIG_HOME',
-  'XDG_DATA_HOME',
-  'XDG_CACHE_HOME',
-  'NVM_DIR',
-  'MISE_DATA_DIR',
-  'ASDF_DATA_DIR',
-  'PYENV_ROOT',
-  'GOPATH',
-  'NODE_PATH'
+  "PATH",
+  "MANPATH",
+  "INFOPATH",
+  "HOMEBREW_PREFIX",
+  "HOMEBREW_CELLAR",
+  "HOMEBREW_REPOSITORY",
+  "LANG",
+  "LC_ALL",
+  "LC_CTYPE",
+  "XDG_CONFIG_HOME",
+  "XDG_DATA_HOME",
+  "XDG_CACHE_HOME",
+  "NVM_DIR",
+  "MISE_DATA_DIR",
+  "ASDF_DATA_DIR",
+  "PYENV_ROOT",
+  "GOPATH",
+  "NODE_PATH",
 ];
 
 function log(msg: string): void {
   try {
     const dir = getNexDir();
     mkdirSync(dir, { recursive: true });
-    appendFileSync(join(dir, 'fix-env.log'), `[${new Date().toISOString()}] ${msg}\n`);
+    appendFileSync(join(dir, "fix-env.log"), `[${new Date().toISOString()}] ${msg}\n`);
   } catch {
     // ignore
   }
 }
 
 function trySpawn(shell: string): string | null {
-  const marker = '__NEX_ENV_BOUNDARY__';
+  const marker = "__NEX_ENV_BOUNDARY__";
   try {
     const out = execFileSync(
       shell,
-      ['-ilc', `printf '%s\\n' '${marker}'; /usr/bin/env; printf '%s\\n' '${marker}'`],
+      ["-ilc", `printf '%s\\n' '${marker}'; /usr/bin/env; printf '%s\\n' '${marker}'`],
       {
-        encoding: 'utf8',
+        encoding: "utf8",
         timeout: 5000,
-        stdio: ['ignore', 'pipe', 'pipe']
-      }
+        stdio: ["ignore", "pipe", "pipe"],
+      },
     );
     return out;
   } catch (err) {
@@ -54,14 +54,14 @@ function trySpawn(shell: string): string | null {
 }
 
 export function fixEnv(): void {
-  if (process.platform === 'win32') return;
+  if (process.platform === "win32") return;
 
   log(
-    `fixEnv start. SHELL=${process.env.SHELL ?? '(unset)'} PATH=${process.env.PATH ?? '(unset)'}`
+    `fixEnv start. SHELL=${process.env.SHELL ?? "(unset)"} PATH=${process.env.PATH ?? "(unset)"}`,
   );
 
-  const candidates = [process.env.SHELL, '/bin/zsh', '/bin/bash'].filter(Boolean) as string[];
-  const marker = '__NEX_ENV_BOUNDARY__';
+  const candidates = [process.env.SHELL, "/bin/zsh", "/bin/bash"].filter(Boolean) as string[];
+  const marker = "__NEX_ENV_BOUNDARY__";
 
   let envBlock: string | null = null;
   for (const shell of candidates) {
@@ -79,12 +79,12 @@ export function fixEnv(): void {
   }
 
   if (!envBlock) {
-    log('all shell attempts failed');
+    log("all shell attempts failed");
     return;
   }
 
-  for (const line of envBlock.split('\n')) {
-    const eq = line.indexOf('=');
+  for (const line of envBlock.split("\n")) {
+    const eq = line.indexOf("=");
     if (eq <= 0) continue;
     const key = line.slice(0, eq);
     const value = line.slice(eq + 1);

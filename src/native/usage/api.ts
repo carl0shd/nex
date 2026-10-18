@@ -1,5 +1,5 @@
-const BASE_URL = 'https://api.anthropic.com';
-const OAUTH_BETA = 'oauth-2025-04-20';
+const BASE_URL = "https://api.anthropic.com";
+const OAUTH_BETA = "oauth-2025-04-20";
 const TIMEOUT_MS = 10_000;
 
 export interface LimitWindow {
@@ -60,12 +60,12 @@ export class UnauthorizedError extends Error {}
 
 export class RateLimitedError extends Error {
   constructor(readonly retryAfterMs: number | null) {
-    super('rate limited');
+    super("rate limited");
   }
 }
 
 function retryAfterOf(response: Response): number | null {
-  const header = response.headers.get('retry-after');
+  const header = response.headers.get("retry-after");
   if (!header) return null;
   const seconds = Number(header);
   return Number.isFinite(seconds) ? seconds * 1000 : null;
@@ -75,9 +75,9 @@ async function get<T>(path: string, accessToken: string): Promise<T> {
   const response = await fetch(`${BASE_URL}${path}`, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
-      'anthropic-beta': OAUTH_BETA
+      "anthropic-beta": OAUTH_BETA,
     },
-    signal: AbortSignal.timeout(TIMEOUT_MS)
+    signal: AbortSignal.timeout(TIMEOUT_MS),
   });
 
   if (response.status === 401 || response.status === 403) {
@@ -100,7 +100,7 @@ function scopeLabelOf(limit: RawLimit): string | null {
 }
 
 export async function fetchAccountUsage(accessToken: string): Promise<AccountUsageResponse> {
-  const body = await get<RawUsageBody>('/api/oauth/usage', accessToken);
+  const body = await get<RawUsageBody>("/api/oauth/usage", accessToken);
 
   return {
     fiveHourPercent: body.five_hour?.utilization ?? null,
@@ -108,28 +108,28 @@ export async function fetchAccountUsage(accessToken: string): Promise<AccountUsa
     sevenDayPercent: body.seven_day?.utilization ?? null,
     sevenDayResetsAt: body.seven_day?.resets_at ?? null,
     limits: (body.limits ?? []).map((limit) => ({
-      kind: limit.kind ?? 'unknown',
-      group: limit.group ?? 'unknown',
+      kind: limit.kind ?? "unknown",
+      group: limit.group ?? "unknown",
       percent: limit.percent ?? 0,
-      severity: limit.severity ?? 'normal',
+      severity: limit.severity ?? "normal",
       resetsAt: limit.resets_at ?? null,
       scopeLabel: scopeLabelOf(limit),
-      isActive: limit.is_active === true
+      isActive: limit.is_active === true,
     })),
     extraUsageEnabled: body.extra_usage?.is_enabled === true,
-    extraUsagePercent: body.extra_usage?.utilization ?? null
+    extraUsagePercent: body.extra_usage?.utilization ?? null,
   };
 }
 
 export async function fetchAccountProfile(accessToken: string): Promise<AccountProfile | null> {
-  const body = await get<RawProfileBody>('/api/oauth/profile', accessToken);
+  const body = await get<RawProfileBody>("/api/oauth/profile", accessToken);
   const email = body.account?.email;
   if (!email) return null;
 
   return {
     email,
-    accountUuid: body.account?.uuid ?? '',
+    accountUuid: body.account?.uuid ?? "",
     organizationName: body.organization?.name ?? null,
-    rateLimitTier: body.organization?.rate_limit_tier ?? null
+    rateLimitTier: body.organization?.rate_limit_tier ?? null,
   };
 }

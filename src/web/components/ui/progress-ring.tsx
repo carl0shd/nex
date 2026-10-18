@@ -1,6 +1,6 @@
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
-type ProgressRingTone = 'primary' | 'green' | 'orange' | 'red';
+type ProgressRingTone = "primary" | "green" | "orange" | "red";
 
 interface ProgressRingProps {
   progress: number;
@@ -13,18 +13,18 @@ interface ProgressRingProps {
 const STROKE = 2;
 
 const TONE_STROKE: Record<ProgressRingTone, string> = {
-  primary: 'stroke-primary',
-  green: 'stroke-green',
-  orange: 'stroke-orange',
-  red: 'stroke-red'
+  primary: "stroke-primary",
+  green: "stroke-green",
+  orange: "stroke-orange",
+  red: "stroke-red",
 };
 
 function ProgressRing({
   progress,
-  tone = 'primary',
+  tone = "primary",
   size = 28,
   children,
-  className
+  className,
 }: ProgressRingProps): React.JSX.Element {
   const radius = (size - STROKE) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -37,7 +37,7 @@ function ProgressRing({
       aria-valuenow={Math.round(clamped * 100)}
       aria-valuemin={0}
       aria-valuemax={100}
-      className={cn('relative inline-flex shrink-0 items-center justify-center', className)}
+      className={cn("relative inline-flex shrink-0 items-center justify-center", className)}
       style={{ width: size, height: size }}
     >
       <svg width={size} height={size} className="absolute inset-0 -rotate-90">
@@ -59,8 +59,8 @@ function ProgressRing({
           strokeDasharray={circumference}
           strokeDashoffset={circumference * (1 - clamped)}
           className={cn(
-            'transition-[stroke-dashoffset] duration-500 ease-out-strong',
-            TONE_STROKE[tone]
+            "transition-[stroke-dashoffset] duration-500 ease-out-strong",
+            TONE_STROKE[tone],
           )}
         />
       </svg>

@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 interface SpecimenRowProps {
   label?: string;
@@ -14,7 +14,7 @@ function SpecimenRow({ label, children, className }: SpecimenRowProps): React.JS
           {label}
         </span>
       )}
-      <div className={cn('flex min-w-0 flex-1 flex-wrap items-center gap-3', className)}>
+      <div className={cn("flex min-w-0 flex-1 flex-wrap items-center gap-3", className)}>
         {children}
       </div>
     </div>

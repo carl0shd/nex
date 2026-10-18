@@ -1,10 +1,10 @@
-import * as agentRepo from '@native/db/repositories/agent.repo';
-import * as agentAccountRepo from '@native/db/repositories/agent-account.repo';
-import * as sessionRepo from '@native/db/repositories/session.repo';
-import * as terminalRepo from '@native/db/repositories/terminal.repo';
-import { agentDisplayName } from '@native/agents/agent-display';
-import { markTerminalFresh } from '@native/pty/manager';
-import type { Terminal, TerminalType } from '@native/db/types';
+import * as agentRepo from "@native/db/repositories/agent.repo";
+import * as agentAccountRepo from "@native/db/repositories/agent-account.repo";
+import * as sessionRepo from "@native/db/repositories/session.repo";
+import * as terminalRepo from "@native/db/repositories/terminal.repo";
+import { agentDisplayName } from "@native/agents/agent-display";
+import { markTerminalFresh } from "@native/pty/manager";
+import type { Terminal, TerminalType } from "@native/db/types";
 
 export interface CreateForSessionInput {
   sessionId: string;
@@ -21,11 +21,11 @@ export function createTerminalForSession(input: CreateForSessionInput): Terminal
   const existing = terminalRepo.getBySession(input.sessionId);
   const isPrimary = input.isPrimary ?? existing.length === 0;
 
-  if (input.type === 'shell') {
+  if (input.type === "shell") {
     let name = input.name;
     if (!name) {
-      const shellCount = existing.filter((t) => t.type === 'shell').length;
-      name = shellCount === 0 ? 'Shell' : `Shell ${shellCount + 1}`;
+      const shellCount = existing.filter((t) => t.type === "shell").length;
+      name = shellCount === 0 ? "Shell" : `Shell ${shellCount + 1}`;
     }
     const terminal = terminalRepo.create({
       sessionId: session.id,
@@ -35,15 +35,15 @@ export function createTerminalForSession(input: CreateForSessionInput): Terminal
       cwd: session.worktreePath,
       env: {},
       isPrimary,
-      type: 'shell',
-      runCommand: input.runCommand ?? null
+      type: "shell",
+      runCommand: input.runCommand ?? null,
     });
     markTerminalFresh(terminal.id);
     return terminal;
   }
 
   const agent = session.agentId ? agentRepo.getById(session.agentId) : null;
-  if (!agent) throw new Error('Session has no agent assigned');
+  if (!agent) throw new Error("Session has no agent assigned");
   const account = session.accountId ? agentAccountRepo.getById(session.accountId) : null;
 
   const env: Record<string, string> = {};
@@ -59,7 +59,7 @@ export function createTerminalForSession(input: CreateForSessionInput): Terminal
     cwd: session.worktreePath,
     env,
     isPrimary,
-    type: 'agent'
+    type: "agent",
   });
   markTerminalFresh(terminal.id);
   return terminal;

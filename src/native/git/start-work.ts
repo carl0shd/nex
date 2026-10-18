@@ -1,8 +1,8 @@
-import { mkdir, writeFile, symlink } from 'fs/promises';
-import { join } from 'path';
-import * as projectRepo from '@native/db/repositories/project.repo';
-import * as sessionRepo from '@native/db/repositories/session.repo';
-import { getNexDir } from '@native/paths';
+import { mkdir, writeFile, symlink } from "fs/promises";
+import { join } from "path";
+import * as projectRepo from "@native/db/repositories/project.repo";
+import * as sessionRepo from "@native/db/repositories/session.repo";
+import { getNexDir } from "@native/paths";
 import {
   detectBaseBranch,
   fetchOrigin,
@@ -10,25 +10,25 @@ import {
   removeWorktree,
   deleteBranch,
   setupGitExclude,
-  isGitRepo
-} from '@native/git/git';
-import { setupSymlinks } from '@native/git/symlinks';
-import { createTerminalForSession } from '@native/agents/agent-terminal';
-import type { Session, StartWorkInput } from '@native/db/types';
+  isGitRepo,
+} from "@native/git/git";
+import { setupSymlinks } from "@native/git/symlinks";
+import { createTerminalForSession } from "@native/agents/agent-terminal";
+import type { Session, StartWorkInput } from "@native/db/types";
 
 function createPrimaryTerminal(session: Session): void {
   createTerminalForSession({
     sessionId: session.id,
-    type: session.agentId ? 'agent' : 'shell',
-    isPrimary: true
+    type: session.agentId ? "agent" : "shell",
+    isPrimary: true,
   });
 }
 
 async function writeIfMissing(path: string, content: string): Promise<void> {
   try {
-    await writeFile(path, content, { flag: 'wx' });
+    await writeFile(path, content, { flag: "wx" });
   } catch (err) {
-    if ((err as NodeJS.ErrnoException).code !== 'EEXIST') throw err;
+    if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err;
   }
 }
 
@@ -36,7 +36,7 @@ async function linkIfMissing(target: string, link: string): Promise<void> {
   try {
     await symlink(target, link);
   } catch (err) {
-    if ((err as NodeJS.ErrnoException).code !== 'EEXIST') throw err;
+    if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err;
   }
 }
 
@@ -45,17 +45,17 @@ export async function startWork(input: StartWorkInput): Promise<Session> {
   if (!project) throw new Error(`Project not found: ${input.projectId}`);
 
   const existing = sessionRepo.getByName(input.name, project.id);
-  if (existing && existing.status === 'active') {
+  if (existing && existing.status === "active") {
     throw new Error(`Active session '${input.name}' already exists for this project`);
   }
 
-  const sessionsDir = join(getNexDir(), 'sessions', project.name, input.name);
+  const sessionsDir = join(getNexDir(), "sessions", project.name, input.name);
   await mkdir(sessionsDir, { recursive: true });
 
-  const notesPath = join(sessionsDir, 'TASK_NOTES.md');
-  await writeFile(notesPath, '');
+  const notesPath = join(sessionsDir, "TASK_NOTES.md");
+  await writeFile(notesPath, "");
 
-  const sharedPath = join(getNexDir(), 'sessions', project.name, 'SHARED_CONTEXT.md');
+  const sharedPath = join(getNexDir(), "sessions", project.name, "SHARED_CONTEXT.md");
   await writeIfMissing(sharedPath, `# ${project.name} - Shared Context\n`);
 
   if (!(await isGitRepo(project.path))) {
@@ -64,11 +64,11 @@ export async function startWork(input: StartWorkInput): Promise<Session> {
       agentId: input.agentId,
       accountId: input.accountId,
       name: input.name,
-      branch: '',
-      baseBranch: '',
+      branch: "",
+      baseBranch: "",
       worktreePath: project.path,
       notesPath,
-      symlinks: []
+      symlinks: [],
     });
     createPrimaryTerminal(session);
     return session;
@@ -76,17 +76,17 @@ export async function startWork(input: StartWorkInput): Promise<Session> {
 
   const [detected] = await Promise.all([detectBaseBranch(project.path), fetchOrigin(project.path)]);
   const baseBranch = input.baseBranch?.trim() || detected;
-  const prefix = (project.branchPrefix || '').replace(/\/+$/, '');
+  const prefix = (project.branchPrefix || "").replace(/\/+$/, "");
   const branch = prefix ? `${prefix}/${input.name}` : input.name;
-  const wtPath = join(project.path, '.worktrees', input.name);
+  const wtPath = join(project.path, ".worktrees", input.name);
   await createWorktree(project.path, branch, wtPath, baseBranch);
 
   try {
     setupGitExclude(project.path);
-    setupSymlinks(project.path, wtPath, ['.claude']);
+    setupSymlinks(project.path, wtPath, [".claude"]);
 
-    await linkIfMissing(notesPath, join(wtPath, 'TASK_NOTES.md'));
-    await linkIfMissing(sharedPath, join(wtPath, 'SHARED_CONTEXT.md'));
+    await linkIfMissing(notesPath, join(wtPath, "TASK_NOTES.md"));
+    await linkIfMissing(sharedPath, join(wtPath, "SHARED_CONTEXT.md"));
 
     const session = sessionRepo.create({
       projectId: project.id,
@@ -97,7 +97,7 @@ export async function startWork(input: StartWorkInput): Promise<Session> {
       baseBranch,
       worktreePath: wtPath,
       notesPath,
-      symlinks: ['.claude']
+      symlinks: [".claude"],
     });
     createPrimaryTerminal(session);
     return session;

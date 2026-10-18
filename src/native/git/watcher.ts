@@ -1,22 +1,22 @@
-import { watch, type FSWatcher } from 'fs';
-import { execFile } from 'child_process';
+import { watch, type FSWatcher } from "fs";
+import { execFile } from "child_process";
 
 const DEBOUNCE_MS = 250;
 
 // A single `yarn install` or build would otherwise reset the debounce timer
 // forever. Cheaper than a full gitignore evaluation.
 const IGNORED_SEGMENTS = new Set([
-  'node_modules',
-  '.git',
-  'dist',
-  'out',
-  'build',
-  'target',
-  '.next',
-  '.turbo',
-  '.venv',
-  '.cache',
-  '__pycache__'
+  "node_modules",
+  ".git",
+  "dist",
+  "out",
+  "build",
+  "target",
+  ".next",
+  ".turbo",
+  ".venv",
+  ".cache",
+  "__pycache__",
 ]);
 
 interface WorktreeWatch {
@@ -29,12 +29,12 @@ const watches = new Map<string, WorktreeWatch>();
 
 function isIgnored(relativePath: string | null): boolean {
   if (!relativePath) return false;
-  return relativePath.split('/').some((segment) => IGNORED_SEGMENTS.has(segment));
+  return relativePath.split("/").some((segment) => IGNORED_SEGMENTS.has(segment));
 }
 
 function resolveGitDir(worktreePath: string): Promise<string | null> {
   return new Promise((resolve) => {
-    execFile('git', ['rev-parse', '--absolute-git-dir'], { cwd: worktreePath }, (err, stdout) => {
+    execFile("git", ["rev-parse", "--absolute-git-dir"], { cwd: worktreePath }, (err, stdout) => {
       resolve(err ? null : stdout.trim() || null);
     });
   });
@@ -51,11 +51,11 @@ function notify(entry: WorktreeWatch): void {
 function addWatcher(entry: WorktreeWatch, path: string, recursive: boolean): void {
   try {
     const watcher = watch(path, { recursive, persistent: false }, (_event, filename) => {
-      const name = typeof filename === 'string' ? filename : null;
+      const name = typeof filename === "string" ? filename : null;
       if (recursive && isIgnored(name)) return;
       notify(entry);
     });
-    watcher.on('error', () => watcher.close());
+    watcher.on("error", () => watcher.close());
     entry.watchers.push(watcher);
   } catch {
     /* the path may have been removed underneath us */

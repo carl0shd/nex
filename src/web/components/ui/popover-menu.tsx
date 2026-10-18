@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
+import { useState } from "react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
-type Side = 'top' | 'right' | 'bottom' | 'left';
-type Align = 'start' | 'center' | 'end';
+type Side = "top" | "right" | "bottom" | "left";
+type Align = "start" | "center" | "end";
 type Anchor = `${Side} ${Align}`;
 
 interface PopoverMenuProps {
@@ -15,7 +15,7 @@ interface PopoverMenuProps {
 }
 
 function parseAnchor(anchor: Anchor): { side: Side; align: Align } {
-  const [side, align] = anchor.split(' ') as [Side, Align];
+  const [side, align] = anchor.split(" ") as [Side, Align];
   return { side, align };
 }
 
@@ -23,9 +23,9 @@ function parseAnchor(anchor: Anchor): { side: Side; align: Align } {
 function PopoverMenu({
   trigger,
   children,
-  anchor = 'right start',
+  anchor = "right start",
   gap = 8,
-  className
+  className,
 }: PopoverMenuProps): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const { side, align } = parseAnchor(anchor);
@@ -35,16 +35,16 @@ function PopoverMenu({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <div className="cursor-pointer outline-none">
-          {typeof trigger === 'function' ? trigger(open) : trigger}
+          {typeof trigger === "function" ? trigger(open) : trigger}
         </div>
       </PopoverTrigger>
       <PopoverContent
         side={side}
         align={align}
         sideOffset={gap}
-        className={cn('rounded-none border-0 bg-transparent p-0 shadow-none', className)}
+        className={cn("rounded-none border-0 bg-transparent p-0 shadow-none", className)}
       >
-        {typeof children === 'function' ? children({ close }) : children}
+        {typeof children === "function" ? children({ close }) : children}
       </PopoverContent>
     </Popover>
   );

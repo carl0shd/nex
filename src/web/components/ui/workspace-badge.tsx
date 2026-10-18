@@ -1,11 +1,11 @@
-import { Rocket, Code, Palette, Zap } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { Rocket, Code, Palette, Zap } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 const ICON_MAP: Record<string, LucideIcon> = {
   rocket: Rocket,
   code: Code,
   palette: Palette,
-  zap: Zap
+  zap: Zap,
 };
 
 interface WorkspaceBadgeProps {
@@ -22,16 +22,16 @@ interface WorkspaceBadgeProps {
 function WorkspaceBadge({
   name,
   color,
-  icon = 'letter',
+  icon = "letter",
   customImage,
   size = 18,
   fontSize = 9,
   iconSize,
-  rounded = 'rounded'
+  rounded = "rounded",
 }: WorkspaceBadgeProps): React.JSX.Element {
-  const isCustomImage = icon === 'custom' && !!customImage;
+  const isCustomImage = icon === "custom" && !!customImage;
   const IconComponent = ICON_MAP[icon];
-  const initial = name[0]?.toUpperCase() ?? '';
+  const initial = name[0]?.toUpperCase() ?? "";
   const resolvedIconSize = iconSize ?? Math.round(size * 0.55);
 
   return (
@@ -41,12 +41,12 @@ function WorkspaceBadge({
         width: size,
         height: size,
         fontSize,
-        ...(isCustomImage ? {} : { backgroundColor: color })
+        ...(isCustomImage ? {} : { backgroundColor: color }),
       }}
     >
       {isCustomImage ? (
         <img
-          src={customImage!.startsWith('data:') ? customImage! : `nex-file://${customImage}`}
+          src={customImage!.startsWith("data:") ? customImage! : `nex-file://${customImage}`}
           alt=""
           className="h-full w-full object-cover"
           draggable={false}

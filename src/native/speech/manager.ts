@@ -1,6 +1,6 @@
-import { IPC } from '@native/ipc/channels';
-import { getMainWindow } from '@native/main/app-window';
-import * as client from './client';
+import { IPC } from "@native/ipc/channels";
+import { getMainWindow } from "@native/main/app-window";
+import * as client from "./client";
 
 function send(payload: object): void {
   const win = getMainWindow();
@@ -9,7 +9,7 @@ function send(payload: object): void {
 }
 
 export function initSpeech(): void {
-  client.subscribeDevicesChanged(() => send({ type: 'devicesChanged' }));
+  client.subscribeDevicesChanged(() => send({ type: "devicesChanged" }));
 }
 
 export async function speechAvailable(): Promise<client.AvailabilityResult> {
@@ -40,15 +40,15 @@ export async function startSpeech(opts: {
       deviceId: opts.deviceId,
       onDevice: opts.onDevice,
       continuous: opts.continuous ?? true,
-      interimResults: true
+      interimResults: true,
     },
     {
-      onState: (state) => send({ type: 'state', state }),
+      onState: (state) => send({ type: "state", state }),
       onResult: ({ text, isFinal, confidence, timestampMs }) =>
-        send({ type: isFinal ? 'final' : 'partial', text, confidence, timestampMs }),
-      onError: ({ code, message }) => send({ type: 'error', code, message }),
-      onEnd: () => send({ type: 'end' })
-    }
+        send({ type: isFinal ? "final" : "partial", text, confidence, timestampMs }),
+      onError: ({ code, message }) => send({ type: "error", code, message }),
+      onEnd: () => send({ type: "end" }),
+    },
   );
 }
 

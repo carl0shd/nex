@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3';
+import type Database from "better-sqlite3";
 
 const migrations: string[] = [
   `CREATE TABLE workspaces (
@@ -172,11 +172,11 @@ const migrations: string[] = [
     size INTEGER NOT NULL DEFAULT 0,
     byte_offset INTEGER NOT NULL DEFAULT 0,
     scanned_at TEXT NOT NULL DEFAULT (datetime('now'))
-  );`
+  );`,
 ];
 
 export function runMigrations(db: Database.Database): void {
-  const currentVersion = db.pragma('user_version', { simple: true }) as number;
+  const currentVersion = db.pragma("user_version", { simple: true }) as number;
 
   if (currentVersion >= migrations.length) return;
 

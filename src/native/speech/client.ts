@@ -1,4 +1,4 @@
-import { getHelper, disposeHelper, type HelperMessage } from './helper-process';
+import { getHelper, disposeHelper, type HelperMessage } from "./helper-process";
 
 export interface InputDevice {
   id: number;
@@ -22,7 +22,7 @@ export interface AvailabilityResult {
   supportsOnDevice?: boolean;
 }
 
-export type SessionState = 'idle' | 'starting' | 'listening' | 'stopping' | 'stopped' | 'error';
+export type SessionState = "idle" | "starting" | "listening" | "stopping" | "stopped" | "error";
 
 export interface SessionResult {
   text: string;
@@ -45,8 +45,8 @@ export interface StartSessionOptions {
 }
 
 type EventMsg = HelperMessage & {
-  type: 'event';
-  event: 'state' | 'result' | 'error' | 'stopped';
+  type: "event";
+  event: "state" | "result" | "error" | "stopped";
   state?: SessionState;
   text?: string;
   isFinal?: boolean;
@@ -57,8 +57,8 @@ type EventMsg = HelperMessage & {
 };
 
 export async function checkAvailability(): Promise<AvailabilityResult> {
-  if (process.platform !== 'darwin') {
-    return { available: false, reason: 'macOS only' };
+  if (process.platform !== "darwin") {
+    return { available: false, reason: "macOS only" };
   }
   const helper = getHelper();
   try {
@@ -66,7 +66,7 @@ export async function checkAvailability(): Promise<AvailabilityResult> {
   } catch (err) {
     return { available: false, reason: err instanceof Error ? err.message : String(err) };
   }
-  const res = (await helper.send({ command: 'checkAvailability' }, 5000)) as HelperMessage & {
+  const res = (await helper.send({ command: "checkAvailability" }, 5000)) as HelperMessage & {
     available?: boolean;
     reason?: string;
     authStatus?: string;
@@ -80,25 +80,25 @@ export async function checkAvailability(): Promise<AvailabilityResult> {
     authStatus: res.authStatus,
     micStatus: res.micStatus,
     recognizerLocale: res.recognizerLocale,
-    supportsOnDevice: res.supportsOnDevice
+    supportsOnDevice: res.supportsOnDevice,
   };
 }
 
 export async function listInputDevices(): Promise<InputDevice[]> {
-  if (process.platform !== 'darwin') return [];
+  if (process.platform !== "darwin") return [];
   const helper = getHelper();
   await helper.start();
-  const res = (await helper.send({ command: 'listDevices' }, 5000)) as HelperMessage & {
+  const res = (await helper.send({ command: "listDevices" }, 5000)) as HelperMessage & {
     devices?: InputDevice[];
   };
   return res.devices ?? [];
 }
 
 export async function listLocales(): Promise<Locale[]> {
-  if (process.platform !== 'darwin') return [];
+  if (process.platform !== "darwin") return [];
   const helper = getHelper();
   await helper.start();
-  const res = (await helper.send({ command: 'listLocales' }, 5000)) as HelperMessage & {
+  const res = (await helper.send({ command: "listLocales" }, 5000)) as HelperMessage & {
     locales?: Locale[];
   };
   return res.locales ?? [];
@@ -108,14 +108,14 @@ export async function requestAuthorization(): Promise<{
   authorized: boolean;
   status: string;
 }> {
-  if (process.platform !== 'darwin') return { authorized: false, status: 'unsupported' };
+  if (process.platform !== "darwin") return { authorized: false, status: "unsupported" };
   const helper = getHelper();
   await helper.start();
-  const res = (await helper.send({ command: 'requestAuth' }, 30000)) as HelperMessage & {
+  const res = (await helper.send({ command: "requestAuth" }, 30000)) as HelperMessage & {
     authorized?: boolean;
     status?: string;
   };
-  return { authorized: !!res.authorized, status: res.status ?? 'unknown' };
+  return { authorized: !!res.authorized, status: res.status ?? "unknown" };
 }
 
 interface ActiveSession {
@@ -132,19 +132,19 @@ export async function startSession(
     onResult?: (result: SessionResult) => void;
     onError?: (error: SessionError) => void;
     onEnd?: () => void;
-  }
+  },
 ): Promise<void> {
-  if (active) throw new Error('Speech session already running');
+  if (active) throw new Error("Speech session already running");
   const helper = getHelper();
   await helper.start();
 
   const id = helper.sendStreaming({
-    command: 'startSession',
+    command: "startSession",
     locale: opts.locale ?? null,
     deviceId: opts.deviceId ?? null,
     interimResults: opts.interimResults ?? true,
     continuous: opts.continuous ?? false,
-    onDevice: opts.onDevice ?? false
+    onDevice: opts.onDevice ?? false,
   });
 
   const channel = `event:${id}`;
@@ -158,27 +158,27 @@ export async function startSession(
   };
   const listener = (msg: EventMsg): void => {
     switch (msg.event) {
-      case 'state':
+      case "state":
         if (msg.state) handlers.onState?.(msg.state);
         break;
-      case 'result':
-        if (typeof msg.text === 'string' && typeof msg.isFinal === 'boolean') {
+      case "result":
+        if (typeof msg.text === "string" && typeof msg.isFinal === "boolean") {
           handlers.onResult?.({
             text: msg.text,
             isFinal: msg.isFinal,
             confidence: msg.confidence,
-            timestampMs: msg.timestampMs
+            timestampMs: msg.timestampMs,
           });
         }
         break;
-      case 'error':
+      case "error":
         handlers.onError?.({
-          code: msg.code ?? 'unknown',
-          message: msg.message ?? 'Unknown error'
+          code: msg.code ?? "unknown",
+          message: msg.message ?? "Unknown error",
         });
         cleanup();
         break;
-      case 'stopped':
+      case "stopped":
         cleanup();
         break;
     }
@@ -194,7 +194,7 @@ export function stopSession(): void {
   // Allow the next session to start immediately; the listener stays subscribed
   // until the backend emits 'stopped' (500ms drain to flush trailing audio).
   active = null;
-  getHelper().sendControl({ command: 'stopSession', sessionId: id });
+  getHelper().sendControl({ command: "stopSession", sessionId: id });
 }
 
 export function abortSession(): void {
@@ -202,14 +202,14 @@ export function abortSession(): void {
   const id = active.id;
   active.unsubscribe();
   active = null;
-  getHelper().sendControl({ command: 'abortSession', sessionId: id });
+  getHelper().sendControl({ command: "abortSession", sessionId: id });
 }
 
 export function subscribeDevicesChanged(callback: () => void): () => void {
   const helper = getHelper();
   const listener = (): void => callback();
-  helper.on('event:devices', listener);
-  return () => helper.off('event:devices', listener);
+  helper.on("event:devices", listener);
+  return () => helper.off("event:devices", listener);
 }
 
 export { disposeHelper };

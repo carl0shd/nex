@@ -1,7 +1,7 @@
-import { Check } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { selectableVariants } from '@/components/ui/selectable';
-import { cn } from '@/lib/utils';
+import { Check } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { selectableVariants } from "@/components/ui/selectable";
+import { cn } from "@/lib/utils";
 
 interface OptionCardProps {
   selected: boolean;
@@ -20,15 +20,15 @@ function OptionCard({
   title,
   subtitle,
   titleClassName,
-  className
+  className,
 }: OptionCardProps): React.JSX.Element {
   return (
     <Card
       asChild
       className={cn(
         selectableVariants({ selected }),
-        'w-full flex-row items-center gap-3 p-3',
-        className
+        "w-full flex-row items-center gap-3 p-3",
+        className,
       )}
     >
       <button type="button" onClick={onClick}>
@@ -36,7 +36,7 @@ function OptionCard({
           {icon}
         </div>
         <div className="flex flex-1 flex-col items-start gap-0.5">
-          <span className={titleClassName ?? 'text-sm font-medium text-ink'}>{title}</span>
+          <span className={titleClassName ?? "text-sm font-medium text-ink"}>{title}</span>
           {subtitle && <span className="text-left text-2xs text-ink-3">{subtitle}</span>}
         </div>
         {selected && (

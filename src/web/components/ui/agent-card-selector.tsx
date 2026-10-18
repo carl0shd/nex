@@ -1,8 +1,8 @@
-import { Terminal } from 'lucide-react';
-import Chip from '@/components/ui/chip';
-import { Field, FieldLabel } from '@/components/ui/field';
-import { selectableVariants } from '@/components/ui/selectable';
-import { cn } from '@/lib/utils';
+import { Terminal } from "lucide-react";
+import Chip from "@/components/ui/chip";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { selectableVariants } from "@/components/ui/selectable";
+import { cn } from "@/lib/utils";
 
 interface AgentCardOption {
   value: string;
@@ -23,7 +23,7 @@ function AgentCardSelector({
   value,
   onChange,
   options,
-  label
+  label,
 }: AgentCardSelectorProps): React.JSX.Element {
   const columns = Math.min(Math.max(options.length, 1), 5);
 
@@ -36,7 +36,7 @@ function AgentCardSelector({
       >
         {options.map((opt) => {
           const selected = opt.value === value;
-          const tone = selected ? 'text-ink' : 'text-ink-2';
+          const tone = selected ? "text-ink" : "text-ink-2";
           return (
             <button
               key={opt.value}
@@ -45,12 +45,12 @@ function AgentCardSelector({
               onClick={() => onChange(opt.value)}
               className={cn(
                 selectableVariants({ selected }),
-                'flex h-18 flex-col items-center justify-center gap-1.5 px-2 py-2.5',
-                opt.disabled && 'pointer-events-none opacity-40'
+                "flex h-18 flex-col items-center justify-center gap-1.5 px-2 py-2.5",
+                opt.disabled && "pointer-events-none opacity-40",
               )}
             >
               {opt.icon ?? <Terminal size={18} className={tone} />}
-              <span className={cn('text-center text-2xs leading-tight font-medium', tone)}>
+              <span className={cn("text-center text-2xs leading-tight font-medium", tone)}>
                 {opt.label}
               </span>
               {opt.badge && <Chip>{opt.badge}</Chip>}

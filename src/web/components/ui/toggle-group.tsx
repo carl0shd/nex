@@ -1,13 +1,13 @@
-import { createContext, useContext } from 'react';
-import { ToggleGroup as ToggleGroupPrimitive } from 'radix-ui';
-import { type VariantProps } from 'class-variance-authority';
+import { createContext, useContext } from "react";
+import { ToggleGroup as ToggleGroupPrimitive } from "radix-ui";
+import { type VariantProps } from "class-variance-authority";
 
-import { cn } from '@/lib/utils';
-import { toggleVariants } from '@/components/ui/toggle';
+import { cn } from "@/lib/utils";
+import { toggleVariants } from "@/components/ui/toggle";
 
 const ToggleGroupContext = createContext<VariantProps<typeof toggleVariants>>({
-  size: 'default',
-  variant: 'default'
+  size: "default",
+  variant: "default",
 });
 
 function ToggleGroup({
@@ -24,8 +24,8 @@ function ToggleGroup({
       data-variant={variant}
       data-size={size}
       className={cn(
-        'group/toggle-group flex w-fit items-center gap-0.5 rounded-full data-[variant=outline]:bg-muted data-[variant=outline]:p-0.5 data-[variant=outline]:shadow-inset-field',
-        className
+        "group/toggle-group flex w-fit items-center gap-0.5 rounded-full data-[variant=outline]:bg-muted data-[variant=outline]:p-0.5 data-[variant=outline]:shadow-inset-field",
+        className,
       )}
       {...props}
     >
@@ -52,9 +52,9 @@ function ToggleGroupItem({
       data-variant={context.variant ?? variant}
       data-size={context.size ?? size}
       className={cn(
-        toggleVariants({ variant: 'default', size: context.size ?? size }),
-        'w-auto min-w-0 shrink-0 rounded-full focus:z-10',
-        className
+        toggleVariants({ variant: "default", size: context.size ?? size }),
+        "w-auto min-w-0 shrink-0 rounded-full focus:z-10",
+        className,
       )}
       {...props}
     >

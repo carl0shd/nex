@@ -1,7 +1,7 @@
-import { useRef, useState } from 'react';
-import { cn } from '@/lib/utils';
+import { useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 
-interface GlideHighlightProps extends React.ComponentProps<'div'> {
+interface GlideHighlightProps extends React.ComponentProps<"div"> {
   rowSelector?: string;
   highlightClassName?: string;
 }
@@ -11,7 +11,7 @@ interface GlideBox {
   height: number;
 }
 
-const DEFAULT_ROWS = '[data-glide-row]';
+const DEFAULT_ROWS = "[data-glide-row]";
 
 function GlideHighlight({
   rowSelector = DEFAULT_ROWS,
@@ -33,7 +33,7 @@ function GlideHighlight({
     if (!(target instanceof Element) || !container) return;
     const row = target.closest(rowSelector);
     if (!(row instanceof HTMLElement) || !container.contains(row)) return;
-    if (row.matches('[data-disabled], :disabled')) return;
+    if (row.matches("[data-disabled], :disabled")) return;
     const containerRect = container.getBoundingClientRect();
     const rowRect = row.getBoundingClientRect();
     setBox({ top: rowRect.top - containerRect.top + container.scrollTop, height: rowRect.height });
@@ -44,7 +44,7 @@ function GlideHighlight({
     <div
       ref={ref}
       data-slot="glide-highlight"
-      className={cn('relative', className)}
+      className={cn("relative", className)}
       onMouseOver={(e) => {
         moveTo(e.target);
         onMouseOver?.(e);
@@ -66,16 +66,16 @@ function GlideHighlight({
       <span
         aria-hidden
         className={cn(
-          'pointer-events-none absolute inset-x-0 rounded-[7px] bg-hover-2',
-          highlightClassName
+          "pointer-events-none absolute inset-x-0 rounded-[7px] bg-hover-2",
+          highlightClassName,
         )}
         style={{
           top: box?.top ?? 0,
           height: box?.height ?? 0,
           opacity: box && visible ? 1 : 0,
           transition: box
-            ? 'top 220ms var(--ease-out-strong), height 220ms var(--ease-out-strong), opacity 150ms ease'
-            : 'opacity 150ms ease'
+            ? "top 220ms var(--ease-out-strong), height 220ms var(--ease-out-strong), opacity 150ms ease"
+            : "opacity 150ms ease",
         }}
       />
       {children}

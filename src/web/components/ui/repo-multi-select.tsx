@@ -1,17 +1,17 @@
-import { useMemo, useState } from 'react';
-import { Search } from 'lucide-react';
-import SimpleBar from 'simplebar-react';
-import { Checkbox } from '@/components/ui/checkbox';
-import Chip from '@/components/ui/chip';
-import { Field, FieldLabel } from '@/components/ui/field';
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
-import { cn } from '@/lib/utils';
-import type { GithubRepo } from '@native/git/github';
-import { Spinner } from '@/components/ui/spinner';
+import { useMemo, useState } from "react";
+import { Search } from "lucide-react";
+import SimpleBar from "simplebar-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import Chip from "@/components/ui/chip";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import { cn } from "@/lib/utils";
+import type { GithubRepo } from "@native/git/github";
+import { Spinner } from "@/components/ui/spinner";
 
 interface RepoStatus {
   label: string;
-  tone: 'muted' | 'success' | 'error';
+  tone: "muted" | "success" | "error";
 }
 
 interface RepoMultiSelectProps {
@@ -23,10 +23,10 @@ interface RepoMultiSelectProps {
   label?: string;
 }
 
-const STATUS_TONE: Record<RepoStatus['tone'], string> = {
-  muted: 'text-ink-3',
-  success: 'text-green',
-  error: 'text-red'
+const STATUS_TONE: Record<RepoStatus["tone"], string> = {
+  muted: "text-ink-3",
+  success: "text-green",
+  error: "text-red",
 };
 
 function RepoMultiSelect({
@@ -35,16 +35,16 @@ function RepoMultiSelect({
   onToggle,
   statuses,
   disabled = false,
-  label = '// repositories'
+  label = "// repositories",
 }: RepoMultiSelectProps): React.JSX.Element {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
     if (!repos) return [];
     const q = query.trim().toLowerCase();
     if (!q) return repos;
     return repos.filter(
-      (r) => r.name.toLowerCase().includes(q) || r.description.toLowerCase().includes(q)
+      (r) => r.name.toLowerCase().includes(q) || r.description.toLowerCase().includes(q),
     );
   }, [repos, query]);
 
@@ -77,7 +77,7 @@ function RepoMultiSelect({
           ) : filtered.length === 0 ? (
             <div className="flex items-center justify-center py-6">
               <span className="text-2xs text-ink-3">
-                {repos.length === 0 ? 'no repositories found' : 'no repositories match'}
+                {repos.length === 0 ? "no repositories found" : "no repositories match"}
               </span>
             </div>
           ) : (
@@ -91,9 +91,9 @@ function RepoMultiSelect({
                     disabled={disabled}
                     onClick={() => onToggle(repo.nameWithOwner)}
                     className={cn(
-                      'interactive flex h-8 cursor-pointer items-center gap-2.5 px-2.5 text-left select-none',
-                      'hover:bg-hover-2 disabled:pointer-events-none',
-                      disabled && 'opacity-70'
+                      "interactive flex h-8 cursor-pointer items-center gap-2.5 px-2.5 text-left select-none",
+                      "hover:bg-hover-2 disabled:pointer-events-none",
+                      disabled && "opacity-70",
                     )}
                   >
                     <Checkbox
@@ -110,7 +110,7 @@ function RepoMultiSelect({
                       </span>
                     )}
                     {status && (
-                      <span className={cn('ml-auto shrink-0 text-3xs', STATUS_TONE[status.tone])}>
+                      <span className={cn("ml-auto shrink-0 text-3xs", STATUS_TONE[status.tone])}>
                         {status.label}
                       </span>
                     )}

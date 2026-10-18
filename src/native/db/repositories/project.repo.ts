@@ -1,6 +1,6 @@
-import { randomUUID } from 'crypto';
-import { getDb } from '@native/db/database';
-import type { Project, CreateProjectInput, UpdateProjectInput } from '@native/db/types';
+import { randomUUID } from "crypto";
+import { getDb } from "@native/db/database";
+import type { Project, CreateProjectInput, UpdateProjectInput } from "@native/db/types";
 
 interface ProjectRow {
   id: string;
@@ -22,24 +22,25 @@ function toProject(row: ProjectRow): Project {
     branchPrefix: row.branch_prefix,
     quickCommands: JSON.parse(row.quick_commands),
     sortOrder: row.sort_order,
-    createdAt: row.created_at
+    createdAt: row.created_at,
   };
 }
 
 export function getById(id: string): Project | null {
-  const row = getDb().prepare('SELECT * FROM projects WHERE id = ?').get(id) as
-    ProjectRow | undefined;
+  const row = getDb().prepare("SELECT * FROM projects WHERE id = ?").get(id) as
+    | ProjectRow
+    | undefined;
   return row ? toProject(row) : null;
 }
 
 export function getAll(): Project[] {
-  const rows = getDb().prepare('SELECT * FROM projects ORDER BY sort_order').all() as ProjectRow[];
+  const rows = getDb().prepare("SELECT * FROM projects ORDER BY sort_order").all() as ProjectRow[];
   return rows.map(toProject);
 }
 
 export function getByWorkspace(workspaceId: string): Project[] {
   const rows = getDb()
-    .prepare('SELECT * FROM projects WHERE workspace_id = ? ORDER BY sort_order')
+    .prepare("SELECT * FROM projects WHERE workspace_id = ? ORDER BY sort_order")
     .all(workspaceId) as ProjectRow[];
   return rows.map(toProject);
 }
@@ -48,21 +49,21 @@ export function create(input: CreateProjectInput): Project {
   const db = getDb();
   const maxOrder = db
     .prepare(
-      'SELECT COALESCE(MAX(sort_order), -1) + 1 as next FROM projects WHERE workspace_id = ?'
+      "SELECT COALESCE(MAX(sort_order), -1) + 1 as next FROM projects WHERE workspace_id = ?",
     )
     .get(input.workspaceId) as { next: number };
   const row = db
     .prepare(
-      'INSERT INTO projects (id, workspace_id, name, path, branch_prefix, quick_commands, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *'
+      "INSERT INTO projects (id, workspace_id, name, path, branch_prefix, quick_commands, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *",
     )
     .get(
       randomUUID(),
       input.workspaceId,
       input.name,
       input.path,
-      input.branchPrefix ?? '',
+      input.branchPrefix ?? "",
       JSON.stringify(input.quickCommands ?? []),
-      maxOrder.next
+      maxOrder.next,
     ) as ProjectRow;
   return toProject(row);
 }
@@ -72,38 +73,38 @@ export function update(id: string, input: UpdateProjectInput): Project {
   const values: unknown[] = [];
 
   if (input.name !== undefined) {
-    fields.push('name = ?');
+    fields.push("name = ?");
     values.push(input.name);
   }
   if (input.path !== undefined) {
-    fields.push('path = ?');
+    fields.push("path = ?");
     values.push(input.path);
   }
   if (input.branchPrefix !== undefined) {
-    fields.push('branch_prefix = ?');
+    fields.push("branch_prefix = ?");
     values.push(input.branchPrefix);
   }
   if (input.quickCommands !== undefined) {
-    fields.push('quick_commands = ?');
+    fields.push("quick_commands = ?");
     values.push(JSON.stringify(input.quickCommands));
   }
   if (input.sortOrder !== undefined) {
-    fields.push('sort_order = ?');
+    fields.push("sort_order = ?");
     values.push(input.sortOrder);
   }
 
   if (fields.length === 0) {
-    const row = getDb().prepare('SELECT * FROM projects WHERE id = ?').get(id) as ProjectRow;
+    const row = getDb().prepare("SELECT * FROM projects WHERE id = ?").get(id) as ProjectRow;
     return toProject(row);
   }
 
   values.push(id);
   const row = getDb()
-    .prepare(`UPDATE projects SET ${fields.join(', ')} WHERE id = ? RETURNING *`)
+    .prepare(`UPDATE projects SET ${fields.join(", ")} WHERE id = ? RETURNING *`)
     .get(...values) as ProjectRow;
   return toProject(row);
 }
 
 export function remove(id: string): void {
-  getDb().prepare('DELETE FROM projects WHERE id = ?').run(id);
+  getDb().prepare("DELETE FROM projects WHERE id = ?").run(id);
 }

@@ -1,21 +1,22 @@
 # Nex
 
-Multi-IDE desktop app for managing git worktrees with integrated terminals, notes, and diff viewer per project.
+macOS desktop app for running Claude Code on many git worktrees at once, with terminals, notes, a diff viewer and a built-in browser per task.
 
 ## Tech Stack
 
-- **Runtime:** Electron 39
-- **Frontend:** React 19 + TypeScript 5.9
+- **Runtime:** Electron 44, macOS only (the builder config has no Windows or Linux targets)
+- **Frontend:** React 19 + TypeScript 6
 - **Styling:** Tailwind CSS 4 (via `@tailwindcss/vite`)
-- **Build:** electron-vite 5 + Vite 7
+- **Build:** electron-vite 6 + Vite 8 (the Vite+ core)
+- **Toolchain:** Vite+ (`vp`, pinned through the pnpm catalog) — Vitest, Oxlint and Oxfmt behind one CLI, configured in `vite.config.ts`; electron-vite still builds main, preload and renderer from `electron.vite.config.ts`
 - **Package:** electron-builder 26
 - **Icons:** lucide-react
 - **Scrollbar:** simplebar-react
-- **Routing:** react-router-dom with `MemoryRouter` (not BrowserRouter)
+- **Routing:** react-router 8 data router via `createMemoryRouter` (no real URLs in Electron)
 - **State:** Zustand (hook-based stores in `web/stores/`)
 - **Design system:** shadcn/ui (new-york) on Radix UI + `class-variance-authority` + `clsx` + `tailwind-merge`
 - **Database:** better-sqlite3 (SQLite in main process)
-- **Package Manager:** yarn 1.x
+- **Package Manager:** pnpm 10 (`vite` is aliased to `@voidzero-dev/vite-plus-core` through the `pnpm-workspace.yaml` catalog — never add `vite` directly)
 
 ## Project Structure
 
@@ -23,10 +24,10 @@ Multi-IDE desktop app for managing git worktrees with integrated terminals, note
 src/
 ├── native/                    # Electron / Node.js (main process)
 │   ├── main/
-│   │   ├── index.ts           # App lifecycle, menu, IPC, DB init, updater
+│   │   ├── index.ts           # App lifecycle, menu, IPC, DB init
 │   │   ├── app-window.ts      # Window creation and management
-│   │   ├── menu.ts            # Native app menu
-│   │   └── updater.ts         # Auto-updates
+│   │   ├── fix-env.ts         # Restores the login shell PATH in packaged builds
+│   │   └── menu.ts            # Native app menu
 │   ├── preload/
 │   │   ├── index.ts           # Context bridge (typed API surface)
 │   │   └── index.d.ts         # Preload types (NexAPI interface)
@@ -47,26 +48,22 @@ src/
 ├── web/                       # React / UI (renderer process)
 │   ├── index.html             # Entry HTML (shell skeleton for instant load)
 │   ├── main.tsx               # React entry (react-scan in dev)
-│   ├── App.tsx                # Root component (ErrorBoundary + Titlebar + Sidebar + Router)
-│   ├── routes/                # Pages/views
-│   │   └── home.tsx           # Main view
+│   ├── App.tsx                # Root component (ErrorBoundary + Titlebar + Router)
+│   ├── routes/
+│   │   ├── home.tsx           # Main view (empty — being rebuilt from the wireframes)
+│   │   └── design-system.tsx  # Living style guide (dev only)
 │   ├── components/
-│   │   ├── layout/            # App structure (titlebar, sidebar, empty-state, active-badge)
-│   │   ├── sidebar/           # Sidebar-specific (workspace-item, task-group-header, etc.)
-│   │   ├── terminal/          # Terminal-related (terminal-box)
-│   │   ├── ui/                # Generic primitives (badge, icon-button, shortcut-key, etc.)
+│   │   ├── layout/            # App structure (app-shell, titlebar)
+│   │   ├── design-system/     # Specimens rendered by routes/design-system.tsx
+│   │   ├── ui/                # shadcn primitives + app composites
 │   │   └── error-boundary.tsx # React error boundary
-│   ├── hooks/                 # Custom hooks
-│   │   ├── use-app-data.ts    # Hydrates all stores on app mount
-│   │   ├── use-fullscreen.ts  # Detect fullscreen state
-│   │   └── use-scrollable.ts  # Detect SimpleBar scroll visibility
+│   ├── hooks/
+│   │   └── use-system-theme.ts
 │   ├── stores/                # Zustand stores
-│   │   ├── workspace.store.ts # Workspaces + projects
-│   │   ├── worktree.store.ts  # Worktrees
-│   │   └── task.store.ts      # Tasks
-│   ├── lib/                   # Utilities
+│   │   └── settings.store.ts  # Theme preference
+│   ├── lib/
 │   │   ├── utils.ts           # `cn()` — clsx + tailwind-merge (used by every ui/ component)
-│   │   └── status.ts          # Status types and badge mappings
+│   │   └── theme.ts           # applyTheme / getTheme
 │   ├── assets/                # Images, SVGs
 │   │   └── logo.svg     # Nex logo
 │   ├── styles/
@@ -76,12 +73,15 @@ src/
 │
 ├── build/                     # Build & packaging config
 │   ├── electron-builder.yml   # Electron builder config
-│   ├── dev-app-update.yml     # Auto-update config (dev)
 │   ├── entitlements.mac.plist # macOS entitlements
-│   └── icon.icns / .ico / .png
+│   └── icon.icns
 │
 ├── scripts/
 │   └── resign.js              # macOS ad-hoc re-signing (afterSign hook)
+│
+├── .changeset/                # Changesets config and the pending changesets (one Markdown file per change)
+├── .github/workflows/         # checks.yml (every PR) and release.yml (push to main → checks → version PR / tag)
+├── CHANGELOG.md               # Written by Changesets when a version is released; never edited by hand
 │
 └── .claude/skills/            # Agent skills (frontend-design, vercel patterns, etc.)
 ```
@@ -92,12 +92,15 @@ src/
 ## Commands
 
 ```bash
-yarn dev              # Start dev server
-yarn build            # Typecheck + build
-yarn build:mac        # Build + package for macOS (includes re-sign)
-yarn lint             # ESLint
-yarn format           # Prettier
-yarn typecheck        # TypeScript check (node + web)
+pnpm dev              # Start dev server
+pnpm build            # Typecheck + build
+pnpm build:mac        # Build + package for macOS (includes re-sign)
+pnpm check            # vp check: Oxfmt + Oxlint
+pnpm lint             # Oxlint
+pnpm fmt              # Oxfmt
+pnpm test             # Vitest (pure lib/ and store logic)
+pnpm typecheck        # TypeScript check (node + web)
+pnpm changeset        # add a changeset (Claude writes them by hand, see Releases)
 ```
 
 ## Architecture
@@ -166,7 +169,7 @@ Rules:
 ### Theming
 
 All colors use CSS variables defined in `globals.css`. Never hardcode colors in components.
-The visual language is **beautiful-ui** (structure, rings, motion) plus the **notfound hub** palette
+The visual language is **beautiful-ui** (structure, rings, motion) plus its own palette
 (warm neutrals, green brand) and a subtle glass for floating chrome.
 
 **No gradients or colored backgrounds.** No aurora/blob washes, glows, or gradient-filled buttons and
@@ -234,12 +237,8 @@ change, and `press` (scale 0.97 on `:active`) on clickables. Overlays enter with
 
 ### Titlebar
 
-The app uses `titleBarStyle: 'hiddenInset'` for native macOS look. The `Titlebar` component provides a 47px drag region with:
-
-- Left: traffic lights zone, then a spacer that tracks the sidebar width so the command bar lines up
-  with the content edge (the collapse control lives in the sidebar header)
-- Center-left: command bar + active badge
-- Right: bell, smartphone, grid, settings icons
+The app uses `titleBarStyle: 'hiddenInset'` for native macOS look. `layout/titlebar.tsx` is a 47px
+drag region; its contents are being rebuilt from the wireframes (see Design Reference).
 
 All interactive elements inside the titlebar must have `WebkitAppRegion: 'no-drag'`.
 
@@ -261,8 +260,8 @@ Modals use the `Modal` component (`ui/modal.tsx`), a wrapper over the shadcn `Di
 
 ### Diff viewer
 
-The diff is rendered by `@pierre/diffs` (`CodeView`) in `components/diff/`, with the route in
-`routes/diff-view.tsx`.
+The diff is rendered by `@pierre/diffs` (`CodeView`). The renderer was removed for the rebuild; the
+previous version lives on the `backup/redesign-v1` branch and these rules still apply to the new one.
 
 - **What it shows:** everything the session changed — `merge-base(baseBranch, HEAD)` through the
   working tree, so commits made inside the worktree count, plus staged, unstaged and untracked
@@ -284,13 +283,50 @@ The diff is rendered by `@pierre/diffs` (`CodeView`) in `components/diff/`, with
   whitespace, file tree) and the per-session set of collapsed files. Collapsing is per file,
   driven by clicking its header.
 
-### Sidebar Store
+### Stores
 
-UI state for the sidebar lives in `sidebar.store.ts` (Zustand). This includes collapse state (persisted to settings), and modal open/close flags. Always use individual selectors (`useSidebarStore(s => s.collapsed)`) — never subscribe to the whole store.
+Always use individual selectors (`useSettingsStore(s => s.theme)`) — never subscribe to a whole store.
 
 ### Routing
 
-Uses `MemoryRouter` from react-router-dom. This is required for Electron (no real URL bar). Routes are in `web/routes/`.
+`App.tsx` builds a `createMemoryRouter` (react-router 8 data router, in memory because Electron has no URL bar). `layout/app-shell.tsx` is the root route element and renders the page through `<Outlet />`. Routes are in `web/routes/`.
+
+### Releases
+
+Versioning uses Changesets 3 (`.changeset/config.json`, `baseBranch: main`, private package with
+version and tag on). Pushing to `main` never ships anything by itself.
+
+- **Every push to `main`** runs `release.yml`: first `checks.yml` (frozen install, `pnpm check`,
+  typecheck, `vp test --run`, `electron-vite build`), then `changesets/action` opens or updates a PR
+  titled **chore: version packages** with the next version in `package.json` and the new
+  `CHANGELOG.md` section.
+- **Merging that PR is the release:** the workflow tags `vX.Y.Z` and creates the GitHub Release with
+  the changelog. Nex has no auto-updates for now, so nothing builds or publishes the macOS app.
+- **Never edit `CHANGELOG.md` or the version in `package.json` by hand:** the version PR owns both.
+
+#### Changesets: Claude writes them
+
+Every change that a Nex user would notice ships with a changeset written by Claude without being
+asked, next to the code it describes: `.changeset/<kebab-case-slug>.md` with
+
+```md
+---
+"nex": patch
+---
+
+We improved how fast the task view opens.
+```
+
+- `patch` for fixes and small improvements, `minor` for a new feature or screen, `major` only when a
+  user has to do something (reinstall, sign in again, recreate a workspace) or Nex drops support for
+  something.
+- One sentence **in English, for users**, written like the release notes of a consumer app: general
+  and about the benefit, in the first person plural ("We improved…", "New option to…", "We fixed an
+  issue where…"). Name the area (home, tasks, changes, browser, environments, settings, onboarding)
+  but never the mechanism: no files, functions, stores, IPC channels or libraries.
+- Several user-visible changes are several changesets, one per change.
+- Internal work (refactors, CI, dependencies, docs, tests, tooling) gets no changeset, unless a user
+  would feel it (it is faster, a crash is gone).
 
 ## Conventions
 
@@ -299,8 +335,9 @@ Uses `MemoryRouter` from react-router-dom. This is required for Electron (no rea
 - **Hooks:** `camelCase` with `use` prefix (`useAppData`)
 - **Types/Interfaces:** `PascalCase` (`TaskItemProps`)
 - **Constants:** `UPPER_SNAKE_CASE` (`IPC`)
-- **Formatting:** Prettier with single quotes, semicolons, no trailing commas, 100 char width
-- **Linting:** ESLint with TypeScript + React + Prettier integration. `eslint --fix` applies both ESLint and Prettier rules.
+- **Formatting:** Oxfmt with its defaults (`pnpm fmt`). Do not add a Prettier config.
+- **Linting:** Oxlint through `vp lint`, rules in the `lint` block of `vite.config.ts`. The project's own rules live in `lint-rules/` as an Oxlint JS plugin (`nex/*`).
+- **Tests:** Vitest through `vp test`, importing from `vite-plus/test`. Test files sit next to the code as `*.test.ts`.
 - **Interactive elements:** Must have `cursor-pointer` and `select-none`
 - **Path aliases:** `@/` → `src/web/`, `@native/` → `src/native/`. Always use aliases instead of relative imports when crossing boundaries (e.g. `@native/db/types` not `../../native/db/types`)
 - **Comments:** See the [Comments](#comments) section. The default is none, and the hard limit is 2 lines.
@@ -320,7 +357,7 @@ Uses `MemoryRouter` from react-router-dom. This is required for Electron (no rea
 "thoroughness" — a comment is a last resort, used only when the code genuinely cannot carry the
 information itself. Assume the reader can read TypeScript.
 
-**Hard limit: 2 lines.** Enforced by `nex/max-comment-lines` in `eslint.config.mjs`, which fails the
+**Hard limit: 2 lines.** Enforced by `nex/max-comment-lines` in `lint-rules/`, which fails the
 build. Consecutive `//` lines count as one comment. If an explanation does not fit in 2 lines, the
 comment is not the fix — rename things, extract a function, or let it go.
 
@@ -349,7 +386,7 @@ interface Props {
   /** Trailing slot, typically a count badge. */
   trailing?: React.ReactNode;
   /** `card` stands on its own; `plain` is meant for a divided list. */
-  variant?: 'card' | 'plain';
+  variant?: "card" | "plain";
   /** Control aligned to the right of the label. */
   control?: React.ReactNode;
 }
@@ -357,7 +394,7 @@ interface Props {
 // right
 interface Props {
   trailing?: React.ReactNode;
-  variant?: 'card' | 'plain';
+  variant?: "card" | "plain";
   control?: React.ReactNode;
 }
 ```
@@ -378,9 +415,8 @@ code does, delete it. Leaving it because "it was already there" is how they accu
 
 Components are organized by function, not dumped into a flat `ui/` folder:
 
-- **`layout/`** — App structure components (titlebar, sidebar, empty-state, active-badge)
-- **`sidebar/`** — Sidebar-specific components (sidebar-header, sidebar-rail-button, workspace-item,
-  sidebar-task, task-section-header, count-badge)
+- **`layout/`** — App structure components (titlebar, sidebar)
+- **`sidebar/`** — Sidebar-specific components
 
 ### Sidebar
 
@@ -389,17 +425,14 @@ collapsed — never a second "collapsed" component. Every row is a `.sidebar-row
 glyph sits in a `size-5` slot so it stays at x=26 in both states; text goes in `.sidebar-copy`, which
 fades and slides out. Nested lists use `CollapsibleRows`, which the rail closes automatically unless
 it is `railVisible` (the workspace badges). The CSS lives in the `Sidebar` block of `globals.css`.
-- **`terminal/`** — Terminal-related components (terminal-box)
+
 - **`ui/`** — shadcn primitives + the app composites built on them (see “Design system” above)
-- **`modals/`** — Modal dialogs (workspace-modal, create-project-modal, delete-workspace-modal, manage-workspaces-modal)
+- **`modals/`** — Modal dialogs
 
 When creating a new component, place it in the folder that matches its scope. If it's only used within the sidebar, it goes in `sidebar/`. If it's a generic primitive, it goes in `ui/`. If it's part of the app shell, it goes in `layout/`. Modals go in `modals/`.
 
 ## Design Reference
 
-The UI design lives in `pencil-new.pen` (Pencil app). Look for "Worktree Terminal App" frames:
-
-1. **Empty State** — Sidebar + centered CTA with logo and shortcuts
-2. **Main View** — Sidebar + horizontal terminal boxes
-3. **Grid View** — Sidebar + 2x2 terminal grid
-4. **Code Diff** — Sidebar + scrollable diff viewer with file headers
+The UI design lives in the "Nex 2 — Wireframes" canvas: https://claude.ai/artifact/GbdEmDmeVR2CGVQmXxiqMi
+(home strip, task view with session strip + side panel, changes, built-in browser, first run,
+settings, usage, task environments, composer states).

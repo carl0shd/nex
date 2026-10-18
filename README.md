@@ -2,31 +2,31 @@
 
 ## Recommended IDE Setup
 
-- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+- [VSCode](https://code.visualstudio.com/) + [Oxc](https://marketplace.visualstudio.com/items?itemName=oxc.oxc-vscode) (lint and format through Vite+)
 
 ## Project Setup
 
 ### Install
 
 ```bash
-$ yarn
+$ pnpm install
 ```
 
 ### Development
 
 ```bash
-$ yarn dev
+$ pnpm dev
 ```
 
 ### Build
 
 ```bash
 # For windows
-$ yarn build:win
+$ pnpm build:win
 
 # For macOS
-$ yarn build:mac
+$ pnpm build:mac
 
 # For Linux
-$ yarn build:linux
+$ pnpm build:linux
 ```

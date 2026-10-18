@@ -1,6 +1,6 @@
-import Chip from '@/components/ui/chip';
-import { Field, FieldLabel } from '@/components/ui/field';
-import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
+import Chip from "@/components/ui/chip";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 
 interface DropdownOption {
   value: string;
@@ -19,10 +19,10 @@ interface DropdownProps {
 }
 
 /** Radix rejects `""` as an item value, so blank options round-trip through a sentinel. */
-const EMPTY_VALUE = '__nex_empty__';
+const EMPTY_VALUE = "__nex_empty__";
 
-const toRadix = (value: string): string => (value === '' ? EMPTY_VALUE : value);
-const fromRadix = (value: string): string => (value === EMPTY_VALUE ? '' : value);
+const toRadix = (value: string): string => (value === "" ? EMPTY_VALUE : value);
+const fromRadix = (value: string): string => (value === EMPTY_VALUE ? "" : value);
 
 function Dropdown({
   value,
@@ -30,7 +30,7 @@ function Dropdown({
   options,
   label,
   placeholder,
-  disabled = false
+  disabled = false,
 }: DropdownProps): React.JSX.Element {
   const selected = options.find((o) => o.value === value) ?? null;
 
@@ -48,7 +48,7 @@ function Dropdown({
             {selected ? (
               selected.label
             ) : (
-              <span className="text-ink-4">{placeholder ?? 'Select...'}</span>
+              <span className="text-ink-4">{placeholder ?? "Select..."}</span>
             )}
           </span>
           {selected?.badge && <Chip>{selected.badge}</Chip>}

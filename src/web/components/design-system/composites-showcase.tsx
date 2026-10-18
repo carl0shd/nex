@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { Group, Panel } from 'react-resizable-panels';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { Group, Panel } from "react-resizable-panels";
+import { toast } from "sonner";
 import {
   Archive,
   Code,
@@ -16,118 +16,118 @@ import {
   Rocket,
   Rows3,
   Trash2,
-  TriangleAlert
-} from 'lucide-react';
+  TriangleAlert,
+} from "lucide-react";
 import {
   SAMPLE_BRANCHES,
   SAMPLE_QUICK_COMMANDS,
   SAMPLE_REPOS,
-  SAMPLE_WORKSPACE_COLORS
-} from '@/components/design-system/samples';
-import ShowcaseSection from '@/components/design-system/showcase-section';
-import Specimen from '@/components/design-system/specimen';
-import SpecimenItem from '@/components/design-system/specimen-item';
-import SpecimenRow from '@/components/design-system/specimen-row';
-import ActionMenu, { type ActionMenuAction } from '@/components/ui/action-menu';
-import AgentCardSelector, { type AgentCardOption } from '@/components/ui/agent-card-selector';
-import AgentIcon from '@/components/ui/agent-icon';
-import BackHeader from '@/components/ui/back-header';
-import { Badge } from '@/components/ui/badge';
-import BranchPicker from '@/components/ui/branch-picker';
-import { Button } from '@/components/ui/button';
-import { Card, CardDescription, CardTitle } from '@/components/ui/card';
-import Callout from '@/components/ui/callout';
-import Chip from '@/components/ui/chip';
-import ColorPicker from '@/components/ui/color-picker';
-import CommandBar from '@/components/ui/command-bar';
-import Dropdown, { type DropdownOption } from '@/components/ui/dropdown';
-import FloatingPanel from '@/components/ui/floating-panel';
-import FolderPicker from '@/components/ui/folder-picker';
-import IconButton from '@/components/ui/icon-button';
-import IconSelector, { type IconSelectorOption } from '@/components/ui/icon-selector';
-import IconToggle from '@/components/ui/icon-toggle';
-import { Input } from '@/components/ui/input';
+  SAMPLE_WORKSPACE_COLORS,
+} from "@/components/design-system/samples";
+import ShowcaseSection from "@/components/design-system/showcase-section";
+import Specimen from "@/components/design-system/specimen";
+import SpecimenItem from "@/components/design-system/specimen-item";
+import SpecimenRow from "@/components/design-system/specimen-row";
+import ActionMenu, { type ActionMenuAction } from "@/components/ui/action-menu";
+import AgentCardSelector, { type AgentCardOption } from "@/components/ui/agent-card-selector";
+import AgentIcon from "@/components/ui/agent-icon";
+import BackHeader from "@/components/ui/back-header";
+import { Badge } from "@/components/ui/badge";
+import BranchPicker from "@/components/ui/branch-picker";
+import { Button } from "@/components/ui/button";
+import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import Callout from "@/components/ui/callout";
+import Chip from "@/components/ui/chip";
+import ColorPicker from "@/components/ui/color-picker";
+import CommandBar from "@/components/ui/command-bar";
+import Dropdown, { type DropdownOption } from "@/components/ui/dropdown";
+import FloatingPanel from "@/components/ui/floating-panel";
+import FolderPicker from "@/components/ui/folder-picker";
+import IconButton from "@/components/ui/icon-button";
+import IconSelector, { type IconSelectorOption } from "@/components/ui/icon-selector";
+import IconToggle from "@/components/ui/icon-toggle";
+import { Input } from "@/components/ui/input";
 import {
   Modal,
   ModalBody,
   ModalButton,
   ModalDivider,
   ModalFooter,
-  ModalHeader
-} from '@/components/ui/modal';
-import OptionCard from '@/components/ui/option-card';
-import OverflowBadge from '@/components/ui/overflow-badge';
-import PanelSection from '@/components/ui/panel-section';
-import PopoverMenu from '@/components/ui/popover-menu';
-import ProgressRing from '@/components/ui/progress-ring';
-import QuickCommandList from '@/components/ui/quick-command-list';
-import RepoMultiSelect from '@/components/ui/repo-multi-select';
-import ResizeHandle from '@/components/ui/resize-handle';
-import SectionHeader from '@/components/ui/section-header';
-import SegmentedControl, { type SegmentedControlOption } from '@/components/ui/segmented-control';
-import SettingField from '@/components/ui/setting-field';
-import SettingRow, { SettingValue } from '@/components/ui/setting-row';
-import ShortcutKey from '@/components/ui/shortcut-key';
-import { Shimmer } from '@/components/ui/shimmer';
-import { Spinner } from '@/components/ui/spinner';
-import { StatusPill, type StatusPillTone } from '@/components/ui/status-pill';
-import StatusDot from '@/components/ui/status-dot';
-import { Switch } from '@/components/ui/switch';
-import { TextField } from '@/components/ui/text-field';
-import TipBox from '@/components/ui/tip-box';
-import TreeGroupLabel from '@/components/ui/tree-group-label';
-import WorkspaceBadge from '@/components/ui/workspace-badge';
+  ModalHeader,
+} from "@/components/ui/modal";
+import OptionCard from "@/components/ui/option-card";
+import OverflowBadge from "@/components/ui/overflow-badge";
+import PanelSection from "@/components/ui/panel-section";
+import PopoverMenu from "@/components/ui/popover-menu";
+import ProgressRing from "@/components/ui/progress-ring";
+import QuickCommandList from "@/components/ui/quick-command-list";
+import RepoMultiSelect from "@/components/ui/repo-multi-select";
+import ResizeHandle from "@/components/ui/resize-handle";
+import SectionHeader from "@/components/ui/section-header";
+import SegmentedControl, { type SegmentedControlOption } from "@/components/ui/segmented-control";
+import SettingField from "@/components/ui/setting-field";
+import SettingRow, { SettingValue } from "@/components/ui/setting-row";
+import ShortcutKey from "@/components/ui/shortcut-key";
+import { Shimmer } from "@/components/ui/shimmer";
+import { Spinner } from "@/components/ui/spinner";
+import { StatusPill, type StatusPillTone } from "@/components/ui/status-pill";
+import StatusDot from "@/components/ui/status-dot";
+import { Switch } from "@/components/ui/switch";
+import { TextField } from "@/components/ui/text-field";
+import TipBox from "@/components/ui/tip-box";
+import TreeGroupLabel from "@/components/ui/tree-group-label";
+import WorkspaceBadge from "@/components/ui/workspace-badge";
 
 const DROPDOWN_OPTIONS: DropdownOption[] = [
-  { value: 'claude-code', label: 'Claude Code', icon: <AgentIcon slug="claude-code" /> },
-  { value: 'codex', label: 'Codex', icon: <AgentIcon slug="codex" />, badge: 'beta' },
-  { value: '', label: 'No agent' }
+  { value: "claude-code", label: "Claude Code", icon: <AgentIcon slug="claude-code" /> },
+  { value: "codex", label: "Codex", icon: <AgentIcon slug="codex" />, badge: "beta" },
+  { value: "", label: "No agent" },
 ];
 
 const AGENT_OPTIONS: AgentCardOption[] = [
-  { value: 'claude-code', label: 'Claude Code', icon: <AgentIcon slug="claude-code" size={18} /> },
-  { value: 'shell', label: 'Shell' },
-  { value: 'codex', label: 'Codex', disabled: true, badge: 'soon' }
+  { value: "claude-code", label: "Claude Code", icon: <AgentIcon slug="claude-code" size={18} /> },
+  { value: "shell", label: "Shell" },
+  { value: "codex", label: "Codex", disabled: true, badge: "soon" },
 ];
 
 const ICON_OPTIONS: IconSelectorOption[] = [
-  { id: 'letter', type: 'letter', letter: 'N', label: 'Letter' },
-  { id: 'rocket', type: 'icon', icon: Rocket, label: 'Rocket' },
-  { id: 'code', type: 'icon', icon: Code, label: 'Code' },
-  { id: 'custom', type: 'image-picker', icon: ImagePlus, label: 'Image' }
+  { id: "letter", type: "letter", letter: "N", label: "Letter" },
+  { id: "rocket", type: "icon", icon: Rocket, label: "Rocket" },
+  { id: "code", type: "icon", icon: Code, label: "Code" },
+  { id: "custom", type: "image-picker", icon: ImagePlus, label: "Image" },
 ];
 
 const VIEW_OPTIONS: SegmentedControlOption<string>[] = [
-  { value: 'split', label: 'Split' },
-  { value: 'unified', label: 'Unified' }
+  { value: "split", label: "Split" },
+  { value: "unified", label: "Unified" },
 ];
 
 const LAYOUT_OPTIONS: SegmentedControlOption<string>[] = [
-  { value: 'rows', icon: Rows3, title: 'Rows' },
-  { value: 'list', icon: LayoutList, title: 'List' }
+  { value: "rows", icon: Rows3, title: "Rows" },
+  { value: "list", icon: LayoutList, title: "List" },
 ];
 
 const MENU_ACTIONS: ActionMenuAction[] = [
-  { label: 'Rename', icon: Pencil, onClick: () => toast('Rename') },
-  { label: 'Duplicate', icon: Copy, onClick: () => toast('Duplicate') },
-  { label: 'Archive', icon: Archive, onClick: () => toast('Archive') },
-  { label: 'Delete', icon: Trash2, destructive: true, onClick: () => toast.error('Delete') }
+  { label: "Rename", icon: Pencil, onClick: () => toast("Rename") },
+  { label: "Duplicate", icon: Copy, onClick: () => toast("Duplicate") },
+  { label: "Archive", icon: Archive, onClick: () => toast("Archive") },
+  { label: "Delete", icon: Trash2, destructive: true, onClick: () => toast.error("Delete") },
 ];
 
-const TERMINAL_STATUSES = ['idle', 'running', 'waiting'] as const;
-const PILL_TONES: StatusPillTone[] = ['neutral', 'primary', 'green', 'orange', 'red', 'blue'];
+const TERMINAL_STATUSES = ["idle", "running", "waiting"] as const;
+const PILL_TONES: StatusPillTone[] = ["neutral", "primary", "green", "orange", "red", "blue"];
 const RING_STEPS = [
-  { progress: 0.25, tone: 'primary' },
-  { progress: 0.6, tone: 'orange' },
-  { progress: 0.92, tone: 'red' },
-  { progress: 1, tone: 'green' }
+  { progress: 0.25, tone: "primary" },
+  { progress: 0.6, tone: "orange" },
+  { progress: 0.92, tone: "red" },
+  { progress: 1, tone: "green" },
 ] as const;
-const WORKSPACE_ICONS = ['letter', 'rocket', 'code', 'palette', 'zap'];
+const WORKSPACE_ICONS = ["letter", "rocket", "code", "palette", "zap"];
 
 function ModalSpecimen(): React.JSX.Element {
   const [formOpen, setFormOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [name, setName] = useState('');
+  const [name, setName] = useState("");
 
   return (
     <Specimen name="Modal" source="ui/modal.tsx">
@@ -144,7 +144,7 @@ function ModalSpecimen(): React.JSX.Element {
         <ModalHeader label="// new project" title="Create project" subtitle="Link a git repo." />
         <ModalBody>
           <TextField label="// name" value={name} onChange={setName} placeholder="my-project" />
-          <FolderPicker value="" onBrowse={() => toast('Browse')} />
+          <FolderPicker value="" onBrowse={() => toast("Browse")} />
         </ModalBody>
         <ModalDivider />
         <ModalFooter>
@@ -176,10 +176,10 @@ function ModalSpecimen(): React.JSX.Element {
 }
 
 function FormFieldsSpecimen(): React.JSX.Element {
-  const [text, setText] = useState('');
-  const [agent, setAgent] = useState('claude-code');
-  const [branch, setBranch] = useState('main');
-  const [folder, setFolder] = useState('');
+  const [text, setText] = useState("");
+  const [agent, setAgent] = useState("claude-code");
+  const [branch, setBranch] = useState("main");
+  const [folder, setFolder] = useState("");
 
   return (
     <Specimen
@@ -203,7 +203,7 @@ function FormFieldsSpecimen(): React.JSX.Element {
           branches={SAMPLE_BRANCHES}
           defaultBranch="main"
         />
-        <FolderPicker value={folder} onBrowse={() => setFolder('~/Projects/nex')} />
+        <FolderPicker value={folder} onBrowse={() => setFolder("~/Projects/nex")} />
         <TextField label="// disabled" value="" onChange={setText} placeholder="—" disabled />
       </div>
     </Specimen>
@@ -212,7 +212,7 @@ function FormFieldsSpecimen(): React.JSX.Element {
 
 function QuickCommandSpecimen(): React.JSX.Element {
   const [commands, setCommands] = useState(SAMPLE_QUICK_COMMANDS);
-  const [selected, setSelected] = useState(new Set(['acme/nex']));
+  const [selected, setSelected] = useState(new Set(["acme/nex"]));
 
   const toggleRepo = (repo: string): void => {
     setSelected((prev) => {
@@ -234,7 +234,7 @@ function QuickCommandSpecimen(): React.JSX.Element {
           repos={SAMPLE_REPOS}
           selected={selected}
           onToggle={toggleRepo}
-          statuses={{ 'acme/api': { label: 'imported', tone: 'success' } }}
+          statuses={{ "acme/api": { label: "imported", tone: "success" } }}
         />
       </div>
     </Specimen>
@@ -242,10 +242,10 @@ function QuickCommandSpecimen(): React.JSX.Element {
 }
 
 function SelectionSpecimen(): React.JSX.Element {
-  const [agent, setAgent] = useState('claude-code');
-  const [icon, setIcon] = useState('letter');
+  const [agent, setAgent] = useState("claude-code");
+  const [icon, setIcon] = useState("letter");
   const [color, setColor] = useState(SAMPLE_WORKSPACE_COLORS[0]);
-  const [option, setOption] = useState('worktree');
+  const [option, setOption] = useState("worktree");
 
   return (
     <Specimen
@@ -263,15 +263,15 @@ function SelectionSpecimen(): React.JSX.Element {
         <ColorPicker label="// color" value={color} onChange={setColor} />
         <div className="flex flex-col gap-2">
           <OptionCard
-            selected={option === 'worktree'}
-            onClick={() => setOption('worktree')}
+            selected={option === "worktree"}
+            onClick={() => setOption("worktree")}
             icon={<GitBranch size={16} className="text-ink-2" />}
             title="New worktree"
             subtitle="Isolated branch checkout"
           />
           <OptionCard
-            selected={option === 'existing'}
-            onClick={() => setOption('existing')}
+            selected={option === "existing"}
+            onClick={() => setOption("existing")}
             icon={<FolderGit2 size={16} className="text-ink-2" />}
             title="Existing folder"
             subtitle="Work in place"
@@ -283,8 +283,8 @@ function SelectionSpecimen(): React.JSX.Element {
 }
 
 function ControlsSpecimen(): React.JSX.Element {
-  const [view, setView] = useState('split');
-  const [layout, setLayout] = useState('rows');
+  const [view, setView] = useState("split");
+  const [layout, setLayout] = useState("rows");
 
   return (
     <Specimen
@@ -429,23 +429,23 @@ function FeedbackSpecimen(): React.JSX.Element {
         <Callout variant="error">Could not reach the git remote.</Callout>
       </div>
       <SpecimenRow label="toast">
-        <Button variant="outline" size="sm" onClick={() => toast('Task created')}>
+        <Button variant="outline" size="sm" onClick={() => toast("Task created")}>
           default
         </Button>
-        <Button variant="outline" size="sm" onClick={() => toast.success('Pushed to origin')}>
+        <Button variant="outline" size="sm" onClick={() => toast.success("Pushed to origin")}>
           success
         </Button>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => toast.warning('Rate limited', { description: 'retry in 30s' })}
+          onClick={() => toast.warning("Rate limited", { description: "retry in 30s" })}
         >
           warning
         </Button>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => toast.error('Failed to create task', { description: 'fatal: bad ref' })}
+          onClick={() => toast.error("Failed to create task", { description: "fatal: bad ref" })}
         >
           error
         </Button>

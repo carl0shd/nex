@@ -1,7 +1,7 @@
-import { closeSync, openSync, readdirSync, readSync, statSync } from 'fs';
-import { join } from 'path';
-import { StringDecoder } from 'string_decoder';
-import { emptyTokens, type ModelSpeed, type TokenCounts } from '@native/usage/pricing';
+import { closeSync, openSync, readdirSync, readSync, statSync } from "fs";
+import { join } from "path";
+import { StringDecoder } from "string_decoder";
+import { emptyTokens, type ModelSpeed, type TokenCounts } from "@native/usage/pricing";
 
 export interface UsageRecord {
   key: string;
@@ -23,7 +23,7 @@ const CHUNK_BYTES = 1 << 20;
 
 // Claude Code stamps locally generated assistant turns (API error placeholders
 // and the like) with this in place of a model; they are never billed.
-const SYNTHETIC_MODEL = '<synthetic>';
+const SYNTHETIC_MODEL = "<synthetic>";
 
 interface RawUsage {
   input_tokens?: number;
@@ -48,7 +48,7 @@ interface RawLine {
 }
 
 export function listTranscriptFiles(configDir: string): string[] {
-  const root = join(configDir, 'projects');
+  const root = join(configDir, "projects");
   const files: string[] = [];
 
   let projectDirs: string[];
@@ -66,7 +66,7 @@ export function listTranscriptFiles(configDir: string): string[] {
       continue;
     }
     for (const entry of entries) {
-      if (entry.endsWith('.jsonl')) files.push(join(root, dir, entry));
+      if (entry.endsWith(".jsonl")) files.push(join(root, dir, entry));
     }
   }
 
@@ -98,24 +98,24 @@ function recordFrom(line: string): UsageRecord | null {
     return null;
   }
 
-  if (parsed.type !== 'assistant') return null;
+  if (parsed.type !== "assistant") return null;
 
   const usage = parsed.message?.usage;
   const model = parsed.message?.model;
   if (!usage || !model || model === SYNTHETIC_MODEL) return null;
 
-  const messageId = parsed.message?.id ?? '';
-  const requestId = parsed.requestId ?? '';
+  const messageId = parsed.message?.id ?? "";
+  const requestId = parsed.requestId ?? "";
   if (!messageId && !requestId) return null;
 
   return {
     key: `${messageId}:${requestId}`,
-    agentSessionId: parsed.sessionId ?? '',
-    cwd: parsed.cwd ?? '',
+    agentSessionId: parsed.sessionId ?? "",
+    cwd: parsed.cwd ?? "",
     model,
-    speed: usage.speed === 'fast' ? 'fast' : 'standard',
-    timestamp: parsed.timestamp ?? '',
-    tokens: tokensFrom(usage)
+    speed: usage.speed === "fast" ? "fast" : "standard",
+    timestamp: parsed.timestamp ?? "",
+    tokens: tokensFrom(usage),
   };
 }
 
@@ -133,15 +133,15 @@ export function scanTranscript(filePath: string, fromOffset: number): Transcript
   if (size === start) return { records: [], offset: start, size };
 
   const records: UsageRecord[] = [];
-  const decoder = new StringDecoder('utf8');
+  const decoder = new StringDecoder("utf8");
   const buffer = Buffer.allocUnsafe(CHUNK_BYTES);
   let readAt = start;
   let committed = start;
-  let carry = '';
+  let carry = "";
   let fd: number;
 
   try {
-    fd = openSync(filePath, 'r');
+    fd = openSync(filePath, "r");
   } catch {
     return { records: [], offset: start, size: start };
   }
@@ -152,8 +152,8 @@ export function scanTranscript(filePath: string, fromOffset: number): Transcript
       if (bytes <= 0) break;
       readAt += bytes;
 
-      const parts = (carry + decoder.write(buffer.subarray(0, bytes))).split('\n');
-      carry = parts.pop() ?? '';
+      const parts = (carry + decoder.write(buffer.subarray(0, bytes))).split("\n");
+      carry = parts.pop() ?? "";
 
       for (const part of parts) {
         committed += Buffer.byteLength(part) + 1;

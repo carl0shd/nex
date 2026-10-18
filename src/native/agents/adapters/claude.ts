@@ -5,22 +5,22 @@ import {
   statSync,
   unlinkSync,
   watch,
-  type FSWatcher
-} from 'fs';
-import { join } from 'path';
-import { homedir } from 'os';
-import type { Agent } from '@native/db/types';
-import type { AgentResumeAdapter, SessionTrackerHandle } from '@native/agents/resume';
+  type FSWatcher,
+} from "fs";
+import { join } from "path";
+import { homedir } from "os";
+import type { Agent } from "@native/db/types";
+import type { AgentResumeAdapter, SessionTrackerHandle } from "@native/agents/resume";
 
 const SETTLE_INSPECT_DELAY_MS = 1_000;
 const WATCH_DEBOUNCE_MS = 100;
 
 function encodeCwd(cwd: string): string {
-  return cwd.replace(/[^A-Za-z0-9]/g, '-');
+  return cwd.replace(/[^A-Za-z0-9]/g, "-");
 }
 
 function projectDir(cwd: string): string {
-  return join(homedir(), '.claude', 'projects', encodeCwd(cwd));
+  return join(homedir(), ".claude", "projects", encodeCwd(cwd));
 }
 
 function sessionFile(cwd: string, sessionId: string): string {
@@ -31,7 +31,7 @@ function listSessionIds(dir: string): Set<string> {
   const out = new Set<string>();
   try {
     for (const entry of readdirSync(dir)) {
-      if (entry.endsWith('.jsonl')) out.add(entry.slice(0, -6));
+      if (entry.endsWith(".jsonl")) out.add(entry.slice(0, -6));
     }
   } catch {
     /* dir doesn't exist yet */
@@ -41,7 +41,7 @@ function listSessionIds(dir: string): Set<string> {
 
 function watchForNewSession(
   cwd: string,
-  onDiscovered: (sessionId: string) => void
+  onDiscovered: (sessionId: string) => void,
 ): SessionTrackerHandle {
   const dir = projectDir(cwd);
   try {
@@ -108,12 +108,12 @@ function watchForNewSession(
   return {
     stop(): void {
       finish(null);
-    }
+    },
   };
 }
 
 export const claudeAdapter: AgentResumeAdapter = {
-  slug: 'claude-code',
+  slug: "claude-code",
   sessionExists(cwd, sessionId) {
     return existsSync(sessionFile(cwd, sessionId));
   },
@@ -130,5 +130,5 @@ export const claudeAdapter: AgentResumeAdapter = {
   buildResumeArgs(agent: Agent, sessionId: string) {
     return [...agent.resumeArgs, sessionId];
   },
-  watchForNewSession
+  watchForNewSession,
 };

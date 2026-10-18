@@ -1,33 +1,30 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   SAMPLE_RANKED,
   SAMPLE_SPARKLINE,
-  SAMPLE_STACKED_BARS
-} from '@/components/design-system/samples';
-import ShowcaseSection from '@/components/design-system/showcase-section';
-import Specimen from '@/components/design-system/specimen';
-import SpecimenItem from '@/components/design-system/specimen-item';
-import SpecimenRow from '@/components/design-system/specimen-row';
-import ActiveBadge from '@/components/layout/active-badge';
-import CostBadge from '@/components/layout/cost-badge';
-import TokensBadge from '@/components/layout/tokens-badge';
-import MeterBar from '@/components/ui/meter-bar';
-import RankedBarList from '@/components/ui/ranked-bar-list';
-import Sparkline from '@/components/ui/sparkline';
-import StackedBarChart from '@/components/ui/stacked-bar-chart';
-import StatTile from '@/components/ui/stat-tile';
-import { formatCompactUsd } from '@/lib/usage-format';
+  SAMPLE_STACKED_BARS,
+} from "@/components/design-system/samples";
+import ShowcaseSection from "@/components/design-system/showcase-section";
+import Specimen from "@/components/design-system/specimen";
+import SpecimenItem from "@/components/design-system/specimen-item";
+import SpecimenRow from "@/components/design-system/specimen-row";
+import MeterBar from "@/components/ui/meter-bar";
+import RankedBarList from "@/components/ui/ranked-bar-list";
+import Sparkline from "@/components/ui/sparkline";
+import StackedBarChart from "@/components/ui/stacked-bar-chart";
+import StatTile from "@/components/ui/stat-tile";
+import { formatCompactUsd } from "@/lib/usage-format";
 
 const METER_TONES = [
-  { tone: 'normal', percent: 42 },
-  { tone: 'warning', percent: 78 },
-  { tone: 'critical', percent: 96 },
-  { tone: 'cost', percent: 60 },
-  { tone: 'muted', percent: 30 }
+  { tone: "normal", percent: 42 },
+  { tone: "warning", percent: 78 },
+  { tone: "critical", percent: 96 },
+  { tone: "cost", percent: 60 },
+  { tone: "muted", percent: 30 },
 ] as const;
 
-const STAT_SIZES = ['default', 'compact'] as const;
-const STAT_SURFACES = ['panel', 'menu'] as const;
+const STAT_SIZES = ["default", "compact"] as const;
+const STAT_SURFACES = ["panel", "menu"] as const;
 
 function MeterSpecimen(): React.JSX.Element {
   return (
@@ -120,37 +117,12 @@ function ChartsSpecimen(): React.JSX.Element {
   );
 }
 
-function TitlebarBadgesSpecimen(): React.JSX.Element {
-  return (
-    <Specimen
-      name="ActiveBadge · TokensBadge · CostBadge"
-      source="layout/active-badge · tokens-badge · cost-badge"
-    >
-      <SpecimenRow label="active">
-        <ActiveBadge count={0} />
-        <ActiveBadge count={3} />
-      </SpecimenRow>
-      <SpecimenRow label="tokens">
-        <TokensBadge percent={null} tone="normal" />
-        <TokensBadge percent={42} tone="normal" />
-        <TokensBadge percent={78} tone="warning" />
-        <TokensBadge percent={96} tone="critical" />
-      </SpecimenRow>
-      <SpecimenRow label="cost">
-        <CostBadge amount={0} />
-        <CostBadge amount={12.34} />
-      </SpecimenRow>
-    </Specimen>
-  );
-}
-
 function DataShowcase(): React.JSX.Element {
   return (
     <>
       <ShowcaseSection title="Metrics" description="Usage numbers and limit meters.">
         <MeterSpecimen />
         <StatTileSpecimen />
-        <TitlebarBadgesSpecimen />
       </ShowcaseSection>
       <ShowcaseSection title="Charts" description="cost = chart-cost; categories = chart-1..5.">
         <ChartsSpecimen />

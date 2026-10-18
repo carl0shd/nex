@@ -1,16 +1,16 @@
-import { Plus, X, Play } from 'lucide-react';
-import SimpleBar from 'simplebar-react';
-import type { QuickCommand } from '@native/db/types';
-import { Button } from '@/components/ui/button';
-import { FieldLabel } from '@/components/ui/field';
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
-import { Separator } from '@/components/ui/separator';
+import { Plus, X, Play } from "lucide-react";
+import SimpleBar from "simplebar-react";
+import type { QuickCommand } from "@native/db/types";
+import { Button } from "@/components/ui/button";
+import { FieldLabel } from "@/components/ui/field";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import { Separator } from "@/components/ui/separator";
 
-const MONO_FONT = 'JetBrains Mono Variable, JetBrains Mono, monospace';
+const MONO_FONT = "JetBrains Mono Variable, JetBrains Mono, monospace";
 
 interface QuickCommandRowProps {
   cmd: QuickCommand;
-  onChange: (field: 'name' | 'command', value: string) => void;
+  onChange: (field: "name" | "command", value: string) => void;
   onRemove: () => void;
 }
 
@@ -22,7 +22,7 @@ function QuickCommandRow({ cmd, onChange, onRemove }: QuickCommandRowProps): Rea
       </InputGroupAddon>
       <InputGroupInput
         value={cmd.name}
-        onChange={(e) => onChange('name', e.target.value)}
+        onChange={(e) => onChange("name", e.target.value)}
         placeholder="name"
         size={cmd.name.length || 4}
         spellCheck={false}
@@ -34,7 +34,7 @@ function QuickCommandRow({ cmd, onChange, onRemove }: QuickCommandRowProps): Rea
       <Separator orientation="vertical" className="h-3" />
       <InputGroupInput
         value={cmd.command}
-        onChange={(e) => onChange('command', e.target.value)}
+        onChange={(e) => onChange("command", e.target.value)}
         placeholder="npm run dev"
         spellCheck={false}
         autoCorrect="off"
@@ -60,13 +60,13 @@ interface QuickCommandListProps {
 function QuickCommandList({
   commands,
   onChange,
-  label = '// quick commands'
+  label = "// quick commands",
 }: QuickCommandListProps): React.JSX.Element {
   const add = (): void => {
-    onChange([...commands, { name: '', command: '' }]);
+    onChange([...commands, { name: "", command: "" }]);
   };
 
-  const update = (index: number, field: 'name' | 'command', value: string): void => {
+  const update = (index: number, field: "name" | "command", value: string): void => {
     onChange(commands.map((cmd, i) => (i === index ? { ...cmd, [field]: value } : cmd)));
   };
 

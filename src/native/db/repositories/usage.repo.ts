@@ -1,6 +1,6 @@
-import { getDb } from '@native/db/database';
-import type { ModelSpeed, TokenCounts } from '@native/usage/pricing';
-import type { UsageRecord } from '@native/usage/transcript';
+import { getDb } from "@native/db/database";
+import type { ModelSpeed, TokenCounts } from "@native/usage/pricing";
+import type { UsageRecord } from "@native/usage/transcript";
 
 export interface DayRange {
   fromDay: string;
@@ -64,7 +64,7 @@ function toTokens(row: BucketRow): TokenCounts {
     cacheWrite5m: row.cache_write_5m,
     cacheWrite1h: row.cache_write_1h,
     cacheRead: row.cache_read,
-    webSearches: row.web_searches
+    webSearches: row.web_searches,
   };
 }
 
@@ -72,8 +72,8 @@ function toBucket(row: BucketRow & { day: string }): ModelBucket {
   return {
     day: row.day,
     model: row.model,
-    speed: row.speed === 'fast' ? 'fast' : 'standard',
-    tokens: toTokens(row)
+    speed: row.speed === "fast" ? "fast" : "standard",
+    tokens: toTokens(row),
   };
 }
 
@@ -85,7 +85,7 @@ export function insertMany(records: UsageRecord[], accountId: string | null): nu
     `INSERT OR IGNORE INTO usage_events
        (key, account_id, agent_session_id, cwd, model, speed, ts,
         input_tokens, output_tokens, cache_write_5m, cache_write_1h, cache_read, web_searches)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
 
   let inserted = 0;
@@ -104,7 +104,7 @@ export function insertMany(records: UsageRecord[], accountId: string | null): nu
         row.tokens.cacheWrite5m,
         row.tokens.cacheWrite1h,
         row.tokens.cacheRead,
-        row.tokens.webSearches
+        row.tokens.webSearches,
       );
       inserted += result.changes;
     }
@@ -116,7 +116,7 @@ export function insertMany(records: UsageRecord[], accountId: string | null): nu
 
 export function getScanState(filePath: string): ScanState | null {
   const row = getDb()
-    .prepare('SELECT file_path, size, byte_offset FROM usage_scan WHERE file_path = ?')
+    .prepare("SELECT file_path, size, byte_offset FROM usage_scan WHERE file_path = ?")
     .get(filePath) as { file_path: string; size: number; byte_offset: number } | undefined;
   return row ? { filePath: row.file_path, size: row.size, byteOffset: row.byte_offset } : null;
 }
@@ -125,7 +125,7 @@ export function setScanState(
   filePath: string,
   accountId: string | null,
   size: number,
-  byteOffset: number
+  byteOffset: number,
 ): void {
   getDb()
     .prepare(
@@ -135,7 +135,7 @@ export function setScanState(
          account_id = excluded.account_id,
          size = excluded.size,
          byte_offset = excluded.byte_offset,
-         scanned_at = excluded.scanned_at`
+         scanned_at = excluded.scanned_at`,
     )
     .run(filePath, accountId, size, byteOffset);
 }
@@ -143,17 +143,17 @@ export function setScanState(
 export function pruneScanState(existingPaths: string[]): void {
   const db = getDb();
   if (existingPaths.length === 0) {
-    db.prepare('DELETE FROM usage_scan').run();
+    db.prepare("DELETE FROM usage_scan").run();
     return;
   }
-  const placeholders = existingPaths.map(() => '?').join(',');
+  const placeholders = existingPaths.map(() => "?").join(",");
   db.prepare(`DELETE FROM usage_scan WHERE file_path NOT IN (${placeholders})`).run(
-    ...existingPaths
+    ...existingPaths,
   );
 }
 
 export function sumByDay(range: DayRange, accountId?: string): DayBucket[] {
-  const filter = accountId ? 'AND u.account_id = ?' : '';
+  const filter = accountId ? "AND u.account_id = ?" : "";
   const params: unknown[] = [range.fromDay, range.toDay];
   if (accountId) params.push(accountId);
 
@@ -163,7 +163,7 @@ export function sumByDay(range: DayRange, accountId?: string): DayBucket[] {
        FROM usage_events u
        WHERE ${LOCAL_DAY} BETWEEN ? AND ? ${filter}
        GROUP BY day, in_nex, model, speed
-       ORDER BY day`
+       ORDER BY day`,
     )
     .all(...params) as (BucketRow & { day: string; in_nex: number })[];
 
@@ -176,7 +176,7 @@ export function sumByAgentSession(range: DayRange): AgentSessionBucket[] {
       `SELECT ${LOCAL_DAY} AS day, agent_session_id, model, speed, ${TOKEN_SUMS}
        FROM usage_events u
        WHERE ${LOCAL_DAY} BETWEEN ? AND ? AND agent_session_id <> ''
-       GROUP BY day, agent_session_id, model, speed`
+       GROUP BY day, agent_session_id, model, speed`,
     )
     .all(range.fromDay, range.toDay) as (BucketRow & { day: string; agent_session_id: string })[];
 
@@ -185,14 +185,14 @@ export function sumByAgentSession(range: DayRange): AgentSessionBucket[] {
 
 export function sumForAgentSessions(agentSessionIds: string[]): AgentSessionBucket[] {
   if (agentSessionIds.length === 0) return [];
-  const placeholders = agentSessionIds.map(() => '?').join(',');
+  const placeholders = agentSessionIds.map(() => "?").join(",");
 
   const rows = getDb()
     .prepare(
       `SELECT ${LOCAL_DAY} AS day, agent_session_id, model, speed, ${TOKEN_SUMS}
        FROM usage_events u
        WHERE agent_session_id IN (${placeholders})
-       GROUP BY day, agent_session_id, model, speed`
+       GROUP BY day, agent_session_id, model, speed`,
     )
     .all(...agentSessionIds) as (BucketRow & { day: string; agent_session_id: string })[];
 
@@ -205,7 +205,7 @@ export function sumByAccount(range: DayRange): AccountBucket[] {
       `SELECT ${LOCAL_DAY} AS day, account_id, model, speed, ${TOKEN_SUMS}
        FROM usage_events u
        WHERE ${LOCAL_DAY} BETWEEN ? AND ?
-       GROUP BY day, account_id, model, speed`
+       GROUP BY day, account_id, model, speed`,
     )
     .all(range.fromDay, range.toDay) as (BucketRow & { day: string; account_id: string | null })[];
 
@@ -214,6 +214,7 @@ export function sumByAccount(range: DayRange): AccountBucket[] {
 
 export function firstEventDay(): string | null {
   const row = getDb().prepare(`SELECT MIN(${LOCAL_DAY}) AS day FROM usage_events`).get() as
-    { day: string | null } | undefined;
+    | { day: string | null }
+    | undefined;
   return row?.day ?? null;
 }

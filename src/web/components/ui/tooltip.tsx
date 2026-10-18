@@ -1,5 +1,5 @@
-import { Tooltip as TooltipPrimitive } from 'radix-ui';
-import { cn } from '@/lib/utils';
+import { Tooltip as TooltipPrimitive } from "radix-ui";
+import { cn } from "@/lib/utils";
 
 function TooltipProvider({
   delayDuration = 200,
@@ -23,7 +23,7 @@ function Tooltip(props: React.ComponentProps<typeof TooltipPrimitive.Root>): Rea
 }
 
 function TooltipTrigger(
-  props: React.ComponentProps<typeof TooltipPrimitive.Trigger>
+  props: React.ComponentProps<typeof TooltipPrimitive.Trigger>,
 ): React.JSX.Element {
   return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />;
 }
@@ -40,8 +40,8 @@ function TooltipContent({
         data-slot="tooltip-content"
         sideOffset={sideOffset}
         className={cn(
-          'z-50 w-fit origin-(--radix-tooltip-content-transform-origin) rounded-[7px] bg-ink px-2 py-1 text-2xs font-medium text-inverse shadow-raised duration-120 ease-out-strong data-[state=delayed-open]:animate-in data-[state=delayed-open]:fade-in-0 data-[state=delayed-open]:zoom-in-95 data-[state=instant-open]:animate-in data-[state=instant-open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0',
-          className
+          "z-50 w-fit origin-(--radix-tooltip-content-transform-origin) rounded-[7px] bg-ink px-2 py-1 text-2xs font-medium text-inverse shadow-raised duration-120 ease-out-strong data-[state=delayed-open]:animate-in data-[state=delayed-open]:fade-in-0 data-[state=delayed-open]:zoom-in-95 data-[state=instant-open]:animate-in data-[state=instant-open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0",
+          className,
         )}
         {...props}
       >

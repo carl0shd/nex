@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 interface RankedBarItem {
   key: string;
@@ -19,16 +19,16 @@ function RankedBarList({
   items,
   formatValue,
   emptyLabel,
-  className
+  className,
 }: RankedBarListProps): React.JSX.Element {
   if (items.length === 0) {
-    return <p className={cn('py-1 text-2xs text-ink-3', className)}>{emptyLabel}</p>;
+    return <p className={cn("py-1 text-2xs text-ink-3", className)}>{emptyLabel}</p>;
   }
 
   const max = Math.max(...items.map((item) => item.value), 0);
 
   return (
-    <ul data-slot="ranked-bar-list" className={cn('flex flex-col gap-1.5', className)}>
+    <ul data-slot="ranked-bar-list" className={cn("flex flex-col gap-1.5", className)}>
       {items.map((item) => (
         <li key={item.key} className="flex flex-col gap-0.5">
           <div className="flex items-baseline justify-between gap-3">
@@ -40,7 +40,7 @@ function RankedBarList({
           <div className="flex items-center gap-2">
             <span className="block h-1 flex-1 overflow-hidden rounded-full bg-ink-3/15">
               <span
-                className={cn('block h-full rounded-full', item.barClass ?? 'bg-chart-cost')}
+                className={cn("block h-full rounded-full", item.barClass ?? "bg-chart-cost")}
                 style={{ width: `${max > 0 ? Math.max((item.value / max) * 100, 2) : 0}%` }}
               />
             </span>

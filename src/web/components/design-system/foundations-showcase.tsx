@@ -1,11 +1,11 @@
-import { Bell, LayoutGrid, Search, Settings } from 'lucide-react';
-import ShowcaseSection from '@/components/design-system/showcase-section';
-import Specimen from '@/components/design-system/specimen';
-import SpecimenItem from '@/components/design-system/specimen-item';
-import SpecimenRow from '@/components/design-system/specimen-row';
-import TokenRow from '@/components/design-system/token-row';
-import TokenSwatch from '@/components/design-system/token-swatch';
-import TokenTile from '@/components/design-system/token-tile';
+import { Bell, LayoutGrid, Search, Settings } from "lucide-react";
+import ShowcaseSection from "@/components/design-system/showcase-section";
+import Specimen from "@/components/design-system/specimen";
+import SpecimenItem from "@/components/design-system/specimen-item";
+import SpecimenRow from "@/components/design-system/specimen-row";
+import TokenRow from "@/components/design-system/token-row";
+import TokenSwatch from "@/components/design-system/token-swatch";
+import TokenTile from "@/components/design-system/token-tile";
 import {
   COLOR_GROUPS,
   EASINGS,
@@ -14,18 +14,18 @@ import {
   RADII,
   SHADOWS,
   TEXT_COLORS,
-  TYPE_SCALE
-} from '@/components/design-system/tokens';
-import { Button } from '@/components/ui/button';
-import GlideHighlight from '@/components/ui/glide-highlight';
-import IconButton from '@/components/ui/icon-button';
-import { Kbd } from '@/components/ui/kbd';
-import { Shimmer } from '@/components/ui/shimmer';
-import { cn } from '@/lib/utils';
-import { useSettingsStore } from '@/stores/settings.store';
+  TYPE_SCALE,
+} from "@/components/design-system/tokens";
+import { Button } from "@/components/ui/button";
+import GlideHighlight from "@/components/ui/glide-highlight";
+import IconButton from "@/components/ui/icon-button";
+import { Kbd } from "@/components/ui/kbd";
+import { Shimmer } from "@/components/ui/shimmer";
+import { cn } from "@/lib/utils";
+import { useSettingsStore } from "@/stores/settings.store";
 
-const SAMPLE_TEXT = 'Worktree sessions, side by side';
-const GLIDE_ROWS = ['feat/design-system', 'fix/terminal-resize', 'chore/bump-electron'];
+const SAMPLE_TEXT = "Worktree sessions, side by side";
+const GLIDE_ROWS = ["feat/design-system", "fix/terminal-resize", "chore/bump-electron"];
 
 function ColorTokens(): React.JSX.Element {
   const theme = useSettingsStore((s) => s.resolvedTheme);
@@ -62,7 +62,7 @@ function GlassAndMotion(): React.JSX.Element {
     >
       <Specimen name="Glass on aurora" source="glass · glass-panel · aurora">
         <div className="relative isolate h-64 overflow-hidden rounded-panel bg-page">
-          <div aria-hidden className="aurora" style={{ position: 'absolute', opacity: 1 }} />
+          <div aria-hidden className="aurora" style={{ position: "absolute", opacity: 1 }} />
           <div className="relative flex h-full flex-col justify-between p-5">
             <div className="glass flex w-fit items-center gap-1 rounded-full p-1">
               <Button variant="ghost" size="sm" className="bg-surface text-ink shadow-glass">
@@ -144,7 +144,7 @@ function Typography(): React.JSX.Element {
       <Specimen name="Size scale" source="@theme --text-*" className="gap-3">
         {TYPE_SCALE.map((t) => (
           <TokenRow key={t.name} name={t.name} aside={t.usage}>
-            <span className={cn('text-ink', t.className)}>{SAMPLE_TEXT}</span>
+            <span className={cn("text-ink", t.className)}>{SAMPLE_TEXT}</span>
           </TokenRow>
         ))}
       </Specimen>
@@ -153,7 +153,7 @@ function Typography(): React.JSX.Element {
         <Specimen name="Weights" source="Inter Variable" className="gap-2">
           {FONT_WEIGHTS.map((w) => (
             <TokenRow key={w.name} name={w.name}>
-              <span className={cn('text-sm text-ink', w.className)}>{SAMPLE_TEXT}</span>
+              <span className={cn("text-sm text-ink", w.className)}>{SAMPLE_TEXT}</span>
             </TokenRow>
           ))}
         </Specimen>
@@ -161,7 +161,7 @@ function Typography(): React.JSX.Element {
         <Specimen name="Families" source="main.tsx · @fontsource-variable" className="gap-2">
           {FONT_FAMILIES.map((f) => (
             <TokenRow key={f.name} name={f.usage}>
-              <span className={cn('text-base text-ink', f.className)}>{f.name}</span>
+              <span className={cn("text-base text-ink", f.className)}>{f.name}</span>
             </TokenRow>
           ))}
         </Specimen>
@@ -171,7 +171,7 @@ function Typography(): React.JSX.Element {
         <div className="flex flex-col gap-2">
           {TEXT_COLORS.map((t) => (
             <TokenRow key={t.name} name={t.name}>
-              <span className={cn('text-sm', t.className)}>{t.usage}</span>
+              <span className={cn("text-sm", t.className)}>{t.usage}</span>
             </TokenRow>
           ))}
         </div>
@@ -190,7 +190,7 @@ function Shape(): React.JSX.Element {
         <div className="flex flex-wrap gap-4">
           {RADII.map((r) => (
             <TokenTile key={r.name} name={r.name} usage={r.usage}>
-              <span className={cn('h-14 w-full bg-muted shadow-hairline', r.className)} />
+              <span className={cn("h-14 w-full bg-muted shadow-hairline", r.className)} />
             </TokenTile>
           ))}
         </div>
@@ -200,7 +200,7 @@ function Shape(): React.JSX.Element {
         <div className="flex flex-wrap gap-6 p-2">
           {SHADOWS.map((s) => (
             <TokenTile key={s.name} name={s.name} usage={s.usage}>
-              <span className={cn('h-16 w-full rounded-card bg-surface-raised', s.className)} />
+              <span className={cn("h-16 w-full rounded-card bg-surface-raised", s.className)} />
             </TokenTile>
           ))}
         </div>

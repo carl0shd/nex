@@ -1,9 +1,9 @@
-import { existsSync, mkdirSync, readdirSync, symlinkSync } from 'fs';
-import { join } from 'path';
+import { existsSync, mkdirSync, readdirSync, symlinkSync } from "fs";
+import { join } from "path";
 
 export function setupSymlinks(repoRoot: string, wtPath: string, items: string[]): void {
   for (const item of items) {
-    if (item === '.claude') {
+    if (item === ".claude") {
       setupClaudeShallow(repoRoot, wtPath);
     } else {
       const src = join(repoRoot, item);
@@ -16,10 +16,10 @@ export function setupSymlinks(repoRoot: string, wtPath: string, items: string[])
 }
 
 function setupClaudeShallow(repoRoot: string, wtPath: string): void {
-  const srcDir = join(repoRoot, '.claude');
+  const srcDir = join(repoRoot, ".claude");
   if (!existsSync(srcDir)) return;
 
-  const dstDir = join(wtPath, '.claude');
+  const dstDir = join(wtPath, ".claude");
   mkdirSync(dstDir, { recursive: true });
 
   let entries: string[];
@@ -30,7 +30,7 @@ function setupClaudeShallow(repoRoot: string, wtPath: string): void {
   }
 
   for (const entry of entries) {
-    if (entry === 'plans' || entry === 'settings.local.json') continue;
+    if (entry === "plans" || entry === "settings.local.json") continue;
     const dst = join(dstDir, entry);
     if (!existsSync(dst)) {
       symlinkSync(join(srcDir, entry), dst);

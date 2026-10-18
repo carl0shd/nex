@@ -1,12 +1,11 @@
 {
   "extends": "@electron-toolkit/tsconfig/tsconfig.node.json",
-  "include": ["electron.vite.config.*", "src/native/**/*"],
+  "include": ["electron.vite.config.*", "vite.config.ts", "src/native/**/*"],
   "compilerOptions": {
     "composite": true,
     "types": ["electron-vite/node"],
-    "baseUrl": ".",
     "paths": {
-      "@native/*": ["src/native/*"]
+      "@native/*": ["./src/native/*"]
     }
   }
 }

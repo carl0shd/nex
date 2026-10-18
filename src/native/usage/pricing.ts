@@ -1,4 +1,4 @@
-export type ModelSpeed = 'standard' | 'fast';
+export type ModelSpeed = "standard" | "fast";
 
 export interface TokenCounts {
   input: number;
@@ -38,12 +38,12 @@ const MODELS: PricedModel[] = [
   {
     match: /opus-5/,
     standard: { input: 5, output: 25 },
-    fast: { input: 10, output: 50 }
+    fast: { input: 10, output: 50 },
   },
   {
     match: /opus-4-8/,
     standard: { input: 5, output: 25 },
-    fast: { input: 10, output: 50 }
+    fast: { input: 10, output: 50 },
   },
   { match: /opus-4-[567]/, standard: { input: 5, output: 25 } },
   { match: /opus-4|opus-3|3-opus/, standard: { input: 15, output: 75 } },
@@ -51,12 +51,12 @@ const MODELS: PricedModel[] = [
     match: /sonnet-5/,
     standard: { input: 3, output: 15 },
     introRate: { input: 2, output: 10 },
-    introUntil: '2026-08-31'
+    introUntil: "2026-08-31",
   },
   { match: /sonnet/, standard: { input: 3, output: 15 } },
   { match: /haiku-4-5/, standard: { input: 1, output: 5 } },
   { match: /3-5-haiku/, standard: { input: 0.8, output: 4 } },
-  { match: /haiku/, standard: { input: 0.25, output: 1.25 } }
+  { match: /haiku/, standard: { input: 0.25, output: 1.25 } },
 ];
 
 const FALLBACK: PricedModel = { match: /./, standard: { input: 5, output: 25 } };
@@ -72,7 +72,7 @@ export function isKnownModel(model: string): boolean {
 }
 
 function rateFor(entry: PricedModel, speed: ModelSpeed, isoTimestamp: string): Rate {
-  if (speed === 'fast' && entry.fast) return entry.fast;
+  if (speed === "fast" && entry.fast) return entry.fast;
   if (entry.introRate && entry.introUntil && isoTimestamp.slice(0, 10) <= entry.introUntil) {
     return entry.introRate;
   }
@@ -83,7 +83,7 @@ export function costOf(
   model: string,
   speed: ModelSpeed,
   tokens: TokenCounts,
-  isoTimestamp: string
+  isoTimestamp: string,
 ): number {
   const { input, output } = rateFor(resolveModel(model), speed, isoTimestamp);
 
@@ -104,7 +104,7 @@ export function emptyTokens(): TokenCounts {
     cacheWrite5m: 0,
     cacheWrite1h: 0,
     cacheRead: 0,
-    webSearches: 0
+    webSearches: 0,
   };
 }
 

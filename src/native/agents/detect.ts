@@ -1,14 +1,14 @@
-import { existsSync } from 'fs';
-import * as agentRepo from '@native/db/repositories/agent.repo';
-import * as agentAccountRepo from '@native/db/repositories/agent-account.repo';
-import type { Agent, AgentAccount } from '@native/db/types';
+import { existsSync } from "fs";
+import * as agentRepo from "@native/db/repositories/agent.repo";
+import * as agentAccountRepo from "@native/db/repositories/agent-account.repo";
+import type { Agent, AgentAccount } from "@native/db/types";
 import {
   AGENT_CATALOG,
   findBinaryInPath,
   getCatalogEntry,
   resolveConfigDir,
-  type SuggestedAccount
-} from './catalog';
+  type SuggestedAccount,
+} from "./catalog";
 
 export interface AvailableAgent {
   slug: string;
@@ -46,9 +46,9 @@ export async function detectAvailableAgents(): Promise<AvailableAgent[]> {
         command,
         configDir,
         installed,
-        suggestedAccount
+        suggestedAccount,
       };
-    })
+    }),
   );
 }
 
@@ -73,7 +73,7 @@ export async function installAgent(slug: string): Promise<InstallAgentResult> {
         configEnvVar: entry.configEnvVar,
         args: entry.args,
         resumeArgs: entry.resumeArgs,
-        skipPermissionsArgs: entry.skipPermissionsArgs
+        skipPermissionsArgs: entry.skipPermissionsArgs,
       });
 
   let account: AgentAccount | null = agentAccountRepo.getDefault(agent.id);
@@ -84,7 +84,7 @@ export async function installAgent(slug: string): Promise<InstallAgentResult> {
         agentId: agent.id,
         name: suggested.name,
         configDir: suggested.configDir,
-        isDefault: true
+        isDefault: true,
       });
     }
   }

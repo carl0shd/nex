@@ -1,5 +1,5 @@
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface FloatingPanelProps {
   children: React.ReactNode;
@@ -16,7 +16,7 @@ function FloatingPanel({
   collapsed = false,
   label,
   collapsedAction,
-  className
+  className,
 }: FloatingPanelProps): React.JSX.Element {
   const foldable = onToggleCollapse != null;
 
@@ -37,8 +37,8 @@ function FloatingPanel({
       ) : (
         <div
           className={cn(
-            'glass pointer-events-auto flex w-full max-w-3xl animate-pop-in flex-col gap-2 rounded-panel p-2',
-            className
+            "glass pointer-events-auto flex w-full max-w-3xl animate-pop-in flex-col gap-2 rounded-panel p-2",
+            className,
           )}
         >
           {foldable && (

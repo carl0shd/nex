@@ -1,7 +1,7 @@
-import { ChevronDown } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
-import IconButton from '@/components/ui/icon-button';
-import { cn } from '@/lib/utils';
+import { ChevronDown } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import IconButton from "@/components/ui/icon-button";
+import { cn } from "@/lib/utils";
 
 interface Action {
   icon: LucideIcon;
@@ -26,10 +26,10 @@ function SectionHeader({
   onToggle,
   actions = EMPTY_ACTIONS,
   badge,
-  className
+  className,
 }: SectionHeaderProps): React.JSX.Element {
   return (
-    <div className={cn('group/section flex h-7 w-full items-center gap-1 px-2', className)}>
+    <div className={cn("group/section flex h-7 w-full items-center gap-1 px-2", className)}>
       <button
         type="button"
         onClick={onToggle}
@@ -41,8 +41,8 @@ function SectionHeader({
           <ChevronDown
             size={11}
             className={cn(
-              'text-ink-4 opacity-0 transition-[opacity,rotate] duration-200 ease-out-strong group-hover/section:opacity-100',
-              collapsed && '-rotate-90 opacity-100'
+              "text-ink-4 opacity-0 transition-[opacity,rotate] duration-200 ease-out-strong group-hover/section:opacity-100",
+              collapsed && "-rotate-90 opacity-100",
             )}
           />
         )}

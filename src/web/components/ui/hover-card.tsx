@@ -1,5 +1,5 @@
-import { HoverCard as HoverCardPrimitive } from 'radix-ui';
-import { cn } from '@/lib/utils';
+import { HoverCard as HoverCardPrimitive } from "radix-ui";
+import { cn } from "@/lib/utils";
 
 function HoverCard({
   openDelay = 180,
@@ -17,15 +17,15 @@ function HoverCard({
 }
 
 function HoverCardTrigger(
-  props: React.ComponentProps<typeof HoverCardPrimitive.Trigger>
+  props: React.ComponentProps<typeof HoverCardPrimitive.Trigger>,
 ): React.JSX.Element {
   return <HoverCardPrimitive.Trigger data-slot="hover-card-trigger" {...props} />;
 }
 
 function HoverCardContent({
   className,
-  align = 'center',
-  side = 'right',
+  align = "center",
+  side = "right",
   sideOffset = 8,
   ...props
 }: React.ComponentProps<typeof HoverCardPrimitive.Content>): React.JSX.Element {
@@ -37,8 +37,8 @@ function HoverCardContent({
         side={side}
         sideOffset={sideOffset}
         className={cn(
-          'z-50 origin-(--radix-hover-card-content-transform-origin) outline-none duration-150 ease-out-strong data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-1 data-[side=top]:slide-in-from-bottom-1 data-[side=left]:slide-in-from-right-1 data-[side=right]:slide-in-from-left-1 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95',
-          className
+          "z-50 origin-(--radix-hover-card-content-transform-origin) outline-none duration-150 ease-out-strong data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-1 data-[side=top]:slide-in-from-bottom-1 data-[side=left]:slide-in-from-right-1 data-[side=right]:slide-in-from-left-1 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
+          className,
         )}
         {...props}
       />

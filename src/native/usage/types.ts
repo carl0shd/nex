@@ -1,9 +1,9 @@
-import type { TokenCounts } from '@native/usage/pricing';
-import type { SessionStatus } from '@native/db/types';
+import type { TokenCounts } from "@native/usage/pricing";
+import type { SessionStatus } from "@native/db/types";
 
-export type UsageGranularity = 'day' | 'week' | 'month';
+export type UsageGranularity = "day" | "week" | "month";
 
-export type AccountLimitStatus = 'ok' | 'unauthenticated' | 'expired' | 'throttled' | 'error';
+export type AccountLimitStatus = "ok" | "unauthenticated" | "expired" | "throttled" | "error";
 
 export interface UsageTotals {
   tokens: TokenCounts;

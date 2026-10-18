@@ -1,7 +1,7 @@
-import { useLayoutEffect, useRef, useState } from 'react';
-import type { LucideIcon } from 'lucide-react';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { cn } from '@/lib/utils';
+import { useLayoutEffect, useRef, useState } from "react";
+import type { LucideIcon } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { cn } from "@/lib/utils";
 
 interface SegmentedControlOption<T extends string> {
   value: T;
@@ -14,7 +14,7 @@ interface SegmentedControlProps<T extends string> {
   value: T;
   options: SegmentedControlOption<T>[];
   onChange: (value: T) => void;
-  size?: 'sm' | 'default' | 'lg';
+  size?: "sm" | "default" | "lg";
   className?: string;
 }
 
@@ -27,8 +27,8 @@ function SegmentedControl<T extends string>({
   value,
   options,
   onChange,
-  size = 'sm',
-  className
+  size = "sm",
+  className,
 }: SegmentedControlProps<T>): React.JSX.Element {
   const rootRef = useRef<HTMLDivElement>(null);
   const [thumb, setThumb] = useState<ThumbBox | null>(null);
@@ -54,7 +54,7 @@ function SegmentedControl<T extends string>({
       // Radix reports an empty string when the pressed item is toggled off; a
       // segmented control always keeps exactly one option selected.
       onValueChange={(next) => next && onChange(next as T)}
-      className={cn('relative isolate', className)}
+      className={cn("relative isolate", className)}
     >
       <span
         aria-hidden
@@ -64,8 +64,8 @@ function SegmentedControl<T extends string>({
           width: thumb?.width ?? 0,
           opacity: thumb ? 1 : 0,
           transition: thumb
-            ? 'left 220ms var(--ease-out-strong), width 220ms var(--ease-out-strong)'
-            : undefined
+            ? "left 220ms var(--ease-out-strong), width 220ms var(--ease-out-strong)"
+            : undefined,
         }}
       />
       {options.map((option) => (

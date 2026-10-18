@@ -1,5 +1,5 @@
-import { Card } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 interface SpecimenProps {
   name: string;
@@ -15,7 +15,7 @@ function Specimen({ name, source, children, className }: SpecimenProps): React.J
         <span className="text-xs font-medium text-ink select-none">{name}</span>
         <span className="truncate font-mono text-3xs text-ink-3 select-text">{source}</span>
       </div>
-      <div className={cn('flex flex-col gap-4 bg-page p-4', className)}>{children}</div>
+      <div className={cn("flex flex-col gap-4 bg-page p-4", className)}>{children}</div>
     </Card>
   );
 }
