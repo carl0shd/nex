@@ -47,7 +47,7 @@ function DiffToolbar({
   onIgnoreWhitespaceChange
 }: DiffToolbarProps): React.JSX.Element {
   return (
-    <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border-soft bg-bg-soft px-3 py-2 select-none">
+    <div className="flex h-12 shrink-0 items-center justify-between gap-2 border-b border-line-soft px-2.5 select-none">
       <div className="flex items-center gap-2 overflow-hidden">
         <IconButton icon={ArrowLeft} size={14} onClick={onBack} title="Back to sessions" />
         <IconButton
@@ -56,11 +56,11 @@ function DiffToolbar({
           onClick={onToggleTree}
           title="Toggle file list"
           // Variant is fixed: `ghost` swaps the button's padding and would shift the row.
-          className={cn(treeVisible && 'text-text')}
+          className={cn(treeVisible && 'bg-hover-2 text-ink')}
         />
-        <span className="truncate text-[13px] font-semibold text-text">{branch}</span>
-        <span className="truncate text-[12px] text-text-muted">{projectName}</span>
-        <span className="shrink-0 text-[12px] text-text-muted">
+        <span className="ml-1 truncate text-sm font-medium text-ink">{branch}</span>
+        <span className="truncate text-xs text-ink-3">{projectName}</span>
+        <span className="shrink-0 text-xs text-ink-4 tabular-nums">
           {fileCount} {fileCount === 1 ? 'file' : 'files'}
         </span>
         {showStats && <DiffStat added={totalAdded} removed={totalRemoved} size="md" />}

@@ -87,29 +87,22 @@ function BranchPicker({
       <Popover open={open} onOpenChange={setOpen} modal>
         <PopoverTrigger
           disabled={disabled}
-          className="group flex h-9 w-full cursor-pointer items-center gap-2 rounded border border-input bg-bg-input px-2.5 outline-none data-[state=open]:border-border disabled:pointer-events-none disabled:opacity-50"
+          className="interactive group flex h-8 w-full cursor-pointer items-center gap-2 rounded-control border border-line bg-field px-2.5 outline-none select-none hover:border-line-strong data-[state=open]:border-ring/60 data-[state=open]:ring-3 data-[state=open]:ring-ring/15 disabled:pointer-events-none disabled:opacity-50"
         >
-          <GitBranch size={13} className="shrink-0 text-text-muted" />
+          <GitBranch size={13} className="shrink-0 text-ink-3" />
           <span
-            className={cn(
-              'flex-1 truncate text-left text-[12px]',
-              value ? 'text-text' : 'text-text-placeholder'
-            )}
+            className={cn('flex-1 truncate text-left text-sm', value ? 'text-ink' : 'text-ink-4')}
           >
             {value || placeholder}
           </span>
           <ChevronDown
             size={12}
-            className="shrink-0 text-text-muted group-data-[state=open]:rotate-180"
+            className="shrink-0 text-ink-3 transition-transform duration-200 ease-out-strong group-data-[state=open]:rotate-180"
           />
         </PopoverTrigger>
-        <PopoverContent
-          align="start"
-          sideOffset={4}
-          className="flex w-[390px] flex-col rounded-md border-border-soft bg-bg-input p-1 shadow-[var(--nex-shadow-dropdown)]"
-        >
-          <div className="flex items-center gap-1.5 border-b border-border-soft px-2 py-1.5">
-            <Search size={12} className="shrink-0 text-text-muted" />
+        <PopoverContent align="start" sideOffset={4} className="flex w-[390px] flex-col p-1">
+          <div className="flex h-8 items-center gap-2 border-b border-line-soft px-2 pb-1">
+            <Search size={12} className="shrink-0 text-ink-3" />
             <input
               type="text"
               autoFocus
@@ -117,7 +110,7 @@ function BranchPicker({
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Search branches…"
-              className="flex-1 bg-transparent text-[12px] text-text placeholder:text-text-placeholder outline-none"
+              className="flex-1 bg-transparent text-sm text-ink placeholder:text-ink-4 outline-none"
             />
           </div>
           <SimpleBar
@@ -129,7 +122,7 @@ function BranchPicker({
             className="mt-1"
           >
             {filtered.length === 0 ? (
-              <div className="px-2 py-1.5 text-[11px] text-text-muted">No branches found</div>
+              <div className="px-2 py-2 text-xs text-ink-3">No branches found</div>
             ) : (
               <div
                 style={{ height: virtualizer.getTotalSize(), position: 'relative', width: '100%' }}
@@ -151,15 +144,15 @@ function BranchPicker({
                         transform: `translateY(${row.start}px)`
                       }}
                       className={cn(
-                        'flex cursor-pointer items-center gap-2 rounded px-2',
-                        row.index === activeIndex && 'bg-bg-item-active'
+                        'flex cursor-pointer items-center gap-2 rounded-[7px] px-2 transition-colors duration-100',
+                        row.index === activeIndex && 'bg-hover-2'
                       )}
                     >
-                      <GitBranch size={12} className="shrink-0 text-text-muted" />
+                      <GitBranch size={12} className="shrink-0 text-ink-3" />
                       <span
                         className={cn(
-                          'flex-1 truncate text-left text-[12px]',
-                          branch === value ? 'text-text' : 'text-text-secondary'
+                          'flex-1 truncate text-left text-sm',
+                          branch === value ? 'text-ink' : 'text-ink-2'
                         )}
                       >
                         {branch}

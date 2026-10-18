@@ -12,7 +12,7 @@ interface SessionViewProps {
 function SessionList({ sessionIds }: { sessionIds: string[] }): React.JSX.Element {
   const { active } = useDndContext();
   return (
-    <div className="flex h-full gap-3 py-3">
+    <div className="flex h-full gap-3 pt-1 pb-3">
       {sessionIds.map((id) => (
         <SessionPanel key={id} sessionId={id} />
       ))}
@@ -33,7 +33,7 @@ function SessionView({ sessionIds }: SessionViewProps): React.JSX.Element {
         </SortableContext>
         <DragOverlay>
           {activeId ? (
-            <SessionPanelChrome sessionId={activeId} extraClassName="shadow-2xl" />
+            <SessionPanelChrome sessionId={activeId} extraClassName="shadow-overlay" />
           ) : null}
         </DragOverlay>
       </DndContext>

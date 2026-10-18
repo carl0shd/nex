@@ -45,8 +45,8 @@ function Sparkline({
           >
             <span
               className={cn(
-                'block w-full rounded-t-[1px]',
-                point.value > 0 ? 'bg-chart-cost' : 'h-px bg-text-muted/25',
+                'block w-full rounded-t-[1px] transition-opacity duration-150',
+                point.value > 0 ? 'bg-chart-cost' : 'h-px bg-ink-3/25',
                 dim && 'opacity-45'
               )}
               style={point.value > 0 ? { height: `${height * 100}%` } : undefined}

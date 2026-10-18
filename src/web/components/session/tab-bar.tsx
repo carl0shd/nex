@@ -10,7 +10,12 @@ import QuickCommand from '@/components/session/quick-command';
 import OverflowBadge from '@/components/ui/overflow-badge';
 import IconButton from '@/components/ui/icon-button';
 import ActionMenu, { type ActionMenuAction } from '@/components/ui/action-menu';
-import PopoverMenu from '@/components/ui/popover-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 import AgentIcon from '@/components/ui/agent-icon';
 
 interface TabBarProps {
@@ -82,14 +87,14 @@ function TabBar({
       hiddenCommands.map((cmd) => ({
         label: cmd.label,
         icon: Play,
-        iconClassName: 'text-badge-success-text',
+        iconClassName: 'text-green',
         onClick: () => onRunCommand?.(cmd)
       })),
     [hiddenCommands, onRunCommand]
   );
 
   return (
-    <div className="flex h-9 shrink-0 items-center gap-1 border-b border-border-soft bg-bg-soft px-1">
+    <div className="flex h-10 shrink-0 items-center gap-1 border-b border-line-soft px-2">
       <div className="flex min-w-0 flex-1 items-center gap-1.5">
         <DndContext {...dndContextProps}>
           <SortableContext items={visibleTabIds} strategy={horizontalListSortingStrategy}>
@@ -119,39 +124,23 @@ function TabBar({
             actions={hiddenTabActions}
           />
         )}
-        <PopoverMenu
-          anchor="bottom start"
-          gap={4}
-          trigger={<IconButton icon={Plus} size={12} variant="ghost" className="shrink-0" />}
-          className="flex w-45 flex-col rounded-lg border border-border-menu bg-bg-menu p-1 shadow-lg"
-        >
-          {({ close }) => (
-            <>
-              {agentName && (
-                <button
-                  onClick={() => {
-                    close();
-                    onAddAgentTab?.();
-                  }}
-                  className="flex w-full cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-text-secondary select-none hover:bg-bg-mute"
-                >
-                  <AgentIcon slug={agentSlug} size={13} className="shrink-0" />
-                  <span className="text-[12px]">{agentName}</span>
-                </button>
-              )}
-              <button
-                onClick={() => {
-                  close();
-                  onAddShellTab?.();
-                }}
-                className="flex w-full cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-text-secondary select-none hover:bg-bg-mute"
-              >
-                <TerminalSquare size={13} className="shrink-0 text-text-muted" />
-                <span className="text-[12px]">Shell</span>
-              </button>
-            </>
-          )}
-        </PopoverMenu>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <IconButton icon={Plus} size={13} title="New terminal" className="size-6 shrink-0" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-48">
+            {agentName && (
+              <DropdownMenuItem onSelect={onAddAgentTab}>
+                <AgentIcon slug={agentSlug} size={13} />
+                {agentName}
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onSelect={onAddShellTab}>
+              <TerminalSquare size={13} />
+              Shell
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="flex shrink-0 items-center gap-1">

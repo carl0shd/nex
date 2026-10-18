@@ -36,7 +36,7 @@ function WorkspaceBadge({
 
   return (
     <span
-      className={`flex shrink-0 items-center justify-center overflow-hidden ${rounded} font-bold text-text`}
+      className={`flex shrink-0 items-center justify-center overflow-hidden ${rounded} font-semibold text-on-color shadow-mark`}
       style={{
         width: size,
         height: size,

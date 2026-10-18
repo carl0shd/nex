@@ -62,15 +62,15 @@ function DiffChatBar({
         <button
           type="button"
           onClick={onAddPending}
-          className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-left select-none hover:bg-bg-hover"
+          className="interactive flex h-8 cursor-pointer items-center gap-2 rounded-control px-2 text-left select-none hover:bg-hover-2"
         >
-          <Plus size={12} className="shrink-0 text-text-muted" />
-          <span className="truncate font-mono text-[11px] text-text-secondary">{pendingName}</span>
-          <span className="shrink-0 font-mono text-[10px] text-text-muted">
+          <Plus size={12} className="shrink-0 text-ink-3" />
+          <span className="truncate font-mono text-2xs text-ink-2">{pendingName}</span>
+          <span className="shrink-0 font-mono text-3xs text-ink-3">
             {pending.start}-{pending.end}
           </span>
           <span className="flex-1" />
-          <span className="shrink-0 text-[11px] text-text-muted">add to chat</span>
+          <span className="shrink-0 text-2xs text-ink-3">add to chat</span>
         </button>
       )}
 
@@ -92,7 +92,7 @@ function DiffChatBar({
             onSubmit={onSubmit}
           />
           {!agentName && (
-            <span className="px-1 text-[10px] text-text-muted">
+            <span className="px-1 text-3xs text-ink-3">
               Open an agent tab in this session to send.
             </span>
           )}

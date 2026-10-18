@@ -24,22 +24,12 @@ function FieldLabel({
 
 function FieldDescription({ className, ...props }: React.ComponentProps<'p'>): React.JSX.Element {
   return (
-    <p
-      data-slot="field-description"
-      className={cn('text-[10px] leading-relaxed text-text-muted', className)}
-      {...props}
-    />
+    <p data-slot="field-description" className={cn('text-2xs text-ink-3', className)} {...props} />
   );
 }
 
 function FieldError({ className, ...props }: React.ComponentProps<'span'>): React.JSX.Element {
-  return (
-    <span
-      data-slot="field-error"
-      className={cn('text-[10px] text-destructive-text', className)}
-      {...props}
-    />
-  );
+  return <span data-slot="field-error" className={cn('text-2xs text-red', className)} {...props} />;
 }
 
 export { Field, FieldLabel, FieldDescription, FieldError };

@@ -37,8 +37,8 @@ function ColorPicker({
             onClick={() => onChange(c)}
             disabled={disabled}
             className={cn(
-              'size-6 cursor-pointer rounded-full',
-              !disabled && value === c && 'ring-2'
+              'interactive press size-6 cursor-pointer rounded-full shadow-mark hover:scale-110',
+              !disabled && value === c && 'ring-2 ring-offset-2 ring-offset-surface-raised'
             )}
             style={{
               backgroundColor: c,

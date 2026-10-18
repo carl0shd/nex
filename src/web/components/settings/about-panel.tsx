@@ -39,14 +39,14 @@ function AboutPanel(): React.JSX.Element {
       <div className="flex items-center gap-3">
         <img src={nexLogo} alt="Nex" className="size-8" draggable={false} />
         <div className="flex flex-col gap-0.5">
-          <span className="text-[13px] font-medium text-text">Nex {info?.version ?? ''}</span>
-          <span className="text-[11px] text-text-muted">
+          <span className="text-sm font-medium text-ink">Nex {info?.version ?? ''}</span>
+          <span className="text-2xs text-ink-3">
             Git worktrees, terminals and diffs in one place.
           </span>
         </div>
       </div>
 
-      <Card className="gap-0 divide-y divide-border-soft overflow-hidden bg-bg-soft p-0">
+      <Card className="gap-0 divide-y divide-line-soft overflow-hidden bg-canvas p-0">
         <SettingRow
           variant="plain"
           title="Version"

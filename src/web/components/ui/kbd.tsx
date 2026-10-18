@@ -5,7 +5,7 @@ function Kbd({ className, ...props }: React.ComponentProps<'kbd'>): React.JSX.El
     <kbd
       data-slot="kbd"
       className={cn(
-        'flex select-none items-center justify-center rounded border border-border-soft bg-bg-mute/50 px-1 py-0.5 text-center font-[system-ui] text-[10px] leading-none font-medium text-text-muted',
+        'flex h-[18px] min-w-[18px] select-none items-center justify-center rounded-control bg-muted px-1 text-center font-[system-ui] text-3xs leading-none font-medium text-ink-3 shadow-[inset_0_0_0_1px_var(--line),inset_0_-1px_0_var(--line-strong)]',
         className
       )}
       {...props}

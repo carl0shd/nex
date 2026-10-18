@@ -1,4 +1,4 @@
-import { ArrowRight, ChevronDown, ChevronRight } from 'lucide-react';
+import { ArrowRight, ChevronDown } from 'lucide-react';
 import type { FileDiffMetadata } from '@pierre/diffs/react';
 import DiffStatusBadge from './diff-status-badge';
 import DiffStat from './diff-stat';
@@ -23,26 +23,33 @@ function counts(fileDiff: FileDiffMetadata): { added: number; removed: number } 
 function DiffFileHeader({ fileDiff, collapsed, onToggle }: DiffFileHeaderProps): React.JSX.Element {
   const { added, removed } = counts(fileDiff);
   const isRename = fileDiff.prevName != null && fileDiff.prevName !== fileDiff.name;
-  const Chevron = collapsed ? ChevronRight : ChevronDown;
 
   return (
     <div
       onClick={() => onToggle?.(fileDiff.name)}
       className={cn(
-        'flex min-h-[44px] w-full min-w-0 items-center gap-2 bg-bg-soft px-3 select-none',
-        onToggle && 'cursor-pointer hover:bg-bg-hover'
+        'interactive group flex min-h-11 w-full min-w-0 items-center gap-2 bg-surface px-3 select-none',
+        onToggle && 'cursor-pointer hover:bg-muted'
       )}
     >
-      {onToggle && <Chevron size={13} className="shrink-0 text-text-muted" />}
+      {onToggle && (
+        <ChevronDown
+          size={13}
+          className={cn(
+            'shrink-0 text-ink-4 transition-transform duration-200 ease-out-strong group-hover:text-ink-3',
+            collapsed && '-rotate-90'
+          )}
+        />
+      )}
       <DiffStatusBadge type={fileDiff.type} />
-      <div className="flex min-w-0 items-center gap-1.5 text-[12px]">
+      <div className="flex min-w-0 items-center gap-1.5 text-xs">
         {isRename && (
           <>
-            <span className="shrink truncate text-text-muted">{fileDiff.prevName}</span>
-            <ArrowRight size={12} className="shrink-0 text-text-muted" />
+            <span className="shrink truncate text-ink-3">{fileDiff.prevName}</span>
+            <ArrowRight size={12} className="shrink-0 text-ink-3" />
           </>
         )}
-        <span className="truncate font-semibold text-text">{fileDiff.name}</span>
+        <span className="truncate font-mono text-xs font-medium text-ink">{fileDiff.name}</span>
       </div>
       <span className="flex-1" />
       <DiffStat added={added} removed={removed} size="md" order="removed-first" />

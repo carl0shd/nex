@@ -24,11 +24,11 @@ function readTheme(): Record<string, string> {
   const styles = getComputedStyle(document.documentElement);
   const get = (name: string): string => styles.getPropertyValue(name).trim();
   return {
-    background: get('--nex-bg-chat'),
-    foreground: get('--nex-text'),
-    cursor: get('--nex-text'),
-    cursorAccent: get('--nex-bg-chat'),
-    selectionBackground: get('--nex-bg-item-active')
+    background: get('--terminal'),
+    foreground: get('--ink'),
+    cursor: get('--ink'),
+    cursorAccent: get('--terminal'),
+    selectionBackground: get('--terminal-selection')
   };
 }
 

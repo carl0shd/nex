@@ -24,24 +24,24 @@ function TerminalTab({
     <div
       onClick={onClick}
       className={cn(
-        'flex shrink-0 items-center gap-2 whitespace-nowrap rounded-[5px] border px-2 py-1 select-none',
+        'interactive group flex h-7 shrink-0 items-center gap-1.5 rounded-full px-2.5 whitespace-nowrap select-none',
         active
-          ? 'border-border bg-bg-hover text-text'
-          : 'border-border-soft text-text-secondary hover:border-border hover:text-text',
-        dragging ? 'cursor-grabbing bg-bg-hover shadow-lg' : 'cursor-pointer'
+          ? 'bg-surface-raised text-ink shadow-btn'
+          : 'text-ink-3 hover:bg-hover-2 hover:text-ink',
+        dragging ? 'cursor-grabbing bg-surface-raised shadow-overlay' : 'cursor-pointer'
       )}
     >
       {status && <StatusDot status={status} />}
-      <span className={`text-[11px] ${active ? 'font-medium' : 'font-normal'}`}>{name}</span>
+      <span className="text-xs font-medium">{name}</span>
       {active && (
         <button
           onClick={(e) => {
             e.stopPropagation();
             onClose?.();
           }}
-          className="cursor-pointer text-text-muted hover:text-text-secondary"
+          className="interactive -mr-1 flex size-4 cursor-pointer items-center justify-center rounded-full text-ink-3 hover:bg-hover-2 hover:text-ink"
         >
-          <X size={10} />
+          <X size={10} strokeWidth={2.5} />
         </button>
       )}
     </div>

@@ -2,9 +2,9 @@ import type { TerminalStatus } from '@native/db/types';
 import { cn } from '@/lib/utils';
 
 const STATUS_CLASS: Record<TerminalStatus, string> = {
-  idle: 'bg-text-muted',
-  running: 'bg-badge-success-text',
-  waiting: 'bg-badge-warning-text'
+  idle: 'bg-ink-4',
+  running: 'bg-green shadow-[0_0_0_3px_color-mix(in_srgb,var(--green)_22%,transparent)]',
+  waiting: 'animate-breathe bg-orange'
 };
 
 const STATUS_LABEL: Record<TerminalStatus, string> = {

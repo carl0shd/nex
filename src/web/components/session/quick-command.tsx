@@ -1,4 +1,5 @@
 import { Play } from 'lucide-react';
+import PillButton from '@/components/ui/pill-button';
 
 interface QuickCommandProps {
   label: string;
@@ -7,13 +8,13 @@ interface QuickCommandProps {
 
 function QuickCommand({ label, onClick }: QuickCommandProps): React.JSX.Element {
   return (
-    <button
+    <PillButton
       onClick={onClick}
-      className="flex cursor-pointer items-center gap-1 rounded border border-border-soft px-2 py-0.75 font-mono text-[10px] font-medium text-text-secondary select-none hover:border-border hover:bg-bg-hover hover:text-text"
+      className="h-6 gap-1 bg-hover px-2 font-mono text-3xs text-ink-2 hover:text-ink"
     >
-      <Play size={10} className="text-badge-success-text" />
+      <Play size={9} className="fill-current text-green" />
       {label}
-    </button>
+    </PillButton>
   );
 }
 

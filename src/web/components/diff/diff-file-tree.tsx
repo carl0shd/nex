@@ -5,6 +5,7 @@ import SectionHeader from '@/components/ui/section-header';
 import TreeGroupLabel from '@/components/ui/tree-group-label';
 import CountBadge from '@/components/sidebar/count-badge';
 import DiffFileRow from '@/components/diff/diff-file-row';
+import GlideHighlight from '@/components/ui/glide-highlight';
 import { useScrollable } from '@/hooks/use-scrollable';
 import { cn } from '@/lib/utils';
 
@@ -53,18 +54,18 @@ function DiffFileTree({
     );
 
   return (
-    <div className="flex h-full min-w-0 flex-col bg-bg-soft">
-      <div className="flex shrink-0 flex-col gap-0.5 p-4 pb-0">
-        <SectionHeader title="// files" badge={<CountBadge count={files.length} />} />
+    <div className="flex h-full min-w-0 flex-col">
+      <div className="flex shrink-0 flex-col gap-0.5 px-2.5 pt-2.5">
+        <SectionHeader title="Files" badge={<CountBadge count={files.length} />} />
       </div>
 
-      <div className="min-h-0 flex-1 px-4 pt-2">
+      <div className="min-h-0 flex-1 px-2.5 pt-1">
         <SimpleBar ref={scrollRef} style={{ maxHeight: '100%' }} autoHide={false}>
-          <div className={cn('flex flex-col gap-2.5', isScrollable && 'pr-3')}>
+          <GlideHighlight className={cn('flex flex-col gap-2', isScrollable && 'pr-2.5')}>
             {groups.map((group) => {
               const collapsed = collapsedDirs.includes(group.dir);
               return (
-                <div key={group.dir || '.'} className="flex flex-col gap-0.5">
+                <div key={group.dir || '.'} className="flex flex-col gap-px">
                   <TreeGroupLabel
                     id={group.dir}
                     name={group.dir || './'}
@@ -72,7 +73,7 @@ function DiffFileTree({
                     onToggle={toggleDir}
                   />
                   {!collapsed && (
-                    <div className="flex flex-col gap-0.5 pl-4">
+                    <div className="ml-2.5 flex flex-col gap-px border-l border-line-soft pl-1.5">
                       {group.files.map((file) => (
                         <DiffFileRow
                           key={file.name}
@@ -90,7 +91,7 @@ function DiffFileTree({
                 </div>
               );
             })}
-          </div>
+          </GlideHighlight>
         </SimpleBar>
       </div>
     </div>

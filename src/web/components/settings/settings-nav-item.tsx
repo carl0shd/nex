@@ -15,10 +15,8 @@ function SettingsNavItem({ label, active, onClick }: SettingsNavItemProps): Reac
       size="sm"
       onClick={onClick}
       className={cn(
-        'w-full justify-start px-3 py-1.75 text-[12px]',
-        active
-          ? 'bg-bg-mute text-text hover:bg-bg-mute'
-          : 'text-text-secondary hover:bg-bg-mute/50 hover:text-text'
+        'w-full justify-start px-3 py-1.75 text-xs',
+        active ? 'bg-muted text-ink hover:bg-muted' : 'text-ink-2 hover:bg-muted/50 hover:text-ink'
       )}
     >
       {label}

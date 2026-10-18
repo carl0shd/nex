@@ -4,12 +4,12 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const toggleVariants = cva(
-  'inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-md text-[12px] font-medium whitespace-nowrap text-text-muted outline-none select-none hover:bg-bg-hover hover:text-text-secondary data-[state=on]:bg-bg-item-active data-[state=on]:text-text disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0',
+  'interactive press inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-control text-xs font-medium whitespace-nowrap text-ink-3 outline-none select-none hover:bg-hover-2 hover:text-ink data-[state=on]:bg-surface data-[state=on]:text-ink data-[state=on]:shadow-btn disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0',
   {
     variants: {
       variant: {
         default: 'bg-transparent',
-        outline: 'border border-border-soft bg-transparent'
+        outline: 'shadow-hairline bg-transparent'
       },
       size: {
         default: 'h-7 min-w-7 px-2',

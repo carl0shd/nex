@@ -39,7 +39,7 @@ function WorkspaceRow({
     <div className={`flex items-center gap-3 rounded-md px-3 py-2 ${archived ? 'opacity-50' : ''}`}>
       <WorkspaceBadge
         name={workspace.name}
-        color={archived ? 'var(--nex-archived)' : workspace.color}
+        color={archived ? 'var(--ink-4)' : workspace.color}
         icon={workspace.icon}
         customImage={workspace.customImage}
         size={28}
@@ -47,8 +47,8 @@ function WorkspaceRow({
         rounded="rounded-md"
       />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="truncate text-[13px] font-medium text-text">{workspace.name}</span>
-        <span className="text-[11px] text-text-muted">{stats}</span>
+        <span className="truncate text-sm font-medium text-ink">{workspace.name}</span>
+        <span className="text-2xs text-ink-3">{stats}</span>
       </div>
       <div className="flex items-center gap-1">
         {archived ? (
@@ -135,10 +135,8 @@ function ManageWorkspacesModal({ open, onClose }: ManageWorkspacesModalProps): R
     <Modal open={open} onClose={onClose} width={620}>
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
-          <h2 className="text-lg font-semibold text-text">Manage Workspaces</h2>
-          <p className="text-[13px] text-text-secondary">
-            View, edit and organize all your workspaces
-          </p>
+          <h2 className="text-lg font-semibold text-ink">Manage Workspaces</h2>
+          <p className="text-sm text-ink-2">View, edit and organize all your workspaces</p>
         </div>
 
         <TextField
@@ -153,8 +151,8 @@ function ManageWorkspacesModal({ open, onClose }: ManageWorkspacesModalProps): R
 
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-medium text-text-muted">{'// active'}</span>
-          <span className="rounded-full bg-border px-1.5 py-px text-[10px] font-medium text-text-secondary">
+          <span className="text-3xs font-medium text-ink-3">{'// active'}</span>
+          <span className="rounded-full bg-line px-1.5 py-px text-3xs font-medium text-ink-2">
             {activeWorkspaces.length}
           </span>
         </div>
@@ -170,9 +168,7 @@ function ManageWorkspacesModal({ open, onClose }: ManageWorkspacesModalProps): R
               />
             ))}
             {activeWorkspaces.length === 0 && (
-              <span className="py-4 text-center text-[13px] text-text-muted">
-                No active workspaces
-              </span>
+              <span className="py-4 text-center text-sm text-ink-3">No active workspaces</span>
             )}
           </div>
         </SimpleBar>
@@ -182,9 +178,9 @@ function ManageWorkspacesModal({ open, onClose }: ManageWorkspacesModalProps): R
             <ModalDivider />
 
             <div className="flex items-center gap-1.5">
-              <Archive size={12} className="text-text-muted" />
-              <span className="text-[10px] font-medium text-text-muted">{'// archived'}</span>
-              <span className="rounded-full bg-border px-1.5 py-px text-[10px] font-medium text-text-muted">
+              <Archive size={12} className="text-ink-3" />
+              <span className="text-3xs font-medium text-ink-3">{'// archived'}</span>
+              <span className="rounded-full bg-line px-1.5 py-px text-3xs font-medium text-ink-3">
                 {archivedWorkspaces.length}
               </span>
             </div>

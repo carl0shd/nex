@@ -37,17 +37,18 @@ function DiffFileRow({
   return (
     <div
       ref={rowRef}
+      data-glide-row
       onClick={() => onSelect(file.name)}
       className={cn(
-        'group flex w-full cursor-pointer items-center justify-between gap-2 rounded px-2 py-1 text-left select-none',
-        active ? 'bg-bg-mute/50' : 'hover:bg-bg-mute/50'
+        'interactive group relative flex h-8 w-full cursor-pointer items-center justify-between gap-2 rounded-control pr-1 pl-2 text-left select-none',
+        active && 'bg-surface-raised shadow-btn'
       )}
     >
       <div className="flex items-center gap-2 overflow-hidden">
         <DiffStatusLetter status={file.status} />
         <span
           title={file.name}
-          className={cn('truncate text-[12px]', active ? 'text-text' : 'text-text-muted')}
+          className={cn('truncate font-mono text-2xs', active ? 'text-ink' : 'text-ink-2')}
         >
           {label}
         </span>
@@ -57,7 +58,7 @@ function DiffFileRow({
         <DiffStat added={file.added} removed={file.removed} />
         {/* Fades rather than unmounts: the menu anchors to this element, and a
             display:none trigger would strand the open menu at the viewport origin. */}
-        <div className="opacity-0 group-hover:opacity-100">
+        <div className="opacity-0 transition-opacity duration-150 group-hover:opacity-100">
           <ActionMenu
             rowRef={rowRef}
             trigger={<IconButton icon={Ellipsis} size={12} />}

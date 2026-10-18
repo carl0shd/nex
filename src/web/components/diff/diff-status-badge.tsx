@@ -21,7 +21,7 @@ function DiffStatusBadge({ type, className }: DiffStatusBadgeProps): React.JSX.E
   const { label, variant } = STATUS[type];
 
   return (
-    <Badge variant={variant} size="sm" className={cn('rounded-md font-mono lowercase', className)}>
+    <Badge variant={variant} size="sm" className={cn('font-mono lowercase', className)}>
       {label}
     </Badge>
   );

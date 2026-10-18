@@ -16,9 +16,9 @@ interface QuickCommandRowProps {
 
 function QuickCommandRow({ cmd, onChange, onRemove }: QuickCommandRowProps): React.JSX.Element {
   return (
-    <InputGroup className="rounded border-border-soft bg-transparent py-1 hover:border-border">
+    <InputGroup className="h-7 bg-transparent">
       <InputGroupAddon>
-        <Play size={10} className="text-badge-success-text" />
+        <Play size={10} className="text-green" />
       </InputGroupAddon>
       <InputGroupInput
         value={cmd.name}
@@ -28,7 +28,7 @@ function QuickCommandRow({ cmd, onChange, onRemove }: QuickCommandRowProps): Rea
         spellCheck={false}
         autoCorrect="off"
         autoCapitalize="off"
-        className="max-w-32 min-w-8 flex-none text-[11px]"
+        className="max-w-32 min-w-8 flex-none text-2xs"
         style={{ fontFamily: MONO_FONT, fontWeight: 500 }}
       />
       <Separator orientation="vertical" className="h-3" />
@@ -39,7 +39,7 @@ function QuickCommandRow({ cmd, onChange, onRemove }: QuickCommandRowProps): Rea
         spellCheck={false}
         autoCorrect="off"
         autoCapitalize="off"
-        className="text-[11px]"
+        className="text-2xs"
         style={{ fontFamily: MONO_FONT }}
       />
       <InputGroupAddon align="inline-end">
@@ -83,7 +83,7 @@ function QuickCommandList({
           variant="ghost"
           size="sm"
           onClick={add}
-          className="gap-1 rounded-[3px] bg-bg-raised px-2 py-0.5 text-[10px] hover:bg-bg-hover"
+          className="h-6 gap-1 bg-muted px-2.5 text-2xs hover:bg-muted-strong"
         >
           <Plus size={10} />
           add
@@ -94,7 +94,7 @@ function QuickCommandList({
         <div className="flex flex-col gap-1">
           {commands.length === 0 && (
             <div
-              className="rounded border border-dashed border-border-soft px-2.5 py-1.25 text-left text-[11px] text-text-placeholder"
+              className="rounded-control border border-dashed border-line px-2.5 py-1.5 text-left text-2xs text-ink-4"
               style={{ fontFamily: MONO_FONT }}
             >
               No commands yet

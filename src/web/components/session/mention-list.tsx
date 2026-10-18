@@ -70,7 +70,7 @@ const MentionList = forwardRef<MentionListHandle, MentionListProps>(
 
     if (items.length === 0) {
       return (
-        <div className="w-80 rounded-lg border border-border-menu bg-bg-menu p-3 text-[12px] text-text-muted shadow-lg">
+        <div className="w-80 animate-pop-in rounded-card bg-surface-raised px-3 py-2.5 text-xs text-ink-3 shadow-overlay">
           No matches
         </div>
       );
@@ -80,7 +80,7 @@ const MentionList = forwardRef<MentionListHandle, MentionListProps>(
 
     return (
       <div
-        className="w-80 overflow-hidden rounded-lg border border-border-menu bg-bg-menu p-1 shadow-lg"
+        className="w-80 animate-pop-in overflow-hidden rounded-card bg-surface-raised p-1 shadow-overlay"
         onMouseMove={() => {
           hoverEnabledRef.current = true;
         }}
@@ -100,13 +100,11 @@ const MentionList = forwardRef<MentionListHandle, MentionListProps>(
                   if (hoverEnabledRef.current) applySelection(index);
                 }}
                 onClick={() => select(index)}
-                className="flex w-full cursor-pointer items-center gap-2 rounded px-2 py-1 text-left text-text-secondary select-none data-[selected]:bg-bg-hover data-[selected]:text-text"
+                className="flex w-full cursor-pointer items-center gap-2 rounded-[7px] px-2 py-1 text-left text-ink-2 transition-colors duration-100 select-none data-[selected]:bg-hover-2 data-[selected]:text-ink"
               >
-                <Icon size={13} className="shrink-0 text-text-muted" />
-                <span className="truncate text-[12px]">{name}</span>
-                {dir && (
-                  <span className="ml-auto truncate pr-1 text-[10px] text-text-muted">{dir}</span>
-                )}
+                <Icon size={13} className="shrink-0 text-ink-3" />
+                <span className="truncate text-sm">{name}</span>
+                {dir && <span className="ml-auto truncate pr-1 text-3xs text-ink-3">{dir}</span>}
               </button>
             );
           })}

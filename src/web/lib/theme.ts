@@ -10,16 +10,23 @@ export function resolveTheme(preference: ThemePreference): ThemeName {
 }
 
 // Only needed by third-party renderers that can't consume CSS variables;
-// everything else themes itself through the `--nex-*` tokens.
+// everything else themes itself through the CSS tokens in `globals.css`.
 export function getTheme(): ThemeName {
   if (typeof document === 'undefined') return 'dark';
   return document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
 }
 
-/** Swaps the whole palette: `globals.css` overrides `--nex-*` per theme. */
 export function applyTheme(preference: ThemePreference): ThemeName {
   const theme = resolveTheme(preference);
-  if (typeof document !== 'undefined') document.documentElement.dataset.theme = theme;
+  if (typeof document === 'undefined') return theme;
+  const root = document.documentElement;
+  if (root.dataset.theme === theme) return theme;
+  // Hover transitions would fade hundreds of tokens at different speeds; freeze them for one frame.
+  root.classList.add('theme-switching');
+  root.dataset.theme = theme;
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => root.classList.remove('theme-switching'))
+  );
   return theme;
 }
 

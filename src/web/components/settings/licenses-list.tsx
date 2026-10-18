@@ -6,7 +6,7 @@ function LicensesList(): React.JSX.Element {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   return (
-    <div className="divide-y divide-border-soft">
+    <div className="divide-y divide-line-soft">
       {licenses.map((entry) => (
         <LicenseItem
           key={entry.name}

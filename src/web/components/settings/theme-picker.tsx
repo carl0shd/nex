@@ -21,9 +21,9 @@ function ThemePicker({ value, onChange }: ThemePickerProps): React.JSX.Element {
           key={theme.value}
           selected={value === theme.value}
           onClick={() => onChange(theme.value)}
-          icon={<theme.icon size={16} className="text-text-secondary" />}
+          icon={<theme.icon size={16} className="text-ink-2" />}
           title={theme.title}
-          className="bg-bg-soft"
+          className="bg-canvas"
         />
       ))}
     </div>

@@ -33,6 +33,7 @@ import CloseSessionModal from '@/components/modals/close-session-modal';
 import type { ChatEditorHandle } from '@/components/session/chat-editor';
 import type { SessionTab, QuickCommand } from '@/lib/session-view';
 import { aggregateTerminalStatus } from '@/lib/status';
+import { cn } from '@/lib/utils';
 
 interface SessionPanelChromeProps {
   sessionId: string;
@@ -274,9 +275,11 @@ function SessionPanelChrome({
       style={mergedStyle}
       onFocus={handleFocusIn}
       onMouseDown={handleFocusIn}
-      className={`relative flex h-full shrink-0 flex-col overflow-hidden rounded-lg border bg-bg ${
-        isActiveSession ? 'border-border' : 'border-border-soft'
-      } ${extraClassName}`}
+      className={cn(
+        'interactive relative flex h-full shrink-0 flex-col overflow-hidden rounded-panel bg-surface',
+        isActiveSession ? 'shadow-raised ring-1 ring-selected-ring' : 'shadow-card',
+        extraClassName
+      )}
     >
       <SessionHeader
         branch={branch || name}
@@ -332,7 +335,7 @@ function SessionPanelChrome({
         )}
 
         <Panel id="bottom" defaultSize="73%" minSize="25%">
-          <div className="flex h-full min-h-0 flex-col bg-bg-chat">
+          <div className="flex h-full min-h-0 flex-col">
             <TabBar
               tabs={tabs}
               commands={commands}
@@ -345,8 +348,8 @@ function SessionPanelChrome({
               onRunCommand={handleRunCommand}
               onReorderTabs={handleReorderTabs}
             />
-            <div className="flex min-h-0 flex-1 flex-col gap-3 p-3.5 pt-3">
-              <div className="min-h-0 flex-1 overflow-hidden">
+            <div className="flex min-h-0 flex-1 flex-col gap-2 p-2">
+              <div className="min-h-0 flex-1 overflow-hidden rounded-card bg-terminal p-2 shadow-[inset_0_0_0_1px_var(--line-soft)]">
                 {sessionTerminals.length === 0 ? (
                   <NoTerminalsEmpty
                     agentName={agentLabel}
@@ -386,9 +389,10 @@ function SessionPanelChrome({
       <div
         onPointerDown={onResizeStart}
         onDoubleClick={handleResizeDoubleClick}
-        className={`absolute top-0 right-0 z-10 h-full w-1.5 cursor-col-resize hover:bg-accent ${
-          isResizing ? 'bg-accent' : ''
-        }`}
+        className={cn(
+          'absolute top-0 right-0 z-10 h-full w-1.5 cursor-col-resize transition-colors duration-150 hover:bg-primary/25',
+          isResizing && 'bg-primary/40'
+        )}
         aria-hidden
       />
 

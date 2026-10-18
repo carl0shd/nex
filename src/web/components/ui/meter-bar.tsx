@@ -1,14 +1,14 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
-const meterFill = cva('block h-full rounded-full', {
+const meterFill = cva('block h-full rounded-full transition-[width] duration-500 ease-out-strong', {
   variants: {
     tone: {
-      normal: 'bg-badge-warning-text/70',
-      warning: 'bg-badge-warning-text',
-      critical: 'bg-badge-error-text',
+      normal: 'bg-orange/70',
+      warning: 'bg-orange',
+      critical: 'bg-red',
       cost: 'bg-chart-cost',
-      muted: 'bg-text-muted/50'
+      muted: 'bg-ink-3/50'
     }
   },
   defaultVariants: { tone: 'normal' }
@@ -17,11 +17,11 @@ const meterFill = cva('block h-full rounded-full', {
 const meterTrack = cva('block overflow-hidden rounded-full', {
   variants: {
     tone: {
-      normal: 'bg-badge-warning-text/10',
-      warning: 'bg-badge-warning-text/10',
-      critical: 'bg-badge-error-text/15',
+      normal: 'bg-orange/10',
+      warning: 'bg-orange/10',
+      critical: 'bg-red/15',
       cost: 'bg-chart-cost/15',
-      muted: 'bg-text-muted/15'
+      muted: 'bg-ink-3/15'
     }
   },
   defaultVariants: { tone: 'normal' }

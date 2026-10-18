@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react';
 import nexLogo from '@/assets/images/logo.svg';
 import { Button } from '@/components/ui/button';
 import ShortcutKey from '@/components/ui/shortcut-key';
@@ -14,12 +15,12 @@ function EmptyState(): React.JSX.Element {
   const hasWorkspaces = workspaces.length > 0;
   const hasProjects = projects.length > 0;
 
-  const ctaLabel = !hasWorkspaces ? 'new workspace' : !hasProjects ? 'new project' : 'new task';
+  const ctaLabel = !hasWorkspaces ? 'New workspace' : !hasProjects ? 'New project' : 'New task';
   const ctaSubtitle = !hasWorkspaces
-    ? 'Create a workspace to get started'
+    ? 'Create a workspace to get started.'
     : !hasProjects
-      ? 'Add a project to your workspace'
-      : 'Create a new task to start working';
+      ? 'Add a project to your workspace.'
+      : 'Start a task to spin up a worktree and its agents.';
   const ctaAction = !hasWorkspaces
     ? openCreateWorkspace
     : !hasProjects
@@ -27,22 +28,25 @@ function EmptyState(): React.JSX.Element {
       : () => openCreateTask();
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-6 bg-bg">
-      <img src={nexLogo} alt="Nex" className="w-12 pb-10" draggable={false} />
-
-      <div className="flex flex-col items-center gap-2">
-        <h2 className="text-lg font-medium text-text">No active worktrees</h2>
-        <p className="text-sm text-text-secondary">{ctaSubtitle}</p>
+    <div className="flex flex-1 flex-col items-center justify-center gap-8 px-6">
+      <div className="glass flex size-16 animate-rise items-center justify-center rounded-window">
+        <img src={nexLogo} alt="Nex" className="w-7" draggable={false} />
       </div>
 
-      <Button onClick={ctaAction} className="px-6 py-2.5 text-sm">
-        &gt; {ctaLabel}
+      <div className="flex animate-rise flex-col items-center gap-1.5 text-center [animation-delay:60ms]">
+        <h2 className="text-2xl font-medium text-ink">No active worktrees</h2>
+        <p className="text-sm text-ink-3">{ctaSubtitle}</p>
+      </div>
+
+      <Button size="lg" onClick={ctaAction} className="animate-rise px-5 [animation-delay:120ms]">
+        <Plus size={15} strokeWidth={2.25} />
+        {ctaLabel}
       </Button>
 
-      <div className="flex flex-col gap-2">
-        <ShortcutKey keys="⌘W" label="new workspace" />
-        <ShortcutKey keys="⌘P" label="new project" />
-        <ShortcutKey keys="⌘T" label="new task" />
+      <div className="flex animate-rise items-center gap-5 [animation-delay:180ms]">
+        <ShortcutKey keys="⌘W" label="New workspace" />
+        <ShortcutKey keys="⌘P" label="New project" />
+        <ShortcutKey keys="⌘T" label="New task" />
       </div>
     </div>
   );

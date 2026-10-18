@@ -41,14 +41,12 @@ function DiffStat({
     <span
       className={cn(
         'flex shrink-0 items-center gap-1.5 font-mono font-medium',
-        size === 'md' ? 'text-[11px]' : 'text-[9px]',
+        size === 'md' ? 'text-2xs' : 'text-3xs',
         className
       )}
     >
-      <span className="text-badge-success-text">+{format(added)}</span>
-      <span className={removed > 0 ? 'text-badge-error-text' : 'text-text-muted'}>
-        -{format(removed)}
-      </span>
+      <span className="text-green">+{format(added)}</span>
+      <span className={removed > 0 ? 'text-red' : 'text-ink-3'}>-{format(removed)}</span>
     </span>
   );
 }

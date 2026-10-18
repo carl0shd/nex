@@ -183,7 +183,7 @@ function TaskForm({
       workspaceProjects.map((p) => ({
         value: p.id,
         label: p.name,
-        icon: <Folder size={13} className="shrink-0 text-text-muted" />
+        icon: <Folder size={13} className="shrink-0 text-ink-3" />
       })),
     [workspaceProjects]
   );
@@ -205,7 +205,7 @@ function TaskForm({
         label: acc.name,
         icon: (
           <span
-            className={`size-1.5 shrink-0 rounded-full ${acc.isDefault ? 'bg-selected' : 'bg-text-muted'}`}
+            className={`size-1.5 shrink-0 rounded-full ${acc.isDefault ? 'bg-primary' : 'bg-ink-3'}`}
           />
         ),
         badge: acc.isDefault ? 'active and default' : undefined
@@ -287,7 +287,7 @@ function TaskForm({
               label={gitDisabled ? '// task name' : '// branch name'}
               icon={GitBranch}
             />
-            {nameError && <span className="text-[10px] text-destructive-text">{nameError}</span>}
+            {nameError && <span className="text-3xs text-red">{nameError}</span>}
           </div>
 
           {!gitDisabled && (
@@ -317,13 +317,11 @@ function TaskForm({
 
           {agents.length === 0 ? (
             <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-medium text-text-muted">{'// agent'}</label>
-              <div className="flex flex-col items-center gap-3 rounded-md border border-border-soft bg-bg-input px-3 py-5">
+              <label className="text-3xs font-medium text-ink-3">{'// agent'}</label>
+              <div className="flex flex-col items-center gap-3 rounded-md border border-line-soft bg-inset px-3 py-5">
                 <div className="flex flex-col items-center gap-0.5">
-                  <span className="text-[12px] font-medium text-text">No agents configured</span>
-                  <span className="text-[11px] text-text-muted">
-                    Add an agent to use it in your tasks
-                  </span>
+                  <span className="text-xs font-medium text-ink">No agents configured</span>
+                  <span className="text-2xs text-ink-3">Add an agent to use it in your tasks</span>
                 </div>
                 <ModalButton variant="outline" size="sm" disabled>
                   <Plus size={11} />
@@ -355,9 +353,9 @@ function TaskForm({
           <>
             <ModalDivider />
             <div className="flex flex-col gap-2.5">
-              <span className="text-[10px] font-medium text-text-muted">{'// options'}</span>
+              <span className="text-3xs font-medium text-ink-3">{'// options'}</span>
 
-              <Label className="w-full cursor-pointer text-[11px] text-text-secondary">
+              <Label className="w-full cursor-pointer text-2xs text-ink-2">
                 <Checkbox
                   checked={defaultBranch}
                   onCheckedChange={(checked) => setDefaultBranch(checked === true)}
@@ -384,14 +382,11 @@ function TaskForm({
               )}
 
               <div className="flex flex-col gap-1.5">
-                <span className="text-[10px] font-medium text-text-muted">
+                <span className="text-3xs font-medium text-ink-3">
                   {'// symlink into worktree'}
                 </span>
                 {SYMLINK_OPTIONS.map((name) => (
-                  <Label
-                    key={name}
-                    className="w-full cursor-pointer text-[11px] text-text-secondary"
-                  >
+                  <Label key={name} className="w-full cursor-pointer text-2xs text-ink-2">
                     <Checkbox
                       checked={symlinks.includes(name)}
                       onCheckedChange={() => toggleSymlink(name)}

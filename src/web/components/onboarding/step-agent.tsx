@@ -12,6 +12,7 @@ import { useOnboardingStore } from '@/stores/onboarding.store';
 import { useAgentStore } from '@/stores/agent.store';
 import claudeLogo from '@/assets/images/claude-logo.svg';
 import type { AvailableAgent } from '@native/agents/detect';
+import { Spinner } from '@/components/ui/spinner';
 
 interface StepAgentProps {
   onFinish: () => void;
@@ -74,14 +75,14 @@ function StepAgent({ onFinish }: StepAgentProps): React.JSX.Element {
 
       {loading ? (
         <div className="flex flex-col items-center gap-3 py-8">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-border-soft border-t-text-muted" />
-          <span className="text-[12px] text-text-muted">Detecting agents...</span>
+          <Spinner className="size-5" />
+          <span className="text-xs text-ink-3">Detecting agents...</span>
         </div>
       ) : (
         <div className="flex flex-col gap-4">
           {available.length > 0 && (
             <div className="flex flex-col gap-1.5">
-              <span className="text-[10px] font-medium text-text-muted">
+              <span className="text-3xs font-medium text-ink-3">
                 {available.length > 1 ? '// detected agents' : '// detected agent'}
               </span>
               {available.map((a) => {
@@ -95,7 +96,7 @@ function StepAgent({ onFinish }: StepAgentProps): React.JSX.Element {
                       logo ? (
                         <img src={logo} alt="" className="h-5 w-5" draggable={false} />
                       ) : (
-                        <Terminal size={18} className="text-text-secondary" />
+                        <Terminal size={18} className="text-ink-2" />
                       )
                     }
                     title={a.name}
@@ -108,7 +109,7 @@ function StepAgent({ onFinish }: StepAgentProps): React.JSX.Element {
 
           {available.length === 0 && (
             <div className="flex flex-col items-center gap-2 py-4">
-              <span className="text-[13px] text-text-secondary">No agents detected</span>
+              <span className="text-sm text-ink-2">No agents detected</span>
             </div>
           )}
 
@@ -117,10 +118,10 @@ function StepAgent({ onFinish }: StepAgentProps): React.JSX.Element {
           <OptionCard
             selected={selectedSlug === null}
             onClick={() => setSelectedSlug(null)}
-            icon={<Terminal size={18} className="text-text-secondary" />}
+            icon={<Terminal size={18} className="text-ink-2" />}
             title="Skip for now"
             subtitle="Run your agent manually in the worktree session or configure one later in settings"
-            titleClassName="text-[13px] font-medium text-text-secondary"
+            titleClassName="text-sm font-medium text-ink-2"
           />
         </div>
       )}

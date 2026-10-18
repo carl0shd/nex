@@ -19,21 +19,19 @@ function LimitsPopover({ summary, children }: LimitsPopoverProps): React.JSX.Ele
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent align="start" className="flex w-88 flex-col gap-2.5 p-2.5">
         {!summary ? (
-          <p className="py-4 text-center text-xs text-text-muted">Loading limits…</p>
+          <p className="py-4 text-center text-xs text-ink-3">Loading limits…</p>
         ) : (
           <>
             <PanelSection
               title="Plan limits"
               trailing={
                 summary.worstAccountName && summary.accounts.length > 1 ? (
-                  <span className="text-[10px] text-text-muted">
-                    highest · {summary.worstAccountName}
-                  </span>
+                  <span className="text-3xs text-ink-3">highest · {summary.worstAccountName}</span>
                 ) : undefined
               }
             >
               {summary.accounts.length === 0 ? (
-                <p className="py-2 text-[11px] text-text-muted">No agent account connected yet.</p>
+                <p className="py-2 text-2xs text-ink-3">No agent account connected yet.</p>
               ) : (
                 <div className="flex flex-col gap-2.5">
                   {summary.accounts.map((account, index) => (

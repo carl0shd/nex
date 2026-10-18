@@ -51,10 +51,10 @@ function StepWorkspace(): React.JSX.Element {
           rounded="rounded-lg"
         />
         <div className="flex flex-col">
-          <span className="max-w-48 truncate text-[14px] font-semibold text-text">
+          <span className="max-w-48 truncate text-base font-semibold text-ink">
             {name.trim() || 'my-workspace'}
           </span>
-          <span className="text-[11px] text-text-muted">0 projects</span>
+          <span className="text-2xs text-ink-3">0 projects</span>
         </div>
       </div>
 

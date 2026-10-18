@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface TreeGroupLabelProps {
@@ -19,19 +19,24 @@ function TreeGroupLabel({
   trailing,
   className
 }: TreeGroupLabelProps): React.JSX.Element {
-  const Chevron = collapsed ? ChevronRight : ChevronDown;
-
   return (
     <button
+      data-glide-row
       onClick={() => onToggle?.(id)}
       title={name}
       className={cn(
-        'flex cursor-pointer items-center gap-1.5 px-1 py-0.5 text-left select-none',
+        'interactive group relative flex h-7 cursor-pointer items-center gap-1.5 rounded-control px-1.5 text-left outline-none select-none',
         className
       )}
     >
-      <Chevron size={12} className="shrink-0 text-text-muted" />
-      <span className="truncate text-[12px] font-medium text-text-muted">{name}</span>
+      <ChevronDown
+        size={12}
+        className={cn(
+          'shrink-0 text-ink-4 transition-transform duration-200 ease-out-strong group-hover:text-ink-3',
+          collapsed && '-rotate-90'
+        )}
+      />
+      <span className="truncate text-xs font-medium text-ink-3 group-hover:text-ink-2">{name}</span>
       {trailing}
     </button>
   );

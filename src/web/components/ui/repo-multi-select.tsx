@@ -7,6 +7,7 @@ import { Field, FieldLabel } from '@/components/ui/field';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { cn } from '@/lib/utils';
 import type { GithubRepo } from '@native/git/github';
+import { Spinner } from '@/components/ui/spinner';
 
 interface RepoStatus {
   label: string;
@@ -23,9 +24,9 @@ interface RepoMultiSelectProps {
 }
 
 const STATUS_TONE: Record<RepoStatus['tone'], string> = {
-  muted: 'text-text-muted',
-  success: 'text-badge-success-text',
-  error: 'text-destructive-text'
+  muted: 'text-ink-3',
+  success: 'text-green',
+  error: 'text-red'
 };
 
 function RepoMultiSelect({
@@ -51,13 +52,11 @@ function RepoMultiSelect({
     <Field>
       <div className="flex items-center justify-between">
         <FieldLabel>{label}</FieldLabel>
-        {selected.size > 0 && (
-          <span className="text-[10px] text-text-muted">{selected.size} selected</span>
-        )}
+        {selected.size > 0 && <span className="text-3xs text-ink-3">{selected.size} selected</span>}
       </div>
 
-      <div className="flex flex-col overflow-hidden rounded border border-border-soft bg-bg-input">
-        <InputGroup className="rounded-none border-0 border-b border-border-soft">
+      <div className="flex flex-col overflow-hidden rounded-card bg-field shadow-hairline">
+        <InputGroup className="rounded-none border-0 border-b border-line-soft bg-transparent focus-within:ring-0">
           <InputGroupAddon>
             <Search size={13} />
           </InputGroupAddon>
@@ -72,12 +71,12 @@ function RepoMultiSelect({
         <SimpleBar autoHide={false} style={{ maxHeight: 180 }}>
           {repos === null ? (
             <div className="flex items-center justify-center gap-2 py-6">
-              <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-border-soft border-t-text-muted" />
-              <span className="text-[11px] text-text-muted">loading repositories...</span>
+              <Spinner />
+              <span className="text-2xs text-ink-3">loading repositories...</span>
             </div>
           ) : filtered.length === 0 ? (
             <div className="flex items-center justify-center py-6">
-              <span className="text-[11px] text-text-muted">
+              <span className="text-2xs text-ink-3">
                 {repos.length === 0 ? 'no repositories found' : 'no repositories match'}
               </span>
             </div>
@@ -92,8 +91,8 @@ function RepoMultiSelect({
                     disabled={disabled}
                     onClick={() => onToggle(repo.nameWithOwner)}
                     className={cn(
-                      'flex cursor-pointer items-center gap-2.5 px-2.5 py-1.5 text-left select-none',
-                      'hover:bg-bg-hover disabled:pointer-events-none',
+                      'interactive flex h-8 cursor-pointer items-center gap-2.5 px-2.5 text-left select-none',
+                      'hover:bg-hover-2 disabled:pointer-events-none',
                       disabled && 'opacity-70'
                     )}
                   >
@@ -103,17 +102,15 @@ function RepoMultiSelect({
                       className="pointer-events-none"
                       tabIndex={-1}
                     />
-                    <span className="truncate text-[12px] text-text">{repo.name}</span>
-                    {repo.isPrivate && <Chip className="px-1.5 text-[9px]">private</Chip>}
+                    <span className="truncate text-sm text-ink">{repo.name}</span>
+                    {repo.isPrivate && <Chip className="px-1.5 text-3xs">private</Chip>}
                     {repo.description && !status && (
-                      <span className="min-w-0 flex-1 truncate text-[10px] text-text-muted">
+                      <span className="min-w-0 flex-1 truncate text-3xs text-ink-3">
                         {repo.description}
                       </span>
                     )}
                     {status && (
-                      <span
-                        className={cn('ml-auto shrink-0 text-[10px]', STATUS_TONE[status.tone])}
-                      >
+                      <span className={cn('ml-auto shrink-0 text-3xs', STATUS_TONE[status.tone])}>
                         {status.label}
                       </span>
                     )}

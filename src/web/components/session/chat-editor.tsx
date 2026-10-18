@@ -287,7 +287,7 @@ const ChatEditor = forwardRef<ChatEditorHandle, ChatEditorProps>(
       editorProps: {
         attributes: {
           class:
-            'size-full cursor-text overflow-y-auto bg-transparent font-mono text-[12px] text-text-secondary outline-none'
+            'size-full cursor-text overflow-y-auto bg-transparent font-mono text-xs text-ink-2 outline-none'
         }
       },
       onUpdate: ({ editor: ed }) => {

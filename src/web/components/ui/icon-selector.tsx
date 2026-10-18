@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import { Field, FieldLabel } from '@/components/ui/field';
+import { selectableVariants } from '@/components/ui/selectable';
 import { cn } from '@/lib/utils';
 
 interface IconSelectorOption {
@@ -34,7 +35,7 @@ function IconSelector({
       <div className="flex gap-2">
         {options.map((opt) => {
           const isActive = value === opt.id;
-          const iconColor = isActive ? 'text-text' : 'text-text-secondary';
+          const iconColor = isActive ? 'text-ink' : 'text-ink-2';
           const handleClick = (): void => {
             if (opt.type === 'image-picker' && onPickImage) {
               onPickImage();
@@ -48,8 +49,8 @@ function IconSelector({
                 type="button"
                 onClick={handleClick}
                 className={cn(
-                  'flex cursor-pointer items-center justify-center overflow-hidden rounded-lg border bg-bg-input',
-                  isActive ? 'border-border' : 'border-border-soft'
+                  selectableVariants({ selected: isActive }),
+                  'flex items-center justify-center overflow-hidden rounded-panel'
                 )}
                 style={{ width: size, height: size }}
               >
@@ -67,12 +68,7 @@ function IconSelector({
                 )}
               </button>
               {opt.label && (
-                <span
-                  className={cn(
-                    'text-[10px]',
-                    isActive ? 'text-text-secondary' : 'text-text-muted'
-                  )}
-                >
+                <span className={cn('text-3xs', isActive ? 'text-ink-2' : 'text-ink-3')}>
                   {opt.label}
                 </span>
               )}

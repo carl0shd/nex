@@ -13,7 +13,7 @@ function InputGroup({
     <Comp
       data-slot="input-group"
       className={cn(
-        'flex items-center gap-2 rounded-[5px] border border-input bg-bg-input px-2.5 py-2 not-focus-within:hover:border-border focus-within:border-border has-disabled:opacity-50',
+        'interactive flex h-8 items-center gap-2 rounded-control border border-line bg-field px-2.5 not-focus-within:hover:border-line-strong focus-within:border-ring/60 focus-within:ring-3 focus-within:ring-ring/15 has-disabled:opacity-50',
         className
       )}
       {...props}
@@ -21,7 +21,7 @@ function InputGroup({
   );
 }
 
-const inputGroupAddonVariants = cva('flex shrink-0 items-center gap-1.5 text-text-muted', {
+const inputGroupAddonVariants = cva('flex shrink-0 items-center gap-1.5 text-ink-3', {
   variants: {
     align: {
       'inline-start': 'order-first',
@@ -56,7 +56,7 @@ function InputGroupInput({
       type="text"
       data-slot="input-group-control"
       className={cn(
-        'min-w-0 flex-1 bg-transparent text-[12px] text-text-secondary outline-none placeholder:text-text-placeholder focus:text-text disabled:pointer-events-none',
+        'min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-ink-4 disabled:pointer-events-none',
         className
       )}
       {...props}

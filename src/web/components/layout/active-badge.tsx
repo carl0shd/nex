@@ -1,3 +1,4 @@
+import PillButton from '@/components/ui/pill-button';
 import { cn } from '@/lib/utils';
 
 interface ActiveBadgeProps extends React.ComponentProps<'button'> {
@@ -8,23 +9,21 @@ function ActiveBadge({ count, className, ...props }: ActiveBadgeProps): React.JS
   const idle = count === 0;
 
   return (
-    <button
-      type="button"
+    <PillButton
       title="Open sessions"
-      className={cn(
-        'inline-flex cursor-pointer items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium select-none',
-        idle
-          ? 'bg-bg-mute text-text-muted hover:bg-bg-item-active'
-          : 'bg-accent/40 text-badge-success-text hover:bg-accent',
-        className
-      )}
+      className={cn('tabular-nums', idle ? 'text-ink-3' : 'text-ink', className)}
       {...props}
     >
       <span
-        className={cn('size-1.5 rounded-full', idle ? 'bg-text-muted' : 'bg-badge-success-text')}
+        className={cn(
+          'size-1.5 rounded-full',
+          idle
+            ? 'bg-ink-4'
+            : 'bg-green shadow-[0_0_0_3px_color-mix(in_srgb,var(--green)_22%,transparent)]'
+        )}
       />
       {count} active
-    </button>
+    </PillButton>
   );
 }
 

@@ -29,7 +29,7 @@ function Settings(): React.JSX.Element {
   const tab: SettingsTab = isSettingsTab(requestedTab) ? requestedTab : 'appearance';
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-bg">
+    <div className="flex min-w-0 flex-1 animate-fade-in flex-col overflow-hidden">
       <div className="mx-auto w-full max-w-300 shrink-0 px-10 pt-8">
         <SettingsHeader
           title="Settings"
