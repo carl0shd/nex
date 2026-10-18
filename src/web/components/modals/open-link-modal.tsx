@@ -26,16 +26,16 @@ function OpenLinkModal(): React.JSX.Element {
   return (
     <Modal open={open} onClose={dismiss} width={440}>
       <div className="flex flex-col gap-2">
-        <h2 className="text-lg font-semibold text-text">Open external link?</h2>
-        <p className="text-[13px] leading-[1.4] text-text-secondary">
+        <h2 className="text-lg font-semibold text-ink">Open external link?</h2>
+        <p className="text-sm leading-[1.4] text-ink-2">
           You&apos;re about to open this URL in your default browser.
         </p>
       </div>
 
-      <div className="flex flex-col gap-1.5 rounded-md border border-border-soft bg-bg-mute p-3">
-        <span className="text-[11px] font-semibold text-text">{host}</span>
+      <div className="flex flex-col gap-1.5 rounded-md border border-line-soft bg-muted p-3">
+        <span className="text-2xs font-semibold text-ink">{host}</span>
         <SimpleBar autoHide={false} style={{ maxHeight: 120 }}>
-          <code className="mr-3 block font-mono text-[10px] break-all text-text-muted">{url}</code>
+          <code className="mr-3 block font-mono text-3xs break-all text-ink-3">{url}</code>
         </SimpleBar>
       </div>
 

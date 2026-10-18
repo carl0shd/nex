@@ -1,6 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
 import { Toggle } from '@/components/ui/toggle';
-import { cn } from '@/lib/utils';
 
 interface IconToggleProps extends Omit<React.ComponentProps<typeof Toggle>, 'children' | 'size'> {
   icon: LucideIcon;
@@ -16,7 +15,7 @@ function IconToggle({
   ...props
 }: IconToggleProps): React.JSX.Element {
   return (
-    <Toggle variant="outline" size={size} className={cn('bg-bg', className)} {...props}>
+    <Toggle variant="outline" size={size} className={className} {...props}>
       <Icon size={iconSize} />
     </Toggle>
   );

@@ -40,7 +40,7 @@ function CostPopover({ summary, children }: CostPopoverProps): React.JSX.Element
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent align="start" className="flex w-84 flex-col gap-2 p-2.5">
         {!summary ? (
-          <p className="py-4 text-center text-xs text-text-muted">Loading usage…</p>
+          <p className="py-4 text-center text-xs text-ink-3">Loading usage…</p>
         ) : (
           <>
             <div className="grid grid-cols-3 gap-1">
@@ -76,7 +76,7 @@ function CostPopover({ summary, children }: CostPopoverProps): React.JSX.Element
             <PanelSection
               title="Last 14 days"
               trailing={
-                <span className="font-mono text-[11px] text-text-secondary tabular-nums">
+                <span className="font-mono text-2xs text-ink-2 tabular-nums">
                   {focused
                     ? `${formatDayLabel(focused.day, 'day')} · ${formatUsd(focused.costUsd)}`
                     : formatUsd(trendTotal)}

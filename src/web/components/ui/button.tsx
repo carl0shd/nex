@@ -3,25 +3,27 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-md font-medium whitespace-nowrap select-none outline-none disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0',
+  'interactive press inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-full font-medium whitespace-nowrap select-none outline-none disabled:pointer-events-none disabled:opacity-45 [&_svg]:pointer-events-none [&_svg]:shrink-0',
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-accent-hover',
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-bg-hover',
+        default:
+          'bg-primary text-primary-foreground shadow-solid hover:bg-primary-hover',
+        secondary: 'bg-surface text-ink shadow-btn hover:bg-muted aria-expanded:bg-muted',
         outline:
-          'border border-border-soft text-text-secondary hover:border-border hover:text-text',
-        ghost: 'text-text-muted hover:bg-bg-mute hover:text-text-secondary',
+          'text-ink-2 shadow-hairline hover:bg-hover hover:text-ink hover:shadow-[0_0_0_1px_var(--line-strong)] aria-expanded:bg-hover aria-expanded:text-ink',
+        ghost: 'text-ink-3 hover:bg-hover-2 hover:text-ink aria-expanded:bg-hover-2',
         destructive:
-          'border border-destructive bg-destructive text-destructive-foreground hover:bg-destructive-hover',
-        link: 'text-text underline-offset-4 hover:underline'
+          'bg-red/12 text-red shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--red)_18%,transparent)] hover:bg-red/20',
+        link: 'text-primary-ink underline-offset-4 hover:underline'
       },
       size: {
-        default: 'px-4 py-2 text-[13px]',
-        sm: 'px-2.5 py-1 text-[11px]',
-        lg: 'px-5 py-2.5 text-[14px]',
-        icon: 'p-1.5',
-        'icon-sm': 'p-1'
+        default: 'h-8 px-3.5 text-sm',
+        xs: 'h-6 gap-1 px-2.5 text-2xs',
+        sm: 'h-7 gap-1 px-3 text-xs',
+        lg: 'h-9 px-4 text-sm',
+        icon: 'size-7',
+        'icon-sm': 'size-6'
       }
     },
     defaultVariants: {

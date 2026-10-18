@@ -30,7 +30,7 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        'fixed inset-0 z-50 bg-overlay data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0',
+        'fixed inset-0 z-50 bg-overlay backdrop-blur-[3px] duration-200 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0',
         className
       )}
       {...props}
@@ -54,7 +54,7 @@ function DialogPanel({
     <DialogPrimitive.Content
       data-slot="dialog-panel"
       className={cn(
-        'fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100vh-64px)] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-5 rounded-lg border border-border-soft bg-bg-panel p-6 shadow-2xl duration-150 outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95',
+        'fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100vh-64px)] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-5 rounded-window bg-surface-raised p-6 text-ink shadow-overlay duration-200 ease-out-strong outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-[0.97] data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-[0.97] data-[state=closed]:duration-150',
         className
       )}
       {...props}
@@ -63,7 +63,7 @@ function DialogPanel({
       {showCloseButton && (
         <DialogPrimitive.Close
           data-slot="dialog-close"
-          className="absolute top-4 right-4 cursor-pointer rounded-md p-1 text-text-muted outline-none hover:bg-bg-mute hover:text-text-secondary"
+          className="interactive press absolute top-4 right-4 flex size-7 cursor-pointer items-center justify-center rounded-full text-ink-3 outline-none hover:bg-hover-2 hover:text-ink"
         >
           <X size={14} />
           <span className="sr-only">Close</span>
@@ -108,7 +108,7 @@ function DialogTitle({
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn('text-lg font-semibold text-text', className)}
+      className={cn('text-lg font-semibold text-ink', className)}
       {...props}
     />
   );
@@ -121,7 +121,7 @@ function DialogDescription({
   return (
     <DialogPrimitive.Description
       data-slot="dialog-description"
-      className={cn('text-[13px] text-text-secondary', className)}
+      className={cn('text-sm text-ink-3', className)}
       {...props}
     />
   );

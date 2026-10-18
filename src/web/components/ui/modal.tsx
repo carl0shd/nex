@@ -96,14 +96,14 @@ function ModalHeader({
       {Icon && (
         <div
           className={cn(
-            'flex size-12 items-center justify-center rounded-full bg-bg-mute',
+            'flex size-11 items-center justify-center rounded-full bg-muted shadow-hairline',
             align === 'center' && 'self-center'
           )}
         >
-          <Icon size={20} className="text-text-secondary" />
+          <Icon size={20} className="text-ink-2" />
         </div>
       )}
-      {label && <span className="text-[11px] font-medium text-text-muted">{label}</span>}
+      {label && <span className="eyebrow">{label}</span>}
       <DialogTitle className={cn(!title && 'sr-only')}>{title ?? label ?? 'Dialog'}</DialogTitle>
       <DialogDescription className={cn(!subtitle && 'sr-only')}>
         {subtitle ?? title ?? ''}

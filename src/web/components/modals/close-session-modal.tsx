@@ -33,8 +33,8 @@ function CloseSessionModal({
   return (
     <Modal open={open} onClose={onClose} width={400} onAfterClose={handleAfterClose}>
       <div className="flex flex-col gap-2">
-        <h2 className="text-lg font-semibold text-text">Close task?</h2>
-        <p className="text-[13px] leading-[1.4] text-text-secondary">
+        <h2 className="text-lg font-semibold text-ink">Close task?</h2>
+        <p className="text-sm leading-[1.4] text-ink-2">
           This action cannot be undone. Closing the task &quot;{session?.name}&quot; will
           permanently remove its worktree, notes and progress.
         </p>

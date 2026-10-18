@@ -41,22 +41,22 @@ function DeleteProjectModal({
   return (
     <Modal open={open} onClose={onClose} width={400} onAfterClose={handleAfterClose}>
       <div className="flex flex-col gap-2">
-        <h2 className="text-lg font-semibold text-text">Delete project?</h2>
-        <p className="text-[13px] leading-[1.4] text-text-secondary">
+        <h2 className="text-lg font-semibold text-ink">Delete project?</h2>
+        <p className="text-sm leading-[1.4] text-ink-2">
           This action cannot be undone. Deleting the project &quot;{project?.name}&quot; will
           permanently remove all associated tasks.
         </p>
       </div>
 
       {projectSessions.length > 0 && (
-        <div className="flex flex-col gap-2 rounded-md border border-border-soft p-3">
-          <span className="text-[9px] font-semibold text-destructive-text">
+        <div className="flex flex-col gap-2 rounded-md border border-line-soft p-3">
+          <span className="text-3xs font-semibold text-red">
             {'// the following will be deleted'}
           </span>
           {projectSessions.map((s) => (
             <div key={s.id} className="flex items-center gap-2">
-              <GitBranch size={12} className="shrink-0 text-text-muted" />
-              <span className="text-[11px] text-text-secondary">{s.name}</span>
+              <GitBranch size={12} className="shrink-0 text-ink-3" />
+              <span className="text-2xs text-ink-2">{s.name}</span>
             </div>
           ))}
         </div>

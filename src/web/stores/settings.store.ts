@@ -27,7 +27,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
   load: async () => {
     if (get().loaded) return;
     const stored = await window.api.getSetting<AppPrefs>(SETTINGS_KEY, DEFAULT_PREFS);
-    const prefs = { ...DEFAULT_PREFS, ...stored };
+    const prefs: AppPrefs = { theme: stored.theme ?? DEFAULT_PREFS.theme };
     set({ ...prefs, resolvedTheme: applyTheme(prefs.theme), loaded: true });
   },
 

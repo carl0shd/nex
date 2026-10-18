@@ -135,7 +135,8 @@ class merging, and `React.ComponentProps<...>` prop types spread onto the underl
 
 **Primitives** (shadcn API — compose them): `button`, `input`, `textarea`, `label`, `field`,
 `input-group`, `badge`, `checkbox`, `switch`, `separator`, `card`, `alert`, `kbd`, `dialog`,
-`dropdown-menu`, `select`, `popover`, `hover-card`, `tooltip`, `toggle`, `toggle-group`.
+`dropdown-menu`, `select`, `popover`, `hover-card`, `tooltip`, `toggle`, `toggle-group`,
+`status-pill`, `shimmer`, `spinner`, `glide-highlight`, `selectable` (cva for selectable cards).
 
 **App composites** (ergonomic wrappers built on those primitives, default exports):
 `modal`, `text-field`, `dropdown`, `branch-picker`, `action-menu`, `popover-menu`, `icon-button`,
@@ -145,6 +146,10 @@ class merging, and `React.ComponentProps<...>` prop types spread onto the underl
 
 The root `tsconfig.json` carries `paths` purely so `npx shadcn@latest add <component>` can resolve
 `@/` — without it the CLI writes into a literal `@/` folder at the repo root.
+
+**Living style guide:** `routes/design-system.tsx` (dev only — palette icon in the titlebar) renders
+every token and `ui/` component from `components/design-system/`. Add a specimen when you add or
+change a component.
 
 Rules:
 
@@ -161,43 +166,78 @@ Rules:
 ### Theming
 
 All colors use CSS variables defined in `globals.css`. Never hardcode colors in components.
+The visual language is **beautiful-ui** (structure, rings, motion) plus the **notfound hub** palette
+(warm neutrals, green brand) and a subtle glass for floating chrome.
 
-There are two token layers, one palette:
+**No gradients or colored backgrounds.** No aurora/blob washes, glows, or gradient-filled buttons and
+tiles — surfaces are flat tokens, depth comes from surface steps, rings and shadows only.
 
-1. `--nex-*` in `:root` is the source of truth. **A theme only overrides these.**
-2. shadcn semantic tokens (`--background`, `--primary`, `--muted`, `--border`, `--input`, `--ring`,
-   `--radius`, sidebar tokens…) are aliases over `--nex-*`, re-exported through `@theme inline`.
-   Never give them literal colors — that would break theming.
+There are two layers, one palette:
 
-`--radius: 0.5rem` is chosen so `rounded-sm/md/lg/xl` keep Tailwind's default 4/6/8/12px.
+1. The palette in `:root` (dark) and `[data-theme='light']` is the source of truth. **A theme only
+   overrides these variables.**
+2. `@theme inline` turns them into utilities and aliases the shadcn semantic tokens (`--background`,
+   `--primary`, `--muted`, `--border`, `--ring`, sidebar tokens…) onto them. Never give the shadcn
+   tokens literal colors.
 
-**Theme tokens available as Tailwind classes:**
+**Tokens as Tailwind classes:**
 
-- Backgrounds: `bg-bg`, `bg-bg-soft`, `bg-bg-mute`, `bg-bg-card`, `bg-bg-raised`, `bg-bg-input`, `bg-bg-panel`, `bg-bg-hover`, `bg-bg-item-active`, `bg-bg-menu`
-- Borders: `border-border`, `border-border-soft`, `border-border-strong`, `border-border-menu`
-- Text: `text-text`, `text-text-secondary`, `text-text-muted`, `text-text-placeholder`
-- Accent: `bg-accent`, `bg-accent-hover`
-- Destructive: `bg-destructive`, `bg-destructive-hover`, `text-destructive-text`
-- Badges: `bg-badge-success-bg`, `text-badge-success-text` (+ warning, error, default)
-- Archived: `text-archived` (gray for archived workspace badges)
+- Surfaces (solid, one step per layer): `bg-page`, `bg-canvas`, `bg-surface`, `bg-surface-raised`,
+  `bg-inset`, `bg-terminal`, `bg-muted`, `bg-muted-strong`
+- Interaction fills (translucent, so they read on glass): `bg-field`, `bg-hover`, `bg-hover-2`, `bg-active`
+- Ink: `text-ink`, `text-ink-2`, `text-ink-3`, `text-ink-4`, `text-inverse`, `text-on-color`
+- Lines (translucent): `line-soft`, `line`, `line-strong`, `line-hover` (as `border-*`, `bg-*`, `ring-*`)
+- Brand: `primary`, `primary-hover`, `primary-deep`, `primary-ink` (text on tint), `primary-tint`,
+  `primary-foreground`, `ring`
+- Semantic: `green`, `orange`, `red`, `blue`, `yellow` — tint with opacity (`bg-red/14`), never new tokens
+- Data: `chart-cost`, `chart-1..5`, `chart-grid`
 
-**NEVER hardcode hex colors in components.** All colors must come from `--nex-*` CSS variables exposed as Tailwind classes. If a needed color doesn't exist as a token, add it to `globals.css` first (both in `@theme` and `:root`), then use the Tailwind class. The only exception is inline `style` for dynamic colors passed as props (e.g. workspace color). This ensures all themes work by overriding variables only.
+**Shape.** Radii: `rounded-chip` 6 · `rounded-control` 8 · `rounded-card` 10 · `rounded-panel` 14 ·
+`rounded-window` 18 · `rounded-full` (buttons, badges, pills). Outlines are rings, not borders:
+`shadow-hairline` → `shadow-btn` → `shadow-card` → `shadow-raised` → `shadow-overlay`, plus
+`shadow-solid` (filled controls) and `shadow-glass`.
 
-**Themes.** The active theme is the `data-theme` attribute on `<html>` in `src/web/index.html`.
-`globals.css` ships `dark` (the `:root` defaults) and `light` (`[data-theme='light']`). To add another,
-copy the light block and override the `--nex-*` variables — no component changes needed.
+**Type.** Dense scale: `text-3xs` 10 · `2xs` 11 · `xs` 12 · `sm` 13 · `base` 14 · `lg` 16 · `xl` 20 ·
+`2xl` 24 · `3xl` 30. Never use arbitrary `text-[Npx]`. `eyebrow` is the section label (sentence case).
+**Never use uppercase text** anywhere in the app — no `uppercase`, no all-caps copy, no wide tracking on
+labels. Section labels are sentence case ("Workspaces", not "WORKSPACES").
 
-Two things must be kept in sync when adding a theme:
+**Glass.** Kept deliberately subtle: frosted, never a light source. `glass` (mostly-opaque tint +
+28px blur + inner ring, no sheen) is for floating chrome:
+titlebar islands, floating panels, docks. `glass-panel` is the frosted, mostly-opaque version for large
+surfaces. Menus, popovers, dialogs and anything with dense text stay solid (`bg-surface-raised`).
+Terminals and code stay solid too. Tune intensity through the palette variables (`--glass-tint`,
+`--glass-filter`), never per component.
+
+**NEVER hardcode hex colors in components.** If a color doesn't exist, add it to the palette (both
+themes) and to `@theme inline`, then use the class. The only exception is inline `style` for dynamic
+colors passed as props (e.g. workspace color).
+
+**Themes.** The active theme is the `data-theme` attribute on `<html>`. `applyTheme` adds
+`.theme-switching` for one frame so hover transitions don't fade every token at a different speed.
+To add a theme, copy the light block and override the palette — no component changes needed.
+
+Keep in sync when changing the palette:
 
 - The pre-React skeleton in `index.html` repeats `#shell` colors inline (it paints before Tailwind loads).
-- `lib/theme.ts` `getTheme()` feeds the theme to third-party renderers that can't read CSS variables
-  (sonner, the `@pierre/diffs` viewer). xterm reads `--nex-*` directly and needs nothing.
+- `lib/theme.ts` `getTheme()` feeds third-party renderers (sonner, `@pierre/diffs`). xterm reads
+  `--terminal`, `--ink` and `--terminal-selection` directly — keep those as hex/rgba.
+
+### Motion
+
+Motion is CSS only. Use `interactive` (150ms, `ease-out-strong`) on anything with a hover or state
+change, and `press` (scale 0.97 on `:active`) on clickables. Overlays enter with tw-animate
+(`animate-in fade-in-0 zoom-in-95 duration-150 ease-out-strong`). Menus and lists use
+`GlideHighlight` — one hover layer that slides between rows — instead of per-row hover fills.
+`SegmentedControl` slides its thumb. Long-running agent states use `Shimmer`. Everything respects
+`prefers-reduced-motion` globally.
 
 ### Titlebar
 
 The app uses `titleBarStyle: 'hiddenInset'` for native macOS look. The `Titlebar` component provides a 47px drag region with:
 
-- Left: traffic lights zone (78px) + sidebar toggle (PanelLeft icon)
+- Left: traffic lights zone, then a spacer that tracks the sidebar width so the command bar lines up
+  with the content edge (the collapse control lives in the sidebar header)
 - Center-left: command bar + active badge
 - Right: bell, smartphone, grid, settings icons
 
@@ -264,7 +304,7 @@ Uses `MemoryRouter` from react-router-dom. This is required for Electron (no rea
 - **Interactive elements:** Must have `cursor-pointer` and `select-none`
 - **Path aliases:** `@/` → `src/web/`, `@native/` → `src/native/`. Always use aliases instead of relative imports when crossing boundaries (e.g. `@native/db/types` not `../../native/db/types`)
 - **Comments:** See the [Comments](#comments) section. The default is none, and the hard limit is 2 lines.
-- **Transitions:** No CSS transitions on hover states. All interactions are instant.
+- **Transitions:** Short and strong: `interactive` (150ms `ease-out-strong`) and `press`. No slow fades, no `ease-in` on UI.
 - **No hardcoded colors:** NEVER use hardcoded hex colors in components. All colors must use theme tokens from `globals.css`. If a color doesn't exist as a token, create it first. Only exception: inline `style` for dynamic colors passed as props (e.g. workspace color).
 - **Native feel:** Global `user-select: none`, `cursor: default`, `-webkit-user-drag: none`. The app should never feel like a website.
 - **shadcn by default:** Every piece of UI is built from the shadcn primitives in `ui/`. Reach for `npx shadcn@latest add <component>` before writing a new primitive by hand.
@@ -339,7 +379,16 @@ code does, delete it. Leaving it because "it was already there" is how they accu
 Components are organized by function, not dumped into a flat `ui/` folder:
 
 - **`layout/`** — App structure components (titlebar, sidebar, empty-state, active-badge)
-- **`sidebar/`** — Sidebar-specific components (workspace-item, task-group-header, project-label, sidebar-task, count-badge, workspace-badge, task-icon, task-item, project-item)
+- **`sidebar/`** — Sidebar-specific components (sidebar-header, sidebar-rail-button, workspace-item,
+  sidebar-task, task-section-header, count-badge)
+
+### Sidebar
+
+Ported from beautiful-ui's `SidebarNav`: **one persistent 260px tree** clipped to a 52px rail when
+collapsed — never a second "collapsed" component. Every row is a `.sidebar-row` (244px → 36px) whose
+glyph sits in a `size-5` slot so it stays at x=26 in both states; text goes in `.sidebar-copy`, which
+fades and slides out. Nested lists use `CollapsibleRows`, which the rail closes automatically unless
+it is `railVisible` (the workspace badges). The CSS lives in the `Sidebar` block of `globals.css`.
 - **`terminal/`** — Terminal-related components (terminal-box)
 - **`ui/`** — shadcn primitives + the app composites built on them (see “Design system” above)
 - **`modals/`** — Modal dialogs (workspace-modal, create-project-modal, delete-workspace-modal, manage-workspaces-modal)

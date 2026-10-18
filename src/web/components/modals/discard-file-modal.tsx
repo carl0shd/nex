@@ -31,15 +31,15 @@ function DiscardFileModal({
   return (
     <Modal open={open} onClose={onClose} width={400} onAfterClose={handleAfterClose}>
       <div className="flex flex-col gap-2">
-        <h2 className="text-lg font-semibold text-text">Discard changes?</h2>
-        <p className="text-[13px] leading-[1.4] text-text-secondary">
+        <h2 className="text-lg font-semibold text-ink">Discard changes?</h2>
+        <p className="text-sm leading-[1.4] text-ink-2">
           This restores the file to its last commit and cannot be undone. Commits already made in
           this worktree are kept.
         </p>
       </div>
 
-      <div className="rounded-md border border-border-soft p-3">
-        <span className="font-mono text-[11px] break-all text-text-secondary">{fileName}</span>
+      <div className="rounded-md border border-line-soft p-3">
+        <span className="font-mono text-2xs break-all text-ink-2">{fileName}</span>
       </div>
 
       <ModalDivider />

@@ -15,7 +15,7 @@ function UsagePopoverFooter({ onNavigate }: UsagePopoverFooterProps): React.JSX.
         onNavigate?.();
         navigate('/settings', { state: { tab: 'usage' } });
       }}
-      className="flex cursor-pointer items-center justify-between rounded-md px-1 py-1 text-[11px] text-text-secondary select-none hover:bg-bg-hover hover:text-text"
+      className="flex cursor-pointer items-center justify-between rounded-md px-1 py-1 text-2xs text-ink-2 select-none hover:bg-hover-2 hover:text-ink"
     >
       View all usage
       <ArrowRight size={12} strokeWidth={2} />

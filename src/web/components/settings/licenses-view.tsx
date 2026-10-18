@@ -10,7 +10,7 @@ interface LicensesViewProps {
 function LicensesView({ onBack }: LicensesViewProps): React.JSX.Element {
   return (
     <SettingsPanel header={<BackHeader title="Open source licenses" onBack={onBack} />}>
-      <Card className="gap-0 overflow-hidden bg-bg-soft p-0">
+      <Card className="gap-0 overflow-hidden bg-canvas p-0">
         <LicensesList />
       </Card>
     </SettingsPanel>

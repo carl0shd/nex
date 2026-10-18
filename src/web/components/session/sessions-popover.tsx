@@ -13,6 +13,7 @@ import { useSessionStore } from '@/stores/session.store';
 import { useTerminalStore } from '@/stores/terminal.store';
 import { useUsageStore } from '@/stores/usage.store';
 import { useWorkspaceStore } from '@/stores/workspace.store';
+import GlideHighlight from '@/components/ui/glide-highlight';
 
 interface SessionsPopoverProps {
   children: React.ReactNode;
@@ -110,7 +111,7 @@ function SessionsPopover({ children }: SessionsPopoverProps): React.JSX.Element 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent align="start" className="flex w-84 flex-col gap-2 p-2.5">
+      <PopoverContent align="start" className="flex w-84 flex-col gap-3 p-2.5">
         <div className="grid grid-cols-3 gap-1">
           <StatTile size="compact" surface="menu" label="Working" value={String(counts.running)} />
           <StatTile size="compact" surface="menu" label="Waiting" value={String(counts.waiting)} />
@@ -120,16 +121,16 @@ function SessionsPopover({ children }: SessionsPopoverProps): React.JSX.Element 
         <PanelSection
           title="Sessions"
           trailing={
-            <span className="font-mono text-[11px] text-text-secondary tabular-nums">
+            <span className="font-mono text-2xs text-ink-2 tabular-nums">
               {formatUsd(totalCost)} today
             </span>
           }
         >
           {allRows.length === 0 ? (
-            <p className="py-2 text-[11px] text-text-muted">No session open yet.</p>
+            <p className="py-2 text-xs text-ink-3">No session open yet.</p>
           ) : (
             <SimpleBar autoHide={false} style={{ maxHeight: LIST_MAX_HEIGHT }}>
-              <div className="flex flex-col gap-2">
+              <GlideHighlight className="flex flex-col gap-2">
                 {groups.map((group) => (
                   <SessionWorkspaceGroup
                     key={group.workspace.id}
@@ -138,7 +139,7 @@ function SessionsPopover({ children }: SessionsPopoverProps): React.JSX.Element 
                     icon={group.workspace.icon}
                     customImage={group.workspace.customImage}
                     trailing={
-                      <span className="font-mono text-[10px] text-text-muted tabular-nums">
+                      <span className="font-mono text-3xs text-ink-3 tabular-nums">
                         {formatUsd(group.costUsd)}
                       </span>
                     }
@@ -152,7 +153,7 @@ function SessionsPopover({ children }: SessionsPopoverProps): React.JSX.Element 
                     ))}
                   </SessionWorkspaceGroup>
                 ))}
-              </div>
+              </GlideHighlight>
             </SimpleBar>
           )}
         </PanelSection>

@@ -48,7 +48,7 @@ function Dropdown({
             {selected ? (
               selected.label
             ) : (
-              <span className="text-text-placeholder">{placeholder ?? 'Select...'}</span>
+              <span className="text-ink-4">{placeholder ?? 'Select...'}</span>
             )}
           </span>
           {selected?.badge && <Chip>{selected.badge}</Chip>}

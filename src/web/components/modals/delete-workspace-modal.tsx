@@ -45,24 +45,24 @@ function DeleteWorkspaceModal({
   return (
     <Modal open={open} onClose={onClose} width={400} onAfterClose={handleAfterClose}>
       <div className="flex flex-col gap-2">
-        <h2 className="text-lg font-semibold text-text">Delete workspace?</h2>
-        <p className="text-[13px] leading-[1.4] text-text-secondary">
+        <h2 className="text-lg font-semibold text-ink">Delete workspace?</h2>
+        <p className="text-sm leading-[1.4] text-ink-2">
           This action cannot be undone. Deleting the workspace &quot;{workspace?.name}&quot; will
           permanently remove all associated projects and their tasks.
         </p>
       </div>
 
       {projectsWithTaskCount.length > 0 && (
-        <div className="flex flex-col gap-2 rounded-md border border-border-soft p-3">
-          <span className="text-[9px] font-semibold text-destructive-text">
+        <div className="flex flex-col gap-2 rounded-md border border-line-soft p-3">
+          <span className="text-3xs font-semibold text-red">
             {'// the following will be deleted'}
           </span>
           {projectsWithTaskCount.map((p) => (
             <div key={p.name} className="flex items-center gap-2">
-              <Folder size={12} className="shrink-0 text-text-muted" />
-              <span className="text-[11px] text-text-secondary">{p.name}</span>
+              <Folder size={12} className="shrink-0 text-ink-3" />
+              <span className="text-2xs text-ink-2">{p.name}</span>
               <span className="flex-1" />
-              <span className="text-[11px] font-medium text-text-muted">
+              <span className="text-2xs font-medium text-ink-3">
                 {p.taskCount} {p.taskCount === 1 ? 'task' : 'tasks'}
               </span>
             </div>

@@ -19,7 +19,7 @@ function SessionWorkspaceGroup({
 }: SessionWorkspaceGroupProps): React.JSX.Element {
   return (
     <div className="flex flex-col gap-0.5">
-      <header className="flex items-center gap-1.5 px-1.5 py-0.5">
+      <header className="flex items-center gap-1.5 px-2 py-0.5">
         <WorkspaceBadge
           name={name}
           color={color}
@@ -29,7 +29,7 @@ function SessionWorkspaceGroup({
           fontSize={6}
           rounded="rounded-xs"
         />
-        <span className="truncate text-[11px] text-text-secondary">{name}</span>
+        <span className="eyebrow truncate">{name}</span>
         <span className="flex-1" />
         {trailing}
       </header>

@@ -1,6 +1,5 @@
 import { memo, useEffect, useRef, useState } from 'react';
-import { X } from 'lucide-react';
-import IconButton from '@/components/ui/icon-button';
+import PaneHeader from '@/components/session/pane-header';
 
 interface NotesPanelProps {
   sessionId: string;
@@ -63,16 +62,14 @@ function NotesPanel({ sessionId, onClose }: NotesPanelProps): React.JSX.Element 
 
   return (
     <div className="flex h-full flex-1 flex-col">
-      <div className="flex shrink-0 items-center justify-between border-b border-border-soft bg-bg-soft px-2.5 py-1.5">
-        <span className="text-[11px] text-text-muted">{'// notes'}</span>
-        <IconButton icon={X} size={10} ghost onClick={onClose} />
-      </div>
+      <PaneHeader title="Notes" onClose={onClose} />
       <textarea
         value={value}
         onChange={(e) => handleChange(e.target.value)}
         onBlur={flushSave}
         spellCheck={false}
-        className="min-h-0 flex-1 resize-none bg-bg-notes p-2.5 font-mono text-[11px] leading-relaxed text-text-secondary outline-none"
+        placeholder="Notes for this task…"
+        className="min-h-0 flex-1 resize-none bg-transparent px-3 py-2.5 font-mono text-2xs leading-relaxed text-ink-2 outline-none placeholder:text-ink-4 select-text"
       />
     </div>
   );

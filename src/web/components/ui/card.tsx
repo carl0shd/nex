@@ -12,7 +12,7 @@ function Card({
     <Comp
       data-slot="card"
       className={cn(
-        'flex flex-col gap-2 rounded-lg border border-border-soft bg-bg-card p-3 text-card-foreground',
+        'flex flex-col gap-2 rounded-panel bg-surface p-3.5 text-ink shadow-card',
         className
       )}
       {...props}
@@ -30,7 +30,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<'div'>): React.
   return (
     <div
       data-slot="card-title"
-      className={cn('text-[13px] font-medium text-text', className)}
+      className={cn('text-sm font-medium text-ink', className)}
       {...props}
     />
   );
@@ -38,11 +38,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<'div'>): React.
 
 function CardDescription({ className, ...props }: React.ComponentProps<'div'>): React.JSX.Element {
   return (
-    <div
-      data-slot="card-description"
-      className={cn('text-[11px] text-text-muted', className)}
-      {...props}
-    />
+    <div data-slot="card-description" className={cn('text-xs text-ink-3', className)} {...props} />
   );
 }
 

@@ -1,16 +1,17 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useShallow } from 'zustand/react/shallow';
-import { Plus, LayoutGrid, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, LayoutGrid, Search, SquarePen } from 'lucide-react';
 import SimpleBar from 'simplebar-react';
-import { useScrollable } from '@/hooks/use-scrollable';
-import { Button } from '@/components/ui/button';
+import GlideHighlight from '@/components/ui/glide-highlight';
+import CollapsibleRows from '@/components/ui/collapsible-rows';
+import { Kbd } from '@/components/ui/kbd';
 import SectionHeader from '@/components/ui/section-header';
+import SidebarHeader from '@/components/sidebar/sidebar-header';
+import SidebarRailButton from '@/components/sidebar/sidebar-rail-button';
+import TaskSectionHeader from '@/components/sidebar/task-section-header';
 import WorkspaceItem from '@/components/sidebar/workspace-item';
-import TaskGroupHeader from '@/components/sidebar/task-group-header';
-import TreeGroupLabel from '@/components/ui/tree-group-label';
-import CountBadge from '@/components/sidebar/count-badge';
 import SidebarTask from '@/components/sidebar/sidebar-task';
-import SessionGroupDot from '@/components/sidebar/session-group-dot';
 import WorkspaceModal from '@/components/modals/workspace-modal';
 import CreateProjectModal from '@/components/modals/create-project-modal';
 import ImportGithubModal from '@/components/modals/import-github-modal';
@@ -20,13 +21,18 @@ import DeleteProjectModal from '@/components/modals/delete-project-modal';
 import ManageWorkspacesModal from '@/components/modals/manage-workspaces-modal';
 import CreateTaskModal from '@/components/modals/create-task-modal';
 import CloseSessionModal from '@/components/modals/close-session-modal';
-import CollapsedSidebar from '@/components/layout/collapsed-sidebar';
 import { useWorkspaceStore } from '@/stores/workspace.store';
 import { useSessionStore } from '@/stores/session.store';
 import { useSidebarStore } from '@/stores/sidebar.store';
 
+const EXPANDED_WIDTH = 260;
+const COLLAPSED_WIDTH = 52;
+const GLIDE_RAIL = 'sidebar-glide-highlight';
+
 function Sidebar(): React.JSX.Element {
-  const [simpleBarRef, isScrollable] = useScrollable();
+  const navigate = useNavigate();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState('');
   const workspaces = useWorkspaceStore((s) => s.workspaces);
   const projects = useWorkspaceStore((s) => s.projects);
   const updateWorkspace = useWorkspaceStore((s) => s.updateWorkspace);
@@ -58,6 +64,7 @@ function Sidebar(): React.JSX.Element {
 
   const persist = useSidebarStore((s) => s.persist);
   const toggle = useSidebarStore((s) => s.toggle);
+  const toggleFull = useSidebarStore((s) => s.toggleFull);
   const openCreateWorkspace = useSidebarStore((s) => s.openCreateWorkspace);
   const openEditWorkspace = useSidebarStore((s) => s.openEditWorkspace);
   const closeWorkspaceModal = useSidebarStore((s) => s.closeWorkspaceModal);
@@ -106,28 +113,42 @@ function Sidebar(): React.JSX.Element {
 
   const hasWorkspaces = workspaces.length > 0;
   const hasProjects = projects.length > 0;
-  const ctaLabel = !hasWorkspaces ? 'new workspace' : !hasProjects ? 'new project' : 'new task';
+  const cta = !hasWorkspaces
+    ? { label: 'New workspace', shortcut: '⌘W' }
+    : !hasProjects
+      ? { label: 'New project', shortcut: '⌘P' }
+      : { label: 'New task', shortcut: '⌘T' };
   const ctaAction = !hasWorkspaces
     ? openCreateWorkspace
     : !hasProjects
       ? () => openCreateProject(activeWorkspaces[0].id)
       : () => openCreateTask();
 
-  const workspacesWithTasks = useMemo(
-    () =>
-      activeWorkspaces.filter((ws) => {
-        const wsProjects = projectsByWorkspace.get(ws.id) ?? [];
-        return wsProjects.some((p) => activeSessions.some((s) => s.projectId === p.id));
-      }),
-    [activeWorkspaces, projectsByWorkspace, activeSessions]
+  const projectNameById = useMemo(() => new Map(projects.map((p) => [p.id, p.name])), [projects]);
+
+  const visibleSessions = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return activeSessions;
+    return activeSessions.filter(
+      (s) =>
+        s.name.toLowerCase().includes(q) ||
+        (projectNameById.get(s.projectId) ?? '').toLowerCase().includes(q)
+    );
+  }, [activeSessions, projectNameById, query]);
+
+  const sidebarCollapsed = collapsed.full;
+
+  const selectWorkspace = useCallback(
+    (id: string) => {
+      if (!sidebarCollapsed) {
+        toggle('workspaces', id);
+        return;
+      }
+      toggleFull();
+      if (collapsed.workspaces.includes(id)) toggle('workspaces', id);
+    },
+    [sidebarCollapsed, collapsed.workspaces, toggle, toggleFull]
   );
-
-  const totalTasks = activeSessions.length;
-  const TasksChevron = collapsed.tasks ? ChevronRight : ChevronDown;
-
-  const toggleWorkspace = useCallback((id: string) => toggle('workspaces', id), [toggle]);
-  const toggleGroup = useCallback((id: string) => toggle('groups', id), [toggle]);
-  const toggleProject = useCallback((id: string) => toggle('projects', id), [toggle]);
   const archiveWorkspace = useCallback(
     (id: string) => updateWorkspace(id, { archived: true }),
     [updateWorkspace]
@@ -135,8 +156,8 @@ function Sidebar(): React.JSX.Element {
 
   const sectionActions = useMemo(
     () => [
-      { icon: LayoutGrid, onClick: openManageWorkspaces },
-      { icon: Plus, onClick: openCreateWorkspace }
+      { icon: LayoutGrid, label: 'Manage workspaces', onClick: openManageWorkspaces },
+      { icon: Plus, label: 'New workspace', onClick: openCreateWorkspace }
     ],
     [openManageWorkspaces, openCreateWorkspace]
   );
@@ -145,10 +166,17 @@ function Sidebar(): React.JSX.Element {
     () => persist({ ...collapsed, workspacesSection: !collapsed.workspacesSection }),
     [persist, collapsed]
   );
-  const toggleTasksSection = useCallback(
-    () => persist({ ...collapsed, tasks: !collapsed.tasks }),
-    [persist, collapsed]
-  );
+
+  const collapseSidebar = useCallback(() => {
+    setSearchOpen(false);
+    setQuery('');
+    toggleFull();
+  }, [toggleFull]);
+
+  const openSearch = useCallback(() => {
+    if (sidebarCollapsed) toggleFull();
+    setSearchOpen(true);
+  }, [sidebarCollapsed, toggleFull]);
 
   const modals = (
     <>
@@ -194,148 +222,104 @@ function Sidebar(): React.JSX.Element {
     </>
   );
 
-  if (collapsed.full) {
-    return (
-      <>
-        <CollapsedSidebar />
-        {modals}
-      </>
-    );
-  }
-
   return (
-    <div className="flex h-full w-65 shrink-0 flex-col bg-bg">
-      <div className="flex shrink-0 flex-col gap-0.5 p-4 pb-0">
-        <SectionHeader
-          title="// workspaces"
-          collapsed={collapsed.workspacesSection}
-          onToggle={toggleWorkspacesSection}
-          actions={sectionActions}
-        />
+    <>
+      <aside
+        data-sidebar
+        data-sidebar-collapsed={sidebarCollapsed}
+        aria-label="Navigation"
+        className="relative h-full shrink-0 overflow-hidden transition-[width] duration-280 ease-glide"
+        style={{ width: sidebarCollapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH }}
+      >
+        <div className="flex h-full flex-col" style={{ width: EXPANDED_WIDTH }}>
+          <SidebarHeader
+            collapsed={sidebarCollapsed}
+            onCollapse={collapseSidebar}
+            onExpand={toggleFull}
+            onNewWorkspace={openCreateWorkspace}
+            onManageWorkspaces={openManageWorkspaces}
+            onOpenSettings={() => navigate('/settings')}
+          />
 
-        {!collapsed.workspacesSection &&
-          activeWorkspaces.map((ws) => {
-            const wsProjects = projectsByWorkspace.get(ws.id) ?? [];
-            const wsCollapsed = collapsed.workspaces.includes(ws.id);
-            return (
-              <WorkspaceItem
-                key={ws.id}
-                workspace={ws}
-                projects={wsProjects}
-                collapsed={wsCollapsed}
-                onToggle={toggleWorkspace}
-                onAddProject={openCreateProject}
-                onEditWorkspace={openEditWorkspace}
-                onArchiveWorkspace={archiveWorkspace}
-                onDeleteWorkspace={openDeleteWorkspace}
-                onEditProject={openEditProject}
-                onDeleteProject={openDeleteProject}
-              />
-            );
-          })}
-      </div>
+          <GlideHighlight highlightClassName={GLIDE_RAIL} className="flex shrink-0 flex-col gap-px">
+            <SidebarRailButton
+              icon={<SquarePen size={15} className="text-primary-ink" />}
+              label={cta.label}
+              trailing={<Kbd>{cta.shortcut}</Kbd>}
+              onClick={ctaAction}
+            />
+            <SidebarRailButton
+              icon={<Search size={15} />}
+              label="Search tasks"
+              onClick={openSearch}
+            />
+          </GlideHighlight>
 
-      <div className="mx-4 my-4 h-px shrink-0 bg-border-soft" />
+          <SimpleBar className="mt-4 min-h-0 flex-1" autoHide>
+            <div className="flex flex-col gap-4 pb-3">
+              <section className="flex flex-col">
+                <div className="sidebar-copy mx-2 w-61">
+                  <SectionHeader
+                    title="Workspaces"
+                    collapsed={collapsed.workspacesSection}
+                    onToggle={toggleWorkspacesSection}
+                    actions={sectionActions}
+                  />
+                </div>
+                <CollapsibleRows open={!collapsed.workspacesSection} railVisible>
+                  <GlideHighlight highlightClassName={GLIDE_RAIL} className="flex flex-col gap-px">
+                    {activeWorkspaces.map((ws) => (
+                      <WorkspaceItem
+                        key={ws.id}
+                        workspace={ws}
+                        projects={projectsByWorkspace.get(ws.id) ?? []}
+                        collapsed={collapsed.workspaces.includes(ws.id)}
+                        onSelect={selectWorkspace}
+                        onAddProject={openCreateProject}
+                        onEditWorkspace={openEditWorkspace}
+                        onArchiveWorkspace={archiveWorkspace}
+                        onDeleteWorkspace={openDeleteWorkspace}
+                        onEditProject={openEditProject}
+                        onDeleteProject={openDeleteProject}
+                      />
+                    ))}
+                  </GlideHighlight>
+                </CollapsibleRows>
+              </section>
 
-      <div className="flex shrink-0 items-center gap-1 px-5">
-        <button
-          onClick={toggleTasksSection}
-          className="flex cursor-pointer items-center gap-1 text-text-muted"
-        >
-          <TasksChevron size={12} />
-          <span className="select-none text-[13px] font-medium">{'// active tasks'}</span>
-        </button>
-        <span className="flex-1" />
-        <CountBadge count={totalTasks} />
-      </div>
-
-      {!collapsed.tasks && (
-        <div className="min-h-0 flex-1 pl-4 pr-4 pt-2">
-          <SimpleBar ref={simpleBarRef} style={{ maxHeight: '100%' }} autoHide={false}>
-            <div className={`flex flex-col gap-2.5 ${isScrollable ? 'pr-3' : ''}`}>
-              {workspacesWithTasks.map((ws) => {
-                const groupCollapsed = collapsed.groups.includes(ws.id);
-                const wsProjects = projectsByWorkspace.get(ws.id) ?? [];
-                const projectsWithTasks = wsProjects.filter((p) =>
-                  activeSessions.some((s) => s.projectId === p.id)
-                );
-                const wsSessionIds = activeSessions
-                  .filter((s) => projectsWithTasks.some((p) => p.id === s.projectId))
-                  .map((s) => s.id);
-
-                return (
-                  <div key={ws.id} className="flex flex-col gap-0.5">
-                    <TaskGroupHeader
-                      id={ws.id}
-                      name={ws.name}
-                      color={ws.color}
-                      icon={ws.icon}
-                      customImage={ws.customImage}
-                      collapsed={groupCollapsed}
-                      onToggle={toggleGroup}
-                      trailing={
-                        groupCollapsed ? <SessionGroupDot sessionIds={wsSessionIds} /> : null
-                      }
+              <section className="flex flex-col">
+                <TaskSectionHeader
+                  count={activeSessions.length}
+                  searchOpen={searchOpen}
+                  query={query}
+                  onQueryChange={setQuery}
+                  onSearchOpenChange={setSearchOpen}
+                />
+                <GlideHighlight highlightClassName={GLIDE_RAIL} className="flex flex-col gap-px">
+                  {visibleSessions.map((s) => (
+                    <SidebarTask
+                      key={s.id}
+                      id={s.id}
+                      name={s.name}
+                      projectName={projectNameById.get(s.projectId)}
+                      active={s.id === activeSessionId}
+                      onClick={() => focusSession(s.id)}
+                      onDelete={openCloseSession}
                     />
-                    {!groupCollapsed && (
-                      <div className="flex flex-col gap-1 pl-4">
-                        {projectsWithTasks.map((project) => {
-                          const projectCollapsed = collapsed.projects.includes(project.id);
-                          const projectSessions = activeSessions.filter(
-                            (s) => s.projectId === project.id
-                          );
-                          return (
-                            <div key={project.id} className="flex flex-col gap-0.5">
-                              <TreeGroupLabel
-                                id={project.id}
-                                name={project.name}
-                                collapsed={projectCollapsed}
-                                onToggle={toggleProject}
-                                trailing={
-                                  projectCollapsed ? (
-                                    <SessionGroupDot
-                                      sessionIds={projectSessions.map((s) => s.id)}
-                                    />
-                                  ) : null
-                                }
-                              />
-                              {!projectCollapsed && (
-                                <div className="ml-2.5 flex flex-col pl-1">
-                                  {projectSessions.map((s) => (
-                                    <SidebarTask
-                                      key={s.id}
-                                      id={s.id}
-                                      name={s.name}
-                                      active={s.id === activeSessionId}
-                                      onClick={() => focusSession(s.id)}
-                                      onDelete={openCloseSession}
-                                    />
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                  ))}
+                </GlideHighlight>
+                {visibleSessions.length === 0 && (
+                  <p className="sidebar-copy mx-4 py-1.5 text-xs text-ink-4">
+                    {query ? 'No tasks match' : 'No active tasks'}
+                  </p>
+                )}
+              </section>
             </div>
           </SimpleBar>
         </div>
-      )}
-
-      {collapsed.tasks && <div className="flex-1" />}
-
-      <div className="shrink-0 p-4 pt-3 z-20">
-        <Button onClick={ctaAction} className="w-full py-2 text-[12px]">
-          &gt; {ctaLabel}
-        </Button>
-      </div>
-
+      </aside>
       {modals}
-    </div>
+    </>
   );
 }
 

@@ -1,4 +1,5 @@
 import { CircleDollarSign } from 'lucide-react';
+import PillButton from '@/components/ui/pill-button';
 import { formatCompactUsd } from '@/lib/usage-format';
 import { cn } from '@/lib/utils';
 
@@ -8,18 +9,14 @@ interface CostBadgeProps extends React.ComponentProps<'button'> {
 
 function CostBadge({ amount, className, ...props }: CostBadgeProps): React.JSX.Element {
   return (
-    <button
-      type="button"
+    <PillButton
       title="Cost today"
-      className={cn(
-        'inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-accent/40 px-2 py-0.5 text-[11px] font-medium text-text-secondary/70 select-none hover:bg-accent hover:text-text-secondary',
-        className
-      )}
+      className={cn('text-ink-2 hover:text-ink', className)}
       {...props}
     >
       <CircleDollarSign size={11} className="shrink-0" strokeWidth={1.75} />
       <span className="tabular-nums">{formatCompactUsd(amount)}</span>
-    </button>
+    </PillButton>
   );
 }
 

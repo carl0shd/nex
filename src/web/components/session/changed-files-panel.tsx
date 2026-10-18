@@ -1,8 +1,8 @@
 import { memo } from 'react';
-import { X } from 'lucide-react';
 import SimpleBar from 'simplebar-react';
 import type { ChangedFile } from '@/lib/session-view';
-import IconButton from '@/components/ui/icon-button';
+import GlideHighlight from '@/components/ui/glide-highlight';
+import PaneHeader from '@/components/session/pane-header';
 import DiffStat from '@/components/diff/diff-stat';
 import DiffStatusLetter from '@/components/diff/diff-status-letter';
 import { cn } from '@/lib/utils';
@@ -28,39 +28,29 @@ function ChangedFilesPanel({
 }: ChangedFilesPanelProps): React.JSX.Element {
   return (
     <div className="flex h-full min-w-0 flex-col">
-      <div className="flex shrink-0 items-center justify-between gap-1 border-b border-border-soft bg-bg-soft px-2.5 py-1.5">
-        <button
-          type="button"
-          onClick={onOpenDiff}
-          className="cursor-pointer select-none text-[11px] text-text-muted hover:text-text"
-        >
-          {'// changed files'}
-        </button>
-        <IconButton icon={X} size={10} ghost onClick={onClose} />
-      </div>
+      <PaneHeader title="Changed files" onTitleClick={onOpenDiff} onClose={onClose} />
 
-      <div className="min-h-0 flex-1 overflow-hidden bg-bg-soft">
+      <div className="min-h-0 flex-1 overflow-hidden">
         {files.length === 0 ? (
           <div className="flex h-full items-center justify-center">
-            <span className="font-mono text-[11px] text-text-placeholder opacity-60">
-              no changes yet
-            </span>
+            <span className="text-xs text-ink-4">No changes yet</span>
           </div>
         ) : (
           <SimpleBar style={{ maxHeight: '100%', width: '100%' }} autoHide={false}>
-            <div className="flex flex-col py-1">
+            <GlideHighlight className="flex flex-col p-1">
               {files.map((file) => (
                 <button
                   type="button"
                   key={file.name}
                   onClick={() => onSelectFile?.(file.name)}
-                  className="flex cursor-pointer select-none items-center gap-2 px-2.5 py-1.25 text-left hover:bg-bg-hover"
+                  data-glide-row
+                  className="relative flex h-7 cursor-pointer items-center gap-2 rounded-[7px] px-2 text-left outline-none select-none"
                 >
                   <DiffStatusLetter status={file.status} />
                   <span
                     className={cn(
-                      'truncate font-mono text-[11px]',
-                      file.status === 'deleted' ? 'text-text-muted' : 'text-text'
+                      'truncate font-mono text-2xs',
+                      file.status === 'deleted' ? 'text-ink-3' : 'text-ink'
                     )}
                   >
                     {file.name}
@@ -69,7 +59,7 @@ function ChangedFilesPanel({
                   <DiffStat added={file.added} removed={file.removed} />
                 </button>
               ))}
-            </div>
+            </GlideHighlight>
           </SimpleBar>
         )}
       </div>
@@ -77,9 +67,9 @@ function ChangedFilesPanel({
       <button
         type="button"
         onClick={onOpenDiff}
-        className="flex shrink-0 cursor-pointer select-none items-center gap-1.5 border-t border-border-soft bg-bg-soft px-2.5 py-1.5 font-mono text-[10px] hover:bg-bg-hover"
+        className="interactive flex h-8 shrink-0 cursor-pointer items-center gap-1.5 border-t border-line-soft px-3 font-mono text-3xs select-none hover:bg-hover"
       >
-        <span className="text-text-muted">{totalFiles} files,</span>
+        <span className="text-ink-3">{totalFiles} files</span>
         <DiffStat added={totalAdded} removed={totalRemoved} />
       </button>
     </div>

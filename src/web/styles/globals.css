@@ -2,23 +2,278 @@
 @import 'tw-animate-css';
 
 /*
- * Two token layers, one palette:
- *   1. `--nex-*` (below, in :root) is the source of truth. Themes override these only.
- *   2. shadcn semantic tokens (--background, --primary, …) alias the nex palette so
- *      shadcn/ui components inherit the app theme without any per-component styling.
+ * One palette, two layers:
+ *   1. The palette below (:root = dark, [data-theme='light']) is the source of truth.
+ *      A theme overrides these variables only.
+ *   2. `@theme inline` turns them into utilities (bg-surface, text-ink-2, shadow-glass…)
+ *      and aliases the shadcn semantic tokens (--primary, --muted…) onto them.
  */
+
+:root {
+  color-scheme: dark;
+
+  /* Surfaces — warm neutrals, lifted one step per layer */
+  --page: #131412;
+  --canvas: #161715;
+  --surface: #191a18;
+  --surface-raised: #1e1f1d;
+  --inset: #171816;
+  --terminal: #141513;
+  --terminal-selection: rgba(63, 140, 108, 0.35);
+  --muted: #242522;
+  --muted-strong: #2c2d2a;
+
+  /* Interaction fills — translucent, so they read on glass and solid alike */
+  --field: rgb(236 235 230 / 5%);
+  --hover: rgb(236 235 230 / 5%);
+  --hover-2: rgb(236 235 230 / 8%);
+  --active: rgb(236 235 230 / 11%);
+
+  /* Ink */
+  --ink: #ecebe6;
+  --ink-2: #b9b8b2;
+  --ink-3: #9a9c96;
+  --ink-4: #6f716c;
+  --inverse: #121311;
+  --on-color: #ffffff;
+
+  /* Lines */
+  --line: rgb(236 235 230 / 10%);
+  --line-soft: rgb(236 235 230 / 6%);
+  --line-strong: rgb(236 235 230 / 16%);
+  --line-hover: rgb(236 235 230 / 24%);
+
+  /* Brand */
+  --primary: #3f8c6c;
+  --primary-hover: #4a9a79;
+  --primary-deep: #34765a;
+  --primary-ink: #7cc4a2;
+  --primary-tint: rgb(63 140 108 / 18%);
+  --primary-fg: #f4f8f5;
+  --ring: #4f9d7c;
+
+  /* Semantic — condiments, used sparingly */
+  --green: #4f9d7c;
+  --orange: #d89c32;
+  --red: #e0664f;
+  --red-hover: #c9573f;
+  --blue: #6f9ae0;
+  --yellow: #e8b040;
+
+  /* Data */
+  --chart-cost: #3f8c6c;
+  --chart-1: #c08411;
+  --chart-2: #2c6fc4;
+  --chart-3: #d4658f;
+  --chart-4: #7a5ad4;
+  --chart-5: #40a565;
+  --chart-grid: rgb(236 235 230 / 7%);
+  --diff-added: #4ba85e;
+  --diff-removed: #e0664f;
+
+  --scrollbar: rgb(236 235 230 / 10%);
+  --scrollbar-hover: rgb(236 235 230 / 18%);
+  --overlay: rgb(0 0 0 / 45%);
+
+  /* Glass — a flat frosted tint, never a gradient or a light source */
+  --highlight: rgb(255 255 255 / 3%);
+  --glass-tint: rgb(25 26 24 / 84%);
+  --glass-ring: rgb(236 235 230 / 4%);
+  --glass-filter: blur(28px) saturate(110%);
+  --glass-panel-bg: color-mix(in oklab, var(--surface) 86%, transparent);
+  --glass-panel-filter: blur(24px) saturate(150%);
+  --r-panel: 14px;
+  --r-window: 18px;
+  --selected-ring: rgb(63 140 108 / 22%);
+
+  /* Elevation — hairline ring + layered shadow, graduated by how far a surface floats */
+  --shadow-hairline: 0 0 0 1px var(--line);
+  --shadow-btn:
+    0 0 0 1px rgb(255 255 255 / 6%), 0 1px 2px rgb(0 0 0 / 30%), inset 0 1px 0 var(--highlight);
+  --shadow-card:
+    0 0 0 1px var(--line-soft), inset 0 1px 0 var(--highlight), 0 1px 2px rgb(0 0 0 / 25%),
+    0 8px 24px -12px rgb(0 0 0 / 50%);
+  --shadow-raised:
+    0 0 0 1px rgb(255 255 255 / 7%), 0 2px 4px rgb(0 0 0 / 22%), 0 10px 24px -8px rgb(0 0 0 / 45%);
+  --shadow-overlay:
+    0 0 0 1px rgb(255 255 255 / 7%), inset 0 1px 0 var(--highlight), 0 2px 6px rgb(0 0 0 / 25%),
+    0 16px 40px -12px rgb(0 0 0 / 60%);
+  --shadow-glass:
+    0 1px 2px rgb(0 0 0 / 25%), 0 8px 24px -12px rgb(0 0 0 / 40%),
+    inset 0 1px 0 rgb(255 255 255 / 4%);
+  --shadow-solid:
+    0 1px 2px rgb(0 0 0 / 40%), 0 8px 18px -8px rgb(0 0 0 / 60%),
+    inset 0 1px 0 rgb(255 255 255 / 10%);
+  --shadow-inset-field: inset 0 1px 2px rgb(0 0 0 / 35%);
+  --shadow-mark: inset 0 1px 0 rgb(255 255 255 / 18%), inset 0 0 0 1px rgb(0 0 0 / 10%);
+  --shadow-thumb: 0 1px 2px rgb(0 0 0 / 25%), 0 0 0 0.5px rgb(0 0 0 / 6%);
+}
+
+/* Elevation flips on a light page: a raised surface is whiter, and shadows carry the depth. */
+[data-theme='light'] {
+  color-scheme: light;
+
+  --page: #f5f4f2;
+  --canvas: #f0efec;
+  --surface: #fdfdfc;
+  --surface-raised: #ffffff;
+  --inset: #f3f2ef;
+  --terminal: #fdfdfc;
+  --terminal-selection: rgba(43, 108, 82, 0.22);
+  --muted: #eeedea;
+  --muted-strong: #e5e4e0;
+
+  --field: rgb(29 29 29 / 3.5%);
+  --hover: rgb(29 29 29 / 4%);
+  --hover-2: rgb(29 29 29 / 6.5%);
+  --active: rgb(29 29 29 / 9%);
+
+  --ink: #1d1d1d;
+  --ink-2: #484946;
+  --ink-3: #6b6d6a;
+  --ink-4: #9b9c98;
+  --inverse: #fdfdfc;
+
+  --line: rgb(29 29 29 / 9%);
+  --line-soft: rgb(29 29 29 / 6%);
+  --line-strong: rgb(29 29 29 / 14%);
+  --line-hover: rgb(29 29 29 / 22%);
+
+  --primary: #2b6c52;
+  --primary-hover: #327a5d;
+  --primary-deep: #245c46;
+  --primary-ink: #24604a;
+  --primary-tint: rgb(43 108 82 / 11%);
+  --primary-fg: #fbfcf8;
+  --ring: #2b6c52;
+
+  --green: #2b6c52;
+  --orange: #9c6600;
+  --red: #c8442f;
+  --red-hover: #b23b28;
+  --blue: #3b6cb4;
+  --yellow: #e0a11f;
+
+  --chart-cost: #2b6c52;
+  --chart-grid: rgb(29 29 29 / 7%);
+  --diff-added: #1f7a37;
+  --diff-removed: #c8442f;
+
+  --scrollbar: rgb(29 29 29 / 10%);
+  --scrollbar-hover: rgb(29 29 29 / 20%);
+  --overlay: rgb(29 29 29 / 22%);
+
+  --highlight: rgb(255 255 255 / 32%);
+  --glass-tint: rgb(253 253 252 / 64%);
+  --glass-ring: rgb(29 29 29 / 5%);
+  --glass-filter: blur(28px) saturate(140%);
+  --selected-ring: rgb(43 108 82 / 30%);
+
+  --shadow-btn:
+    0 0 0 1px rgb(29 29 29 / 10%), 0 1px 2px rgb(29 29 29 / 6%),
+    inset 0 1px 0 rgb(255 255 255 / 60%);
+  --shadow-card:
+    0 0 0 1px var(--line-soft), inset 0 1px 0 var(--highlight), 0 1px 2px rgb(29 29 29 / 4%),
+    0 10px 28px -12px rgb(29 29 29 / 14%);
+  --shadow-raised:
+    0 0 0 1px rgb(29 29 29 / 8%), 0 2px 4px rgb(29 29 29 / 5%),
+    0 12px 28px -10px rgb(29 29 29 / 16%);
+  --shadow-overlay:
+    0 0 0 1px rgb(29 29 29 / 7%), 0 2px 6px rgb(29 29 29 / 6%),
+    0 16px 40px -12px rgb(29 29 29 / 22%);
+  --shadow-glass:
+    0 1px 2px rgb(29 29 29 / 4%), 0 8px 24px -12px rgb(29 29 29 / 16%),
+    inset 0 1px 0 rgb(255 255 255 / 45%);
+  --shadow-solid:
+    0 1px 2px rgb(29 29 29 / 16%), 0 8px 18px -8px rgb(29 29 29 / 28%),
+    inset 0 1px 0 rgb(255 255 255 / 12%);
+  --shadow-inset-field: inset 0 1px 2px rgb(29 29 29 / 8%);
+}
+
+:root {
+  /* shadcn semantic tokens — aliases only, never literal colors */
+  --radius: 0.5rem;
+  --background: var(--page);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface-raised);
+  --popover-foreground: var(--ink);
+  --primary-foreground: var(--primary-fg);
+  --secondary: var(--muted);
+  --secondary-foreground: var(--ink);
+  --muted-foreground: var(--ink-3);
+  --accent: var(--muted);
+  --accent-foreground: var(--ink);
+  --destructive: var(--red);
+  --destructive-foreground: #ffffff;
+  --border: var(--line);
+  --input: var(--line);
+
+  --sidebar: var(--canvas);
+  --sidebar-foreground: var(--ink-2);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-fg);
+  --sidebar-accent: var(--hover);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--line-soft);
+  --sidebar-ring: var(--ring);
+}
+
 @theme inline {
+  --color-page: var(--page);
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-inset: var(--inset);
+  --color-terminal: var(--terminal);
+  --color-muted: var(--muted);
+  --color-muted-strong: var(--muted-strong);
+  --color-field: var(--field);
+  --color-hover: var(--hover);
+  --color-hover-2: var(--hover-2);
+  --color-active: var(--active);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-ink-4: var(--ink-4);
+  --color-inverse: var(--inverse);
+  --color-on-color: var(--on-color);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-line-strong: var(--line-strong);
+  --color-line-hover: var(--line-hover);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-deep: var(--primary-deep);
+  --color-primary-ink: var(--primary-ink);
+  --color-primary-tint: var(--primary-tint);
+  --color-primary-foreground: var(--primary-fg);
+  --color-ring: var(--ring);
+  --color-selected-ring: var(--selected-ring);
+  --color-green: var(--green);
+  --color-orange: var(--orange);
+  --color-red: var(--red);
+  --color-red-hover: var(--red-hover);
+  --color-blue: var(--blue);
+  --color-yellow: var(--yellow);
+  --color-chart-cost: var(--chart-cost);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-grid: var(--chart-grid);
+  --color-overlay: var(--overlay);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
@@ -26,8 +281,6 @@
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
-  --color-ring: var(--ring);
-
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -37,366 +290,225 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
+  --shadow-hairline: var(--shadow-hairline);
+  --shadow-btn: var(--shadow-btn);
+  --shadow-card: var(--shadow-card);
+  --shadow-raised: var(--shadow-raised);
+  --shadow-overlay: var(--shadow-overlay);
+  --shadow-glass: var(--shadow-glass);
+  --shadow-solid: var(--shadow-solid);
+  --shadow-inset-field: var(--shadow-inset-field);
+  --shadow-mark: var(--shadow-mark);
+  --shadow-thumb: var(--shadow-thumb);
+
+  --font-sans: 'Inter Variable', Inter, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Dense desktop scale: 10 · 11 · 12 · 13 · 14 · 16 · 20 · 24 · 30 */
+  --text-3xs: 10px;
+  --text-3xs--line-height: 14px;
+  --text-2xs: 11px;
+  --text-2xs--line-height: 16px;
+  --text-xs: 12px;
+  --text-xs--line-height: 16px;
+  --text-sm: 13px;
+  --text-sm--line-height: 18px;
+  --text-base: 14px;
+  --text-base--line-height: 20px;
+  --text-lg: 16px;
+  --text-lg--line-height: 22px;
+  --text-lg--letter-spacing: -0.012em;
+  --text-xl: 20px;
+  --text-xl--line-height: 26px;
+  --text-xl--letter-spacing: -0.02em;
+  --text-2xl: 24px;
+  --text-2xl--line-height: 30px;
+  --text-2xl--letter-spacing: -0.025em;
+  --text-3xl: 30px;
+  --text-3xl--line-height: 36px;
+  --text-3xl--letter-spacing: -0.03em;
+
+  /* chip 6 · control 8 · card 10 · panel 14 · window 18 · pill */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-chip: 6px;
+  --radius-control: 8px;
+  --radius-card: 10px;
+  --radius-panel: var(--r-panel);
+  --radius-window: var(--r-window);
+
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-glide: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --animate-pop-in: pop-in 160ms var(--ease-out-strong) both;
+  --animate-fade-up: fade-up 320ms var(--ease-out-strong) both;
+  --animate-fade-in: fade-in 200ms ease-out both;
+  --animate-rise: rise 600ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-shimmer: shimmer-text 1.8s linear infinite;
+  --animate-breathe: breathe 2.4s ease-in-out infinite;
+  --animate-sheen: sheen 2.2s ease-in-out infinite;
+
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+  }
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+  @keyframes shimmer-text {
+    from {
+      background-position: 150% center;
+    }
+    to {
+      background-position: -50% center;
+    }
+  }
+  @keyframes breathe {
+    50% {
+      opacity: 0.35;
+    }
+  }
+  @keyframes sheen {
+    from {
+      translate: -100% 0;
+    }
+    to {
+      translate: 250% 0;
+    }
+  }
 }
 
-@theme {
-  --color-bg: var(--nex-bg);
-  --color-bg-soft: var(--nex-bg-soft);
-  --color-bg-mute: var(--nex-bg-mute);
-  --color-bg-card: var(--nex-bg-card);
-  --color-border-soft: var(--nex-border-soft);
-  --color-text: var(--nex-text);
-  --color-text-secondary: var(--nex-text-secondary);
-  --color-text-muted: var(--nex-text-muted);
-  --color-text-placeholder: var(--nex-text-placeholder);
-  --color-accent-hover: var(--nex-accent-hover);
-  --color-switch-thumb: var(--nex-switch-thumb);
-  --color-badge-success-bg: var(--nex-badge-success-bg);
-  --color-badge-success-text: var(--nex-badge-success-text);
-  --color-badge-warning-bg: var(--nex-badge-warning-bg);
-  --color-badge-warning-text: var(--nex-badge-warning-text);
-  --color-badge-error-bg: var(--nex-badge-error-bg);
-  --color-badge-error-text: var(--nex-badge-error-text);
-  --color-badge-default-bg: var(--nex-badge-default-bg);
-  --color-badge-default-text: var(--nex-badge-default-text);
-  --color-badge-count-bg: var(--nex-badge-count-bg);
-  --color-badge-count-text: var(--nex-badge-count-text);
-  --color-badge-info-bg: var(--nex-badge-info-bg);
-  --color-badge-info-text: var(--nex-badge-info-text);
-  --color-badge-success-bg-soft: var(--nex-badge-success-bg-soft);
-  --color-badge-warning-bg-soft: var(--nex-badge-warning-bg-soft);
-  --color-badge-error-bg-soft: var(--nex-badge-error-bg-soft);
-  --color-badge-default-bg-soft: var(--nex-badge-default-bg-soft);
-  --color-badge-info-bg-soft: var(--nex-badge-info-bg-soft);
-  --color-bg-raised: var(--nex-bg-raised);
-  --color-bg-input: var(--nex-bg-input);
-  --color-bg-notes: var(--nex-bg-notes);
-  --color-bg-chat: var(--nex-bg-chat);
-  --color-bg-chat-input: var(--nex-bg-chat-input);
-  --color-bg-panel: var(--nex-bg-panel);
-  --color-bg-hover: var(--nex-bg-hover);
-  --color-bg-item-active: var(--nex-bg-item-active);
-  --color-border-strong: var(--nex-border-strong);
-  --color-border-hover: var(--nex-border-hover);
-
-  /* Destructive */
-  --color-destructive-hover: var(--nex-destructive-hover);
-  --color-destructive-text: var(--nex-destructive-text);
-
-  /* Context menu */
-  --color-bg-menu: var(--nex-bg-menu);
-  --color-border-menu: var(--nex-border-menu);
-
-  /* Archived */
-  --color-archived: var(--nex-archived);
-
-  /* Stat tiles */
-  --color-bg-tile: var(--nex-bg-tile);
-  --color-border-tile: var(--nex-border-tile);
-  --color-bg-tile-menu: var(--nex-bg-tile-menu);
-  --color-border-tile-menu: var(--nex-border-tile-menu);
-
-  /* Charts */
-  --color-chart-cost: var(--nex-chart-cost);
-  --color-chart-1: var(--nex-chart-1);
-  --color-chart-2: var(--nex-chart-2);
-  --color-chart-3: var(--nex-chart-3);
-  --color-chart-4: var(--nex-chart-4);
-  --color-chart-5: var(--nex-chart-5);
-  --color-chart-grid: var(--nex-chart-grid);
-
-  /* Selected */
-  --color-selected: var(--nex-selected);
-  --color-selected-bg: var(--nex-selected-bg);
-  --color-selected-border: var(--nex-selected-border);
-  --color-selected-text: var(--nex-selected-text);
-
-  /* Dialog backdrop */
-  --color-overlay: var(--nex-overlay);
-
-  /* Elevation, as a `shadow-popover` utility */
-  --shadow-popover: var(--nex-shadow-popover);
+/* Floating chrome: a frosted tint with a soft blur. Its own layer, so a hover on a child
+   does not re-run the backdrop filter. */
+@utility glass {
+  background-color: var(--glass-tint);
+  box-shadow:
+    var(--shadow-glass),
+    inset 0 0 0 1px var(--glass-ring);
+  backdrop-filter: var(--glass-filter);
+  isolation: isolate;
+  will-change: backdrop-filter;
 }
 
-:root {
-  /* Native UI (scrollbars, form controls) follows the app theme, not the OS. */
-  color-scheme: dark;
-
-  /* Backgrounds */
-  --nex-bg: #0c0b0b;
-  --nex-bg-soft: #131212;
-  --nex-bg-mute: #1a1918;
-  --nex-bg-card: #171615;
-
-  /* Backgrounds - elevated */
-  --nex-bg-raised: #1c1b1a;
-  --nex-bg-input: #121110;
-  --nex-bg-notes: #0f0f0f;
-  --nex-bg-chat: #141212;
-  --nex-bg-chat-input: #0f0f0f;
-  --nex-bg-panel: #161514;
-  --nex-bg-hover: #1d1c1b;
-  --nex-bg-item-active: #242322;
-
-  /* Borders */
-  --nex-border: #2b2a28;
-  --nex-border-soft: #1f1e1d;
-  --nex-border-strong: #353432;
-  --nex-border-hover: #464543;
-
-  /* Scrollbars */
-  --nex-scrollbar: #1f1e1d;
-  --nex-scrollbar-hover: #353432;
-
-  /* Text */
-  --nex-text: #eeeceb;
-  --nex-text-secondary: #b8b5b2;
-  --nex-text-muted: #8a8784;
-  --nex-text-placeholder: #6a6764;
-
-  /* Accent */
-  --nex-accent: #1e1d1c;
-  --nex-accent-hover: #232221;
-
-  /* Switch knob — rides on a saturated track, so it never follows --nex-text */
-  --nex-switch-thumb: #eeeceb;
-
-  /* Badge - success */
-  --nex-badge-success-bg: #1a3d20;
-  --nex-badge-success-text: #33843f;
-
-  /* Badge - warning */
-  --nex-badge-warning-bg: #422006;
-  --nex-badge-warning-text: #fbbf24;
-
-  /* Badge - error */
-  --nex-badge-error-bg: #450a0a;
-  --nex-badge-error-text: #f87171;
-
-  /* Badge - default */
-  --nex-badge-default-bg: #252423;
-  --nex-badge-default-text: #b8b5b2;
-
-  /* Badge - count */
-  --nex-badge-count-bg: #e2e0de;
-  --nex-badge-count-text: #171615;
-
-  /* Badge - info (modified) */
-  --nex-badge-info-bg: #11243d;
-  --nex-badge-info-text: #69b1ff;
-
-  /* Badge - soft (translucent tint of each variant's accent) */
-  --nex-badge-success-bg-soft: color-mix(in srgb, var(--nex-badge-success-text) 15%, transparent);
-  --nex-badge-warning-bg-soft: color-mix(in srgb, var(--nex-badge-warning-text) 15%, transparent);
-  --nex-badge-error-bg-soft: color-mix(in srgb, var(--nex-badge-error-text) 15%, transparent);
-  --nex-badge-default-bg-soft: color-mix(in srgb, var(--nex-badge-default-text) 12%, transparent);
-  --nex-badge-info-bg-soft: color-mix(in srgb, var(--nex-badge-info-text) 15%, transparent);
-
-  /* Diff tints — same hue family as the +N/-N badges, but lighter: these are
-     mixed into the background as a wash, not read as text. */
-  --nex-diff-added: #4ba85e;
-  --nex-diff-removed: #f87171;
-
-  /* Destructive */
-  --nex-destructive: #e62e2e;
-  --nex-destructive-hover: #cc2929;
-  --nex-destructive-text: #ff3535;
-
-  /* Context menu */
-  --nex-bg-menu: #171615;
-  --nex-border-menu: #2b2a28;
-
-  /* Archived */
-  --nex-archived: #908d8a;
-
-  /* Stat tiles — the theme option card's fill and border on the app background;
-     the menu pair mirrors that step upward, since popovers sit on a lighter surface. */
-  --nex-bg-tile: #121110;
-  --nex-border-tile: #1f1e1d;
-  --nex-bg-tile-menu: #1c1b1a;
-  --nex-border-tile-menu: #2b2a28;
-
-  /* Charts — cost is the brand green, one hue for a single measure; chart-1..5
-     is the fixed categorical order, validated for CVD and contrast on both
-     themes. Green sits last so it never lands beside the cost bars. */
-  --nex-chart-cost: #33843f;
-  --nex-chart-1: #c08411;
-  --nex-chart-2: #2c6fc4;
-  --nex-chart-3: #d4658f;
-  --nex-chart-4: #7a5ad4;
-  --nex-chart-5: #40a565;
-  --nex-chart-grid: #232221;
-
-  /* Selected */
-  --nex-selected: #175f52;
-  --nex-selected-bg: #112b26;
-  --nex-selected-border: #175f52;
-  /* Foreground on top of --nex-selected fills (checkbox tick). Light in both themes. */
-  --nex-selected-text: #ffffff;
-
-  /* Dialog backdrop */
-  --nex-overlay: rgb(0 0 0 / 0.8);
-
-  /* Shadows */
-  --nex-shadow-dropdown: 0 6px 16px 1px rgb(0 0 0 / 0.25);
-  --nex-shadow-popover: 0 4px 12px rgb(0 0 0 / 0.4);
-
-  /*
-   * shadcn/ui semantic tokens — aliases over the nex palette above.
-   * Never give these literal colors: a new theme only overrides `--nex-*`.
-   * `--radius: 0.5rem` keeps rounded-sm/md/lg/xl at Tailwind's default 4/6/8/12px.
-   */
-  --radius: 0.5rem;
-
-  --background: var(--nex-bg);
-  --foreground: var(--nex-text);
-  --card: var(--nex-bg-card);
-  --card-foreground: var(--nex-text);
-  --popover: var(--nex-bg-menu);
-  --popover-foreground: var(--nex-text);
-  --primary: var(--nex-accent);
-  --primary-foreground: var(--nex-text);
-  --secondary: var(--nex-bg-mute);
-  --secondary-foreground: var(--nex-text-secondary);
-  --muted: var(--nex-bg-mute);
-  --muted-foreground: var(--nex-text-muted);
-  --accent: var(--nex-accent);
-  --accent-foreground: var(--nex-text);
-  --destructive: var(--nex-destructive);
-  --destructive-foreground: #ffffff;
-  --border: var(--nex-border);
-  --input: var(--nex-border-soft);
-  --ring: var(--nex-border-hover);
-
-  --sidebar: var(--nex-bg-soft);
-  --sidebar-foreground: var(--nex-text-secondary);
-  --sidebar-primary: var(--nex-accent);
-  --sidebar-primary-foreground: var(--nex-text);
-  --sidebar-accent: var(--nex-bg-hover);
-  --sidebar-accent-foreground: var(--nex-text);
-  --sidebar-border: var(--nex-border-soft);
-  --sidebar-ring: var(--nex-border-hover);
+/* Large frosted panels: mostly opaque, so dense content stays legible. */
+@utility glass-panel {
+  background-color: var(--glass-panel-bg);
+  box-shadow:
+    var(--shadow-card),
+    inset 0 0 0 1px var(--glass-ring),
+    inset 0 1px 0 0 var(--highlight);
+  backdrop-filter: var(--glass-panel-filter);
 }
 
-/*
- * Light theme. Overrides `--nex-*` only — every Tailwind class and shadcn token above
- * is an alias over these, so nothing else in the app needs to know a theme exists.
- * Note the elevation flips direction: on a light page a "raised" surface reads as a
- * slightly darker tint, not a lighter one.
- */
-[data-theme='light'] {
-  color-scheme: light;
+@utility interactive {
+  transition-property: color, background-color, border-color, box-shadow, opacity, scale, translate;
+  transition-duration: 150ms;
+  transition-timing-function: var(--ease-out-strong);
+}
 
-  /* Backgrounds */
-  --nex-bg: #f6f5f3;
-  --nex-bg-soft: #f1efec;
-  --nex-bg-mute: #e8e5e1;
-  --nex-bg-card: #ffffff;
+@utility press {
+  &:active:not(:disabled, [aria-disabled='true'], [aria-haspopup]) {
+    scale: 0.97;
+  }
+}
 
-  /* Backgrounds - elevated */
-  --nex-bg-raised: #eae7e3;
-  --nex-bg-input: #ffffff;
-  --nex-bg-notes: #ffffff;
-  --nex-bg-chat: #ffffff;
-  --nex-bg-chat-input: #ffffff;
-  --nex-bg-panel: #ffffff;
-  --nex-bg-hover: #ece9e5;
-  --nex-bg-item-active: #e0dcd7;
+@utility eyebrow {
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+  font-weight: 500;
+  color: var(--ink-3);
+}
 
-  /* Borders */
-  --nex-border: #d8d4cf;
-  --nex-border-soft: #e6e2dd;
-  --nex-border-strong: #c2bdb7;
-  --nex-border-hover: #a8a29b;
+@utility shimmer-text {
+  background-image: linear-gradient(90deg, var(--ink-3) 35%, var(--ink) 50%, var(--ink-3) 65%);
+  background-size: 200% 100%;
+  background-clip: text;
+  color: transparent;
+  animation: var(--animate-shimmer);
+}
 
-  /* Scrollbars */
-  --nex-scrollbar: #e6e2dd;
-  --nex-scrollbar-hover: #c2bdb7;
+/* Sidebar — one persistent 260px tree clipped by a 52px rail when collapsed (beautiful-ui
+   SidebarNav). Rows keep their glyph at x=26 in both states; only the copy fades and slides. */
+[data-sidebar] {
+  --sidebar-duration: 280ms;
+  --sidebar-copy-duration: 180ms;
+  --sidebar-easing: var(--ease-glide);
+}
 
-  /* Text */
-  --nex-text: #1c1a19;
-  --nex-text-secondary: #4d4944;
-  --nex-text-muted: #6b665f;
-  --nex-text-placeholder: #8f8a84;
+.sidebar-row {
+  width: 244px;
+  transition:
+    width var(--sidebar-copy-duration) var(--sidebar-easing),
+    background-color 150ms var(--ease-out-strong),
+    box-shadow 150ms var(--ease-out-strong),
+    color 150ms var(--ease-out-strong),
+    scale 150ms var(--ease-out-strong);
+}
 
-  /* Accent */
-  --nex-accent: #e4e0db;
-  --nex-accent-hover: #dbd6d0;
+.sidebar-copy {
+  opacity: 1;
+  translate: 0 0;
+  transition:
+    opacity var(--sidebar-copy-duration) ease-out,
+    translate var(--sidebar-copy-duration) var(--sidebar-easing);
+}
 
-  --nex-switch-thumb: #ffffff;
+[data-sidebar] .sidebar-glide-highlight {
+  left: 8px;
+  right: 8px;
+}
 
-  /* Badge - success */
-  --nex-badge-success-bg: #dcf0e0;
-  --nex-badge-success-text: #1f7a37;
+[data-sidebar-collapsed='true'] .sidebar-row {
+  width: 36px;
+}
 
-  /* Badge - warning */
-  --nex-badge-warning-bg: #fdefd6;
-  --nex-badge-warning-text: #8a5600;
+[data-sidebar-collapsed='true'] .sidebar-copy {
+  pointer-events: none;
+  opacity: 0;
+  translate: -8px 0;
+}
 
-  /* Badge - error */
-  --nex-badge-error-bg: #fde3e3;
-  --nex-badge-error-text: #c02626;
+[data-sidebar-collapsed='true'] .sidebar-glide-highlight {
+  right: auto;
+  width: 36px;
+}
 
-  /* Diff tints — darker here, since they wash into a light background. */
-  --nex-diff-added: #1f7a37;
-  --nex-diff-removed: #c02626;
+[data-sidebar-collapsed='true'] [data-slot='collapsible-rows']:not([data-rail='visible']) {
+  grid-template-rows: 0fr;
+}
 
-  /* Badge - default */
-  --nex-badge-default-bg: #e6e2dd;
-  --nex-badge-default-text: #4d4944;
-
-  /* Badge - count */
-  --nex-badge-count-bg: #dcd7d1;
-  --nex-badge-count-text: #3d3935;
-
-  /* Badge - info (modified) */
-  --nex-badge-info-bg: #dceafc;
-  --nex-badge-info-text: #1a5fb4;
-
-  /* Destructive */
-  --nex-destructive: #dc2626;
-  --nex-destructive-hover: #b91c1c;
-  --nex-destructive-text: #c02626;
-
-  /* Context menu */
-  --nex-bg-menu: #ffffff;
-  --nex-border-menu: #ddd8d2;
-
-  /* Archived */
-  --nex-archived: #6f6a63;
-
-  --nex-bg-tile: #f4f2f0;
-  --nex-border-tile: #e6e2dd;
-  --nex-bg-tile-menu: #f4f2f0;
-  --nex-border-tile-menu: #e6e2dd;
-
-  --nex-chart-cost: #1f7a37;
-  --nex-chart-grid: #e2ded8;
-
-  /* Selected */
-  --nex-selected: #0f766e;
-  --nex-selected-bg: #d8efea;
-  --nex-selected-border: #0f766e;
-
-  /* Dialog backdrop */
-  --nex-overlay: rgb(28 26 25 / 0.35);
-
-  /* Shadows */
-  --nex-shadow-dropdown: 0 6px 16px 1px rgb(28 26 25 / 0.12);
-  --nex-shadow-popover: 0 4px 12px rgb(28 26 25 / 0.14);
+[data-sidebar-collapsed='true'] .sidebar-expanded-only,
+[data-sidebar-collapsed='false'] .sidebar-collapsed-only {
+  pointer-events: none;
+  opacity: 0;
 }
 
 ::selection {
-  background: var(--nex-border-strong);
+  background: var(--primary-tint);
 }
 
 *:focus-visible {
-  outline: 1px solid var(--nex-border-hover);
-  outline-offset: -1px;
+  outline: 2px solid color-mix(in srgb, var(--ring) 70%, transparent);
+  outline-offset: 1px;
 }
 
 textarea:focus-visible,
@@ -409,6 +521,23 @@ input:focus-visible {
 [role='dialog']:focus-visible,
 [role='menu']:focus-visible {
   outline: none;
+}
+
+/* A theme switch swaps every token at once; freezing transitions makes it one clean repaint. */
+.theme-switching *,
+.theme-switching *::before,
+.theme-switching *::after {
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Every native scrollbar in the app. Do not add `scrollbar-width`/`scrollbar-color`
@@ -424,12 +553,12 @@ input:focus-visible {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--nex-scrollbar);
+  background: var(--scrollbar);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--nex-scrollbar-hover);
+  background: var(--scrollbar-hover);
 }
 
 html,
@@ -439,7 +568,10 @@ body {
   height: 100%;
   overflow: hidden;
   background: transparent;
-  font-family: 'Inter Variable', Inter, system-ui, sans-serif;
+  font-family: var(--font-sans);
+  font-feature-settings: 'cv11', 'ss01';
+  letter-spacing: -0.01em;
+  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: auto;
   user-select: none;
@@ -448,7 +580,7 @@ body {
 }
 
 .simplebar-scrollbar::before {
-  background: var(--nex-scrollbar);
+  background: var(--scrollbar);
   border-radius: 3px;
 }
 
@@ -459,7 +591,7 @@ body {
 }
 
 .simplebar-scrollbar.simplebar-hover::before {
-  background: var(--nex-scrollbar-hover);
+  background: var(--scrollbar-hover);
 }
 
 .simplebar-content-wrapper:focus-visible {
@@ -493,21 +625,21 @@ body {
 }
 
 [data-sonner-toaster] {
-  --normal-bg: var(--nex-bg-menu);
-  --normal-text: var(--nex-text);
-  --normal-border: var(--nex-border-menu);
-  --success-bg: var(--nex-bg-menu);
-  --success-text: var(--nex-text);
-  --success-border: var(--nex-border-menu);
-  --error-bg: var(--nex-bg-menu);
-  --error-text: var(--nex-text);
-  --error-border: var(--nex-border-menu);
-  --warning-bg: var(--nex-bg-menu);
-  --warning-text: var(--nex-text);
-  --warning-border: var(--nex-border-menu);
-  --info-bg: var(--nex-bg-menu);
-  --info-text: var(--nex-text);
-  --info-border: var(--nex-border-menu);
+  --normal-bg: var(--surface-raised);
+  --normal-text: var(--ink);
+  --normal-border: var(--line);
+  --success-bg: var(--surface-raised);
+  --success-text: var(--ink);
+  --success-border: var(--line);
+  --error-bg: var(--surface-raised);
+  --error-text: var(--ink);
+  --error-border: var(--line);
+  --warning-bg: var(--surface-raised);
+  --warning-text: var(--ink);
+  --warning-border: var(--line);
+  --info-bg: var(--surface-raised);
+  --info-text: var(--ink);
+  --info-border: var(--line);
   z-index: 9999 !important;
 }
 
@@ -517,12 +649,12 @@ body {
 }
 
 [data-sonner-toast] {
-  font-family: 'Inter', system-ui, sans-serif !important;
-  background: var(--nex-bg-menu) !important;
-  border: 1px solid var(--nex-border-menu) !important;
-  border-radius: 8px !important;
+  font-family: var(--font-sans) !important;
+  background: var(--surface-raised) !important;
+  border: 0 !important;
+  border-radius: var(--radius-card) !important;
   padding: 12px 14px !important;
-  box-shadow: var(--nex-shadow-popover) !important;
+  box-shadow: var(--shadow-overlay) !important;
 }
 
 [data-sonner-toast] [data-icon] {
@@ -533,26 +665,26 @@ body {
   font-size: 12px !important;
   font-weight: 500 !important;
   line-height: 1.4 !important;
-  color: var(--nex-text) !important;
+  color: var(--ink) !important;
 }
 
 [data-sonner-toast] [data-description] {
   font-size: 11px !important;
   line-height: 1.5 !important;
-  color: var(--nex-text-secondary) !important;
-  font-family: 'JetBrains Mono', monospace !important;
+  color: var(--ink-2) !important;
+  font-family: var(--font-mono) !important;
 }
 
 [data-sonner-toast][data-type='error'] [data-title] {
-  color: var(--nex-destructive-text) !important;
+  color: var(--red) !important;
 }
 
 [data-sonner-toast][data-type='success'] [data-title] {
-  color: var(--nex-badge-success-text) !important;
+  color: var(--green) !important;
 }
 
 [data-sonner-toast][data-type='warning'] [data-title] {
-  color: var(--nex-badge-warning-text) !important;
+  color: var(--orange) !important;
 }
 
 [data-sonner-toast] [data-close-button] {
@@ -562,7 +694,7 @@ body {
   background: transparent !important;
   border: 0 !important;
   border-radius: 4px !important;
-  color: var(--nex-text-muted) !important;
+  color: var(--ink-3) !important;
   transform: none !important;
   opacity: 0;
   transition: opacity 100ms ease;
@@ -579,8 +711,8 @@ body {
 }
 
 [data-sonner-toast] [data-close-button]:hover {
-  background: var(--nex-bg-hover) !important;
-  color: var(--nex-text) !important;
+  background: var(--hover-2) !important;
+  color: var(--ink) !important;
 }
 
 .ProseMirror,
@@ -595,7 +727,7 @@ body {
   pointer-events: none;
   float: left;
   height: 0;
-  color: var(--nex-text-muted);
+  color: var(--ink-3);
   content: attr(data-placeholder);
 }
 
@@ -605,8 +737,8 @@ body {
   gap: 3px;
   padding: 0 4px;
   border-radius: 3px;
-  background: var(--nex-bg-hover);
-  color: var(--nex-text);
+  background: var(--hover-2);
+  color: var(--ink);
   font-weight: 500;
 }
 
@@ -615,7 +747,7 @@ body {
 }
 
 .nex-interim {
-  color: var(--nex-text-muted);
+  color: var(--ink-3);
   font-style: italic;
 }
 
@@ -643,7 +775,7 @@ body {
 
 #root {
   height: 100%;
-  background: var(--nex-bg);
+  background: var(--page);
   border-radius: 10px;
   overflow: hidden;
 }
@@ -655,18 +787,18 @@ body {
    reads far louder than the rest of the app. */
 .diff-codeview diffs-container,
 .diff-snippet diffs-container {
-  --diffs-dark-bg: var(--nex-bg);
-  --diffs-light-bg: var(--nex-bg);
+  --diffs-dark-bg: var(--inset);
+  --diffs-light-bg: var(--inset);
 
-  --diffs-addition-color-override: var(--nex-diff-added);
-  --diffs-deletion-color-override: var(--nex-diff-removed);
-  --diffs-bg-addition-override: color-mix(in lab, var(--nex-bg) 88%, var(--nex-diff-added));
-  --diffs-bg-deletion-override: color-mix(in lab, var(--nex-bg) 88%, var(--nex-diff-removed));
+  --diffs-addition-color-override: var(--diff-added);
+  --diffs-deletion-color-override: var(--diff-removed);
+  --diffs-bg-addition-override: color-mix(in lab, var(--inset) 88%, var(--diff-added));
+  --diffs-bg-deletion-override: color-mix(in lab, var(--inset) 88%, var(--diff-removed));
 
   /* Word-level highlight stays stronger than the line wash, otherwise the
      changed tokens disappear into it. */
-  --diffs-bg-addition-emphasis-override: rgb(from var(--nex-diff-added) r g b / 0.2);
-  --diffs-bg-deletion-emphasis-override: rgb(from var(--nex-diff-removed) r g b / 0.2);
+  --diffs-bg-addition-emphasis-override: rgb(from var(--diff-added) r g b / 0.2);
+  --diffs-bg-deletion-emphasis-override: rgb(from var(--diff-removed) r g b / 0.2);
 }
 
 /* Snippet previews sit inside the chat card, which already draws the frame. */
@@ -676,8 +808,8 @@ body {
 }
 
 .diff-codeview diffs-container {
-  border: 1px solid var(--nex-border-soft);
-  border-radius: var(--radius);
+  border-radius: var(--radius-card);
+  box-shadow: 0 0 0 1px var(--line-soft);
   overflow: hidden;
 }
 

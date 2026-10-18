@@ -21,20 +21,17 @@ function FolderPicker({
     <Field>
       <FieldLabel>{label}</FieldLabel>
       <InputGroup asChild>
-        <button type="button" onClick={onBrowse} className="cursor-pointer hover:border-border">
+        <button type="button" onClick={onBrowse} className="cursor-pointer hover:border-line">
           <InputGroupAddon>
             <FolderOpen size={14} />
           </InputGroupAddon>
           <span
-            className={cn(
-              'flex-1 truncate text-left text-[12px]',
-              value ? 'text-text-secondary' : 'text-text-placeholder'
-            )}
+            className={cn('flex-1 truncate text-left text-xs', value ? 'text-ink-2' : 'text-ink-4')}
           >
             {value || placeholder}
           </span>
           <InputGroupAddon align="inline-end">
-            <Chip className="px-2 text-[10px]">browse</Chip>
+            <Chip className="px-2 text-3xs">browse</Chip>
           </InputGroupAddon>
         </button>
       </InputGroup>

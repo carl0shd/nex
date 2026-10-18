@@ -1,5 +1,6 @@
 import { memo, useCallback, useRef, useState, type Ref } from 'react';
 import { ArrowUp, FileText, FileDiff } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import IconButton from '@/components/ui/icon-button';
 import { useMergedRef } from '@/hooks/use-merged-ref';
 import ChatEditor, { type ChatEditorHandle } from './chat-editor';
@@ -53,8 +54,8 @@ function TerminalInput({
   }, []);
 
   return (
-    <div className="shrink-0 rounded-lg border border-border-soft bg-bg-chat-input hover:border-border focus-within:border-border">
-      <div className="h-18 py-2.5 pl-3 pr-1">
+    <div className="interactive shrink-0 rounded-panel bg-field shadow-hairline hover:shadow-[0_0_0_1px_var(--line-strong)] focus-within:shadow-[0_0_0_1px_color-mix(in_srgb,var(--ring)_55%,transparent)] focus-within:ring-3 focus-within:ring-ring/12">
+      <div className="h-18 py-2.5 pr-1 pl-3.5">
         <ChatEditor
           ref={setEditorRefs}
           worktreePath={worktreePath}
@@ -64,20 +65,16 @@ function TerminalInput({
           onForwardKey={onForwardKey}
         />
       </div>
-      <div className="flex items-center justify-between border-t border-border-soft px-2.5 pr-2 py-1.5">
+      <div className="flex items-center justify-between px-2 pb-2">
         <div className="flex items-center gap-0.5">
           {!notesVisible && <IconButton icon={FileText} size={14} onClick={onToggleNotes} />}
           {!diffVisible && <IconButton icon={FileDiff} size={14} onClick={onToggleDiff} />}
         </div>
         <div className="flex items-center gap-1">
           <MicButton onTranscript={handleTranscript} onPartial={handlePartial} />
-          <IconButton
-            icon={ArrowUp}
-            size={14}
-            variant="filled"
-            disabled={!hasText}
-            onClick={submit}
-          />
+          <Button size="icon" disabled={!hasText} onClick={submit} title="Send">
+            <ArrowUp size={14} strokeWidth={2.5} />
+          </Button>
         </div>
       </div>
     </div>

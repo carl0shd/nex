@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 interface SidebarTaskProps {
   id: string;
   name: string;
+  projectName?: string;
   active?: boolean;
   onClick?: () => void;
   onDelete?: (id: string) => void;
@@ -17,6 +18,7 @@ interface SidebarTaskProps {
 function SidebarTask({
   id,
   name,
+  projectName,
   active = false,
   onClick,
   onDelete
@@ -27,36 +29,47 @@ function SidebarTask({
   return (
     <div
       ref={rowRef}
+      data-glide-row
+      title={projectName ? `${name} · ${projectName}` : name}
       onClick={onClick}
       className={cn(
-        'group flex h-7 w-full cursor-pointer items-center gap-2 rounded px-1.5 text-left select-none',
-        active ? 'bg-bg-mute/50' : 'hover:bg-bg-mute/50',
-        // Last so it outranks the active fill: a blocked agent is the more urgent
-        // of the two, and active still reads through the brighter label.
-        status === 'waiting' && 'bg-badge-warning-bg-soft'
+        'sidebar-row press group relative mx-2 flex h-8 cursor-pointer items-center rounded-control pr-1 pl-2 text-left select-none',
+        active && 'bg-surface shadow-btn',
+        // Last so it outranks the active fill: a blocked agent is the more urgent of the two.
+        status === 'waiting' && 'bg-orange/10'
       )}
     >
-      <GitBranch size={12} className="shrink-0 text-text-muted" />
-      <span className={cn('truncate text-[12px]', active ? 'text-text' : 'text-text-muted')}>
-        {name}
+      <span className="relative flex size-5 shrink-0 items-center justify-center">
+        <GitBranch size={14} className={active ? 'text-ink-2' : 'text-ink-4'} />
+        {status && status !== 'idle' && (
+          <StatusDot status={status} className="absolute -top-px -right-px size-1.5" />
+        )}
       </span>
-      {status && status !== 'idle' && <StatusDot status={status} className="size-1.5 shrink-0" />}
-      <span className="flex-1" />
+      <span className="sidebar-copy ml-2 flex min-w-0 flex-1 items-baseline gap-1.5">
+        <span className={cn('truncate text-sm', active ? 'font-medium text-ink' : 'text-ink-2')}>
+          {name}
+        </span>
+        {projectName && (
+          <span className="shrink-0 truncate text-2xs text-ink-4">{projectName}</span>
+        )}
+      </span>
       {onDelete && (
-        <div className="opacity-0 group-hover:opacity-100">
-          <ActionMenu
-            rowRef={rowRef}
-            trigger={<IconButton icon={Ellipsis} size={12} />}
-            actions={[
-              {
-                label: 'Delete task',
-                icon: Trash2,
-                onClick: () => onDelete(id),
-                destructive: true
-              }
-            ]}
-          />
-        </div>
+        <span className="sidebar-copy">
+          <span className="flex items-center opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+            <ActionMenu
+              rowRef={rowRef}
+              trigger={<IconButton icon={Ellipsis} size={13} className="size-6" />}
+              actions={[
+                {
+                  label: 'Delete task',
+                  icon: Trash2,
+                  onClick: () => onDelete(id),
+                  destructive: true
+                }
+              ]}
+            />
+          </span>
+        </span>
       )}
     </div>
   );

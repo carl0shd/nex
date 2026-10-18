@@ -37,20 +37,20 @@ function DiffSnippetCard({ snippet, onRemove }: DiffSnippetCardProps): React.JSX
   );
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border-soft bg-bg-chat-input">
+    <div className="overflow-hidden rounded-card bg-inset shadow-hairline">
       <div
         onClick={() => setCollapsed((value) => !value)}
         className={cn(
-          'flex cursor-pointer items-center gap-2 px-3 py-2 select-none hover:bg-bg-hover',
-          !collapsed && 'border-b border-border-soft'
+          'flex cursor-pointer items-center gap-2 px-3 py-2 select-none hover:bg-hover-2',
+          !collapsed && 'border-b border-line-soft'
         )}
       >
-        <Chevron size={13} className="shrink-0 text-text-muted" />
-        <FileCode2 size={13} className="shrink-0 text-text-muted" />
-        <span title={snippet.file} className="truncate text-[12px] font-medium text-text">
+        <Chevron size={13} className="shrink-0 text-ink-3" />
+        <FileCode2 size={13} className="shrink-0 text-ink-3" />
+        <span title={snippet.file} className="truncate text-xs font-medium text-ink">
           {name}
         </span>
-        <span className="shrink-0 font-mono text-[11px] text-text-muted">
+        <span className="shrink-0 font-mono text-2xs text-ink-3">
           ({snippet.start}-{snippet.end}
           {snippet.side === 'deletions' ? ', old' : ''})
         </span>

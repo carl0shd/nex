@@ -158,12 +158,12 @@ function UsagePanel(): React.JSX.Element {
             ))}
           </div>
         ) : (
-          <p className="text-[11px] text-text-muted">No agent account connected yet.</p>
+          <p className="text-2xs text-ink-3">No agent account connected yet.</p>
         )}
       </PanelSection>
 
       {stats?.historyStartDay && (
-        <p className="text-[10px] text-text-muted">
+        <p className="text-3xs text-ink-3">
           Nex has kept usage since {formatDayLabel(stats.historyStartDay, 'day')}. Claude Code
           prunes its own transcripts, so earlier activity is unavailable.
         </p>

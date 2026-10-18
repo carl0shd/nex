@@ -1,7 +1,6 @@
 import { memo, useRef } from 'react';
 import {
   ChevronDown,
-  ChevronRight,
   Folder,
   Plus,
   Ellipsis,
@@ -13,13 +12,15 @@ import {
 import IconButton from '@/components/ui/icon-button';
 import WorkspaceBadge from '@/components/ui/workspace-badge';
 import ActionMenu from '@/components/ui/action-menu';
+import CollapsibleRows from '@/components/ui/collapsible-rows';
+import { cn } from '@/lib/utils';
 import type { Workspace, Project } from '@native/db/types';
 
 interface WorkspaceItemProps {
   workspace: Workspace;
   projects?: Project[];
   collapsed?: boolean;
-  onToggle?: (id: string) => void;
+  onSelect?: (id: string) => void;
   onAddProject?: (workspaceId: string) => void;
   onEditWorkspace?: (workspaceId: string) => void;
   onArchiveWorkspace?: (workspaceId: string) => void;
@@ -34,6 +35,9 @@ interface ProjectRowProps {
   onDeleteProject?: (projectId: string) => void;
 }
 
+const HOVER_REVEAL =
+  'flex items-center opacity-0 transition-opacity duration-150 group-hover:opacity-100';
+
 function ProjectRow({
   project,
   onEditProject,
@@ -43,30 +47,34 @@ function ProjectRow({
   return (
     <div
       ref={rowRef}
-      className="group flex h-7.5 w-full items-center gap-2 rounded px-2 select-none hover:bg-bg-mute/50"
+      data-glide-row
+      className="sidebar-row group relative mx-2 flex h-7 items-center rounded-control pr-1 pl-9 select-none"
     >
-      <Folder size={13} className="shrink-0 text-text-muted" />
-      <span className="truncate text-[12px] text-text-secondary">{project.name}</span>
-      <span className="flex-1" />
-      <div className="opacity-0 group-hover:opacity-100">
-        <ActionMenu
-          rowRef={rowRef}
-          trigger={<IconButton icon={Ellipsis} size={13} />}
-          actions={[
-            {
-              label: 'Edit project',
-              icon: Pencil,
-              onClick: () => onEditProject?.(project.id)
-            },
-            {
-              label: 'Delete project',
-              icon: Trash2,
-              onClick: () => onDeleteProject?.(project.id),
-              destructive: true
-            }
-          ]}
-        />
-      </div>
+      <span className="sidebar-copy flex min-w-0 flex-1 items-center gap-2">
+        <Folder size={12} className="shrink-0 text-ink-4" />
+        <span className="truncate text-sm text-ink-2">{project.name}</span>
+      </span>
+      <span className="sidebar-copy">
+        <span className={HOVER_REVEAL}>
+          <ActionMenu
+            rowRef={rowRef}
+            trigger={<IconButton icon={Ellipsis} size={13} className="size-6" />}
+            actions={[
+              {
+                label: 'Edit project',
+                icon: Pencil,
+                onClick: () => onEditProject?.(project.id)
+              },
+              {
+                label: 'Delete project',
+                icon: Trash2,
+                onClick: () => onDeleteProject?.(project.id),
+                destructive: true
+              }
+            ]}
+          />
+        </span>
+      </span>
     </div>
   );
 }
@@ -75,7 +83,7 @@ function WorkspaceItem({
   workspace,
   projects = [],
   collapsed = false,
-  onToggle,
+  onSelect,
   onAddProject,
   onEditWorkspace,
   onArchiveWorkspace,
@@ -83,60 +91,78 @@ function WorkspaceItem({
   onEditProject,
   onDeleteProject
 }: WorkspaceItemProps): React.JSX.Element {
-  const Chevron = collapsed ? ChevronRight : ChevronDown;
   const headerRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div className="flex flex-col gap-0.5">
+    <div className="flex flex-col">
       <div
         ref={headerRef}
-        onClick={() => onToggle?.(workspace.id)}
-        className="flex w-full cursor-pointer items-center gap-1.5 rounded px-1.5 py-1.25 select-none"
+        data-glide-row
+        title={workspace.name}
+        onClick={() => onSelect?.(workspace.id)}
+        className="sidebar-row press group relative mx-2 flex h-8 cursor-pointer items-center rounded-control pr-1 pl-2 select-none"
       >
-        <Chevron size={12} className="shrink-0 text-text-muted" />
-        <WorkspaceBadge
-          name={workspace.name}
-          color={workspace.color}
-          icon={workspace.icon}
-          customImage={workspace.customImage}
-        />
-        <span className="truncate text-[12px] font-semibold text-text">{workspace.name}</span>
-        <span className="ml-0.5 text-[12px] text-text-muted">{projects.length}</span>
-        <span className="flex-1" />
-        <IconButton
-          icon={Plus}
-          size={13}
-          onClick={(e) => {
-            e.stopPropagation();
-            onAddProject?.(workspace.id);
-          }}
-        />
-        <ActionMenu
-          rowRef={headerRef}
-          trigger={<IconButton icon={Ellipsis} size={14} />}
-          actions={[
-            {
-              label: 'Edit workspace',
-              icon: Settings,
-              onClick: () => onEditWorkspace?.(workspace.id)
-            },
-            {
-              label: 'Archive workspace',
-              icon: Archive,
-              onClick: () => onArchiveWorkspace?.(workspace.id)
-            },
-            {
-              label: 'Delete workspace',
-              icon: Trash2,
-              onClick: () => onDeleteWorkspace?.(workspace.id),
-              destructive: true
-            }
-          ]}
-        />
+        <span className="flex size-5 shrink-0 items-center justify-center">
+          <WorkspaceBadge
+            name={workspace.name}
+            color={workspace.color}
+            icon={workspace.icon}
+            customImage={workspace.customImage}
+            size={18}
+            rounded="rounded-[5px]"
+          />
+        </span>
+        <span className="sidebar-copy ml-2 flex min-w-0 flex-1 items-center gap-1.5">
+          <span className="truncate text-sm font-medium text-ink">{workspace.name}</span>
+          <span className="text-2xs text-ink-4 tabular-nums">{projects.length}</span>
+          <ChevronDown
+            size={12}
+            className={cn(
+              'shrink-0 text-ink-4 transition-transform duration-200 ease-out-strong',
+              collapsed && '-rotate-90'
+            )}
+          />
+        </span>
+        <span className="sidebar-copy">
+          <span className={HOVER_REVEAL}>
+            <IconButton
+              icon={Plus}
+              size={13}
+              title="Add project"
+              className="size-6"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddProject?.(workspace.id);
+              }}
+            />
+            <ActionMenu
+              rowRef={headerRef}
+              trigger={<IconButton icon={Ellipsis} size={14} className="size-6" />}
+              actions={[
+                {
+                  label: 'Edit workspace',
+                  icon: Settings,
+                  onClick: () => onEditWorkspace?.(workspace.id)
+                },
+                {
+                  label: 'Archive workspace',
+                  icon: Archive,
+                  onClick: () => onArchiveWorkspace?.(workspace.id)
+                },
+                {
+                  label: 'Delete workspace',
+                  icon: Trash2,
+                  onClick: () => onDeleteWorkspace?.(workspace.id),
+                  destructive: true
+                }
+              ]}
+            />
+          </span>
+        </span>
       </div>
 
-      {!collapsed && projects.length > 0 && (
-        <div className="flex flex-col gap-px pl-4.5">
+      <CollapsibleRows open={!collapsed && projects.length > 0}>
+        <div className="flex flex-col gap-px pt-px">
           {projects.map((project) => (
             <ProjectRow
               key={project.id}
@@ -146,7 +172,7 @@ function WorkspaceItem({
             />
           ))}
         </div>
-      )}
+      </CollapsibleRows>
     </div>
   );
 }

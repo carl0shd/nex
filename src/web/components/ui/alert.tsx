@@ -2,13 +2,15 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const alertVariants = cva(
-  'flex w-full items-start gap-2 rounded-md border px-2.5 py-2 text-[11px] leading-relaxed [&>svg]:mt-0.5 [&>svg]:shrink-0',
+  'flex w-full items-start gap-2.5 rounded-card px-3 py-2.5 text-xs [&>svg]:mt-px [&>svg]:shrink-0',
   {
     variants: {
       variant: {
-        default: 'border-border-soft bg-bg-raised text-text-secondary',
-        warning: 'border-badge-warning-text/30 bg-badge-warning-bg/40 text-badge-warning-text',
-        destructive: 'border-destructive/30 bg-destructive/10 text-destructive-text'
+        default: 'bg-hover text-ink-2 shadow-hairline [&>svg]:text-ink-3',
+        warning:
+          'bg-orange/10 text-orange shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--orange)_20%,transparent)]',
+        destructive:
+          'bg-red/10 text-red shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--red)_20%,transparent)]'
       }
     },
     defaultVariants: {

@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Mic, ChevronDown, Check } from 'lucide-react';
+import { Mic, ChevronDown } from 'lucide-react';
 import SimpleBar from 'simplebar-react';
 import PopoverMenu from '@/components/ui/popover-menu';
 import { Switch } from '@/components/ui/switch';
 import { useMicStore } from '@/stores/mic.store';
 import { useSpeechRecognition } from '@/hooks/use-speech-recognition';
+import GlideHighlight from '@/components/ui/glide-highlight';
+import MenuRow from '@/components/ui/menu-row';
+import { cn } from '@/lib/utils';
 
 interface MicDevice {
   id: number;
@@ -94,9 +97,10 @@ function MicButton({ onTranscript, onPartial }: MicButtonProps): React.JSX.Eleme
 
   return (
     <div
-      className={`flex items-center rounded-md ${
-        isRecording ? 'bg-badge-success-text/15' : 'hover:bg-bg-mute'
-      }`}
+      className={cn(
+        'interactive flex h-7 items-center rounded-full',
+        isRecording ? 'bg-green/15' : 'hover:bg-hover-2'
+      )}
     >
       <button
         type="button"
@@ -104,9 +108,10 @@ function MicButton({ onTranscript, onPartial }: MicButtonProps): React.JSX.Eleme
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
-        className={`flex cursor-pointer items-center rounded-l-md p-1.5 ${
-          isRecording ? 'text-badge-success-text' : 'text-text-muted hover:text-text-secondary'
-        }`}
+        className={cn(
+          'interactive flex cursor-pointer items-center rounded-l-full py-1.5 pr-1 pl-2',
+          isRecording ? 'text-green' : 'text-ink-3 hover:text-ink'
+        )}
       >
         <Mic size={14} />
       </button>
@@ -116,88 +121,69 @@ function MicButton({ onTranscript, onPartial }: MicButtonProps): React.JSX.Eleme
         trigger={
           <span
             onClick={() => void loadDevices()}
-            className={`flex cursor-pointer items-center rounded-r-md py-1.5 pr-1 ${
-              isRecording ? 'text-badge-success-text' : 'text-text-muted hover:text-text-secondary'
-            }`}
+            className={cn(
+              'interactive flex cursor-pointer items-center rounded-r-full py-1.5 pr-2 pl-0.5',
+              isRecording ? 'text-green' : 'text-ink-3 hover:text-ink'
+            )}
           >
             <ChevronDown size={11} />
           </span>
         }
-        className="w-72 rounded-lg border border-border-menu bg-bg-menu p-1.5 shadow-lg"
+        className="w-72 animate-pop-in rounded-card bg-surface-raised p-1 shadow-overlay"
       >
         {({ close }) => (
-          <div className="flex flex-col gap-1">
-            <div className="px-2 pt-1 pb-0.5 text-[10px] uppercase tracking-wide text-text-muted select-none">
-              Microphone
-            </div>
+          <GlideHighlight className="flex flex-col gap-px">
+            <div className="eyebrow px-2 pt-1.5 pb-1 select-none">Microphone</div>
             {devices.length === 0 && (
-              <div className="px-2 py-1 text-[11px] text-text-muted select-none">
-                No input devices
-              </div>
+              <div className="px-2 py-1.5 text-xs text-ink-3 select-none">No input devices</div>
             )}
             {devices.map((d) => {
               const isSelected =
                 selectedDeviceId === d.id || (selectedDeviceId === null && d.isDefault);
               return (
-                <button
+                <MenuRow
                   key={d.id}
-                  type="button"
+                  selected={isSelected}
+                  label={`${d.isDefault ? `Default - ${d.name}` : d.name}${d.isBuiltIn ? ' (Built-in)' : ''}`}
                   onClick={() => {
                     setSelectedDevice(d.isDefault ? null : d.id);
                     close();
                   }}
-                  className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-left text-text-secondary select-none hover:bg-bg-hover hover:text-text"
-                >
-                  <span className="flex-1 truncate text-[12px]">
-                    {d.isDefault ? `Default - ${d.name}` : d.name}
-                    {d.isBuiltIn && ' (Built-in)'}
-                  </span>
-                  {isSelected && <Check size={12} className="shrink-0 text-text" />}
-                </button>
+                />
               );
             })}
 
-            <div className="my-1 h-px bg-border-soft" />
+            <div className="my-1 h-px bg-line-soft" />
 
-            <div className="px-2 pt-1 pb-0.5 text-[10px] uppercase tracking-wide text-text-muted select-none">
-              Language
-            </div>
+            <div className="eyebrow px-2 pt-1.5 pb-1 select-none">Language</div>
             <SimpleBar autoHide={false} style={{ maxHeight: 120 }}>
-              <button
-                type="button"
+              <MenuRow
+                label="Auto (system)"
+                selected={selectedLocale === null}
                 onClick={() => {
                   setSelectedLocale(null);
                   close();
                 }}
-                className="flex w-full cursor-pointer items-center gap-2 rounded px-2 py-1 text-left text-text-secondary select-none hover:bg-bg-hover hover:text-text"
-              >
-                <span className="flex-1 truncate text-[12px]">Auto (system)</span>
-                {selectedLocale === null && <Check size={12} className="mr-1 shrink-0 text-text" />}
-              </button>
+              />
               {locales.map((l) => (
-                <button
+                <MenuRow
                   key={l.identifier}
-                  type="button"
+                  label={l.displayName}
+                  selected={selectedLocale === l.identifier}
                   onClick={() => {
                     setSelectedLocale(l.identifier);
                     close();
                   }}
-                  className="flex w-full cursor-pointer items-center gap-2 rounded px-2 py-1 text-left text-text-secondary select-none hover:bg-bg-hover hover:text-text"
-                >
-                  <span className="flex-1 truncate text-[12px]">{l.displayName}</span>
-                  {selectedLocale === l.identifier && (
-                    <Check size={12} className="mr-1 shrink-0 text-text" />
-                  )}
-                </button>
+                />
               ))}
             </SimpleBar>
 
-            <div className="my-1 h-px bg-border-soft" />
-            <div className="flex items-center justify-between gap-2 px-2 py-1">
-              <span className="text-[12px] text-text-secondary select-none">Hold to record</span>
+            <div className="my-1 h-px bg-line-soft" />
+            <div className="flex h-8 items-center justify-between gap-2 px-2">
+              <span className="text-sm text-ink-2 select-none">Hold to record</span>
               <Switch checked={holdToRecord} onCheckedChange={setHoldToRecord} />
             </div>
-          </div>
+          </GlideHighlight>
         )}
       </PopoverMenu>
     </div>

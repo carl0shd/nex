@@ -94,10 +94,10 @@ function WorkspaceForm({ existing, onClose }: WorkspaceFormProps): React.JSX.Ele
           rounded="rounded-lg"
         />
         <div className="flex flex-col gap-0.5">
-          <span className="max-w-60 truncate text-[14px] font-semibold text-text">
+          <span className="max-w-60 truncate text-base font-semibold text-ink">
             {name.trim() || 'new-workspace'}
           </span>
-          <span className="text-[11px] text-text-muted">
+          <span className="text-2xs text-ink-3">
             {isEditing ? `${projectCount} projects` : '0 projects · 0 tasks'}
           </span>
         </div>

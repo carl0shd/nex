@@ -11,7 +11,7 @@ function ResizeHandle({ direction }: ResizeHandleProps): React.JSX.Element {
   return (
     <PanelSeparator
       className={cn(
-        'group relative bg-border-soft hover:bg-accent',
+        'group relative bg-line-soft transition-colors duration-150 hover:bg-primary/50 data-[separator=active]:bg-primary/70',
         isHorizontal ? 'w-px cursor-col-resize' : 'h-px cursor-row-resize'
       )}
     >

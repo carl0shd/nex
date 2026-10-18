@@ -110,8 +110,8 @@ function StepProject(): React.JSX.Element {
 
       <div className="flex flex-col gap-3.5">
         <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-medium text-text-muted">{'// workspace'}</label>
-          <div className="flex items-center gap-2 rounded border border-border-soft bg-bg-input px-2.5 py-2">
+          <label className="text-3xs font-medium text-ink-3">{'// workspace'}</label>
+          <div className="flex items-center gap-2 rounded border border-line-soft bg-inset px-2.5 py-2">
             <WorkspaceBadge
               name={workspace.name}
               color={workspace.color}
@@ -121,15 +121,15 @@ function StepProject(): React.JSX.Element {
               fontSize={9}
               rounded="rounded-sm"
             />
-            <span className="text-[12px] text-text">{workspace.name}</span>
+            <span className="text-xs text-ink">{workspace.name}</span>
           </div>
         </div>
 
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between">
-            <label className="text-[10px] font-medium text-text-muted">{'// source'}</label>
+            <label className="text-3xs font-medium text-ink-3">{'// source'}</label>
             {git?.installed && (
-              <span className="text-[10px] text-text-muted">git {git.version} detected</span>
+              <span className="text-3xs text-ink-3">git {git.version} detected</span>
             )}
           </div>
           <SegmentedControl

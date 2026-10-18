@@ -192,8 +192,8 @@ function DiffView(): React.JSX.Element {
   const groupKey = useMemo(() => `diff-${treeVisible}`, [treeVisible]);
 
   return (
-    <div className="flex h-full min-w-0 flex-1 flex-col p-3">
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border-soft bg-bg">
+    <div className="flex h-full min-w-0 flex-1 animate-fade-in flex-col px-3 pt-1 pb-3">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-panel bg-surface shadow-card">
         <DiffToolbar
           branch={session?.branch ?? session?.name ?? ''}
           projectName={project?.name ?? ''}
@@ -215,13 +215,11 @@ function DiffView(): React.JSX.Element {
         <div className="relative min-h-0 flex-1 overflow-hidden">
           {diff.error ? (
             <div className="flex h-full items-center justify-center px-6 text-center">
-              <span className="font-mono text-[12px] text-destructive-text">{diff.error}</span>
+              <span className="font-mono text-xs text-red">{diff.error}</span>
             </div>
           ) : diff.files.length === 0 ? (
             <div className="flex h-full items-center justify-center">
-              <span className="font-mono text-[12px] text-text-placeholder opacity-60">
-                no changes
-              </span>
+              <span className="text-sm text-ink-4">No changes</span>
             </div>
           ) : (
             <Group key={groupKey} orientation="horizontal" className="h-full">

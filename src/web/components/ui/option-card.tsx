@@ -1,5 +1,6 @@
 import { Check } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { selectableVariants } from '@/components/ui/selectable';
 import { cn } from '@/lib/utils';
 
 interface OptionCardProps {
@@ -25,20 +26,22 @@ function OptionCard({
     <Card
       asChild
       className={cn(
-        'w-full cursor-pointer flex-row items-center gap-3 rounded-md bg-bg-input p-3',
-        selected ? 'border-border' : 'hover:border-border',
+        selectableVariants({ selected }),
+        'w-full flex-row items-center gap-3 p-3',
         className
       )}
     >
       <button type="button" onClick={onClick}>
-        <div className="flex size-10 items-center justify-center rounded-md bg-border">{icon}</div>
+        <div className="flex size-9 items-center justify-center rounded-control bg-muted shadow-hairline">
+          {icon}
+        </div>
         <div className="flex flex-1 flex-col items-start gap-0.5">
-          <span className={titleClassName ?? 'text-[13px] font-medium text-text'}>{title}</span>
-          {subtitle && <span className="text-left text-[11px] text-text-muted">{subtitle}</span>}
+          <span className={titleClassName ?? 'text-sm font-medium text-ink'}>{title}</span>
+          {subtitle && <span className="text-left text-2xs text-ink-3">{subtitle}</span>}
         </div>
         {selected && (
-          <div className="flex size-5 items-center justify-center rounded-full bg-accent">
-            <Check size={12} className="text-text" />
+          <div className="flex size-5 animate-in items-center justify-center rounded-full bg-primary shadow-solid duration-200 ease-out-strong zoom-in-50">
+            <Check size={12} strokeWidth={2.5} className="text-primary-foreground" />
           </div>
         )}
       </button>

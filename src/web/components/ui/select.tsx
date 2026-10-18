@@ -1,5 +1,6 @@
 import { Select as SelectPrimitive } from 'radix-ui';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
+import GlideHighlight from '@/components/ui/glide-highlight';
 import { cn } from '@/lib/utils';
 
 function Select(props: React.ComponentProps<typeof SelectPrimitive.Root>): React.JSX.Element {
@@ -23,7 +24,7 @@ function SelectTrigger({
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       className={cn(
-        'group flex h-9 w-full cursor-pointer items-center gap-2 rounded border border-input bg-bg-input px-2.5 text-[12px] text-text outline-none data-[state=open]:border-border data-[placeholder]:text-text-placeholder disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0',
+        'interactive group flex h-8 w-full cursor-pointer items-center gap-2 rounded-control border border-line bg-field px-2.5 text-sm text-ink outline-none select-none hover:border-line-strong data-[state=open]:border-ring/60 data-[state=open]:ring-3 data-[state=open]:ring-ring/15 data-[placeholder]:text-ink-4 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0',
         className
       )}
       {...props}
@@ -32,7 +33,7 @@ function SelectTrigger({
       <SelectPrimitive.Icon asChild>
         <ChevronDown
           size={12}
-          className="shrink-0 text-text-muted group-data-[state=open]:rotate-180"
+          className="shrink-0 text-ink-3 transition-transform duration-200 ease-out-strong group-data-[state=open]:rotate-180"
         />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
@@ -53,14 +54,18 @@ function SelectContent({
         position={position}
         sideOffset={sideOffset}
         className={cn(
-          'relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border border-border-soft bg-bg-input shadow-[var(--nex-shadow-dropdown)] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0',
+          'relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-card bg-surface-raised text-ink shadow-overlay duration-150 ease-out-strong data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-1 data-[side=top]:slide-in-from-bottom-1 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95',
           position === 'popper' && 'w-full min-w-(--radix-select-trigger-width)',
           className
         )}
         {...props}
       >
         <SelectScrollUpButton />
-        <SelectPrimitive.Viewport className="p-1">{children}</SelectPrimitive.Viewport>
+        <SelectPrimitive.Viewport className="p-1">
+          <GlideHighlight rowSelector='[role="option"]' className="flex flex-col">
+            {children}
+          </GlideHighlight>
+        </SelectPrimitive.Viewport>
         <SelectScrollDownButton />
       </SelectPrimitive.Content>
     </SelectPrimitive.Portal>
@@ -74,7 +79,7 @@ function SelectLabel({
   return (
     <SelectPrimitive.Label
       data-slot="select-label"
-      className={cn('px-2 py-1.5 text-[10px] font-medium text-text-muted', className)}
+      className={cn('eyebrow px-2 pt-2 pb-1', className)}
       {...props}
     />
   );
@@ -92,7 +97,7 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        'relative flex w-full cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-[12px] text-text-secondary outline-none select-none data-[highlighted]:bg-bg-item-active data-[state=checked]:text-text data-[disabled]:pointer-events-none data-[disabled]:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0',
+        'interactive relative flex h-8 w-full cursor-pointer items-center gap-2 rounded-[7px] px-2 text-sm text-ink-2 outline-none select-none data-[highlighted]:text-ink data-[state=checked]:text-ink data-[disabled]:pointer-events-none data-[disabled]:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0',
         showIndicator && 'pr-8',
         className
       )}
@@ -102,7 +107,7 @@ function SelectItem({
       {showIndicator && (
         <span className="pointer-events-none absolute right-2 flex size-3.5 items-center justify-center">
           <SelectPrimitive.ItemIndicator>
-            <Check size={12} />
+            <Check size={13} className="text-primary-ink" />
           </SelectPrimitive.ItemIndicator>
         </span>
       )}
@@ -117,7 +122,7 @@ function SelectSeparator({
   return (
     <SelectPrimitive.Separator
       data-slot="select-separator"
-      className={cn('-mx-1 my-1 h-px bg-border-soft', className)}
+      className={cn('-mx-1 my-1 h-px bg-line-soft', className)}
       {...props}
     />
   );
@@ -130,7 +135,7 @@ function SelectScrollUpButton({
   return (
     <SelectPrimitive.ScrollUpButton
       data-slot="select-scroll-up-button"
-      className={cn('flex items-center justify-center py-1 text-text-muted', className)}
+      className={cn('flex items-center justify-center py-1 text-ink-3', className)}
       {...props}
     >
       <ChevronUp size={12} />
@@ -145,7 +150,7 @@ function SelectScrollDownButton({
   return (
     <SelectPrimitive.ScrollDownButton
       data-slot="select-scroll-down-button"
-      className={cn('flex items-center justify-center py-1 text-text-muted', className)}
+      className={cn('flex items-center justify-center py-1 text-ink-3', className)}
       {...props}
     >
       <ChevronDown size={12} />

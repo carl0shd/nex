@@ -7,6 +7,7 @@ import Callout from '@/components/ui/callout';
 import { useWorkspaceStore } from '@/stores/workspace.store';
 import { cleanIpcError } from '@/lib/ipc';
 import type { GhInfo, GithubOwner, GithubRepo } from '@native/git/github';
+import { Spinner } from '@/components/ui/spinner';
 
 const DEFAULT_WORKSPACE_COLOR = '#33843F';
 
@@ -184,8 +185,8 @@ function ImportForm({ onClose }: { onClose: () => void }): React.JSX.Element {
 
       {gh === null ? (
         <div className="flex flex-col items-center gap-3 py-8">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-border-soft border-t-text-muted" />
-          <span className="text-[12px] text-text-muted">Detecting GitHub CLI...</span>
+          <Spinner className="size-5" />
+          <span className="text-xs text-ink-3">Detecting GitHub CLI...</span>
         </div>
       ) : !gh.installed ? (
         <Callout variant="warning">
@@ -214,7 +215,7 @@ function ImportForm({ onClose }: { onClose: () => void }): React.JSX.Element {
               disabled={owners === null || importing}
             />
             {owner && (
-              <span className="text-[10px] text-text-muted">
+              <span className="text-3xs text-ink-3">
                 {existingWorkspace
                   ? `projects will be added to the "${existingWorkspace.name}" workspace`
                   : `a new "${owner}" workspace will be created`}

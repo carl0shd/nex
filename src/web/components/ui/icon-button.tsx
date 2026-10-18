@@ -13,9 +13,9 @@ interface IconButtonProps extends Omit<React.ComponentProps<typeof Button>, 'var
 }
 
 const variantStyles: Record<IconButtonVariant, string> = {
-  ghost: 'text-text-muted hover:bg-transparent hover:text-text-secondary',
-  default: 'text-text-muted hover:bg-bg-mute hover:text-text-secondary',
-  filled: 'bg-accent text-text hover:bg-accent-hover'
+  ghost: 'text-ink-3 hover:bg-transparent hover:text-ink',
+  default: 'text-ink-3 hover:bg-hover-2 hover:text-ink',
+  filled: 'bg-surface text-ink shadow-btn hover:bg-muted'
 };
 
 function IconButton({

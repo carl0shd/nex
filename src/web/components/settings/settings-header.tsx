@@ -21,8 +21,8 @@ function SettingsHeader({ title, description, onBack }: SettingsHeaderProps): Re
         />
       )}
       <div className="flex flex-col gap-1">
-        <h1 className="text-[20px] font-semibold tracking-tight text-text">{title}</h1>
-        <p className="text-[13px] text-text-muted">{description}</p>
+        <h1 className="text-xl font-semibold tracking-tight text-ink">{title}</h1>
+        <p className="text-sm text-ink-3">{description}</p>
       </div>
     </div>
   );

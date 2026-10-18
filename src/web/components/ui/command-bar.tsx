@@ -1,26 +1,30 @@
 import { Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Kbd } from '@/components/ui/kbd';
+import { cn } from '@/lib/utils';
 
 interface CommandBarProps {
   onClick?: () => void;
+  className?: string;
 }
 
-function CommandBar({ onClick }: CommandBarProps): React.JSX.Element {
+function CommandBar({ onClick, className }: CommandBarProps): React.JSX.Element {
   return (
-    <Button
-      variant="outline"
+    <button
+      type="button"
       onClick={onClick}
-      className="group max-h-7 w-80 justify-between rounded-md py-1.5 pr-1.5 pl-3 font-normal hover:bg-bg-mute/50"
+      className={cn(
+        'glass interactive press group flex h-8 w-80 cursor-pointer items-center justify-between rounded-full pr-1.5 pl-3 outline-none select-none',
+        className
+      )}
     >
       <span className="flex items-center gap-2">
-        <Search size={13} className="text-text-muted" />
-        <span className="text-[12px] text-text-placeholder group-hover:text-text-muted">
-          Search or type a command...
+        <Search size={13} className="text-ink-3" />
+        <span className="interactive text-xs text-ink-4 group-hover:text-ink-3">
+          Search or type a command…
         </span>
       </span>
-      <Kbd className="group-hover:border-border">⌘K</Kbd>
-    </Button>
+      <Kbd>⌘K</Kbd>
+    </button>
   );
 }
 
