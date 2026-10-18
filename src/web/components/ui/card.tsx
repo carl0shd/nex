@@ -1,54 +1,54 @@
-import { Slot } from 'radix-ui';
-import { cn } from '@/lib/utils';
+import { Slot } from "radix-ui";
+import { cn } from "@/lib/utils";
 
 function Card({
   className,
   asChild = false,
   ...props
-}: React.ComponentProps<'div'> & { asChild?: boolean }): React.JSX.Element {
-  const Comp = asChild ? Slot.Root : 'div';
+}: React.ComponentProps<"div"> & { asChild?: boolean }): React.JSX.Element {
+  const Comp = asChild ? Slot.Root : "div";
 
   return (
     <Comp
       data-slot="card"
       className={cn(
-        'flex flex-col gap-2 rounded-panel bg-surface p-3.5 text-ink shadow-card',
-        className
+        "flex flex-col gap-2 rounded-panel bg-surface p-3.5 text-ink shadow-card",
+        className,
       )}
       {...props}
     />
   );
 }
 
-function CardHeader({ className, ...props }: React.ComponentProps<'div'>): React.JSX.Element {
+function CardHeader({ className, ...props }: React.ComponentProps<"div">): React.JSX.Element {
   return (
-    <div data-slot="card-header" className={cn('flex flex-col gap-0.5', className)} {...props} />
+    <div data-slot="card-header" className={cn("flex flex-col gap-0.5", className)} {...props} />
   );
 }
 
-function CardTitle({ className, ...props }: React.ComponentProps<'div'>): React.JSX.Element {
+function CardTitle({ className, ...props }: React.ComponentProps<"div">): React.JSX.Element {
   return (
     <div
       data-slot="card-title"
-      className={cn('text-sm font-medium text-ink', className)}
+      className={cn("text-sm font-medium text-ink", className)}
       {...props}
     />
   );
 }
 
-function CardDescription({ className, ...props }: React.ComponentProps<'div'>): React.JSX.Element {
+function CardDescription({ className, ...props }: React.ComponentProps<"div">): React.JSX.Element {
   return (
-    <div data-slot="card-description" className={cn('text-xs text-ink-3', className)} {...props} />
+    <div data-slot="card-description" className={cn("text-xs text-ink-3", className)} {...props} />
   );
 }
 
-function CardContent({ className, ...props }: React.ComponentProps<'div'>): React.JSX.Element {
-  return <div data-slot="card-content" className={cn('flex flex-col', className)} {...props} />;
+function CardContent({ className, ...props }: React.ComponentProps<"div">): React.JSX.Element {
+  return <div data-slot="card-content" className={cn("flex flex-col", className)} {...props} />;
 }
 
-function CardFooter({ className, ...props }: React.ComponentProps<'div'>): React.JSX.Element {
+function CardFooter({ className, ...props }: React.ComponentProps<"div">): React.JSX.Element {
   return (
-    <div data-slot="card-footer" className={cn('flex items-center gap-2', className)} {...props} />
+    <div data-slot="card-footer" className={cn("flex items-center gap-2", className)} {...props} />
   );
 }
 

@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 interface PanelSectionProps {
   title: string;
@@ -11,10 +11,10 @@ function PanelSection({
   title,
   trailing,
   children,
-  className
+  className,
 }: PanelSectionProps): React.JSX.Element {
   return (
-    <section className={cn('flex flex-col gap-1.5', className)}>
+    <section className={cn("flex flex-col gap-1.5", className)}>
       <header className="flex items-baseline justify-between gap-3">
         <h3 className="eyebrow">{title}</h3>
         {trailing}

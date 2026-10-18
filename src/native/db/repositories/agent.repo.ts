@@ -1,6 +1,6 @@
-import { randomUUID } from 'crypto';
-import { getDb } from '@native/db/database';
-import type { Agent, CreateAgentInput, UpdateAgentInput } from '@native/db/types';
+import { randomUUID } from "crypto";
+import { getDb } from "@native/db/database";
+import type { Agent, CreateAgentInput, UpdateAgentInput } from "@native/db/types";
 
 interface AgentRow {
   id: string;
@@ -28,23 +28,24 @@ function toAgent(row: AgentRow): Agent {
     resumeArgs: JSON.parse(row.resume_args),
     skipPermissionsArgs: JSON.parse(row.skip_permissions_args),
     builtin: row.builtin === 1,
-    createdAt: row.created_at
+    createdAt: row.created_at,
   };
 }
 
 export function getAll(): Agent[] {
-  const rows = getDb().prepare('SELECT * FROM agents ORDER BY created_at').all() as AgentRow[];
+  const rows = getDb().prepare("SELECT * FROM agents ORDER BY created_at").all() as AgentRow[];
   return rows.map(toAgent);
 }
 
 export function getBySlug(slug: string): Agent | null {
-  const row = getDb().prepare('SELECT * FROM agents WHERE slug = ?').get(slug) as
-    AgentRow | undefined;
+  const row = getDb().prepare("SELECT * FROM agents WHERE slug = ?").get(slug) as
+    | AgentRow
+    | undefined;
   return row ? toAgent(row) : null;
 }
 
 export function getById(id: string): Agent | null {
-  const row = getDb().prepare('SELECT * FROM agents WHERE id = ?').get(id) as AgentRow | undefined;
+  const row = getDb().prepare("SELECT * FROM agents WHERE id = ?").get(id) as AgentRow | undefined;
   return row ? toAgent(row) : null;
 }
 
@@ -52,18 +53,18 @@ export function create(input: CreateAgentInput): Agent {
   const row = getDb()
     .prepare(
       `INSERT INTO agents (id, name, slug, command, default_config_dir, config_env_var, args, resume_args, skip_permissions_args)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`,
     )
     .get(
       randomUUID(),
       input.name,
       input.slug,
       input.command,
-      input.defaultConfigDir ?? '',
-      input.configEnvVar ?? '',
+      input.defaultConfigDir ?? "",
+      input.configEnvVar ?? "",
       JSON.stringify(input.args ?? []),
       JSON.stringify(input.resumeArgs ?? []),
-      JSON.stringify(input.skipPermissionsArgs ?? [])
+      JSON.stringify(input.skipPermissionsArgs ?? []),
     ) as AgentRow;
   return toAgent(row);
 }
@@ -73,23 +74,23 @@ export function update(id: string, input: UpdateAgentInput): Agent {
   const values: unknown[] = [];
 
   if (input.name !== undefined) {
-    fields.push('name = ?');
+    fields.push("name = ?");
     values.push(input.name);
   }
   if (input.command !== undefined) {
-    fields.push('command = ?');
+    fields.push("command = ?");
     values.push(input.command);
   }
   if (input.args !== undefined) {
-    fields.push('args = ?');
+    fields.push("args = ?");
     values.push(JSON.stringify(input.args));
   }
   if (input.resumeArgs !== undefined) {
-    fields.push('resume_args = ?');
+    fields.push("resume_args = ?");
     values.push(JSON.stringify(input.resumeArgs));
   }
   if (input.skipPermissionsArgs !== undefined) {
-    fields.push('skip_permissions_args = ?');
+    fields.push("skip_permissions_args = ?");
     values.push(JSON.stringify(input.skipPermissionsArgs));
   }
 
@@ -97,16 +98,16 @@ export function update(id: string, input: UpdateAgentInput): Agent {
 
   values.push(id);
   const row = getDb()
-    .prepare(`UPDATE agents SET ${fields.join(', ')} WHERE id = ? RETURNING *`)
+    .prepare(`UPDATE agents SET ${fields.join(", ")} WHERE id = ? RETURNING *`)
     .get(...values) as AgentRow;
   return toAgent(row);
 }
 
 export function remove(id: string): void {
-  getDb().prepare('DELETE FROM agents WHERE id = ? AND builtin = 0').run(id);
+  getDb().prepare("DELETE FROM agents WHERE id = ? AND builtin = 0").run(id);
 }
 
 export function count(): number {
-  const row = getDb().prepare('SELECT COUNT(*) as count FROM agents').get() as { count: number };
+  const row = getDb().prepare("SELECT COUNT(*) as count FROM agents").get() as { count: number };
   return row.count;
 }

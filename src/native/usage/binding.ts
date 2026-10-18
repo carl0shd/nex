@@ -1,15 +1,15 @@
-import * as agentRepo from '@native/db/repositories/agent.repo';
-import * as agentAccountRepo from '@native/db/repositories/agent-account.repo';
-import type { AgentAccount } from '@native/db/types';
-import { fetchAccountProfile } from '@native/usage/api';
+import * as agentRepo from "@native/db/repositories/agent.repo";
+import * as agentAccountRepo from "@native/db/repositories/agent-account.repo";
+import type { AgentAccount } from "@native/db/types";
+import { fetchAccountProfile } from "@native/usage/api";
 import {
   DEFAULT_KEYCHAIN_SERVICE,
   defaultConfigDir,
   emailForConfigDir,
   listKeychainServices,
   readCredentialsFile,
-  readKeychainCredentials
-} from '@native/usage/credentials';
+  readKeychainCredentials,
+} from "@native/usage/credentials";
 
 const RETRY_AFTER_MS = 10 * 60 * 1000;
 
@@ -31,7 +31,7 @@ async function discover(account: AgentAccount): Promise<string | null> {
     agentAccountRepo
       .getAll()
       .map((other) => other.keychainService)
-      .filter((service): service is string => service !== null)
+      .filter((service): service is string => service !== null),
   );
 
   for (const service of await listKeychainServices()) {

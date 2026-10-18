@@ -1,8 +1,8 @@
-import { Info, AlertTriangle, AlertCircle } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Info, AlertTriangle, AlertCircle } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-type CalloutVariant = 'info' | 'warning' | 'error';
+type CalloutVariant = "info" | "warning" | "error";
 
 interface CalloutProps {
   variant?: CalloutVariant;
@@ -11,18 +11,18 @@ interface CalloutProps {
 }
 
 const alertVariant = {
-  info: 'default',
-  warning: 'warning',
-  error: 'destructive'
+  info: "default",
+  warning: "warning",
+  error: "destructive",
 } as const;
 
 const defaultIcon: Record<CalloutVariant, LucideIcon> = {
   info: Info,
   warning: AlertTriangle,
-  error: AlertCircle
+  error: AlertCircle,
 };
 
-function Callout({ variant = 'info', icon, children }: CalloutProps): React.JSX.Element {
+function Callout({ variant = "info", icon, children }: CalloutProps): React.JSX.Element {
   const Icon = icon ?? defaultIcon[variant];
 
   return (

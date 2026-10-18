@@ -1,14 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
-import type { LucideIcon } from 'lucide-react';
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
+import type { LucideIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 interface ActionMenuAction {
   label: string;
@@ -39,8 +39,8 @@ function ActionMenu({ trigger, actions, rowRef }: ActionMenuProps): React.JSX.El
       setPos({ x: e.clientX, y: e.clientY });
       setOpen(true);
     };
-    row.addEventListener('contextmenu', handler);
-    return () => row.removeEventListener('contextmenu', handler);
+    row.addEventListener("contextmenu", handler);
+    return () => row.removeEventListener("contextmenu", handler);
   }, [rowRef]);
 
   const openFromTrigger = (e: React.MouseEvent): void => {
@@ -85,7 +85,7 @@ function ActionMenu({ trigger, actions, rowRef }: ActionMenuProps): React.JSX.El
             style={{ left: pos.x, top: pos.y, width: 0, height: 0 }}
           />
         </DropdownMenuTrigger>,
-        document.body
+        document.body,
       )}
       <div onClick={openFromTrigger} onContextMenu={openFromContext} className="inline-flex">
         {trigger}
@@ -108,10 +108,10 @@ function ActionMenu({ trigger, actions, rowRef }: ActionMenuProps): React.JSX.El
             {group.map((action) => (
               <DropdownMenuItem
                 key={action.label}
-                variant={action.destructive ? 'destructive' : 'default'}
+                variant={action.destructive ? "destructive" : "default"}
                 onSelect={action.onClick}
               >
-                <action.icon size={13} className={cn('shrink-0', action.iconClassName)} />
+                <action.icon size={13} className={cn("shrink-0", action.iconClassName)} />
                 {action.label}
               </DropdownMenuItem>
             ))}

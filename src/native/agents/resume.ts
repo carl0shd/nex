@@ -1,4 +1,4 @@
-import type { Agent } from '@native/db/types';
+import type { Agent } from "@native/db/types";
 
 export interface SessionTrackerHandle {
   stop(): void;
@@ -13,7 +13,7 @@ export interface AgentResumeAdapter {
   watchForNewSession(cwd: string, onDiscovered: (sessionId: string) => void): SessionTrackerHandle;
 }
 
-import { claudeAdapter } from '@native/agents/adapters/claude';
+import { claudeAdapter } from "@native/agents/adapters/claude";
 
 const adapters: AgentResumeAdapter[] = [claudeAdapter];
 

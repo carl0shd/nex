@@ -1,5 +1,5 @@
-import type { TokenCounts } from '@native/usage/pricing';
-import type { UsageGranularity } from '@native/usage/types';
+import type { TokenCounts } from "@native/usage/pricing";
+import type { UsageGranularity } from "@native/usage/types";
 
 export function totalTokenCount(tokens: TokenCounts): number {
   return (
@@ -8,7 +8,7 @@ export function totalTokenCount(tokens: TokenCounts): number {
 }
 
 export function formatUsd(amount: number): string {
-  if (amount > 0 && amount < 0.01) return '<$0.01';
+  if (amount > 0 && amount < 0.01) return "<$0.01";
   return `$${amount.toFixed(2)}`;
 }
 
@@ -25,28 +25,28 @@ export function formatTokens(count: number): string {
 }
 
 function dateOf(day: string): Date {
-  const [year, month, date] = day.split('-').map(Number);
+  const [year, month, date] = day.split("-").map(Number);
   return new Date(year, month - 1, date, 12);
 }
 
 export function formatDayLabel(day: string, granularity: UsageGranularity): string {
   const date = dateOf(day);
   const options: Intl.DateTimeFormatOptions =
-    granularity === 'month'
-      ? { month: 'short', year: '2-digit' }
-      : { month: 'short', day: 'numeric' };
+    granularity === "month"
+      ? { month: "short", year: "2-digit" }
+      : { month: "short", day: "numeric" };
   return date.toLocaleDateString(undefined, options);
 }
 
 export function formatBucketRange(startDay: string, endDay: string): string {
   if (startDay === endDay) {
     return dateOf(startDay).toLocaleDateString(undefined, {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric'
+      weekday: "short",
+      month: "short",
+      day: "numeric",
     });
   }
-  return `${formatDayLabel(startDay, 'day')} – ${formatDayLabel(endDay, 'day')}`;
+  return `${formatDayLabel(startDay, "day")} – ${formatDayLabel(endDay, "day")}`;
 }
 
 export function formatResetIn(isoTimestamp: string | null): string | null {
@@ -74,17 +74,17 @@ export function formatResetAt(isoTimestamp: string | null): string | null {
   if (Number.isNaN(date.getTime())) return null;
 
   const sameDay = date.toDateString() === new Date().toDateString();
-  const time = date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  const time = date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
   if (sameDay) return `Resets today at ${time}`;
 
   const day = date.toLocaleDateString(undefined, {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric'
+    weekday: "short",
+    month: "short",
+    day: "numeric",
   });
   return `Resets ${day} at ${time}`;
 }
 
 export function shortModelName(model: string): string {
-  return model.replace(/^claude-/, '').replace(/-\d{8}$/, '');
+  return model.replace(/^claude-/, "").replace(/-\d{8}$/, "");
 }

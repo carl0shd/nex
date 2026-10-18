@@ -1,12 +1,12 @@
-import { execFile } from 'child_process';
-import { readFileSync } from 'fs';
-import { homedir } from 'os';
-import { join } from 'path';
-import { promisify } from 'util';
+import { execFile } from "child_process";
+import { readFileSync } from "fs";
+import { homedir } from "os";
+import { join } from "path";
+import { promisify } from "util";
 
 const execFileAsync = promisify(execFile);
 
-export const DEFAULT_KEYCHAIN_SERVICE = 'Claude Code-credentials';
+export const DEFAULT_KEYCHAIN_SERVICE = "Claude Code-credentials";
 const SERVICE_PATTERN = /"svce"<blob>="(Claude Code-credentials[^"]*)"/g;
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
@@ -32,7 +32,7 @@ interface RawCredentialsFile {
 const cache = new Map<string, CachedCredentials>();
 
 export function defaultConfigDir(): string {
-  return join(homedir(), '.claude');
+  return join(homedir(), ".claude");
 }
 
 function parseCredentials(raw: string): OAuthCredentials | null {
@@ -49,18 +49,18 @@ function parseCredentials(raw: string): OAuthCredentials | null {
   return {
     accessToken: oauth.accessToken,
     subscriptionType: oauth.subscriptionType ?? null,
-    expiresAt: oauth.expiresAt ?? null
+    expiresAt: oauth.expiresAt ?? null,
   };
 }
 
 export async function readKeychainCredentials(service: string): Promise<OAuthCredentials | null> {
-  if (process.platform !== 'darwin') return null;
+  if (process.platform !== "darwin") return null;
   try {
-    const { stdout } = await execFileAsync('security', [
-      'find-generic-password',
-      '-s',
+    const { stdout } = await execFileAsync("security", [
+      "find-generic-password",
+      "-s",
       service,
-      '-w'
+      "-w",
     ]);
     return parseCredentials(stdout);
   } catch {
@@ -71,7 +71,7 @@ export async function readKeychainCredentials(service: string): Promise<OAuthCre
 // Linux and Windows keep the same payload in a file instead of a keychain.
 export function readCredentialsFile(configDir: string): OAuthCredentials | null {
   try {
-    return parseCredentials(readFileSync(join(configDir, '.credentials.json'), 'utf8'));
+    return parseCredentials(readFileSync(join(configDir, ".credentials.json"), "utf8"));
   } catch {
     return null;
   }
@@ -81,12 +81,12 @@ export function readCredentialsFile(configDir: string): OAuthCredentials | null 
 // the keychain, which is what binds an account to its credential entry.
 export async function emailForConfigDir(
   command: string,
-  configDir: string
+  configDir: string,
 ): Promise<string | null> {
   try {
-    const { stdout } = await execFileAsync(command, ['auth', 'status'], {
+    const { stdout } = await execFileAsync(command, ["auth", "status"], {
       env: { ...process.env, CLAUDE_CONFIG_DIR: configDir },
-      timeout: 10_000
+      timeout: 10_000,
     });
     const parsed = JSON.parse(stdout.trim()) as { loggedIn?: boolean; email?: string };
     return parsed.loggedIn && parsed.email ? parsed.email : null;
@@ -96,10 +96,10 @@ export async function emailForConfigDir(
 }
 
 export async function listKeychainServices(): Promise<string[]> {
-  if (process.platform !== 'darwin') return [];
+  if (process.platform !== "darwin") return [];
   try {
-    const { stdout } = await execFileAsync('security', ['dump-keychain'], {
-      maxBuffer: 64 * 1024 * 1024
+    const { stdout } = await execFileAsync("security", ["dump-keychain"], {
+      maxBuffer: 64 * 1024 * 1024,
     });
     return [...new Set([...stdout.matchAll(SERVICE_PATTERN)].map((match) => match[1]))];
   } catch {
@@ -109,7 +109,7 @@ export async function listKeychainServices(): Promise<string[]> {
 
 export async function readCredentials(
   service: string | null,
-  configDir: string
+  configDir: string,
 ): Promise<OAuthCredentials | null> {
   const cacheKey = service ?? configDir;
   const cached = cache.get(cacheKey);

@@ -1,16 +1,16 @@
-import { spawn, type IPty } from 'node-pty';
-import { app } from 'electron';
-import { mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'fs';
-import { join } from 'path';
-import { IPC } from '@native/ipc/channels';
-import { getMainWindow } from '@native/main/app-window';
-import * as terminalRepo from '@native/db/repositories/terminal.repo';
-import type { TerminalStatus, TerminalType } from '@native/db/types';
-import type { SessionTrackerHandle } from '@native/agents/resume';
-import type { AgentStatusMarkers } from '@native/agents/status-markers';
-import { createStatusDetector, type StatusDetectorHandle } from '@native/pty/status-detector';
-import { whichBinary } from '@native/which';
-import { getNexDir } from '@native/paths';
+import { spawn, type IPty } from "node-pty";
+import { app } from "electron";
+import { mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from "fs";
+import { join } from "path";
+import { IPC } from "@native/ipc/channels";
+import { getMainWindow } from "@native/main/app-window";
+import * as terminalRepo from "@native/db/repositories/terminal.repo";
+import type { TerminalStatus, TerminalType } from "@native/db/types";
+import type { SessionTrackerHandle } from "@native/agents/resume";
+import type { AgentStatusMarkers } from "@native/agents/status-markers";
+import { createStatusDetector, type StatusDetectorHandle } from "@native/pty/status-detector";
+import { whichBinary } from "@native/which";
+import { getNexDir } from "@native/paths";
 
 interface ManagedTerminal {
   id: string;
@@ -31,7 +31,7 @@ interface ManagedTerminal {
 
 const MAX_BUFFER = 1_000_000;
 const DISK_FLUSH_INTERVAL_MS = 500;
-const RESUME_DIVIDER = '\r\n\x1b[2m─── resumed ───\x1b[0m\r\n';
+const RESUME_DIVIDER = "\r\n\x1b[2m─── resumed ───\x1b[0m\r\n";
 
 interface SpawnOptions {
   id: string;
@@ -48,7 +48,7 @@ interface SpawnOptions {
 }
 
 function bufferDir(): string {
-  return join(getNexDir(), 'terminals');
+  return join(getNexDir(), "terminals");
 }
 
 function bufferPath(id: string): string {
@@ -68,7 +68,7 @@ function ensureBufferDir(): void {
 
 function readBufferFile(id: string): string | null {
   try {
-    return readFileSync(bufferPath(id), 'utf8');
+    return readFileSync(bufferPath(id), "utf8");
   } catch {
     return null;
   }
@@ -77,7 +77,7 @@ function readBufferFile(id: string): string | null {
 function writeBufferFile(id: string, data: string): void {
   ensureBufferDir();
   try {
-    writeFileSync(bufferPath(id), data, 'utf8');
+    writeFileSync(bufferPath(id), data, "utf8");
   } catch {
     /* */
   }
@@ -94,13 +94,13 @@ function unlinkBufferFile(id: string): void {
 function trimBufferAtNewline(buffer: string): string {
   if (buffer.length <= MAX_BUFFER) return buffer;
   const overflow = buffer.length - MAX_BUFFER;
-  const newlineIdx = buffer.indexOf('\n', overflow);
+  const newlineIdx = buffer.indexOf("\n", overflow);
   if (newlineIdx === -1) return buffer.slice(overflow);
   return buffer.slice(newlineIdx + 1);
 }
 
 function scheduleDiskFlush(term: ManagedTerminal): void {
-  if (term.type !== 'shell') return;
+  if (term.type !== "shell") return;
   term.diskDirty = true;
   if (term.diskFlushTimer) return;
   term.diskFlushTimer = setTimeout(() => {
@@ -112,7 +112,7 @@ function scheduleDiskFlush(term: ManagedTerminal): void {
 }
 
 function flushDiskSync(term: ManagedTerminal): void {
-  if (term.type !== 'shell') return;
+  if (term.type !== "shell") return;
   if (term.diskFlushTimer) {
     clearTimeout(term.diskFlushTimer);
     term.diskFlushTimer = null;
@@ -138,8 +138,8 @@ export function unmarkTerminalFresh(id: string): void {
 }
 
 function defaultShell(): string {
-  if (process.platform === 'win32') return process.env.COMSPEC || 'cmd.exe';
-  return process.env.SHELL || '/bin/bash';
+  if (process.platform === "win32") return process.env.COMSPEC || "cmd.exe";
+  return process.env.SHELL || "/bin/bash";
 }
 
 function resolveCommand(cmd: string, envPath: string): string {
@@ -156,7 +156,7 @@ function flushPending(term: ManagedTerminal): void {
   term.flushHandle = null;
   if (!term.pendingData) return;
   const data = term.pendingData;
-  term.pendingData = '';
+  term.pendingData = "";
   send(IPC.PTY_DATA, { id: term.id, data });
 }
 
@@ -177,41 +177,41 @@ export function spawnTerminal(opts: SpawnOptions): void {
   const useDefaultShell = !opts.command;
   const rawCmd = opts.command || defaultShell();
   const args =
-    useDefaultShell && opts.args.length === 0 && process.platform !== 'win32'
-      ? ['-l', '-i']
+    useDefaultShell && opts.args.length === 0 && process.platform !== "win32"
+      ? ["-l", "-i"]
       : opts.args;
   const cols = opts.cols ?? 80;
   const rows = opts.rows ?? 24;
 
   const env = {
     ...process.env,
-    LANG: process.env.LANG || 'en_US.UTF-8',
-    TERM: 'xterm-256color',
-    COLORTERM: 'truecolor',
-    FORCE_COLOR: '3',
-    CLICOLOR: '1',
-    CLICOLOR_FORCE: '1',
-    PAGER: process.env.PAGER || 'less -R',
-    TERM_PROGRAM: 'Nex',
+    LANG: process.env.LANG || "en_US.UTF-8",
+    TERM: "xterm-256color",
+    COLORTERM: "truecolor",
+    FORCE_COLOR: "3",
+    CLICOLOR: "1",
+    CLICOLOR_FORCE: "1",
+    PAGER: process.env.PAGER || "less -R",
+    TERM_PROGRAM: "Nex",
     TERM_PROGRAM_VERSION: app.getVersion(),
-    ...(opts.env ?? {})
+    ...(opts.env ?? {}),
   } as Record<string, string>;
 
   delete env.PREFIX;
   delete env.npm_config_prefix;
 
-  const cmd = resolveCommand(rawCmd, env.PATH ?? '');
+  const cmd = resolveCommand(rawCmd, env.PATH ?? "");
 
   const pty = spawn(cmd, args, {
-    name: 'xterm-256color',
+    name: "xterm-256color",
     cols,
     rows,
     cwd: opts.cwd,
-    env
+    env,
   });
 
-  let seededBuffer = '';
-  if (opts.type === 'shell') {
+  let seededBuffer = "";
+  if (opts.type === "shell") {
     const prev = readBufferFile(opts.id);
     if (prev) seededBuffer = prev + RESUME_DIVIDER;
   }
@@ -224,19 +224,19 @@ export function spawnTerminal(opts: SpawnOptions): void {
     cols,
     rows,
     exited: false,
-    status: 'idle',
-    pendingData: '',
+    status: "idle",
+    pendingData: "",
     flushHandle: null,
     diskDirty: false,
     diskFlushTimer: null,
     sessionTracker: null,
-    statusDetector: null
+    statusDetector: null,
   };
   terminals.set(opts.id, term);
 
   if (opts.statusMarkers) {
     term.statusDetector = createStatusDetector(opts.statusMarkers, (status) =>
-      setStatus(term, status)
+      setStatus(term, status),
     );
   }
 
@@ -258,7 +258,7 @@ export function spawnTerminal(opts: SpawnOptions): void {
     if (term.pendingData) flushPending(term);
     term.statusDetector?.stop();
     term.statusDetector = null;
-    setStatus(term, 'idle');
+    setStatus(term, "idle");
     send(IPC.PTY_EXIT, { id: opts.id, exitCode, signal });
   });
 
@@ -361,7 +361,7 @@ export function sweepOrphanBuffers(validIds: Set<string>): void {
     return;
   }
   for (const entry of entries) {
-    if (!entry.endsWith('.log')) continue;
+    if (!entry.endsWith(".log")) continue;
     const id = entry.slice(0, -4);
     if (validIds.has(id)) continue;
     try {

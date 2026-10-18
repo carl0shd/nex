@@ -19,13 +19,13 @@ import type {
   Terminal,
   CreateTerminalInput,
   TerminalStatus,
-  TerminalType
-} from '@native/db/types';
-import type { AvailableAgent, InstallAgentResult } from '@native/agents/detect';
-import type { WorktreeDiffOptions, WorktreeFileVersionsInput } from '@native/git/git';
-import type { GitInfo, CloneProgress, CloneResult } from '@native/git/clone';
-import type { GhInfo, GithubOwner, GithubRepo } from '@native/git/github';
-import type { UsageGranularity, UsageStats, UsageSummary } from '@native/usage/types';
+  TerminalType,
+} from "@native/db/types";
+import type { AvailableAgent, InstallAgentResult } from "@native/agents/detect";
+import type { WorktreeDiffOptions, WorktreeFileVersionsInput } from "@native/git/git";
+import type { GitInfo, CloneProgress, CloneResult } from "@native/git/clone";
+import type { GhInfo, GithubOwner, GithubRepo } from "@native/git/github";
+import type { UsageGranularity, UsageStats, UsageSummary } from "@native/usage/types";
 
 interface NexAPI {
   getAppInfo: () => Promise<{
@@ -87,11 +87,11 @@ interface NexAPI {
   isGitRepo: (repoPath: string) => Promise<boolean>;
   listBranches: (repoPath: string) => Promise<string[]>;
   listWorktreeFiles: (
-    worktreePath: string
-  ) => Promise<Array<{ path: string; type: 'file' | 'folder' }>>;
+    worktreePath: string,
+  ) => Promise<Array<{ path: string; type: "file" | "folder" }>>;
   getWorktreeDiff: (worktreePath: string, options?: WorktreeDiffOptions) => Promise<string>;
   readWorktreeFileVersions: (
-    input: WorktreeFileVersionsInput
+    input: WorktreeFileVersionsInput,
   ) => Promise<{ oldContents: string | null; newContents: string | null }>;
   discardWorktreeFile: (worktreePath: string, path: string, prevPath?: string) => Promise<void>;
   watchWorktree: (worktreePath: string, callback: () => void) => () => void;
@@ -125,11 +125,11 @@ interface NexAPI {
   onPtyData: (terminalId: string, callback: (data: string) => void) => () => void;
   onPtyExit: (
     terminalId: string,
-    callback: (info: { exitCode: number; signal?: number }) => void
+    callback: (info: { exitCode: number; signal?: number }) => void,
   ) => () => void;
 
   onTerminalStatus: (
-    callback: (info: { id: string; status: TerminalStatus }) => void
+    callback: (info: { id: string; status: TerminalStatus }) => void,
   ) => () => void;
 
   speech: {
@@ -158,14 +158,14 @@ interface NexAPI {
     cancel: () => Promise<void>;
     onEvent: (
       callback: (event: {
-        type: 'state' | 'partial' | 'final' | 'error' | 'end' | 'devicesChanged';
+        type: "state" | "partial" | "final" | "error" | "end" | "devicesChanged";
         state?: string;
         text?: string;
         confidence?: number;
         timestampMs?: number;
         code?: string;
         message?: string;
-      }) => void
+      }) => void,
     ) => () => void;
   };
 

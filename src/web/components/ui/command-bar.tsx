@@ -1,6 +1,6 @@
-import { Search } from 'lucide-react';
-import { Kbd } from '@/components/ui/kbd';
-import { cn } from '@/lib/utils';
+import { Search } from "lucide-react";
+import { Kbd } from "@/components/ui/kbd";
+import { cn } from "@/lib/utils";
 
 interface CommandBarProps {
   onClick?: () => void;
@@ -13,8 +13,8 @@ function CommandBar({ onClick, className }: CommandBarProps): React.JSX.Element 
       type="button"
       onClick={onClick}
       className={cn(
-        'glass interactive press group flex h-8 w-80 cursor-pointer items-center justify-between rounded-full pr-1.5 pl-3 outline-none select-none',
-        className
+        "glass interactive press group flex h-8 w-80 cursor-pointer items-center justify-between rounded-full pr-1.5 pl-3 outline-none select-none",
+        className,
       )}
     >
       <span className="flex items-center gap-2">

@@ -1,5 +1,5 @@
-import { Switch as SwitchPrimitive } from 'radix-ui';
-import { cn } from '@/lib/utils';
+import { Switch as SwitchPrimitive } from "radix-ui";
+import { cn } from "@/lib/utils";
 
 function Switch({
   className,
@@ -9,8 +9,8 @@ function Switch({
     <SwitchPrimitive.Root
       data-slot="switch"
       className={cn(
-        'relative inline-flex h-[18px] w-8 shrink-0 cursor-pointer items-center rounded-full bg-muted-strong shadow-inset-field outline-none transition-colors duration-200 ease-out-strong data-[state=checked]:bg-primary disabled:cursor-default disabled:opacity-40',
-        className
+        "relative inline-flex h-[18px] w-8 shrink-0 cursor-pointer items-center rounded-full bg-muted-strong shadow-inset-field outline-none transition-colors duration-200 ease-out-strong data-[state=checked]:bg-primary disabled:cursor-default disabled:opacity-40",
+        className,
       )}
       {...props}
     >

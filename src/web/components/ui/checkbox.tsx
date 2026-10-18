@@ -1,6 +1,6 @@
-import { Checkbox as CheckboxPrimitive } from 'radix-ui';
-import { Check } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Checkbox as CheckboxPrimitive } from "radix-ui";
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 function Checkbox({
   className,
@@ -10,8 +10,8 @@ function Checkbox({
     <CheckboxPrimitive.Root
       data-slot="checkbox"
       className={cn(
-        'interactive press flex size-4 shrink-0 cursor-pointer items-center justify-center rounded-control border border-line-strong bg-field outline-none hover:border-line-hover data-[state=checked]:border-transparent data-[state=checked]:bg-primary data-[state=checked]:shadow-solid disabled:pointer-events-none disabled:opacity-40',
-        className
+        "interactive press flex size-4 shrink-0 cursor-pointer items-center justify-center rounded-control border border-line-strong bg-field outline-none hover:border-line-hover data-[state=checked]:border-transparent data-[state=checked]:bg-primary data-[state=checked]:shadow-solid disabled:pointer-events-none disabled:opacity-40",
+        className,
       )}
       {...props}
     >

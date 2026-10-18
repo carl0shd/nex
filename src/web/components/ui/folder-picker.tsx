@@ -1,8 +1,8 @@
-import { FolderOpen } from 'lucide-react';
-import Chip from '@/components/ui/chip';
-import { Field, FieldLabel } from '@/components/ui/field';
-import { InputGroup, InputGroupAddon } from '@/components/ui/input-group';
-import { cn } from '@/lib/utils';
+import { FolderOpen } from "lucide-react";
+import Chip from "@/components/ui/chip";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { InputGroup, InputGroupAddon } from "@/components/ui/input-group";
+import { cn } from "@/lib/utils";
 
 interface FolderPickerProps {
   value: string;
@@ -14,8 +14,8 @@ interface FolderPickerProps {
 function FolderPicker({
   value,
   onBrowse,
-  label = '// project path',
-  placeholder = 'select project folder...'
+  label = "// project path",
+  placeholder = "select project folder...",
 }: FolderPickerProps): React.JSX.Element {
   return (
     <Field>
@@ -26,7 +26,7 @@ function FolderPicker({
             <FolderOpen size={14} />
           </InputGroupAddon>
           <span
-            className={cn('flex-1 truncate text-left text-xs', value ? 'text-ink-2' : 'text-ink-4')}
+            className={cn("flex-1 truncate text-left text-xs", value ? "text-ink-2" : "text-ink-4")}
           >
             {value || placeholder}
           </span>

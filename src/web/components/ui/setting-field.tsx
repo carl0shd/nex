@@ -1,4 +1,4 @@
-import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 
 interface SettingFieldProps {
   label: string;

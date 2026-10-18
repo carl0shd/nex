@@ -1,22 +1,21 @@
-import { app } from 'electron';
-import { join } from 'path';
-import { electronApp, optimizer } from '@electron-toolkit/utils';
-import { createMainWindow, getMainWindow, setQuitting } from './app-window';
-import { createApplicationMenu } from './menu';
-import { registerIPCHandlers } from '@native/ipc/handlers';
-import { initAutoUpdater } from './updater';
-import { initDatabase, closeDatabase } from '@native/db/database';
-import { scanAllTranscripts } from '@native/usage/ingest';
-import { registerScheme, registerHandler } from '@native/protocol/nex-file';
-import { flushAllBuffers, killAllTerminals, sweepOrphanBuffers } from '@native/pty/manager';
-import { getAllIds, resetAllStatus } from '@native/db/repositories/terminal.repo';
-import { disposeSpeech, initSpeech } from '@native/speech/manager';
-import { isDev } from '@native/paths';
-import { fixEnv } from './fix-env';
+import { app } from "electron";
+import { join } from "path";
+import { electronApp, optimizer } from "@electron-toolkit/utils";
+import { createMainWindow, getMainWindow, setQuitting } from "./app-window";
+import { createApplicationMenu } from "./menu";
+import { registerIPCHandlers } from "@native/ipc/handlers";
+import { initDatabase, closeDatabase } from "@native/db/database";
+import { scanAllTranscripts } from "@native/usage/ingest";
+import { registerScheme, registerHandler } from "@native/protocol/nex-file";
+import { flushAllBuffers, killAllTerminals, sweepOrphanBuffers } from "@native/pty/manager";
+import { getAllIds, resetAllStatus } from "@native/db/repositories/terminal.repo";
+import { disposeSpeech, initSpeech } from "@native/speech/manager";
+import { isDev } from "@native/paths";
+import { fixEnv } from "./fix-env";
 
 if (isDev()) {
-  app.setName('Nex Dev');
-  app.setPath('userData', join(app.getPath('appData'), 'Nex Dev'));
+  app.setName("Nex Dev");
+  app.setPath("userData", join(app.getPath("appData"), "Nex Dev"));
 } else {
   fixEnv();
 }
@@ -24,10 +23,10 @@ if (isDev()) {
 registerScheme();
 
 app.whenReady().then(() => {
-  electronApp.setAppUserModelId(isDev() ? 'com.nex.app.dev' : 'com.nex.app');
+  electronApp.setAppUserModelId(isDev() ? "com.nex.app.dev" : "com.nex.app");
   registerHandler();
 
-  app.on('browser-window-created', (_, window) => {
+  app.on("browser-window-created", (_, window) => {
     optimizer.watchWindowShortcuts(window);
   });
 
@@ -39,13 +38,12 @@ app.whenReady().then(() => {
   createApplicationMenu();
 
   createMainWindow();
-  initAutoUpdater();
 
   // Catches up on anything the agents wrote while Nex was closed. Deferred so
   // the first paint is never blocked by a cold full scan.
   setImmediate(() => scanAllTranscripts());
 
-  app.on('activate', () => {
+  app.on("activate", () => {
     const win = getMainWindow();
     if (win) {
       win.show();
@@ -55,17 +53,17 @@ app.whenReady().then(() => {
   });
 });
 
-app.on('before-quit', () => {
+app.on("before-quit", () => {
   setQuitting(true);
   flushAllBuffers();
 });
 
-app.on('will-quit', () => {
+app.on("will-quit", () => {
   killAllTerminals();
   void disposeSpeech();
   closeDatabase();
 });
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") app.quit();
 });

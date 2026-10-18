@@ -7,7 +7,7 @@ interface ShowcaseSectionProps {
 function ShowcaseSection({
   title,
   description,
-  children
+  children,
 }: ShowcaseSectionProps): React.JSX.Element {
   return (
     <section className="flex flex-col gap-3">

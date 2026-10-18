@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   AlertCircle,
   AlertTriangle,
@@ -11,24 +11,24 @@ import {
   Plus,
   Search,
   Trash2,
-  Underline
-} from 'lucide-react';
-import ShowcaseSection from '@/components/design-system/showcase-section';
-import Specimen from '@/components/design-system/specimen';
-import SpecimenItem from '@/components/design-system/specimen-item';
-import SpecimenRow from '@/components/design-system/specimen-row';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+  Underline,
+} from "lucide-react";
+import ShowcaseSection from "@/components/design-system/showcase-section";
+import Specimen from "@/components/design-system/specimen";
+import SpecimenItem from "@/components/design-system/specimen-item";
+import SpecimenRow from "@/components/design-system/specimen-row";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle
-} from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
+  CardTitle,
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogClose,
@@ -37,8 +37,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
-} from '@/components/ui/dialog';
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -52,15 +52,15 @@ import {
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-import { Input } from '@/components/ui/input';
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
-import { Kbd, KbdGroup } from '@/components/ui/kbd';
-import { Label } from '@/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { Input } from "@/components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import { Kbd, KbdGroup } from "@/components/ui/kbd";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -69,41 +69,41 @@ import {
   SelectLabel,
   SelectSeparator,
   SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
-import { Toggle } from '@/components/ui/toggle';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { Toggle } from "@/components/ui/toggle";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const BUTTON_VARIANTS = [
-  'default',
-  'secondary',
-  'outline',
-  'ghost',
-  'destructive',
-  'link'
+  "default",
+  "secondary",
+  "outline",
+  "ghost",
+  "destructive",
+  "link",
 ] as const;
-const BUTTON_SIZES = ['sm', 'default', 'lg'] as const;
-const BADGE_VARIANTS = ['default', 'success', 'warning', 'info', 'destructive'] as const;
-const BADGE_TONES = ['solid', 'soft'] as const;
-const TOGGLE_SIZES = ['sm', 'default', 'lg'] as const;
+const BUTTON_SIZES = ["sm", "default", "lg"] as const;
+const BADGE_VARIANTS = ["default", "success", "warning", "info", "destructive"] as const;
+const BADGE_TONES = ["solid", "soft"] as const;
+const TOGGLE_SIZES = ["sm", "default", "lg"] as const;
 const ALERT_VARIANTS = [
-  { variant: 'default', icon: Info, title: 'Heads up', text: 'Worktrees share the same git dir.' },
+  { variant: "default", icon: Info, title: "Heads up", text: "Worktrees share the same git dir." },
   {
-    variant: 'warning',
+    variant: "warning",
     icon: AlertTriangle,
-    title: 'Uncommitted changes',
-    text: '3 files will be stashed.'
+    title: "Uncommitted changes",
+    text: "3 files will be stashed.",
   },
   {
-    variant: 'destructive',
+    variant: "destructive",
     icon: AlertCircle,
-    title: 'Push rejected',
-    text: 'The remote has newer commits.'
-  }
+    title: "Push rejected",
+    text: "The remote has newer commits.",
+  },
 ] as const;
 
 function ButtonSpecimen(): React.JSX.Element {
@@ -167,7 +167,7 @@ function ToggleSpecimen(): React.JSX.Element {
             </Toggle>
           </SpecimenItem>
           <SpecimenItem label="group outline">
-            <ToggleGroup type="multiple" variant="outline" size={size} defaultValue={['bold']}>
+            <ToggleGroup type="multiple" variant="outline" size={size} defaultValue={["bold"]}>
               <ToggleGroupItem value="bold">
                 <Bold size={13} />
               </ToggleGroupItem>
@@ -222,17 +222,17 @@ function FieldSpecimen(): React.JSX.Element {
     <Specimen name="Field · Label" source="ui/field.tsx · ui/label.tsx">
       <div className="grid grid-cols-3 gap-4">
         <Field>
-          <FieldLabel>{'// task name'}</FieldLabel>
+          <FieldLabel>{"// task name"}</FieldLabel>
           <Input placeholder="fix login redirect" />
           <FieldDescription>Used as the branch name.</FieldDescription>
         </Field>
         <Field>
-          <FieldLabel>{'// base branch'}</FieldLabel>
+          <FieldLabel>{"// base branch"}</FieldLabel>
           <Input defaultValue="mian" />
           <FieldError>Branch does not exist.</FieldError>
         </Field>
         <Field data-disabled>
-          <FieldLabel>{'// disabled field'}</FieldLabel>
+          <FieldLabel>{"// disabled field"}</FieldLabel>
           <Input placeholder="Unavailable" disabled />
         </Field>
       </div>
@@ -330,7 +330,7 @@ function SelectSpecimen(): React.JSX.Element {
 
 function DropdownMenuSpecimen(): React.JSX.Element {
   const [showHidden, setShowHidden] = useState(true);
-  const [sort, setSort] = useState('recent');
+  const [sort, setSort] = useState("recent");
 
   return (
     <Specimen name="DropdownMenu" source="ui/dropdown-menu.tsx">

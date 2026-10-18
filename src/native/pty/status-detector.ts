@@ -1,5 +1,5 @@
-import type { TerminalStatus } from '@native/db/types';
-import type { AgentStatusMarkers } from '@native/agents/status-markers';
+import type { TerminalStatus } from "@native/db/types";
+import type { AgentStatusMarkers } from "@native/agents/status-markers";
 
 const EVAL_INTERVAL_MS = 1_000;
 const MAX_BURST = 32_000;
@@ -13,7 +13,7 @@ const ANSI_SEQUENCE = /\x1b\][\s\S]*?(?:\x07|\x1b\\)|\x1b(?:[@-Z\\-_]|\[[0-?]*[ 
 // A TUI spaces words with cursor jumps rather than spaces, so deleting them
 // welds the hint line into `esctointerrupt` and no marker can match it.
 function stripAnsi(text: string): string {
-  return text.replace(CURSOR_COLUMN, ' ').replace(ANSI_SEQUENCE, '');
+  return text.replace(CURSOR_COLUMN, " ").replace(ANSI_SEQUENCE, "");
 }
 
 function toGlobal(pattern: RegExp): RegExp {
@@ -21,11 +21,11 @@ function toGlobal(pattern: RegExp): RegExp {
 }
 
 function toStateless(pattern: RegExp): RegExp {
-  return pattern.global ? new RegExp(pattern.source, pattern.flags.replace('g', '')) : pattern;
+  return pattern.global ? new RegExp(pattern.source, pattern.flags.replace("g", "")) : pattern;
 }
 
 function isLineBreak(char: string): boolean {
-  return char === '\n' || char === '\r';
+  return char === "\n" || char === "\r";
 }
 
 // Widened from the hit instead of matched as a line: a line-spanning pattern
@@ -56,14 +56,14 @@ export interface StatusDetectorHandle {
 // holding the status line untouched for 89 seconds while it worked.
 export function createStatusDetector(
   markers: AgentStatusMarkers,
-  onStatus: (status: TerminalStatus) => void
+  onStatus: (status: TerminalStatus) => void,
 ): StatusDetectorHandle {
   const statusLinePattern = toGlobal(markers.statusLine);
   const runningPattern = toStateless(markers.running);
   const waitingPattern = toStateless(markers.waiting);
 
-  let pending = '';
-  let current: TerminalStatus = 'idle';
+  let pending = "";
+  let current: TerminalStatus = "idle";
   let evalTimer: NodeJS.Timeout | null = null;
   let stopped = false;
 
@@ -77,17 +77,17 @@ export function createStatusDetector(
     evalTimer = null;
     if (stopped || !pending) return;
     const text = stripAnsi(pending);
-    pending = '';
+    pending = "";
 
     if (waitingPattern.test(text)) {
-      apply('waiting');
+      apply("waiting");
       return;
     }
 
     const line = lastMarkedLine(statusLinePattern, text);
     if (line === null) return;
 
-    apply(runningPattern.test(line) ? 'running' : 'idle');
+    apply(runningPattern.test(line) ? "running" : "idle");
   };
 
   return {
@@ -99,9 +99,9 @@ export function createStatusDetector(
     },
     stop(): void {
       stopped = true;
-      pending = '';
+      pending = "";
       if (evalTimer) clearTimeout(evalTimer);
       evalTimer = null;
-    }
+    },
   };
 }

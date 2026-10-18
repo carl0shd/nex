@@ -116,7 +116,7 @@ export interface UpdateAgentAccountInput {
   keychainService?: string | null;
 }
 
-export type SessionStatus = 'active' | 'done' | 'pr';
+export type SessionStatus = "active" | "done" | "pr";
 
 export type PanelLayout = Record<string, number>;
 
@@ -180,8 +180,8 @@ export interface CloneAgentAccountInput {
   copyConfig?: boolean;
 }
 
-export type TerminalStatus = 'idle' | 'running' | 'waiting';
-export type TerminalType = 'agent' | 'shell';
+export type TerminalStatus = "idle" | "running" | "waiting";
+export type TerminalType = "agent" | "shell";
 
 export interface Terminal {
   id: string;

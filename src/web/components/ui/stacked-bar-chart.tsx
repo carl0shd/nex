@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { cn } from '@/lib/utils';
+import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface StackedBarDatum {
   key: string;
@@ -23,14 +23,14 @@ const AXIS_LABEL_TARGET = 6;
 
 function LegendSwatch({
   className,
-  label
+  label,
 }: {
   className: string;
   label: string;
 }): React.JSX.Element {
   return (
     <span className="inline-flex items-center gap-1.5 text-3xs text-ink-3">
-      <span className={cn('size-2 rounded-[2px]', className)} />
+      <span className={cn("size-2 rounded-[2px]", className)} />
       {label}
     </span>
   );
@@ -43,7 +43,7 @@ function StackedBarChart({
   restLabel,
   emptyLabel,
   height = 112,
-  className
+  className,
 }: StackedBarChartProps): React.JSX.Element {
   const [focusedKey, setFocusedKey] = useState<string | null>(null);
 
@@ -55,8 +55,8 @@ function StackedBarChart({
     return (
       <div
         className={cn(
-          'flex items-center justify-center rounded-lg border border-line-soft text-xs text-ink-3',
-          className
+          "flex items-center justify-center rounded-lg border border-line-soft text-xs text-ink-3",
+          className,
         )}
         style={{ height }}
       >
@@ -66,7 +66,7 @@ function StackedBarChart({
   }
 
   return (
-    <div data-slot="stacked-bar-chart" className={cn('flex flex-col gap-3', className)}>
+    <div data-slot="stacked-bar-chart" className={cn("flex flex-col gap-3", className)}>
       <div className="flex items-baseline justify-between gap-4">
         <div className="flex items-center gap-3">
           <LegendSwatch className="bg-chart-cost" label={highlightLabel} />
@@ -101,16 +101,16 @@ function StackedBarChart({
             >
               {rest > 0 && (
                 <span
-                  className={cn('block w-full rounded-t-[3px] bg-ink-3/40', dim && 'opacity-40')}
+                  className={cn("block w-full rounded-t-[3px] bg-ink-3/40", dim && "opacity-40")}
                   style={{ height: `${(rest / max) * 100}%` }}
                 />
               )}
               {datum.highlight > 0 && (
                 <span
                   className={cn(
-                    'block w-full bg-chart-cost',
-                    rest > 0 ? 'rounded-b-[1px]' : 'rounded-t-[3px]',
-                    dim && 'opacity-40'
+                    "block w-full bg-chart-cost",
+                    rest > 0 ? "rounded-b-[1px]" : "rounded-t-[3px]",
+                    dim && "opacity-40",
                   )}
                   style={{ height: `${(datum.highlight / max) * 100}%` }}
                 />
@@ -127,7 +127,7 @@ function StackedBarChart({
             key={datum.key}
             className="min-w-0 flex-1 text-center text-3xs whitespace-nowrap text-ink-3"
           >
-            {index % labelEvery === 0 ? datum.label : ''}
+            {index % labelEvery === 0 ? datum.label : ""}
           </span>
         ))}
       </div>

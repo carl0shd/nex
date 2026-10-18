@@ -1,14 +1,14 @@
-import { create } from 'zustand';
-import { applyTheme, type ThemeName, type ThemePreference } from '@/lib/theme';
+import { create } from "zustand";
+import { applyTheme, type ThemeName, type ThemePreference } from "@/lib/theme";
 
 interface AppPrefs {
   theme: ThemePreference;
 }
 
-const SETTINGS_KEY = 'app-prefs';
+const SETTINGS_KEY = "app-prefs";
 
 const DEFAULT_PREFS: AppPrefs = {
-  theme: 'dark'
+  theme: "dark",
 };
 
 interface SettingsStore extends AppPrefs {
@@ -21,7 +21,7 @@ interface SettingsStore extends AppPrefs {
 
 export const useSettingsStore = create<SettingsStore>((set, get) => ({
   ...DEFAULT_PREFS,
-  resolvedTheme: 'dark',
+  resolvedTheme: "dark",
   loaded: false,
 
   load: async () => {
@@ -37,7 +37,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
   },
 
   syncSystemTheme: () => {
-    if (get().theme !== 'system') return;
-    set({ resolvedTheme: applyTheme('system') });
-  }
+    if (get().theme !== "system") return;
+    set({ resolvedTheme: applyTheme("system") });
+  },
 }));

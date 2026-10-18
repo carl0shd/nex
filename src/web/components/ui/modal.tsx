@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
-import SimpleBar from 'simplebar-react';
-import type { LucideIcon } from 'lucide-react';
+import { useEffect, useRef } from "react";
+import SimpleBar from "simplebar-react";
+import type { LucideIcon } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -8,11 +8,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogPanel,
-  DialogTitle
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 /** Matches the panel exit animation in `dialog.tsx` so `onAfterClose` fires once it is hidden. */
 const EXIT_DURATION = 150;
@@ -30,7 +30,7 @@ function Modal({
   width = 440,
   open = true,
   onClose,
-  onAfterClose
+  onAfterClose,
 }: ModalProps): React.JSX.Element {
   const prevOpenRef = useRef(open);
 
@@ -67,7 +67,7 @@ function ModalPanel({
   children,
   width = 440,
   className,
-  style
+  style,
 }: ModalPanelProps): React.JSX.Element {
   return (
     <DialogPanel showCloseButton={false} className={className} style={{ width, ...style }}>
@@ -81,7 +81,7 @@ interface ModalHeaderProps {
   subtitle?: string;
   label?: string;
   icon?: LucideIcon;
-  align?: 'left' | 'center';
+  align?: "left" | "center";
 }
 
 function ModalHeader({
@@ -89,24 +89,24 @@ function ModalHeader({
   subtitle,
   label,
   icon: Icon,
-  align = 'left'
+  align = "left",
 }: ModalHeaderProps): React.JSX.Element {
   return (
-    <DialogHeader className={cn(align === 'center' && 'text-center')}>
+    <DialogHeader className={cn(align === "center" && "text-center")}>
       {Icon && (
         <div
           className={cn(
-            'flex size-11 items-center justify-center rounded-full bg-muted shadow-hairline',
-            align === 'center' && 'self-center'
+            "flex size-11 items-center justify-center rounded-full bg-muted shadow-hairline",
+            align === "center" && "self-center",
           )}
         >
           <Icon size={20} className="text-ink-2" />
         </div>
       )}
       {label && <span className="eyebrow">{label}</span>}
-      <DialogTitle className={cn(!title && 'sr-only')}>{title ?? label ?? 'Dialog'}</DialogTitle>
-      <DialogDescription className={cn(!subtitle && 'sr-only')}>
-        {subtitle ?? title ?? ''}
+      <DialogTitle className={cn(!title && "sr-only")}>{title ?? label ?? "Dialog"}</DialogTitle>
+      <DialogDescription className={cn(!subtitle && "sr-only")}>
+        {subtitle ?? title ?? ""}
       </DialogDescription>
     </DialogHeader>
   );
@@ -114,7 +114,7 @@ function ModalHeader({
 
 function ModalBody({ children }: { children: React.ReactNode }): React.JSX.Element {
   return (
-    <SimpleBar autoHide={false} className="-mx-6" style={{ maxHeight: 'calc(100vh - 280px)' }}>
+    <SimpleBar autoHide={false} className="-mx-6" style={{ maxHeight: "calc(100vh - 280px)" }}>
       <div className="flex flex-col gap-5 px-6">{children}</div>
     </SimpleBar>
   );

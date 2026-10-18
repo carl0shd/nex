@@ -1,15 +1,15 @@
-import { app, ipcMain, dialog, shell, BrowserWindow } from 'electron';
-import { spawn } from 'child_process';
-import { statSync, readFileSync, mkdirSync, writeFileSync, existsSync } from 'fs';
-import { extname, join } from 'path';
-import { IPC } from './channels';
-import * as workspaceRepo from '@native/db/repositories/workspace.repo';
-import * as projectRepo from '@native/db/repositories/project.repo';
-import * as settings from '@native/db/repositories/settings.repo';
-import * as agentRepo from '@native/db/repositories/agent.repo';
-import * as agentAccountRepo from '@native/db/repositories/agent-account.repo';
-import * as sessionRepo from '@native/db/repositories/session.repo';
-import * as terminalRepo from '@native/db/repositories/terminal.repo';
+import { app, ipcMain, dialog, shell, BrowserWindow } from "electron";
+import { spawn } from "child_process";
+import { statSync, readFileSync, mkdirSync, writeFileSync, existsSync } from "fs";
+import { extname, join } from "path";
+import { IPC } from "./channels";
+import * as workspaceRepo from "@native/db/repositories/workspace.repo";
+import * as projectRepo from "@native/db/repositories/project.repo";
+import * as settings from "@native/db/repositories/settings.repo";
+import * as agentRepo from "@native/db/repositories/agent.repo";
+import * as agentAccountRepo from "@native/db/repositories/agent-account.repo";
+import * as sessionRepo from "@native/db/repositories/session.repo";
+import * as terminalRepo from "@native/db/repositories/terminal.repo";
 import {
   spawnTerminal,
   writeToTerminal,
@@ -19,17 +19,17 @@ import {
   isAlive,
   isTerminalFresh,
   markTerminalFresh,
-  unmarkTerminalFresh
-} from '@native/pty/manager';
-import { getAgentResumeAdapter } from '@native/agents/resume';
-import { getStatusMarkers } from '@native/agents/status-markers';
-import { detectAvailableAgents, installAgent } from '@native/agents/detect';
-import { createTerminalForSession } from '@native/agents/agent-terminal';
-import { cloneAgentAccount } from '@native/agents/clone-account';
-import { startWork } from '@native/git/start-work';
-import { detectGit, cloneRepository } from '@native/git/clone';
-import { detectGh, listGithubOwners, listGithubRepos, cloneGithubRepo } from '@native/git/github';
-import { getNexDir } from '@native/paths';
+  unmarkTerminalFresh,
+} from "@native/pty/manager";
+import { getAgentResumeAdapter } from "@native/agents/resume";
+import { getStatusMarkers } from "@native/agents/status-markers";
+import { detectAvailableAgents, installAgent } from "@native/agents/detect";
+import { createTerminalForSession } from "@native/agents/agent-terminal";
+import { cloneAgentAccount } from "@native/agents/clone-account";
+import { startWork } from "@native/git/start-work";
+import { detectGit, cloneRepository } from "@native/git/clone";
+import { detectGh, listGithubOwners, listGithubRepos, cloneGithubRepo } from "@native/git/github";
+import { getNexDir } from "@native/paths";
 import {
   detectBaseBranch,
   isGitRepo,
@@ -41,13 +41,13 @@ import {
   removeWorktree,
   deleteBranch,
   type WorktreeDiffOptions,
-  type WorktreeFileVersionsInput
-} from '@native/git/git';
-import { watchWorktree } from '@native/git/watcher';
-import { scanAllTranscripts, watchTranscripts } from '@native/usage/ingest';
-import { getUsageStats, getUsageSummary, invalidateLimitsCache } from '@native/usage/service';
-import type { UsageGranularity } from '@native/usage/types';
-import { showMainWindow } from '@native/main/app-window';
+  type WorktreeFileVersionsInput,
+} from "@native/git/git";
+import { watchWorktree } from "@native/git/watcher";
+import { scanAllTranscripts, watchTranscripts } from "@native/usage/ingest";
+import { getUsageStats, getUsageSummary, invalidateLimitsCache } from "@native/usage/service";
+import type { UsageGranularity } from "@native/usage/types";
+import { showMainWindow } from "@native/main/app-window";
 import {
   speechAvailable,
   listSpeechDevices,
@@ -55,10 +55,10 @@ import {
   requestSpeechAuth,
   startSpeech,
   stopSpeech,
-  cancelSpeech
-} from '@native/speech/manager';
-import type { Terminal } from '@native/db/types';
-import type { AgentResumeAdapter, SessionTrackerHandle } from '@native/agents/resume';
+  cancelSpeech,
+} from "@native/speech/manager";
+import type { Terminal } from "@native/db/types";
+import type { AgentResumeAdapter, SessionTrackerHandle } from "@native/agents/resume";
 
 interface AgentSpawnPlan {
   args: string[];
@@ -70,7 +70,7 @@ function pickUnclaimedSessionId(terminal: Terminal, adapter: AgentResumeAdapter)
     terminalRepo
       .getBySession(terminal.sessionId)
       .filter((t) => t.id !== terminal.id && t.agentSessionId)
-      .map((t) => t.agentSessionId as string)
+      .map((t) => t.agentSessionId as string),
   );
   const candidates = adapter.listSessionIds(terminal.cwd).filter((id) => !claimed.has(id));
   return candidates.length === 1 ? candidates[0] : null;
@@ -78,7 +78,7 @@ function pickUnclaimedSessionId(terminal: Terminal, adapter: AgentResumeAdapter)
 
 function makeTrackerFactory(
   terminal: Terminal,
-  adapter: AgentResumeAdapter
+  adapter: AgentResumeAdapter,
 ): () => SessionTrackerHandle {
   return () =>
     adapter.watchForNewSession(terminal.cwd, (sessionId) => {
@@ -91,14 +91,14 @@ function makeTrackerFactory(
 }
 
 function agentSlugFor(terminal: Terminal): string | null {
-  if (terminal.type !== 'agent') return null;
+  if (terminal.type !== "agent") return null;
   const session = sessionRepo.getById(terminal.sessionId);
   const agent = session?.agentId ? agentRepo.getById(session.agentId) : null;
   return agent?.slug ?? null;
 }
 
 function planAgentSpawn(terminal: Terminal): AgentSpawnPlan | null {
-  if (terminal.type !== 'agent') return null;
+  if (terminal.type !== "agent") return null;
   const session = sessionRepo.getById(terminal.sessionId);
   const agent = session?.agentId ? agentRepo.getById(session.agentId) : null;
   const adapter = getAgentResumeAdapter(agent?.slug);
@@ -126,7 +126,7 @@ function planAgentSpawn(terminal: Terminal): AgentSpawnPlan | null {
 }
 
 function deleteAgentSessionFile(terminal: Terminal): void {
-  if (terminal.type !== 'agent' || !terminal.agentSessionId) return;
+  if (terminal.type !== "agent" || !terminal.agentSessionId) return;
   const session = sessionRepo.getById(terminal.sessionId);
   const agent = session?.agentId ? agentRepo.getById(session.agentId) : null;
   const adapter = getAgentResumeAdapter(agent?.slug);
@@ -164,8 +164,8 @@ export function registerIPCHandlers(): void {
     versions: {
       electron: process.versions.electron,
       chrome: process.versions.chrome,
-      node: process.versions.node
-    }
+      node: process.versions.node,
+    },
   }));
 
   ipcMain.handle(IPC.WORKSPACE_GET_ALL, () => workspaceRepo.getAll());
@@ -176,7 +176,7 @@ export function registerIPCHandlers(): void {
 
   ipcMain.handle(IPC.PROJECT_GET_ALL, () => projectRepo.getAll());
   ipcMain.handle(IPC.PROJECT_GET_BY_WORKSPACE, (_, workspaceId) =>
-    projectRepo.getByWorkspace(workspaceId)
+    projectRepo.getByWorkspace(workspaceId),
   );
   ipcMain.handle(IPC.PROJECT_CREATE, (_, input) => projectRepo.create(input));
   ipcMain.handle(IPC.PROJECT_UPDATE, (_, id, input) => projectRepo.update(id, input));
@@ -193,7 +193,7 @@ export function registerIPCHandlers(): void {
 
   ipcMain.handle(IPC.AGENT_ACCOUNT_GET_ALL, () => agentAccountRepo.getAll());
   ipcMain.handle(IPC.AGENT_ACCOUNT_GET_BY_AGENT, (_, agentId) =>
-    agentAccountRepo.getByAgent(agentId)
+    agentAccountRepo.getByAgent(agentId),
   );
   ipcMain.handle(IPC.AGENT_ACCOUNT_CREATE, (_, input) => agentAccountRepo.create(input));
   ipcMain.handle(IPC.AGENT_ACCOUNT_UPDATE, (_, id, input) => agentAccountRepo.update(id, input));
@@ -224,19 +224,19 @@ export function registerIPCHandlers(): void {
 
   ipcMain.handle(IPC.SESSION_NOTES_READ, (_, sessionId: string): string => {
     const session = sessionRepo.getById(sessionId);
-    if (!session?.notesPath || !existsSync(session.notesPath)) return '';
-    return readFileSync(session.notesPath, 'utf8');
+    if (!session?.notesPath || !existsSync(session.notesPath)) return "";
+    return readFileSync(session.notesPath, "utf8");
   });
 
   ipcMain.handle(IPC.SESSION_NOTES_WRITE, (_, sessionId: string, content: string): void => {
     const session = sessionRepo.getById(sessionId);
     if (!session?.notesPath) return;
-    writeFileSync(session.notesPath, content, 'utf8');
+    writeFileSync(session.notesPath, content, "utf8");
   });
 
   ipcMain.handle(IPC.TERMINAL_GET_ALL, () => terminalRepo.getAll());
   ipcMain.handle(IPC.TERMINAL_GET_BY_SESSION, (_, sessionId: string) =>
-    terminalRepo.getBySession(sessionId)
+    terminalRepo.getBySession(sessionId),
   );
   ipcMain.handle(IPC.TERMINAL_CREATE, (_, input) => {
     const terminal = terminalRepo.create(input);
@@ -252,7 +252,7 @@ export function registerIPCHandlers(): void {
     terminalRepo.remove(id);
   });
   ipcMain.handle(IPC.TERMINAL_REORDER, (_, sessionId: string, orderedIds: string[]) =>
-    terminalRepo.reorder(sessionId, orderedIds)
+    terminalRepo.reorder(sessionId, orderedIds),
   );
 
   ipcMain.handle(IPC.PTY_ENSURE, (_, terminalId: string, cols?: number, rows?: number): boolean => {
@@ -273,7 +273,7 @@ export function registerIPCHandlers(): void {
       rows,
       runCommand: terminal.runCommand,
       trackerFactory: plan?.trackerFactory,
-      statusMarkers: getStatusMarkers(agentSlugFor(terminal))
+      statusMarkers: getStatusMarkers(agentSlugFor(terminal)),
     });
     return true;
   });
@@ -297,7 +297,7 @@ export function registerIPCHandlers(): void {
   ipcMain.handle(IPC.GIT_CLONE, (event, url: string, parentDir: string) =>
     cloneRepository(url, parentDir, (progress) => {
       if (!event.sender.isDestroyed()) event.sender.send(IPC.GIT_CLONE_PROGRESS, progress);
-    })
+    }),
   );
   ipcMain.handle(IPC.GH_DETECT, () => detectGh());
   ipcMain.handle(IPC.GH_LIST_OWNERS, () => listGithubOwners());
@@ -307,24 +307,24 @@ export function registerIPCHandlers(): void {
       if (!event.sender.isDestroyed()) {
         event.sender.send(IPC.GIT_CLONE_PROGRESS, { ...progress, repo: nameWithOwner });
       }
-    })
+    }),
   );
   ipcMain.handle(IPC.GIT_DETECT_BASE_BRANCH, (_, repoPath) => detectBaseBranch(repoPath));
   ipcMain.handle(IPC.GIT_IS_REPO, (_, repoPath) => isGitRepo(repoPath));
   ipcMain.handle(IPC.GIT_LIST_BRANCHES, (_, repoPath) => listBranches(repoPath));
   ipcMain.handle(IPC.WORKTREE_LIST_FILES, (_, worktreePath: string) =>
-    listWorktreeFiles(worktreePath)
+    listWorktreeFiles(worktreePath),
   );
   ipcMain.handle(
     IPC.GIT_WORKTREE_DIFF,
     (_, worktreePath: string, options: WorktreeDiffOptions = {}) =>
-      getWorktreeDiff(worktreePath, options)
+      getWorktreeDiff(worktreePath, options),
   );
   ipcMain.handle(IPC.GIT_WORKTREE_FILE_VERSIONS, (_, input: WorktreeFileVersionsInput) =>
-    readWorktreeFileVersions(input)
+    readWorktreeFileVersions(input),
   );
   ipcMain.handle(IPC.GIT_DISCARD_FILE, (_, worktreePath: string, path: string, prevPath?: string) =>
-    discardWorktreeFileChanges(worktreePath, path, prevPath)
+    discardWorktreeFileChanges(worktreePath, path, prevPath),
   );
 
   ipcMain.handle(IPC.GIT_WATCH_START, (event, worktreePath: string) => {
@@ -339,7 +339,7 @@ export function registerIPCHandlers(): void {
       event.sender.send(IPC.GIT_WORKTREE_CHANGED, { worktreePath });
     });
     worktreeWatchers.set(key, { stop, count: 1 });
-    event.sender.once('destroyed', () => stopWorktreeWatchersFor(event.sender.id));
+    event.sender.once("destroyed", () => stopWorktreeWatchersFor(event.sender.id));
   });
 
   ipcMain.handle(IPC.GIT_WATCH_STOP, (event, worktreePath: string) => {
@@ -356,25 +356,27 @@ export function registerIPCHandlers(): void {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (!win) return null;
     const result = await dialog.showOpenDialog(win, {
-      properties: ['openFile'],
-      filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'svg', 'gif', 'ico'] }]
+      properties: ["openFile"],
+      filters: [
+        { name: "Images", extensions: ["png", "jpg", "jpeg", "webp", "svg", "gif", "ico"] },
+      ],
     });
     if (result.canceled || result.filePaths.length === 0) return null;
     const filePath = result.filePaths[0];
     const stats = statSync(filePath);
     if (stats.size > 10 * 1024 * 1024) return null;
-    const ext = extname(filePath).toLowerCase().replace('.', '');
+    const ext = extname(filePath).toLowerCase().replace(".", "");
     const mimeMap: Record<string, string> = {
-      png: 'image/png',
-      jpg: 'image/jpeg',
-      jpeg: 'image/jpeg',
-      webp: 'image/webp',
-      svg: 'image/svg+xml',
-      gif: 'image/gif',
-      ico: 'image/x-icon'
+      png: "image/png",
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      webp: "image/webp",
+      svg: "image/svg+xml",
+      gif: "image/gif",
+      ico: "image/x-icon",
     };
-    const mime = mimeMap[ext] || 'image/png';
-    const base64 = readFileSync(filePath).toString('base64');
+    const mime = mimeMap[ext] || "image/png";
+    const base64 = readFileSync(filePath).toString("base64");
     return `data:${mime};base64,${base64}`;
   });
 
@@ -382,7 +384,7 @@ export function registerIPCHandlers(): void {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (!win) return null;
     const result = await dialog.showOpenDialog(win, {
-      properties: ['openDirectory']
+      properties: ["openDirectory"],
     });
     if (result.canceled || result.filePaths.length === 0) return null;
     return result.filePaths[0];
@@ -390,8 +392,8 @@ export function registerIPCHandlers(): void {
 
   ipcMain.handle(IPC.IDE_OPEN_VSCODE, (_, path: string): boolean => {
     if (!path) return false;
-    const child = spawn('code', [path], { detached: true, stdio: 'ignore' });
-    child.on('error', () => {});
+    const child = spawn("code", [path], { detached: true, stdio: "ignore" });
+    child.on("error", () => {});
     child.unref();
     return true;
   });
@@ -403,7 +405,7 @@ export function registerIPCHandlers(): void {
   ipcMain.handle(
     IPC.SPEECH_START,
     (_, opts: { locale?: string; deviceId?: number; onDevice?: boolean; continuous?: boolean }) =>
-      startSpeech(opts)
+      startSpeech(opts),
   );
   ipcMain.handle(IPC.SPEECH_STOP, () => stopSpeech());
   ipcMain.handle(IPC.SPEECH_CANCEL, () => cancelSpeech());
@@ -412,7 +414,7 @@ export function registerIPCHandlers(): void {
     if (!url) return false;
     try {
       const parsed = new URL(url);
-      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return false;
       void shell.openExternal(url);
       return true;
     } catch {
@@ -427,23 +429,23 @@ export function registerIPCHandlers(): void {
       if (!match) return null;
 
       const mimeType = match[1];
-      const ext = mimeType === 'svg+xml' ? 'svg' : mimeType;
-      const buffer = Buffer.from(match[2], 'base64');
+      const ext = mimeType === "svg+xml" ? "svg" : mimeType;
+      const buffer = Buffer.from(match[2], "base64");
 
-      const dir = join(getNexDir(), 'workspace-icons');
+      const dir = join(getNexDir(), "workspace-icons");
       mkdirSync(dir, { recursive: true });
 
       const filePath = join(dir, `${workspaceId}.${ext}`);
       writeFileSync(filePath, buffer);
 
       return filePath;
-    }
+    },
   );
 
   ipcMain.handle(IPC.USAGE_GET_SUMMARY, () => getUsageSummary());
 
   ipcMain.handle(IPC.USAGE_GET_STATS, (_, granularity: UsageGranularity) =>
-    getUsageStats(granularity)
+    getUsageStats(granularity),
   );
 
   ipcMain.handle(IPC.USAGE_REFRESH, () => {
@@ -460,7 +462,7 @@ export function registerIPCHandlers(): void {
       event.sender.send(IPC.USAGE_CHANGED);
     });
     usageWatchers.set(senderId, stop);
-    event.sender.once('destroyed', () => stopUsageWatcherFor(senderId));
+    event.sender.once("destroyed", () => stopUsageWatcherFor(senderId));
   });
 
   ipcMain.handle(IPC.USAGE_WATCH_STOP, (event) => stopUsageWatcherFor(event.sender.id));

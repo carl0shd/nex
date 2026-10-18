@@ -1,20 +1,20 @@
-import * as agentAccountRepo from '@native/db/repositories/agent-account.repo';
-import * as projectRepo from '@native/db/repositories/project.repo';
-import * as sessionRepo from '@native/db/repositories/session.repo';
-import * as terminalRepo from '@native/db/repositories/terminal.repo';
-import * as usageRepo from '@native/db/repositories/usage.repo';
-import * as workspaceRepo from '@native/db/repositories/workspace.repo';
-import type { AgentAccount } from '@native/db/types';
-import type { DayRange, ModelBucket } from '@native/db/repositories/usage.repo';
+import * as agentAccountRepo from "@native/db/repositories/agent-account.repo";
+import * as projectRepo from "@native/db/repositories/project.repo";
+import * as sessionRepo from "@native/db/repositories/session.repo";
+import * as terminalRepo from "@native/db/repositories/terminal.repo";
+import * as usageRepo from "@native/db/repositories/usage.repo";
+import * as workspaceRepo from "@native/db/repositories/workspace.repo";
+import type { AgentAccount } from "@native/db/types";
+import type { DayRange, ModelBucket } from "@native/db/repositories/usage.repo";
 import {
   RateLimitedError,
   UnauthorizedError,
   fetchAccountUsage,
-  type AccountUsageResponse
-} from '@native/usage/api';
-import { resolveKeychainService } from '@native/usage/binding';
-import { isExpired, readCredentials } from '@native/usage/credentials';
-import { addTokens, costOf, emptyTokens, totalTokens } from '@native/usage/pricing';
+  type AccountUsageResponse,
+} from "@native/usage/api";
+import { resolveKeychainService } from "@native/usage/binding";
+import { isExpired, readCredentials } from "@native/usage/credentials";
+import { addTokens, costOf, emptyTokens, totalTokens } from "@native/usage/pricing";
 import type {
   AccountLimitStatus,
   AccountUsage,
@@ -25,8 +25,8 @@ import type {
   UsageGranularity,
   UsageStats,
   UsageSummary,
-  UsageTotals
-} from '@native/usage/types';
+  UsageTotals,
+} from "@native/usage/types";
 
 const LIMITS_TTL_MS = 5 * 60_000;
 const RATE_LIMIT_BACKOFF_MS = 15 * 60_000;
@@ -35,14 +35,14 @@ const TREND_DAYS = 14;
 const RANGE_DAYS: Record<UsageGranularity, number> = { day: 30, week: 84, month: 365 };
 
 function dayKey(date: Date): string {
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
   return `${date.getFullYear()}-${month}-${day}`;
 }
 
 // Noon anchors the arithmetic so a DST shift never lands on the adjacent day.
 function shiftDay(day: string, delta: number): string {
-  const [year, month, date] = day.split('-').map(Number);
+  const [year, month, date] = day.split("-").map(Number);
   return dayKey(new Date(year, month - 1, date + delta, 12));
 }
 
@@ -72,36 +72,36 @@ function fold(buckets: ModelBucket[]): UsageTotals {
 }
 
 function bucketStart(day: string, granularity: UsageGranularity): string {
-  if (granularity === 'day') return day;
-  if (granularity === 'month') return `${day.slice(0, 7)}-01`;
+  if (granularity === "day") return day;
+  if (granularity === "month") return `${day.slice(0, 7)}-01`;
 
-  const [year, month, date] = day.split('-').map(Number);
+  const [year, month, date] = day.split("-").map(Number);
   const anchor = new Date(year, month - 1, date, 12);
   const mondayOffset = (anchor.getDay() + 6) % 7;
   return shiftDay(day, -mondayOffset);
 }
 
 function bucketEnd(startDay: string, granularity: UsageGranularity): string {
-  if (granularity === 'day') return startDay;
-  if (granularity === 'week') return shiftDay(startDay, 6);
+  if (granularity === "day") return startDay;
+  if (granularity === "week") return shiftDay(startDay, 6);
 
-  const [year, month] = startDay.split('-').map(Number);
+  const [year, month] = startDay.split("-").map(Number);
   return dayKey(new Date(year, month, 0, 12));
 }
 
 function rangeFor(granularity: UsageGranularity): DayRange {
   const toDay = todayKey();
-  if (granularity === 'month') {
-    const [year, month] = toDay.split('-').map(Number);
+  if (granularity === "month") {
+    const [year, month] = toDay.split("-").map(Number);
     return { fromDay: dayKey(new Date(year, month - 12, 1, 12)), toDay };
   }
   return { fromDay: shiftDay(toDay, -(RANGE_DAYS[granularity] - 1)), toDay };
 }
 
 function limitLabel(kind: string, scopeLabel: string | null): string {
-  if (kind === 'session') return 'Session · 5h';
-  if (kind === 'weekly_all') return 'Weekly';
-  if (kind === 'weekly_scoped') return scopeLabel ? `Weekly · ${scopeLabel}` : 'Weekly · scoped';
+  if (kind === "session") return "Session · 5h";
+  if (kind === "weekly_all") return "Weekly";
+  if (kind === "weekly_scoped") return scopeLabel ? `Weekly · ${scopeLabel}` : "Weekly · scoped";
   return scopeLabel ?? kind;
 }
 
@@ -116,10 +116,10 @@ interface CachedLimits {
 const limitsCache = new Map<string, CachedLimits>();
 
 function failureFor(error: unknown, previous: CachedLimits | undefined): AccountLimitStatus {
-  if (error instanceof UnauthorizedError) return 'expired';
+  if (error instanceof UnauthorizedError) return "expired";
   // A throttled endpoint is not an outage: keep showing the last good poll.
-  if (error instanceof RateLimitedError) return previous?.response ? previous.status : 'throttled';
-  return 'error';
+  if (error instanceof RateLimitedError) return previous?.response ? previous.status : "throttled";
+  return "error";
 }
 
 async function loadLimits(account: AgentAccount): Promise<CachedLimits> {
@@ -134,27 +134,27 @@ async function loadLimits(account: AgentAccount): Promise<CachedLimits> {
   if (!credentials) {
     entry = {
       response: null,
-      status: 'unauthenticated',
+      status: "unauthenticated",
       subscriptionType: null,
       fetchedAt: now,
-      retryAfter: 0
+      retryAfter: 0,
     };
   } else if (isExpired(credentials)) {
     entry = {
       response: null,
-      status: 'expired',
+      status: "expired",
       subscriptionType: credentials.subscriptionType,
       fetchedAt: now,
-      retryAfter: 0
+      retryAfter: 0,
     };
   } else {
     try {
       entry = {
         response: await fetchAccountUsage(credentials.accessToken),
-        status: 'ok',
+        status: "ok",
         subscriptionType: credentials.subscriptionType,
         fetchedAt: now,
-        retryAfter: 0
+        retryAfter: 0,
       };
     } catch (error) {
       const backoff =
@@ -166,7 +166,7 @@ async function loadLimits(account: AgentAccount): Promise<CachedLimits> {
         status: failureFor(error, cached),
         subscriptionType: credentials.subscriptionType,
         fetchedAt: now,
-        retryAfter: now + backoff
+        retryAfter: now + backoff,
       };
     }
   }
@@ -178,7 +178,7 @@ async function loadLimits(account: AgentAccount): Promise<CachedLimits> {
 interface SessionContext {
   sessionIdOf: Map<string, string>;
   agentSessionIds: string[];
-  describe: (sessionId: string) => Omit<SessionUsage, 'totals'> | null;
+  describe: (sessionId: string) => Omit<SessionUsage, "totals"> | null;
 }
 
 function sessionContext(): SessionContext {
@@ -203,17 +203,17 @@ function sessionContext(): SessionContext {
         sessionId: session.id,
         name: session.name,
         branch: session.branch,
-        projectName: project?.name ?? '',
-        workspaceColor: workspace?.color ?? '',
-        status: session.status
+        projectName: project?.name ?? "",
+        workspaceColor: workspace?.color ?? "",
+        status: session.status,
       };
-    }
+    },
   };
 }
 
 function sessionUsage(
   buckets: usageRepo.AgentSessionBucket[],
-  context: SessionContext
+  context: SessionContext,
 ): SessionUsage[] {
   const totalsBySession = new Map<string, UsageTotals>();
 
@@ -259,7 +259,7 @@ async function accountUsage(today: string): Promise<AccountUsage[]> {
         label: limitLabel(limit.kind, limit.scopeLabel),
         percent: limit.percent,
         severity: limit.severity,
-        resetsAt: limit.resetsAt
+        resetsAt: limit.resetsAt,
       }));
 
       return {
@@ -273,9 +273,9 @@ async function accountUsage(today: string): Promise<AccountUsage[]> {
         sevenDayPercent: response?.sevenDayPercent ?? null,
         sevenDayResetsAt: response?.sevenDayResetsAt ?? null,
         limits,
-        todayCostUsd: todayByAccount.get(account.id)?.costUsd ?? 0
+        todayCostUsd: todayByAccount.get(account.id)?.costUsd ?? 0,
       };
-    })
+    }),
   );
 }
 
@@ -298,7 +298,7 @@ export async function getUsageSummary(): Promise<UsageSummary> {
   let worstAccountName: string | null = null;
   for (const account of accounts) {
     const percent = Math.max(account.fiveHourPercent ?? 0, account.sevenDayPercent ?? 0);
-    if (account.status !== 'ok') continue;
+    if (account.status !== "ok") continue;
     if (worstPercent === null || percent > worstPercent) {
       worstPercent = percent;
       worstAccountName = account.accountName;
@@ -309,27 +309,27 @@ export async function getUsageSummary(): Promise<UsageSummary> {
     today: {
       total: fold(todayBuckets),
       inNex: fold(todayBuckets.filter((bucket) => bucket.inNex)),
-      outsideNex: fold(todayBuckets.filter((bucket) => !bucket.inNex))
+      outsideNex: fold(todayBuckets.filter((bucket) => !bucket.inNex)),
     },
     trend: [...trendByDay].map(([day, totals]) => ({
       day,
       costUsd: totals.costUsd,
-      tokens: totalTokens(totals.tokens)
+      tokens: totalTokens(totals.tokens),
     })),
     sessions: sessionUsage(usageRepo.sumForAgentSessions(context.agentSessionIds), context).filter(
-      (session) => session.status !== 'done'
+      (session) => session.status !== "done",
     ),
     accounts,
     worstPercent,
     worstAccountName,
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
   };
 }
 
 function statsBuckets(
   buckets: usageRepo.DayBucket[],
   range: DayRange,
-  granularity: UsageGranularity
+  granularity: UsageGranularity,
 ): StatsBucket[] {
   const byStart = new Map<string, StatsBucket>();
 
@@ -341,7 +341,7 @@ function statsBuckets(
       endDay: bucketEnd(startDay, granularity),
       costUsd: 0,
       inNexCostUsd: 0,
-      tokens: 0
+      tokens: 0,
     });
   }
 
@@ -379,7 +379,7 @@ export function getUsageStats(granularity: UsageGranularity): UsageStats {
   const context = sessionContext();
 
   const accountNames = new Map(
-    agentAccountRepo.getAll().map((account) => [account.id, account.name])
+    agentAccountRepo.getAll().map((account) => [account.id, account.name]),
   );
   const byAccount = new Map<
     string,
@@ -387,16 +387,16 @@ export function getUsageStats(granularity: UsageGranularity): UsageStats {
   >();
 
   for (const bucket of usageRepo.sumByAccount(range)) {
-    const key = bucket.accountId ?? '';
+    const key = bucket.accountId ?? "";
     let entry = byAccount.get(key);
     if (!entry) {
       entry = {
         accountId: bucket.accountId,
         accountName: bucket.accountId
-          ? (accountNames.get(bucket.accountId) ?? 'Unknown')
-          : 'Unlinked',
+          ? (accountNames.get(bucket.accountId) ?? "Unknown")
+          : "Unlinked",
         costUsd: 0,
-        tokens: 0
+        tokens: 0,
       };
       byAccount.set(key, entry);
     }
@@ -416,7 +416,7 @@ export function getUsageStats(granularity: UsageGranularity): UsageStats {
     inNexCostUsd: fold(dayBuckets.filter((bucket) => bucket.inNex)).costUsd,
     rangeStartDay: range.fromDay,
     rangeEndDay: range.toDay,
-    historyStartDay: usageRepo.firstEventDay()
+    historyStartDay: usageRepo.firstEventDay(),
   };
 }
 

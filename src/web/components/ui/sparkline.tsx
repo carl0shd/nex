@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 interface SparklinePoint {
   key: string;
@@ -20,7 +20,7 @@ function Sparkline({
   focusedKey,
   onFocusChange,
   className,
-  ariaLabel
+  ariaLabel,
 }: SparklineProps): React.JSX.Element {
   const max = Math.max(...points.map((point) => point.value), 0);
 
@@ -29,7 +29,7 @@ function Sparkline({
       data-slot="sparkline"
       role="img"
       aria-label={ariaLabel}
-      className={cn('flex h-8 items-end gap-px', className)}
+      className={cn("flex h-8 items-end gap-px", className)}
       onMouseLeave={() => onFocusChange?.(null)}
     >
       {points.map((point) => {
@@ -45,9 +45,9 @@ function Sparkline({
           >
             <span
               className={cn(
-                'block w-full rounded-t-[1px] transition-opacity duration-150',
-                point.value > 0 ? 'bg-chart-cost' : 'h-px bg-ink-3/25',
-                dim && 'opacity-45'
+                "block w-full rounded-t-[1px] transition-opacity duration-150",
+                point.value > 0 ? "bg-chart-cost" : "h-px bg-ink-3/25",
+                dim && "opacity-45",
               )}
               style={point.value > 0 ? { height: `${height * 100}%` } : undefined}
             />

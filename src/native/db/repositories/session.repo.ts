@@ -1,11 +1,11 @@
-import { randomUUID } from 'crypto';
-import { getDb } from '@native/db/database';
+import { randomUUID } from "crypto";
+import { getDb } from "@native/db/database";
 import type {
   Session,
   CreateSessionInput,
   UpdateSessionInput,
-  PanelLayout
-} from '@native/db/types';
+  PanelLayout,
+} from "@native/db/types";
 
 export const DEFAULT_SESSION_WIDTH = 630;
 
@@ -53,7 +53,7 @@ function toSession(row: SessionRow): Session {
     worktreePath: row.worktree_path,
     notesPath: row.notes_path,
     symlinks: JSON.parse(row.symlinks),
-    status: row.status as Session['status'],
+    status: row.status as Session["status"],
     opens: row.opens,
     createdAt: row.created_at,
     lastOpened: row.last_opened,
@@ -62,28 +62,28 @@ function toSession(row: SessionRow): Session {
     verticalLayout: parseLayout(row.vertical_layout),
     horizontalLayout: parseLayout(row.horizontal_layout),
     sortOrder: row.sort_order,
-    width: row.width
+    width: row.width,
   };
 }
 
 export function getAll(): Session[] {
   const rows = getDb()
-    .prepare('SELECT * FROM sessions ORDER BY sort_order ASC, created_at DESC')
+    .prepare("SELECT * FROM sessions ORDER BY sort_order ASC, created_at DESC")
     .all() as SessionRow[];
   return rows.map(toSession);
 }
 
 export function getByProject(projectId: string): Session[] {
   const rows = getDb()
-    .prepare('SELECT * FROM sessions WHERE project_id = ? ORDER BY sort_order ASC, created_at DESC')
+    .prepare("SELECT * FROM sessions WHERE project_id = ? ORDER BY sort_order ASC, created_at DESC")
     .all(projectId) as SessionRow[];
   return rows.map(toSession);
 }
 
 export function getByName(name: string, projectId?: string): Session | null {
   const sql = projectId
-    ? 'SELECT * FROM sessions WHERE name = ? AND project_id = ?'
-    : 'SELECT * FROM sessions WHERE name = ?';
+    ? "SELECT * FROM sessions WHERE name = ? AND project_id = ?"
+    : "SELECT * FROM sessions WHERE name = ?";
   const args = projectId ? [name, projectId] : [name];
   const row = getDb()
     .prepare(sql)
@@ -92,22 +92,23 @@ export function getByName(name: string, projectId?: string): Session | null {
 }
 
 export function getById(id: string): Session | null {
-  const row = getDb().prepare('SELECT * FROM sessions WHERE id = ?').get(id) as
-    SessionRow | undefined;
+  const row = getDb().prepare("SELECT * FROM sessions WHERE id = ?").get(id) as
+    | SessionRow
+    | undefined;
   return row ? toSession(row) : null;
 }
 
 export function getActive(): Session[] {
   const rows = getDb()
     .prepare(
-      "SELECT * FROM sessions WHERE status = 'active' ORDER BY sort_order ASC, last_opened DESC"
+      "SELECT * FROM sessions WHERE status = 'active' ORDER BY sort_order ASC, last_opened DESC",
     )
     .all() as SessionRow[];
   return rows.map(toSession);
 }
 
 export function create(input: CreateSessionInput): Session {
-  const max = getDb().prepare('SELECT MAX(sort_order) AS m FROM sessions').get() as {
+  const max = getDb().prepare("SELECT MAX(sort_order) AS m FROM sessions").get() as {
     m: number | null;
   };
   const nextOrder = (max.m ?? -1) + 1;
@@ -115,7 +116,7 @@ export function create(input: CreateSessionInput): Session {
   const row = getDb()
     .prepare(
       `INSERT INTO sessions (id, project_id, agent_id, account_id, name, branch, base_branch, worktree_path, notes_path, symlinks, sort_order, width)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`,
     )
     .get(
       randomUUID(),
@@ -126,17 +127,17 @@ export function create(input: CreateSessionInput): Session {
       input.branch,
       input.baseBranch,
       input.worktreePath,
-      input.notesPath ?? '',
+      input.notesPath ?? "",
       JSON.stringify(input.symlinks ?? []),
       nextOrder,
-      DEFAULT_SESSION_WIDTH
+      DEFAULT_SESSION_WIDTH,
     ) as SessionRow;
   return toSession(row);
 }
 
 export function reorder(orderedIds: string[]): void {
   const db = getDb();
-  const stmt = db.prepare('UPDATE sessions SET sort_order = ? WHERE id = ?');
+  const stmt = db.prepare("UPDATE sessions SET sort_order = ? WHERE id = ?");
   const tx = db.transaction((ids: string[]) => {
     ids.forEach((id, idx) => stmt.run(idx, id));
   });
@@ -148,50 +149,50 @@ export function update(id: string, input: UpdateSessionInput): Session {
   const values: unknown[] = [];
 
   if (input.status !== undefined) {
-    fields.push('status = ?');
+    fields.push("status = ?");
     values.push(input.status);
   }
   if (input.opens !== undefined) {
-    fields.push('opens = ?');
+    fields.push("opens = ?");
     values.push(input.opens);
   }
   if (input.lastOpened !== undefined) {
-    fields.push('last_opened = ?');
+    fields.push("last_opened = ?");
     values.push(input.lastOpened);
   }
   if (input.diffVisible !== undefined) {
-    fields.push('diff_visible = ?');
+    fields.push("diff_visible = ?");
     values.push(input.diffVisible ? 1 : 0);
   }
   if (input.notesVisible !== undefined) {
-    fields.push('notes_visible = ?');
+    fields.push("notes_visible = ?");
     values.push(input.notesVisible ? 1 : 0);
   }
   if (input.verticalLayout !== undefined) {
-    fields.push('vertical_layout = ?');
+    fields.push("vertical_layout = ?");
     values.push(input.verticalLayout === null ? null : JSON.stringify(input.verticalLayout));
   }
   if (input.horizontalLayout !== undefined) {
-    fields.push('horizontal_layout = ?');
+    fields.push("horizontal_layout = ?");
     values.push(input.horizontalLayout === null ? null : JSON.stringify(input.horizontalLayout));
   }
   if (input.width !== undefined) {
-    fields.push('width = ?');
+    fields.push("width = ?");
     values.push(input.width);
   }
 
   if (fields.length === 0) {
-    const row = getDb().prepare('SELECT * FROM sessions WHERE id = ?').get(id) as SessionRow;
+    const row = getDb().prepare("SELECT * FROM sessions WHERE id = ?").get(id) as SessionRow;
     return toSession(row);
   }
 
   values.push(id);
   const row = getDb()
-    .prepare(`UPDATE sessions SET ${fields.join(', ')} WHERE id = ? RETURNING *`)
+    .prepare(`UPDATE sessions SET ${fields.join(", ")} WHERE id = ? RETURNING *`)
     .get(...values) as SessionRow;
   return toSession(row);
 }
 
 export function remove(id: string): void {
-  getDb().prepare('DELETE FROM sessions WHERE id = ?').run(id);
+  getDb().prepare("DELETE FROM sessions WHERE id = ?").run(id);
 }

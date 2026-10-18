@@ -1,7 +1,7 @@
-import { Check } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-interface MenuRowProps extends Omit<React.ComponentProps<'button'>, 'children'> {
+interface MenuRowProps extends Omit<React.ComponentProps<"button">, "children"> {
   label: React.ReactNode;
   selected?: boolean;
   leading?: React.ReactNode;
@@ -12,7 +12,7 @@ function MenuRow({
   selected = false,
   leading,
   className,
-  type = 'button',
+  type = "button",
   ...props
 }: MenuRowProps): React.JSX.Element {
   return (
@@ -21,9 +21,9 @@ function MenuRow({
       data-glide-row
       data-slot="menu-row"
       className={cn(
-        'interactive relative flex h-8 w-full cursor-pointer items-center gap-2 rounded-[7px] px-2 text-left text-sm outline-none select-none',
-        selected ? 'text-ink' : 'text-ink-2 hover:text-ink',
-        className
+        "interactive relative flex h-8 w-full cursor-pointer items-center gap-2 rounded-[7px] px-2 text-left text-sm outline-none select-none",
+        selected ? "text-ink" : "text-ink-2 hover:text-ink",
+        className,
       )}
       {...props}
     >

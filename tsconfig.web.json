@@ -10,10 +10,9 @@
   "compilerOptions": {
     "composite": true,
     "jsx": "react-jsx",
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/web/*"],
-      "@native/*": ["src/native/*"]
+      "@/*": ["./src/web/*"],
+      "@native/*": ["./src/native/*"]
     }
   }
 }

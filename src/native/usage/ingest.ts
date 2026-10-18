@@ -1,9 +1,9 @@
-import { watch, type FSWatcher } from 'fs';
-import { join } from 'path';
-import * as agentAccountRepo from '@native/db/repositories/agent-account.repo';
-import * as usageRepo from '@native/db/repositories/usage.repo';
-import { defaultConfigDir } from '@native/usage/credentials';
-import { listTranscriptFiles, scanTranscript } from '@native/usage/transcript';
+import { watch, type FSWatcher } from "fs";
+import { join } from "path";
+import * as agentAccountRepo from "@native/db/repositories/agent-account.repo";
+import * as usageRepo from "@native/db/repositories/usage.repo";
+import { defaultConfigDir } from "@native/usage/credentials";
+import { listTranscriptFiles, scanTranscript } from "@native/usage/transcript";
 
 const REFRESH_WINDOW_MS = 60_000;
 
@@ -82,14 +82,14 @@ function attachWatchers(entry: TranscriptWatch): void {
   for (const target of scanTargets()) {
     try {
       const watcher = watch(
-        join(target.configDir, 'projects'),
+        join(target.configDir, "projects"),
         { recursive: true, persistent: false },
         (_event, filename) => {
-          if (typeof filename === 'string' && !filename.endsWith('.jsonl')) return;
+          if (typeof filename === "string" && !filename.endsWith(".jsonl")) return;
           notify(entry);
-        }
+        },
       );
-      watcher.on('error', () => watcher.close());
+      watcher.on("error", () => watcher.close());
       entry.watchers.push(watcher);
     } catch {
       /* the config dir may not exist until the agent runs once */

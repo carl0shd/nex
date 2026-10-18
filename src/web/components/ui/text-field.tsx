@@ -1,6 +1,6 @@
-import type { LucideIcon } from 'lucide-react';
-import { Field, FieldLabel } from '@/components/ui/field';
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
+import type { LucideIcon } from "lucide-react";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 
 interface TextFieldProps {
   value: string;
@@ -21,7 +21,7 @@ function TextField({
   icon: Icon,
   trailing,
   disabled = false,
-  className
+  className,
 }: TextFieldProps): React.JSX.Element {
   return (
     <Field className={className}>

@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
-import SimpleBar from 'simplebar-react';
-import type SimpleBarCore from 'simplebar-core';
-import { ChevronDown, GitBranch, Search } from 'lucide-react';
-import Chip from '@/components/ui/chip';
-import { Field, FieldLabel } from '@/components/ui/field';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
+import { useEffect, useMemo, useState } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import SimpleBar from "simplebar-react";
+import type SimpleBarCore from "simplebar-core";
+import { ChevronDown, GitBranch, Search } from "lucide-react";
+import Chip from "@/components/ui/chip";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 interface BranchPickerProps {
   value: string;
@@ -27,11 +27,11 @@ function BranchPicker({
   branches,
   defaultBranch,
   label,
-  placeholder = 'select a branch...',
-  disabled = false
+  placeholder = "select a branch...",
+  disabled = false,
 }: BranchPickerProps): React.JSX.Element {
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const [scrollEl, setScrollEl] = useState<HTMLElement | null>(null);
 
@@ -45,11 +45,11 @@ function BranchPicker({
     count: filtered.length,
     getScrollElement: () => scrollEl,
     estimateSize: () => ROW_HEIGHT,
-    overscan: 8
+    overscan: 8,
   });
 
   useEffect(() => {
-    if (!open) setQuery('');
+    if (!open) setQuery("");
   }, [open]);
 
   useEffect(() => {
@@ -63,17 +63,17 @@ function BranchPicker({
 
   const handleKeyDown = (e: React.KeyboardEvent): void => {
     e.stopPropagation();
-    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       e.preventDefault();
       const next =
-        e.key === 'ArrowDown'
+        e.key === "ArrowDown"
           ? Math.min(activeIndex + 1, filtered.length - 1)
           : Math.max(activeIndex - 1, 0);
       setActiveIndex(next);
       virtualizer.scrollToIndex(next);
       return;
     }
-    if (e.key === 'Enter' && filtered[activeIndex]) {
+    if (e.key === "Enter" && filtered[activeIndex]) {
       e.preventDefault();
       select(filtered[activeIndex]);
     }
@@ -91,7 +91,7 @@ function BranchPicker({
         >
           <GitBranch size={13} className="shrink-0 text-ink-3" />
           <span
-            className={cn('flex-1 truncate text-left text-sm', value ? 'text-ink' : 'text-ink-4')}
+            className={cn("flex-1 truncate text-left text-sm", value ? "text-ink" : "text-ink-4")}
           >
             {value || placeholder}
           </span>
@@ -125,7 +125,7 @@ function BranchPicker({
               <div className="px-2 py-2 text-xs text-ink-3">No branches found</div>
             ) : (
               <div
-                style={{ height: virtualizer.getTotalSize(), position: 'relative', width: '100%' }}
+                style={{ height: virtualizer.getTotalSize(), position: "relative", width: "100%" }}
               >
                 {virtualizer.getVirtualItems().map((row) => {
                   const branch = filtered[row.index];
@@ -136,23 +136,23 @@ function BranchPicker({
                       onClick={() => select(branch)}
                       onMouseEnter={() => setActiveIndex(row.index)}
                       style={{
-                        position: 'absolute',
+                        position: "absolute",
                         top: 0,
                         left: 0,
-                        width: '100%',
+                        width: "100%",
                         height: `${row.size}px`,
-                        transform: `translateY(${row.start}px)`
+                        transform: `translateY(${row.start}px)`,
                       }}
                       className={cn(
-                        'flex cursor-pointer items-center gap-2 rounded-[7px] px-2 transition-colors duration-100',
-                        row.index === activeIndex && 'bg-hover-2'
+                        "flex cursor-pointer items-center gap-2 rounded-[7px] px-2 transition-colors duration-100",
+                        row.index === activeIndex && "bg-hover-2",
                       )}
                     >
                       <GitBranch size={12} className="shrink-0 text-ink-3" />
                       <span
                         className={cn(
-                          'flex-1 truncate text-left text-sm',
-                          branch === value ? 'text-ink' : 'text-ink-2'
+                          "flex-1 truncate text-left text-sm",
+                          branch === value ? "text-ink" : "text-ink-2",
                         )}
                       >
                         {branch}

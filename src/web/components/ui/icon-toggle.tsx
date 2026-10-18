@@ -1,16 +1,16 @@
-import type { LucideIcon } from 'lucide-react';
-import { Toggle } from '@/components/ui/toggle';
+import type { LucideIcon } from "lucide-react";
+import { Toggle } from "@/components/ui/toggle";
 
-interface IconToggleProps extends Omit<React.ComponentProps<typeof Toggle>, 'children' | 'size'> {
+interface IconToggleProps extends Omit<React.ComponentProps<typeof Toggle>, "children" | "size"> {
   icon: LucideIcon;
   iconSize?: number;
-  size?: 'sm' | 'default' | 'lg';
+  size?: "sm" | "default" | "lg";
 }
 
 function IconToggle({
   icon: Icon,
   iconSize = 13,
-  size = 'sm',
+  size = "sm",
   className,
   ...props
 }: IconToggleProps): React.JSX.Element {

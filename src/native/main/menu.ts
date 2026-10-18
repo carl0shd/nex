@@ -1,7 +1,7 @@
-import { Menu, app, type MenuItemConstructorOptions } from 'electron';
+import { Menu, app, type MenuItemConstructorOptions } from "electron";
 
 export function createApplicationMenu(): void {
-  const isMac = process.platform === 'darwin';
+  const isMac = process.platform === "darwin";
 
   const template: MenuItemConstructorOptions[] = [
     ...(isMac
@@ -9,55 +9,55 @@ export function createApplicationMenu(): void {
           {
             label: app.name,
             submenu: [
-              { role: 'about' },
-              { type: 'separator' },
-              { role: 'services' },
-              { type: 'separator' },
-              { role: 'hide' },
-              { role: 'hideOthers' },
-              { role: 'unhide' },
-              { type: 'separator' },
-              { role: 'quit' }
-            ]
-          }
+              { role: "about" },
+              { type: "separator" },
+              { role: "services" },
+              { type: "separator" },
+              { role: "hide" },
+              { role: "hideOthers" },
+              { role: "unhide" },
+              { type: "separator" },
+              { role: "quit" },
+            ],
+          },
         ] as MenuItemConstructorOptions[])
       : []),
     {
-      label: 'Edit',
+      label: "Edit",
       submenu: [
-        { role: 'undo' },
-        { role: 'redo' },
-        { type: 'separator' },
-        { role: 'cut' },
-        { role: 'copy' },
-        { role: 'paste' },
-        { role: 'selectAll' }
-      ]
+        { role: "undo" },
+        { role: "redo" },
+        { type: "separator" },
+        { role: "cut" },
+        { role: "copy" },
+        { role: "paste" },
+        { role: "selectAll" },
+      ],
     },
     {
-      label: 'View',
+      label: "View",
       submenu: [
-        { role: 'reload' },
-        { role: 'forceReload' },
-        { role: 'toggleDevTools' },
-        { type: 'separator' },
-        { role: 'resetZoom' },
-        { role: 'zoomIn' },
-        { role: 'zoomOut' },
-        { type: 'separator' },
-        { role: 'togglefullscreen' }
-      ]
+        { role: "reload" },
+        { role: "forceReload" },
+        { role: "toggleDevTools" },
+        { type: "separator" },
+        { role: "resetZoom" },
+        { role: "zoomIn" },
+        { role: "zoomOut" },
+        { type: "separator" },
+        { role: "togglefullscreen" },
+      ],
     },
     {
-      label: 'Window',
+      label: "Window",
       submenu: [
-        { role: 'minimize' },
-        { role: 'zoom' },
+        { role: "minimize" },
+        { role: "zoom" },
         ...(isMac
-          ? ([{ type: 'separator' }, { role: 'front' }] as MenuItemConstructorOptions[])
-          : ([{ role: 'close' }] as MenuItemConstructorOptions[]))
-      ]
-    }
+          ? ([{ type: "separator" }, { role: "front" }] as MenuItemConstructorOptions[])
+          : ([{ role: "close" }] as MenuItemConstructorOptions[])),
+      ],
+    },
   ];
 
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
