@@ -1,23 +1,51 @@
-import { Card } from "@/components/ui/card";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-interface SpecimenProps {
-  name: string;
-  source: string;
-  children: React.ReactNode;
-  className?: string;
-}
-
-function Specimen({ name, source, children, className }: SpecimenProps): React.JSX.Element {
+export function Section({
+  id,
+  title,
+  description,
+  children,
+}: {
+  id: string;
+  title: string;
+  description?: string;
+  children: ReactNode;
+}) {
   return (
-    <Card className="gap-0 overflow-hidden p-0">
-      <div className="flex items-baseline justify-between gap-3 border-b border-line-soft px-3 py-2">
-        <span className="text-xs font-medium text-ink select-none">{name}</span>
-        <span className="truncate font-mono text-3xs text-ink-3 select-text">{source}</span>
-      </div>
-      <div className={cn("flex flex-col gap-4 bg-page p-4", className)}>{children}</div>
-    </Card>
+    <section id={`ds-${id}`} className="flex scroll-mt-6 flex-col gap-4">
+      <header className="flex flex-col gap-1">
+        <h2 className="m-0 text-xl font-semibold tracking-[-0.02em] text-ink">{title}</h2>
+        {description && <p className="m-0 text-sm text-ink-3">{description}</p>}
+      </header>
+      {children}
+    </section>
   );
 }
 
-export default Specimen;
+export function Specimen({
+  name,
+  children,
+  className,
+  bare = false,
+}: {
+  name: string;
+  children: ReactNode;
+  className?: string;
+  bare?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="font-mono text-2xs text-ink-4">{name}</span>
+      <div
+        className={cn(
+          bare ? "" : "rounded-panel bg-surface p-5 shadow-card",
+          "flex flex-wrap items-center gap-3",
+          className,
+        )}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
