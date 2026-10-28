@@ -1,8 +1,5 @@
 import "@fontsource-variable/inter";
 import "@fontsource-variable/jetbrains-mono";
-// SimpleBar first: its thumb rules match ours selector-for-selector, so whichever
-// sheet loads last wins the tie — and the app's has to.
-import "simplebar-react/dist/simplebar.min.css";
 import "./styles/globals.css";
 
 import { StrictMode } from "react";

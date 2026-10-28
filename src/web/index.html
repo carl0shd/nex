@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <title>Nex</title>
@@ -15,7 +15,7 @@
       #shell {
         position: fixed;
         inset: 0;
-        background: #131412;
+        background: oklch(0.209 0.004 264.477);
         border-radius: 10px;
         overflow: hidden;
         display: flex;
@@ -28,8 +28,8 @@
         flex-shrink: 0;
       }
 
-      html[data-theme="light"] #shell {
-        background: #f5f4f2;
+      html:not(.dark) #shell {
+        background: oklch(0.985 0.001 286.376);
       }
       #root {
         position: fixed;

@@ -1,18 +1,15 @@
 import { Outlet } from "react-router";
-import { Toaster } from "sonner";
 import Titlebar from "@/components/layout/titlebar";
-import { useSettingsStore } from "@/stores/settings.store";
+import { Toaster } from "@/components/primitives/toaster";
 
 function AppShell(): React.JSX.Element {
-  const theme = useSettingsStore((s) => s.resolvedTheme);
-
   return (
-    <div className="relative isolate flex h-screen flex-col overflow-hidden bg-page">
+    <div className="relative isolate flex h-screen flex-col overflow-clip bg-page">
       <Titlebar />
-      <div className="relative flex flex-1 overflow-hidden">
+      <div className="relative flex min-h-0 flex-1 overflow-clip">
         <Outlet />
       </div>
-      <Toaster position="bottom-center" theme={theme} closeButton expand duration={10000} />
+      <Toaster />
     </div>
   );
 }
