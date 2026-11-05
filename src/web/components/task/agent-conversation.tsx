@@ -729,7 +729,9 @@ export function AgentConversation({
   };
   const stickToBottom = () => {
     const scroller = scrollerRef.current;
-    if (scroller && stuckRef.current) scroller.scrollTop = scroller.scrollHeight;
+    if (!scroller) return;
+    if (stuckRef.current) scroller.scrollTop = scroller.scrollHeight;
+    setMoreAbove(scroller.scrollTop > 0);
   };
   const jumpToLatest = () => {
     const scroller = scrollerRef.current;
