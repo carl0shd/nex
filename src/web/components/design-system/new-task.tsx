@@ -10,8 +10,8 @@ import { TaskEmptyState } from "@/components/task/task-empty-state";
 import { WORKSPACES } from "@/components/design-system/sidebar-samples";
 import { Section, Specimen } from "@/components/design-system/specimen";
 
-const MONOKU = { name: "Monoku", color: "#33843F" };
-const PERSONAL = { name: "Personal", color: "#6b21a8" };
+const MONOKU = { id: "monoku", name: "Monoku", color: "#33843F" };
+const PERSONAL = { id: "personal", name: "Personal", color: "#6b21a8" };
 
 const PROJECTS: NewTaskProject[] = [
   { id: "nex", name: "nex", workspace: MONOKU, branches: ["main", "develop", "release/2.4"] },

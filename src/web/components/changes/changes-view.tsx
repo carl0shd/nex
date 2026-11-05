@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { Collapse, Expand, GitPullRequest } from "iconoir-react";
+import { ChevronsDownUp, ChevronsUpDown, GitPullRequest } from "lucide-react";
 import { Button } from "@/components/atoms/button";
 import { IconButton } from "@/components/atoms/icon-button";
 import { SegmentedControl } from "@/components/atoms/segmented-control";
 import { ChangedFileList } from "@/components/changes/changed-file-list";
 import type { ChangedFile, DiffLayout } from "@/components/changes/diff-file";
+import { NoChanges } from "@/components/changes/no-changes";
 import { DiffList, type DiffSelection } from "@/components/changes/diff-list";
 import { SelectionAsk } from "@/components/changes/selection-ask";
 import { DiffStat } from "@/components/task/task-tab-bar";
+import { usePreferencesStore } from "@/stores/preferences.store";
 import { rangeLabel } from "@/lib/diff-range";
 
 const LAYOUTS: readonly DiffLayout[] = ["unified", "split"];
@@ -21,7 +23,9 @@ function totals(files: readonly ChangedFile[]) {
 }
 
 function useChanges(initiallyExpanded: string[]) {
-  const [layout, setLayout] = useState<DiffLayout>("unified");
+  const [layout, setLayout] = useState<DiffLayout>(
+    () => usePreferencesStore.getState().prefs.diffView,
+  );
   const [expanded, setExpanded] = useState<string[]>(initiallyExpanded);
   const [selection, setSelection] = useState<DiffSelection | null>(null);
   const label = selection ? rangeLabel(selection.path, selection.range) : null;
@@ -68,11 +72,12 @@ export function ChangesView({
   onOpenPanel,
 }: {
   files: readonly ChangedFile[];
-  onAsk?: (question: string, lines: string) => void;
+  onAsk?: (question: string, lines: string, text?: string) => void;
   onOpenPanel?: () => void;
 }) {
   const changes = useChanges(files.slice(0, 1).map((file) => file.path));
   const sum = totals(files);
+  if (files.length === 0) return <NoChanges />;
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
       <div className="flex h-[42px] shrink-0 items-center gap-2 pr-2.5 pl-4">
@@ -83,10 +88,10 @@ export function ChangesView({
             <LayoutToggle value={changes.layout} onChange={changes.setLayout} />
           </span>
           <IconButton size="sm" aria-label="Collapse all" onClick={() => changes.setExpanded([])}>
-            <Collapse width={13} height={13} strokeWidth={2} />
+            <ChevronsDownUp width={13} height={13} strokeWidth={2} />
           </IconButton>
           <IconButton size="sm" aria-label="Open in focus" onClick={onOpenPanel}>
-            <Expand width={13} height={13} strokeWidth={2} />
+            <ChevronsUpDown width={13} height={13} strokeWidth={2} />
           </IconButton>
         </span>
       </div>
@@ -103,7 +108,7 @@ export function ChangesView({
         <SelectionAsk
           label={changes.label}
           onSend={(question) => {
-            onAsk?.(question, changes.label ?? "");
+            onAsk?.(question, changes.label ?? "", changes.selection?.text);
             changes.clearSelection();
           }}
           onCancel={changes.clearSelection}
@@ -163,7 +168,7 @@ export function ChangesPanel({
 }: {
   files: readonly ChangedFile[];
   base: string;
-  onAsk?: (question: string, lines: string) => void;
+  onAsk?: (question: string, lines: string, text?: string) => void;
   onCreatePullRequest?: () => void;
 }) {
   const [selected, setSelected] = useState(files[0]?.path ?? "");
@@ -211,7 +216,7 @@ export function ChangesPanel({
           <SelectionAsk
             label={changes.label}
             onSend={(question) => {
-              onAsk?.(question, changes.label ?? "");
+              onAsk?.(question, changes.label ?? "", changes.selection?.text);
               changes.clearSelection();
             }}
             onCancel={changes.clearSelection}

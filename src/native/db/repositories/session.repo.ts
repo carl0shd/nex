@@ -7,7 +7,7 @@ import type {
   PanelLayout,
 } from "@native/db/types";
 
-export const DEFAULT_SESSION_WIDTH = 630;
+export const DEFAULT_SESSION_WIDTH = 600;
 
 interface SessionRow {
   id: string;
@@ -15,6 +15,7 @@ interface SessionRow {
   agent_id: string | null;
   account_id: string | null;
   name: string;
+  title: string;
   branch: string;
   base_branch: string;
   worktree_path: string;
@@ -48,6 +49,7 @@ function toSession(row: SessionRow): Session {
     agentId: row.agent_id,
     accountId: row.account_id,
     name: row.name,
+    title: row.title,
     branch: row.branch,
     baseBranch: row.base_branch,
     worktreePath: row.worktree_path,
@@ -115,8 +117,8 @@ export function create(input: CreateSessionInput): Session {
 
   const row = getDb()
     .prepare(
-      `INSERT INTO sessions (id, project_id, agent_id, account_id, name, branch, base_branch, worktree_path, notes_path, symlinks, sort_order, width)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`,
+      `INSERT INTO sessions (id, project_id, agent_id, account_id, name, title, branch, base_branch, worktree_path, notes_path, symlinks, sort_order, width)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`,
     )
     .get(
       randomUUID(),
@@ -124,6 +126,7 @@ export function create(input: CreateSessionInput): Session {
       input.agentId ?? null,
       input.accountId ?? null,
       input.name,
+      input.title ?? "",
       input.branch,
       input.baseBranch,
       input.worktreePath,
@@ -148,6 +151,10 @@ export function update(id: string, input: UpdateSessionInput): Session {
   const fields: string[] = [];
   const values: unknown[] = [];
 
+  if (input.title !== undefined) {
+    fields.push("title = ?");
+    values.push(input.title);
+  }
   if (input.status !== undefined) {
     fields.push("status = ?");
     values.push(input.status);

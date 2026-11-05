@@ -13,8 +13,9 @@ macOS desktop app for running Claude Code on many git worktrees at once, with te
 - **Routing:** react-router 8 data router via `createMemoryRouter` (no real URLs in Electron)
 - **State:** Zustand (hook-based stores in `web/stores/`)
 - **Design system:** beautiful-ui, copied in full and being restyled to the wireframes · `class-variance-authority` + `clsx` + `tailwind-merge`
-- **Icons:** iconoir-react
+- **Icons:** lucide-react (the wireframes draw every icon with Lucide); brand marks Lucide lacks (GitHub, Apple) are in `atoms/brand-icons.tsx`
 - **Toasts:** Sonner, rendering our own `Toast` / `CompactToast` cards
+- **Shortcuts:** TanStack Hotkeys (`@tanstack/react-hotkeys`, `HotkeysProvider` in `App.tsx`)
 - **Database:** better-sqlite3 (SQLite in main process)
 - **Package Manager:** pnpm 10 (`vite` is aliased to `@voidzero-dev/vite-plus-core` through the `pnpm-workspace.yaml` catalog — never add `vite` directly)
 
@@ -66,7 +67,7 @@ src/
 │   │   ├── utils.ts           # `cn()` — clsx + tailwind-merge
 │   │   └── theme.ts           # applyTheme / getTheme
 │   ├── assets/                # Images, SVGs
-│   │   └── logo.svg     # Nex logo
+│   │   └── brand/           # Nex logos: original SVGs and the nex-mark.webp the app renders
 │   ├── styles/
 │   │   └── globals.css        # Tailwind + theme variables + scrollbar styles
 │   └── types/
@@ -143,7 +144,7 @@ our paths, and comments that broke the [Comments](#comments) rules were removed.
   `fine-tune-card`, `flowchart`, `glide-menu`, `insight-cards`, `loading-state`, `prompt-bar`,
   `recommendation-card`, `records-table`, `search-list`, `selection-actions`, `sidebar-nav`,
   `streaming-text`, `task-rows`, `thinking-state`, `tool-chips`.
-- `sidebar-nav` used a paid icon set (`@central-icons-react`); it now uses `iconoir-react`.
+- `sidebar-nav` used a paid icon set (`@central-icons-react`); it now uses `lucide-react`.
 - `styles/globals.css` is beautiful-ui's foundation (tokens, `@theme`, shadow-plugin, per-component
   CSS and keyframes) plus a short Nex block at the end for the fonts and the native-feel rules.
 
@@ -155,7 +156,7 @@ our paths, and comments that broke the [Comments](#comments) rules were removed.
   `segmented-control` (text or icons), `switch`, `select-button`, `text-field`, `selection-mark`
   (clickable when it gets `onClick`), `option-card`,
   `agent-tile` (`ClaudeTile`), `agent-logo` (Claude, Codex, Gemini or shell), `entity-chip` (`Monogram` workspace badge), `meter`, `orbit`,
-  `shimmer`, `stream-text` (block caret), `spinner` (`Spinner`, `SpinnerArc` icon), `color-swatches`, `dither-progress`, `checkbox` (square), `search-field` (search input with an optional key hint), `inline-code`, `nex-logo` (`NexLogo`, `NexLogoTile`), `logo-tile` (connector and MCP
+  `shimmer`, `stream-text` (block caret), `spinner` (`Spinner`, `SpinnerArc` icon), `color-swatches`, `dither-progress`, `dither-field` (the effort slider's dot field), `dither-stars` (a canvas starfield in the dither palette — three parallax layers drifting left, stars that twinkle, pulse or bob, sparkles and meteors; pauses off screen; math in `lib/dither.ts`), `checkbox` (square), `search-field` (search input with an optional key hint), `hover-swap` (`HoverSwap`: a row's detail cross-fades into its hover action), `expand` (`Expand`: a detail opens and closes by height and fade; its content mounts on first open), `inline-code`, `nex-logo` (`NexLogo`, the isotype on its own — never inside a tile — and `NexWordmark`), `logo-tile` (connector and MCP
   logos). `segmented-control` also has a `bar` variant (icon-only, full width) and `switch` /
   `selection-mark` take `size="sm"`.
 - primitives: `menu` (`Menu`, `MenuItem`, `MenuLabel`, `MenuSeparator` over `GlideMenu`),
@@ -164,12 +165,12 @@ our paths, and comments that broke the [Comments](#comments) rules were removed.
   meta, then title, body, code, tips, progress or a countdown bar; one filled action at most; solid
   surface, close on hover; `CompactToast` is a dot and one line), `toaster` (Sonner's `Toaster`, mounted once in `app-shell.tsx`; toasts are fired with `notify` /
   `notifyCompact` from `lib/notify.tsx`, which render our cards through `toast.custom` and dismiss on
-  any action; the stacked ghosts are styled in `globals.css`), `setting-row`
+  any action; the stacked ghosts are styled in `globals.css`; `task/app-agent-toasts.tsx` fires needs you, done, stopped, pushed and pull request toasts for tasks you are not looking at, copy in `lib/agent-toasts.ts`; `hooks/use-limit-warnings.ts` warns at 80% and 95% of an account's limit, once per window), `setting-row`
   (`SettingsCard` with label and trailing actions, `SettingsGroupHeader`, `SettingRow`),
   `select-menu` (`SelectMenu`: a `SelectButton` that opens a checked `Menu`).
 - app composites: `layout/` (`TitlebarView` with `SearchButton` and `UsagePill`, which opens the `usagePanel` slot), `sidebar/`
   (`Sidebar`, `SidebarRail`, `TaskRow`, `ProjectGroup`, `WorkspaceHeader`, `SidebarLink`,
-  `NewWorkspaceRow` — the inline name field with its color and badge popover — and `AddProjectRow`; task rows show a starting orbit or a red globe, and `environments` is a footer slot), `task/`
+  `NewWorkspaceRow` — the inline name field with its color and badge popover — and `AddProjectRow`; task rows show a starting orbit or a red globe, `environments` is a footer slot, the workspace list scrolls, and hovering a workspace in the rail opens `WorkspacePeek`; `layout/sidebar-frame.tsx` animates the width, swaps rail and sidebar and toggles on ⌘S), `task/`
   (`TaskCard`, `TaskHeader`, `TaskTabBar`, `Conversation` blocks `UserBubble` · `AgentText` · `ToolRow`
   · `InlineDiff` · `ToolOutput` · `WorkingLine`, `PermissionCard`, `QuestionCard`, `EnvButton`, `TaskEmptyState`;
   `blocks` — every tool call is a `BlockRow` with an optional `BlockDetail` body (`DiffLines`,
@@ -180,10 +181,11 @@ our paths, and comments that broke the [Comments](#comments) rules were removed.
   `CodeBlock`)),
   `composer/` (`Composer` holds its own menu state; `ComposerPill`, `ContextRing`, `PermissionChip` +
   `PermissionMenu`, `ModelChip` + `ModelMenu` with `EffortSlider` (X-high/Max dither green, Ultracode
-  violet behind a detent), `AddMenu` + `ConnectorsMenu` + `ConnectorAlert`, `DictateButton` +
+  violet as the last step), `AddMenu` + `ConnectorsMenu` + `ConnectorAlert`, `DictateButton` +
   `DictationMenu` + `VoiceOrb` + `LevelMeter`; `RichEditor` is the tiptap input — `@` and `/` open
-  `FilePicker` / `CommandPicker` and insert `FilePill` / `CommandPill`, a pasted link becomes a
-  `LinkPill` (read from the URL only, `lib/link-preview.ts`), 20+ pasted lines become a card, and
+  `FilePicker` / `CommandPicker` and insert `FilePill` / `CommandPill`, a pasted or typed link becomes a
+  `LinkPill` (read from the URL only, `lib/link-preview.ts`; the node lives in `link-pill-node.ts` and the
+  new task `DetailsEditor` uses it too), 20+ pasted lines become a card, and
   images or files land in the `AttachmentTray` (`DropOverlay` while dragging)), `changes/`
   (`ChangesView` in the task card, `ChangesDock` for the side panel, `ChangesPanel` expanded;
   `DiffList` is the `@pierre/diffs` `CodeView` with our `DiffFileHeader` as each file's header,
@@ -191,7 +193,7 @@ our paths, and comments that broke the [Comments](#comments) rules were removed.
   selecting line numbers opens `SelectionAsk`, `ChangedFileList`; labels in `lib/diff-range.ts`), `notes/` (`NotesView`
   autosaves with "Saved · 2m ago" and "Send to Claude"; `NotesEditor` is tiptap with markdown
   in and out (`@tiptap/markdown`) — only what markdown can store, so no text color or underline —
-  to-do lists, a `FormatToolbar` bubble on selection and a hover block handle with +), `terminal/`
+  to-do lists and a `FormatToolbar` bubble on selection), `terminal/`
   (`ShellView` = `TerminalTabs` + one `TerminalSurface` (xterm) per terminal, themed from the
   palette by `lib/terminal-theme.ts`), `browser/` (`BrowserPanel` = `BrowserTabs` (with the
   `BrowserMenu`) + `AddressBar` + `ClaudeBrowsingBanner` + `BrowserViewport` (desktop or phone, green
@@ -201,7 +203,7 @@ our paths, and comments that broke the [Comments](#comments) rules were removed.
   environment, session, context, connectors — to `EnvironmentPopover`, `SessionInfoPopover`,
   `ContextPopover`, `ConnectorsPopover`), `task-view/` (`ExpandedTaskView` lays out header, strip,
   `TaskChat` and the `TaskDock` side panel, which can expand to full width; `TaskViewHeader`), `home/`
-  (`AgentStrip` — snap-scrolling task cards with the previous one peeking, `StripSummary` and a
+  (`AgentStrip` — freely scrolling task cards with the previous one peeking, `StripSummary` and a
   scroll map — `HomeEmpty`, which `routes/home.tsx` renders until tasks are wired, and
   `AddAgentSlot`, the dashed card next to the only task), `new-task/`
   (`NewTaskDialog` over a `scrim`: title, details and `FieldPill`s for project, base branch, agent,
@@ -210,14 +212,17 @@ our paths, and comments that broke the [Comments](#comments) rules were removed.
   `AccountSwitch`, `SessionLimit` with the projected end of the window, `SpendTrend` sparkline and
   the tasks that spent it; tones and the sparkline math live in `lib/usage.ts`), `command/` (`CommandPalette` — ⌘K over a
   scrim with tasks, files and actions; ranking in `lib/command-search.ts`; ↑↓ moves one sliding
-  highlight, ↵ opens, ⌘↵ opens in a split), `settings/` (`SettingsPage` — one page built from section
-  data so search (`lib/settings-search.ts`) filters rows and drops empty sections; `SettingsIndex`
+  highlight, ↵ opens, ⌘↵ opens in a split), `settings/` (`SettingsPage` — the `/settings` route (titlebar gear, ⌘,), controlled: `AppSettings` feeds it the
+  real data and writes `preferences.store.ts` (`lib/preferences.ts` holds the defaults; main reads the
+  same `preferences` setting for quit, shell and extra agent arguments); one page built from section
+  data so search (`lib/settings-search.ts`) filters rows and drops empty sections; only options that
+  do something are listed; `SettingsIndex`
   follows the scroll with a sliding marker and jumps on click; `AccountList` + `RemoveAccountDialog`,
   `WorkspaceCard`, `MachineCard`, `ShortcutRow` records a new shortcut (`lib/shortcut.ts`);
   `LicensesView` + `LicenseSheet` read `assets/licenses.json`; defaults and options in
-  `settings-values.ts`; dialogs render outside the scroll container so the scrim covers the view),
-  `onboarding/` (`OnboardingFlow` runs Welcome and the six steps — `AgentStep` (ready, signed out,
-  missing), `ConnectStep`, `WorkspaceStep`, `ProjectStep`, `EnvironmentsStep` (offer, running,
+  `settings-values.ts`; its dialogs use `Overlay fullWindow`, which portals to the body so the scrim covers the whole window and the dialog sits in its center),
+  `onboarding/` (`OnboardingFlow` runs Welcome and the five steps — `AgentStep` (ready, signed out,
+  missing), `WorkspaceStep`, `ProjectStep`, `EnvironmentsStep` (offer, running,
   ready, unsupported, failed), `FirstTaskStep` — over `OnboardingChrome` and the `OnboardingStep`
   layout (⌘↵ runs the primary action); `AddAccountDialog` covers every sign-in stage; `CheckList`
   and `OnboardingPanel` are shared; environment progress and sign-in come in from props), `projects/`
@@ -277,6 +282,9 @@ beautiful-ui everywhere:
   instead of a hover fill per row (menus, sidebar links and task lists, the rail, popover actions).
 - **Tabs and segmented controls slide their thumb** (`useSlidingThumb` + `glide-thumb`).
 - **Overlays enter, never pop:** menus, popovers and dialogs use `enter-pop`, toasts `enter-toast`.
+- **Nothing appears on hover without a transition:** an action that replaces a row's detail on hover
+  goes through `HoverSwap` (cross-fade and a small scale, in step with the glide); anything else
+  revealed on hover fades with `transition-opacity`.
 - Rotations and toggles animate (chevrons, the switch knob); long-running agent states use `Shimmer`
   or `Orbit`.
 - Focus is a 2px outline that follows the element's radius; fields use `shadow-focus`, and `GlideMenu`
@@ -289,13 +297,45 @@ drag region; its contents are being rebuilt from the wireframes (see Design Refe
 
 All interactive elements inside the titlebar must have `WebkitAppRegion: 'no-drag'`.
 
+### Agent
+
+Each task runs Claude Code headless, one process per task, in `native/agents/agent-runner.ts`:
+`claude --print --input-format stream-json --output-format stream-json --include-partial-messages
+--permission-prompt-tool stdio`, with `--session-id` for a new conversation and `--resume` after.
+
+- **In:** user messages and control requests (`initialize`, `interrupt`) as JSON lines on stdin.
+- **Out:** every line is forwarded as `AGENT_EVENT`; `stream_event` deltas are the live text, and
+  `result` ends the turn (`AGENT_STATE`). `can_use_tool` control requests become Nex permission
+  cards (`agents/permissions.ts`); "Always allow" returns Claude's own `permission_suggestions`.
+- **History** is the transcript Claude writes (`agents/transcript.ts`); live messages carry the same
+  `uuid`, so `lib/agent-live.ts` merges both without duplicates.
+- **Composer chips:** model and permission mode change live (`set_model`, `set_permission_mode`);
+  effort only exists as a flag, so the process restarts between turns. Saved per task in
+  `agents/agent-settings.ts`, which also maps the composer's ids to the CLI's.
+- **Questions and plans** arrive as `can_use_tool` for `AskUserQuestion` and `ExitPlanMode`; they render as
+  `QuestionCard` / `PlanApproval` and answer with `updatedInput` (`answers`, or `response` when typed).
+- **Messages sent while Claude works** wait in the renderer as `QueuedMessage`s and go out together when
+  the turn ends; "Send now" interrupts.
+- **Models** come from Claude Code itself: the `initialize` response lists them with their effort levels
+  and Auto support (`agents/agent-models.ts`, cached in settings); `composer/models.ts` `MODELS` is only
+  the fallback before any agent has started, and `resolveModel` maps older saved ids.
+- **Versions:** `lib/claude-version.ts` holds the minimum Claude Code Nex supports and the one it was
+  tested with; bump `TESTED_CLAUDE_VERSION` after checking a new release. A control request the CLI
+  answers as unsupported is remembered and skipped; model or mode changes it refuses apply on restart.
+- **Expired account tokens** are renewed by Nex with the refresh token Claude Code stored, through Claude
+  Code's own OAuth client (`usage/credentials.ts` `refreshCredentials`), and written back to the same
+  keychain item; "Sign in again" only logs in from scratch when that refresh fails.
+- Never drive the agent through a pty or by simulating keys.
+
 ### Diff viewer
 
 The diff is rendered by `@pierre/diffs` (`CodeView`) in `components/changes/diff-list.tsx`, styled to
 the wireframes. Pierre mixes each `--diffs-bg-*-override` in at about 20% over the background, so the
 overrides are mix targets, not the final colors. Never set `scrollbar-width`/`scrollbar-color` on or
 inside `.nex-diff-list`: Chromium then drops the `::-webkit-scrollbar` rules Pierre measures. Use
-`CodeView`, not the standalone `FileDiff` (it renders an empty `<pre>` here). Git data is not wired
+`CodeView`, not the standalone `FileDiff` (it renders an empty `<pre>` here). Virtualization is turned off on
+purpose (`DiffList` sets an overscan taller than any diff): measuring files as they scroll in made
+the list jump; the estimates in `ITEM_METRICS` still have to match the header and line heights. Git data is not wired
 yet; when it is, these rules from the previous version apply:
 
 - **What it shows:** everything the session changed — `merge-base(baseBranch, HEAD)` through the
@@ -321,6 +361,18 @@ yet; when it is, these rules from the previous version apply:
 ### Stores
 
 Always use individual selectors (`useSettingsStore(s => s.theme)`) — never subscribe to a whole store.
+
+### Shortcuts
+
+Never add a raw `keydown` listener for a shortcut.
+
+- **App-wide shortcuts** live in `lib/app-shortcuts.ts` (`DEFAULT_SHORTCUTS`, TanStack notation such as
+  `Mod+Shift+N`) and are registered with `useAppHotkey(id, callback)`. Settings lists and records them
+  from the same list (`ShortcutRow` uses `useHotkeyRecorder`).
+- **Shortcuts that belong to one dialog or view** (Esc, ⌘↵ in the new task dialog) use `useHotkey` with
+  `target` set to that element's ref, so two instances never collide.
+- Shown keys come from the list too: `shortcutLabel(id)` for inline hints, `hotkeyCaps(hotkey)` for
+  `KeyCaps`. Never hardcode "⌘T" in a component.
 
 ### Routing
 
@@ -379,6 +431,13 @@ We improved how fast the task view opens.
 - **Comments:** See the [Comments](#comments) section. The default is none, and the hard limit is 2 lines.
 - **Transitions:** Short and strong (150–250ms, ease-out). No slow fades, no `ease-in` on UI.
 - **No hardcoded colors:** NEVER use hardcoded hex colors in components. All colors must use theme tokens from `globals.css`. If a color doesn't exist as a token, create it first. Only exception: inline `style` for dynamic colors passed as props (e.g. workspace color).
+- **Long names:** names that come from the user (workspace, project, task, branch, account) never
+  wrap and never push a row wider: the text sits in its own `truncate` span with the full name in
+  `title`, icons and trailing bits are `shrink-0`. A dialog whose row of pills runs long grows
+  first (the new task dialog is `w-fit` from 700px up to 780px); only past that does the branch
+  pill shrink (`FieldPill shrink`, capped at 260px); project, agent, model and mode keep their full
+  label up to 180px (the agent pill shows only the account name when there are several, its logo
+  names the agent), and the main action stays `shrink-0`.
 - **Native feel:** Global `user-select: none`, `cursor: default`, `-webkit-user-drag: none`. The app should never feel like a website.
 - **Reuse the design system:** build UI from `atoms/` and `primitives/` before writing anything new.
 - **No inline markup:** Never leave repeated inline JSX when a component can be extracted. If a pattern appears more than once, create a component. Use existing components (`Button`, `Chip`, `StatusPill`, `SegmentedControl`, `GlideMenu`, etc.) instead of raw `<button>` or `<span>` with manual styling. Any new UI pattern (dropdowns, selectors, toggles, etc.) MUST be built as a reusable component in `atoms/` or `primitives/` first, then consumed in pages. Never write raw dropdown/select/picker markup inline — always wrap it in a component.

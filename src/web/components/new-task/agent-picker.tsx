@@ -1,4 +1,4 @@
-import { Check } from "iconoir-react";
+import { Check } from "lucide-react";
 import { AgentLogo, type AgentKind } from "@/components/atoms/agent-logo";
 import GlideMenu from "@/components/primitives/glide-menu";
 import { MenuLabel, MenuSeparator } from "@/components/primitives/menu";
@@ -7,14 +7,15 @@ import { cn } from "@/lib/utils";
 export interface AgentAccount {
   id: string;
   name: string;
-  plan: string;
-  color: string;
-  usedPercent: number;
+  plan?: string;
+  color?: string;
+  usedPercent?: number;
 }
 
 export interface AgentOption {
   id: AgentKind;
   name: string;
+  shortName?: string;
   detail: string;
   installed: boolean;
   accounts?: AgentAccount[];
@@ -43,14 +44,17 @@ function AgentRow({
       className={cn(
         "interactive relative flex h-11 items-center gap-2.5 rounded-[9px] px-2.5 select-none",
         option.installed ? "press-wide cursor-pointer" : "opacity-55",
+        selected && "bg-hover group-hover/glide-menu:bg-transparent",
       )}
     >
       <AgentLogo agent={option.id} />
-      <span className="flex flex-1 flex-col gap-px">
-        <span className="text-sm font-medium text-ink">{option.name}</span>
-        <span className="text-2xs text-ink-4">{option.detail}</span>
+      <span className="flex min-w-0 flex-1 flex-col gap-px">
+        <span className="truncate text-sm font-medium text-ink">{option.name}</span>
+        {option.detail && <span className="truncate text-2xs text-ink-4">{option.detail}</span>}
       </span>
-      {selected && <Check width={13} height={13} strokeWidth={2.5} className="text-accent-ink" />}
+      {selected && (
+        <Check width={13} height={13} strokeWidth={2.5} className="shrink-0 text-accent-ink" />
+      )}
       {!option.installed && (
         <button
           type="button"
@@ -81,10 +85,17 @@ function AccountRow({
       onClick={onSelect}
       className="interactive press-wide relative flex h-8 cursor-pointer items-center gap-[9px] rounded-control pr-2.5 pl-[46px] text-xs select-none"
     >
-      <span className="size-1.5 rounded-[2px]" style={{ background: account.color }} />
-      <span className={selected ? "text-ink" : "text-ink-3"}>{account.name}</span>
-      <span className="text-ink-4">{account.plan}</span>
-      <span className="ml-auto text-2xs text-ink-4 tabular-nums">{account.usedPercent}% used</span>
+      <span
+        className="size-1.5 rounded-[2px] bg-accent"
+        style={account.color ? { background: account.color } : undefined}
+      />
+      <span className={cn("truncate", selected ? "text-ink" : "text-ink-3")}>{account.name}</span>
+      {account.plan && <span className="text-ink-4">{account.plan}</span>}
+      {account.usedPercent !== undefined && (
+        <span className="ml-auto text-2xs text-ink-4 tabular-nums">
+          {account.usedPercent}% used
+        </span>
+      )}
     </div>
   );
 }
@@ -128,7 +139,7 @@ export function AgentPicker({
             ))}
           </div>
         ))}
-        <MenuSeparator />
+        {withAccounts.length > 0 && others.length > 0 && <MenuSeparator />}
         {others.map((option) => (
           <AgentRow
             key={option.id}

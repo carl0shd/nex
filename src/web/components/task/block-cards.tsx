@@ -1,15 +1,15 @@
 import type { ReactNode } from "react";
 import {
   Check,
-  Clock,
-  EditPencil,
+  Clock4,
+  ExternalLink,
   GitPullRequest,
-  Map,
-  OpenNewWindow,
-  TaskList,
-  WarningTriangle,
+  ListChecks,
+  MapIcon,
+  PenLine,
+  TriangleAlert,
   WifiOff,
-} from "iconoir-react";
+} from "lucide-react";
 import { ClaudeTile } from "@/components/atoms/agent-tile";
 import { Orbit } from "@/components/atoms/orbit";
 import { Shimmer } from "@/components/atoms/shimmer";
@@ -73,19 +73,27 @@ function CardHead({
 export function CardButton({
   children,
   kind = "neutral",
+  disabled = false,
+  onClick,
 }: {
   children: ReactNode;
-  kind?: "primary" | "neutral" | "quiet";
+  kind?: "primary" | "neutral" | "quiet" | "danger";
+  disabled?: boolean;
+  onClick?: () => void;
 }) {
   return (
     <button
       type="button"
+      disabled={disabled}
+      onClick={onClick}
       className={cn(
         "interactive press flex h-7 cursor-pointer items-center gap-1.5 rounded-full px-3 text-xs font-medium whitespace-nowrap select-none",
         kind === "primary" && "bg-accent text-on-accent hover:bg-accent-hover",
         kind === "neutral" &&
           "bg-elevated text-ink shadow-[0_0_0_1px_rgb(255_255_255/6%)] hover:bg-control-off",
         kind === "quiet" && "text-ink-3 hover:text-ink-2",
+        kind === "danger" && "text-red hover:bg-red-tint",
+        "disabled:pointer-events-none disabled:opacity-50",
       )}
     >
       {children}
@@ -99,7 +107,7 @@ export function TodoPlan({ items }: { items: { label: string; state: TodoState }
   const done = items.filter((item) => item.state === "done").length;
   return (
     <CardShell className="gap-2 px-3.5 py-3">
-      <CardHead icon={TaskList} title="Plan" meta={`${done} of ${items.length}`} />
+      <CardHead icon={ListChecks} title="Plan" meta={`${done} of ${items.length}`} />
       <div className="flex gap-[3px]">
         {items.map((item, i) => (
           <span
@@ -155,7 +163,7 @@ export function SubagentCard({
   name: string;
   task: string;
   meta: string;
-  steps: { icon: BlockIcon; verb: string; target: string; running?: boolean }[];
+  steps: { icon: BlockIcon; verb: string; target: string; running?: boolean; prose?: boolean }[];
 }) {
   return (
     <CardShell className="gap-1 px-3 py-2.5">
@@ -168,8 +176,8 @@ export function SubagentCard({
         <span className="ml-auto shrink-0 text-2xs text-ink-4">{meta}</span>
       </div>
       <div className="ml-[23px]">
-        {steps.map(({ icon: Icon, verb, target, running }) => (
-          <div key={target} className="flex h-[22px] items-center gap-2 text-xs">
+        {steps.map(({ icon: Icon, verb, target, running, prose }, index) => (
+          <div key={index} className="flex h-[22px] items-center gap-2 text-xs">
             {running ? (
               <Spinner />
             ) : (
@@ -182,7 +190,9 @@ export function SubagentCard({
             ) : (
               <span className="font-medium text-ink-2">{verb}</span>
             )}
-            <span className="font-mono text-2xs text-ink-3">{target}</span>
+            <span className={cn("truncate text-ink-3", prose ? "text-xs" : "font-mono text-2xs")}>
+              {target}
+            </span>
           </div>
         ))}
       </div>
@@ -197,8 +207,8 @@ export function ParallelAgents({
 }) {
   return (
     <div className="-mt-0.5 mb-1 ml-[23px]">
-      {agents.map((agent) => (
-        <div key={agent.task} className="flex h-[26px] items-center gap-[9px] text-xs">
+      {agents.map((agent, index) => (
+        <div key={index} className="flex h-[26px] items-center gap-[9px] text-xs">
           {agent.done ? (
             <span className="flex w-3 text-accent-ink">
               <Check width={11} height={11} strokeWidth={2.5} />
@@ -207,7 +217,7 @@ export function ParallelAgents({
             <Spinner />
           )}
           <span className="font-medium text-ink">{agent.name}</span>
-          <span className="text-ink-3">{agent.task}</span>
+          <span className="truncate text-ink-3">{agent.task}</span>
           <span className="ml-auto text-2xs text-ink-4">{agent.meta}</span>
         </div>
       ))}
@@ -215,21 +225,44 @@ export function ParallelAgents({
   );
 }
 
-export function PlanApproval({ title, steps }: { title: string; steps: string[] }) {
+export function PlanApproval({
+  title,
+  steps,
+  children,
+  answering = false,
+  onApprove,
+  onKeepPlanning,
+}: {
+  title: string;
+  steps?: string[];
+  children?: ReactNode;
+  answering?: boolean;
+  onApprove?: () => void;
+  onKeepPlanning?: () => void;
+}) {
   return (
     <CardShell ring="plan" className="gap-2.5 px-3.5 py-3">
-      <CardHead icon={Map} tone="blue" title="Plan ready" meta="plan mode" />
+      <CardHead icon={MapIcon} tone="blue" title="Plan ready" meta="plan mode" />
       <div className="text-xs leading-[19px] text-ink-2">
         <span className="mb-1 block font-medium text-ink">{title}</span>
-        {steps.map((step, i) => (
+        {steps?.map((step, i) => (
           <span key={step} className="block">
             {i + 1}. {step}
           </span>
         ))}
+        {children && (
+          <div className="menu-scroll max-h-[280px] overflow-x-hidden overflow-y-auto select-text [&_h2]:text-base">
+            {children}
+          </div>
+        )}
       </div>
       <div className="flex items-center gap-1.5">
-        <CardButton kind="primary">Approve plan</CardButton>
-        <CardButton>Keep planning</CardButton>
+        <CardButton kind="primary" disabled={answering} onClick={onApprove}>
+          Approve plan
+        </CardButton>
+        <CardButton disabled={answering} onClick={onKeepPlanning}>
+          Keep planning
+        </CardButton>
         <span className="ml-auto text-2xs text-ink-4">or reply to change it</span>
       </div>
     </CardShell>
@@ -240,14 +273,18 @@ export function PullRequestCard({
   title,
   number,
   branch,
+  base = "main",
   files,
   diff,
+  onOpen,
 }: {
   title: string;
   number: number;
   branch: string;
-  files: number;
-  diff: { added: number; removed: number };
+  base?: string;
+  files?: number;
+  diff?: { added: number; removed: number };
+  onOpen?: () => void;
 }) {
   return (
     <CardShell className="px-3 py-2.5">
@@ -259,14 +296,15 @@ export function PullRequestCard({
           <span className="truncate text-sm font-medium text-ink">
             {title} <span className="font-normal text-ink-4">#{number}</span>
           </span>
-          <span className="text-2xs text-ink-4">
-            <span className="font-mono">{branch}</span> → main · {files} files{" "}
-            <DiffCount {...diff} />
+          <span className="truncate text-2xs text-ink-4">
+            <span className="font-mono">{branch}</span> → {base}
+            {files !== undefined && ` · ${files} files `}
+            {diff && <DiffCount {...diff} />}
           </span>
         </span>
         <span className="ml-auto">
-          <CardButton>
-            <OpenNewWindow width={11} height={11} strokeWidth={2} />
+          <CardButton onClick={onOpen}>
+            <ExternalLink width={11} height={11} strokeWidth={2} />
             Open
           </CardButton>
         </span>
@@ -279,27 +317,39 @@ export function UsageLimitCard({
   resets,
   body,
   account,
+  onContinue,
+  onNotify,
 }: {
-  resets: string;
+  resets?: string;
   body: string;
-  account: string;
+  account?: string;
+  onContinue?: () => void;
+  onNotify?: () => void;
 }) {
   return (
     <CardShell ring="waiting" className="gap-2.5 px-3.5 py-3">
       <CardHead
-        icon={Clock}
+        icon={Clock4}
         tone="orange"
         title="Session limit reached"
-        meta={`resets ${resets}`}
+        meta={resets ? `resets ${resets}` : undefined}
       />
       <span className="text-xs text-ink-3">{body}</span>
-      <div className="flex gap-1.5">
-        <CardButton>
-          <ClaudeTile size={16} />
-          Continue on {account}
-        </CardButton>
-        <CardButton kind="quiet">Notify me at reset</CardButton>
-      </div>
+      {(account || onNotify) && (
+        <div className="flex gap-1.5">
+          {account && (
+            <CardButton onClick={onContinue}>
+              <ClaudeTile size={16} />
+              Continue on {account}
+            </CardButton>
+          )}
+          {onNotify && (
+            <CardButton kind="quiet" onClick={onNotify}>
+              Notify me at reset
+            </CardButton>
+          )}
+        </div>
+      )}
     </CardShell>
   );
 }
@@ -307,19 +357,24 @@ export function UsageLimitCard({
 export function TurnSummary({
   files,
   diff,
+  onView,
 }: {
   files: number;
   diff: { added: number; removed: number };
+  onView?: () => void;
 }) {
   return (
     <div className="flex h-[34px] items-center gap-2.5 rounded-field px-2.5 shadow-[inset_0_0_0_1px_var(--line)]">
       <span className="flex w-3.5 shrink-0 justify-center text-ink-3">
-        <EditPencil width={13} height={13} strokeWidth={2} />
+        <PenLine width={13} height={13} strokeWidth={2} />
       </span>
-      <span className="text-xs text-ink-2">Changed {files} files</span>
+      <span className="text-xs text-ink-2">
+        Changed {files} {files === 1 ? "file" : "files"}
+      </span>
       <DiffCount {...diff} />
       <button
         type="button"
+        onClick={onView}
         className="interactive press ml-auto cursor-pointer text-xs text-accent-ink select-none hover:underline"
       >
         View changes →
@@ -342,8 +397,8 @@ type SystemKind = "offline" | "crashed" | "ended";
 
 const SYSTEM: Record<SystemKind, { icon: BlockIcon; tone: string }> = {
   offline: { icon: WifiOff, tone: "text-orange" },
-  crashed: { icon: WarningTriangle, tone: "text-red" },
-  ended: { icon: Clock, tone: "text-ink-3" },
+  crashed: { icon: TriangleAlert, tone: "text-red" },
+  ended: { icon: Clock4, tone: "text-ink-3" },
 };
 
 export function SystemRow({
@@ -355,7 +410,7 @@ export function SystemRow({
   kind: SystemKind;
   title: string;
   description: string;
-  actions: { label: string; primary?: boolean }[];
+  actions: { label: string; primary?: boolean; onClick?: () => void }[];
 }) {
   const { icon: Icon, tone } = SYSTEM[kind];
   return (
@@ -367,11 +422,12 @@ export function SystemRow({
         <span className="text-sm font-medium text-ink">{title}</span>
         <span className="text-xs text-ink-3">{description}</span>
       </span>
-      <span className="ml-auto flex shrink-0 gap-3.5 pt-px">
+      <span className="ml-auto flex shrink-0 gap-3.5 self-center">
         {actions.map((action) => (
           <button
             key={action.label}
             type="button"
+            onClick={action.onClick}
             className={cn(
               "interactive press h-[22px] cursor-pointer text-xs font-medium whitespace-nowrap select-none",
               action.primary

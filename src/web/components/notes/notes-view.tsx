@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { MoreHoriz, SendDiagonal } from "iconoir-react";
+import { Send } from "lucide-react";
 import { Button } from "@/components/atoms/button";
-import { IconButton } from "@/components/atoms/icon-button";
 import { NotesEditor } from "@/components/notes/notes-editor";
 import { relativeTime } from "@/lib/relative-time";
 
@@ -32,14 +31,29 @@ export function NotesView({
   const [lastSaved, setLastSaved] = useState(savedAt);
   const [saving, setSaving] = useState(false);
   const latest = useRef(defaultValue);
+  const [empty, setEmpty] = useState(!defaultValue.trim());
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  useEffect(() => () => clearTimeout(timer.current), []);
+  const pending = useRef(false);
+  const saveRef = useRef(onSave);
+  useEffect(() => {
+    saveRef.current = onSave;
+  });
+  useEffect(
+    () => () => {
+      clearTimeout(timer.current);
+      if (pending.current) saveRef.current?.(latest.current);
+    },
+    [],
+  );
 
   const change = (markdown: string) => {
     latest.current = markdown;
+    setEmpty(!markdown.trim());
     setSaving(true);
+    pending.current = true;
     clearTimeout(timer.current);
     timer.current = setTimeout(() => {
+      pending.current = false;
       onSave?.(markdown);
       setSaving(false);
       setLastSaved(Date.now());
@@ -57,20 +71,19 @@ export function NotesView({
       <div className="flex h-[42px] shrink-0 items-center gap-2 pr-2.5 pl-4">
         <span className="text-xs text-ink-4">{status}</span>
         <span className="ml-auto flex items-center gap-0.5">
-          <Button size="sm" className="mr-1" onClick={() => onSendToClaude?.(latest.current)}>
-            <SendDiagonal width={12} height={12} strokeWidth={2} />
-            Send to Claude
-          </Button>
-          <IconButton size="sm" aria-label="More">
-            <MoreHoriz width={14} height={14} strokeWidth={2} />
-          </IconButton>
+          {onSendToClaude && (
+            <Button size="sm" disabled={empty} onClick={() => onSendToClaude(latest.current)}>
+              <Send width={12} height={12} strokeWidth={2} />
+              Send to Claude
+            </Button>
+          )}
         </span>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">
         <NotesEditor
           defaultValue={defaultValue}
           onChange={change}
-          className="pt-[18px] pr-[26px] pb-6 pl-11"
+          contentClassName="pt-[18px] pr-[26px] pb-6 pl-11"
         />
       </div>
     </div>

@@ -3,14 +3,13 @@ import { Button } from "@/components/atoms/button";
 import { SegmentedControl } from "@/components/atoms/segmented-control";
 import { WORKSPACES } from "@/components/design-system/sidebar-samples";
 import { Section, Specimen } from "@/components/design-system/specimen";
-import { FIRST_RUN } from "@/components/design-system/toast-samples";
 import { WaitingCardSample, WorkingCardSample } from "@/components/design-system/task-card-samples";
 import { AddAgentSlot } from "@/components/home/add-agent-slot";
 import { AddAccountDialog, type AddAccountStage } from "@/components/onboarding/add-account-dialog";
-import type { ClaudeInstall } from "@/components/onboarding/agent-step";
+import { AgentStep, type ClaudeInstall } from "@/components/onboarding/agent-step";
+import { FirstRunCard } from "@/components/onboarding/first-run-card";
 import type { EnvSetup } from "@/components/onboarding/environments-step";
 import { OnboardingFlow, type OnboardingData } from "@/components/onboarding/onboarding-flow";
-import { Toast } from "@/components/primitives/toast";
 import { Sidebar } from "@/components/sidebar/sidebar";
 import type { SidebarWorkspace } from "@/components/sidebar/types";
 
@@ -150,7 +149,14 @@ function ReadyHome() {
           <AddAgentSlot />
         </div>
       </div>
-      <Toast {...FIRST_RUN} className="absolute right-5 bottom-5" />
+      <FirstRunCard
+        className="absolute right-5 bottom-5"
+        tips={[
+          { keys: "⌘T", label: "Start another task" },
+          { keys: "⌘K", label: "Jump to any task, file or action" },
+          { keys: "⇧ scroll", label: "Move between agents on the overview" },
+        ]}
+      />
     </div>
   );
 }
@@ -214,11 +220,33 @@ function FlowWithEnvironments({ claude, env }: { claude: ClaudeScenario; env: En
       onEnvRetry={retry}
       signIn={signInDemo}
       welcomePreview={<HomePreview />}
-      connectPreview={<WaitingCardSample />}
       ready={() => <ReadyHome />}
     />
   );
 }
+
+const AGENT_CASES: { label: string; install: ClaudeInstall; git: string | null }[] = [
+  {
+    label: "Ready · Claude installed and signed in, git found",
+    install: INSTALLS.ready,
+    git: "2.47",
+  },
+  {
+    label: "Installed, not signed in · run claude in a terminal, Nex checks every 3s",
+    install: INSTALLS["signed-out"],
+    git: "2.47",
+  },
+  {
+    label: "Claude Code missing · install command, Nex checks every 3s",
+    install: INSTALLS.missing,
+    git: "2.47",
+  },
+  {
+    label: "Git missing · xcode-select --install, Continue stays off until git shows up",
+    install: INSTALLS.ready,
+    git: null,
+  },
+];
 
 const STAGES: { label: string; state: AddAccountStage }[] = [
   { label: "1 · Sign in with the Claude account", state: { stage: "intro" } },
@@ -253,10 +281,22 @@ export function Onboarding() {
     <Section
       id="first-run"
       title="First run"
-      description="Welcome, then six steps: Claude, live view hooks, workspace, project, environments and the first task. ⌘↵ continues on every step."
+      description="Welcome, then five steps: Claude, workspace, project, environments and the first task. ⌘↵ continues on every step."
     >
       <Specimen name="OnboardingFlow · switch the scenarios, then walk through it" bare>
         <OnboardingDemo />
+      </Specimen>
+      <Specimen name="Agent step · every case" bare>
+        <div className="flex w-full flex-col gap-8">
+          {AGENT_CASES.map(({ label, install, git }) => (
+            <div key={label} className="flex flex-col gap-3">
+              <span className="text-xs text-ink-4">{label}</span>
+              <div className="flex h-[640px] w-full overflow-hidden rounded-card bg-page shadow-card">
+                <AgentStep install={install} git={git} />
+              </div>
+            </div>
+          ))}
+        </div>
       </Specimen>
       <Specimen name="AddAccountDialog · every stage" bare>
         <div className="flex w-full flex-wrap items-start gap-x-10 gap-y-10">

@@ -10,7 +10,11 @@ export function PhraseText({ phrase }: { phrase: Phrase }) {
     <>
       {phrase.map((part, index) =>
         part.code ? (
-          <span key={index} className="font-mono text-xs text-ink">
+          <span
+            key={index}
+            title={part.text}
+            className="inline-block max-w-[200px] truncate align-bottom font-mono text-xs text-ink"
+          >
             {part.text}
           </span>
         ) : (
@@ -50,7 +54,7 @@ export function SetupSection({
         >
           <Icon width={13} height={13} strokeWidth={2} />
         </span>
-        <span className={cn("flex-1 text-sm", open ? "text-ink" : "text-ink-2")}>
+        <span className={cn("min-w-0 flex-1 truncate text-sm", open ? "text-ink" : "text-ink-2")}>
           <PhraseText phrase={phrase} />
         </span>
         {open ? (

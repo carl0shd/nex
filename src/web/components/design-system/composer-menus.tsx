@@ -168,13 +168,7 @@ export function ComposerMenus() {
     >
       <Specimen name="Composer · every pill opens its menu" bare className="items-end pt-[460px]">
         <ComposerFrame>
-          <Composer
-            placeholder="Reply to Claude…"
-            connectors={CONNECTORS}
-            languages={LANGUAGES}
-            microphones={MICROPHONES}
-            state="idle"
-          />
+          <Composer placeholder="Reply to Claude…" connectors={CONNECTORS} state="idle" />
         </ComposerFrame>
       </Specimen>
       <Specimen name="Chips">
@@ -218,8 +212,6 @@ export function ComposerMenus() {
               confirmed: "Make the logout redirect use the same helper",
               pending: "and add a test for the",
             }}
-            languages={LANGUAGES}
-            microphones={MICROPHONES}
             state="idle"
           />
         </ComposerFrame>

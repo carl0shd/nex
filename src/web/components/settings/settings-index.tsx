@@ -49,7 +49,7 @@ export function SettingsIndex({
                   data-index-item={item.id}
                   onClick={() => onSelect(item.id)}
                   className={cn(
-                    "interactive flex h-[30px] cursor-pointer items-center pl-3 text-left text-sm select-none",
+                    "interactive flex h-[30px] cursor-pointer items-center rounded-r-control pl-3 text-left text-sm select-none focus-visible:bg-hover focus-visible:text-ink focus-visible:outline-none",
                     item.id === active ? "text-ink" : "text-ink-3 hover:text-ink-2",
                   )}
                 >

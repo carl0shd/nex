@@ -1,21 +1,22 @@
+import { NexLogo, NexWordmark } from "@/components/atoms/nex-logo";
 import { useState } from "react";
 import {
   Bell,
   Copy,
-  EditPencil,
-  Expand,
+  Ellipsis,
+  ExternalLink,
   Globe,
-  HalfMoon,
-  MoreHoriz,
-  OpenNewWindow,
+  Maximize2,
+  Monitor,
+  Moon,
   Pause,
+  PenLine,
   Plus,
-  Refresh,
-  SunLight,
-  Computer,
+  RotateCcw,
+  Sun,
   Terminal,
-  WarningTriangle,
-} from "iconoir-react";
+  TriangleAlert,
+} from "lucide-react";
 import { ClaudeTile } from "@/components/atoms/agent-tile";
 import { Button } from "@/components/atoms/button";
 import { Chip, CountChip } from "@/components/atoms/chip";
@@ -91,10 +92,10 @@ export function Actions() {
       </Specimen>
       <Specimen name="IconButton">
         <IconButton aria-label="Expand">
-          <Expand width={14} height={14} strokeWidth={2} />
+          <Maximize2 width={14} height={14} strokeWidth={2} />
         </IconButton>
         <IconButton aria-label="More actions">
-          <MoreHoriz width={15} height={15} strokeWidth={2} />
+          <Ellipsis width={15} height={15} strokeWidth={2} />
         </IconButton>
         <IconButton aria-label="Panel" pressed>
           <Terminal width={15} height={15} strokeWidth={2} />
@@ -149,7 +150,7 @@ export function Navigation() {
           options={["System", "Dark", "Light"] as const}
           value={theme}
           onChange={setTheme}
-          icons={{ System: Computer, Dark: HalfMoon, Light: SunLight }}
+          icons={{ System: Monitor, Dark: Moon, Light: Sun }}
         />
       </Specimen>
     </Section>
@@ -269,6 +270,10 @@ export function Identity() {
       title="Identity"
       description="Agent logo tiles wherever an agent is named; workspace initials in their color."
     >
+      <Specimen name="Nex · NexLogo · NexWordmark">
+        <NexLogo height={72} />
+        <NexWordmark height={28} />
+      </Specimen>
       <Specimen name="ClaudeTile · 16 · 18 · 22 · 32">
         <ClaudeTile size={16} />
         <ClaudeTile size={18} />
@@ -303,9 +308,9 @@ export function Overlays() {
               web
             </MenuItem>
             <MenuItem icon={Copy}>Copy link</MenuItem>
-            <MenuItem icon={OpenNewWindow}>Open in its own window</MenuItem>
+            <MenuItem icon={ExternalLink}>Open in its own window</MenuItem>
             <MenuSeparator />
-            <MenuItem icon={Refresh}>Restart environment</MenuItem>
+            <MenuItem icon={RotateCcw}>Restart environment</MenuItem>
             <MenuItem icon={Pause}>Pause</MenuItem>
             <MenuItem checked>Claude can use this browser</MenuItem>
             <MenuSeparator />
@@ -316,7 +321,7 @@ export function Overlays() {
           <ModalCard
             title="Close Fix login redirect param?"
             description="The branch feat/fix-login-redirect stays in git."
-            icon={<StatusIcon tone="red" icon={WarningTriangle} />}
+            icon={<StatusIcon tone="red" icon={TriangleAlert} />}
             footer={
               <>
                 <Button variant="quiet" size="sm">
@@ -355,7 +360,7 @@ export function Settings() {
           label="Edit commands"
           control={
             <Button variant="secondary" size="sm">
-              <EditPencil width={12} height={12} strokeWidth={2} />
+              <PenLine width={12} height={12} strokeWidth={2} />
               Edit
             </Button>
           }

@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Check, Copy, WarningTriangle } from "iconoir-react";
+import { Check, Copy, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function MdParagraph({ children }: { children: ReactNode }) {
@@ -10,11 +10,32 @@ export function MdStrong({ children }: { children: ReactNode }) {
   return <b className="font-semibold text-ink">{children}</b>;
 }
 
+export function MdEm({ children }: { children: ReactNode }) {
+  return <em className="text-ink-2 italic">{children}</em>;
+}
+
+export function MdDel({ children }: { children: ReactNode }) {
+  return <del className="text-ink-4 decoration-ink-5">{children}</del>;
+}
+
+export function MdQuote({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-2.5 border-l-2 border-line-strong pl-3 text-ink-3 [&_p]:text-ink-3">
+      {children}
+    </div>
+  );
+}
+
 export function MdLink({ href = "#", children }: { href?: string; children: ReactNode }) {
   return (
     <a
       href={href}
-      className="interactive border-b border-accent-ink/35 text-accent-ink no-underline hover:border-accent-ink"
+      title={href}
+      onClick={(event) => {
+        event.preventDefault();
+        if (/^https?:/.test(href)) void window.api.openExternalUrl(href);
+      }}
+      className="interactive cursor-pointer border-b border-accent-ink/35 text-accent-ink no-underline hover:border-accent-ink"
     >
       {children}
     </a>
@@ -50,7 +71,7 @@ export function MdCallout({ title, children }: { title: string; children: ReactN
   return (
     <div className="flex gap-3 rounded-field bg-orange-tint/60 px-3 py-2.5">
       <span className="flex pt-0.5 text-orange">
-        <WarningTriangle width={14} height={14} strokeWidth={2} />
+        <TriangleAlert width={14} height={14} strokeWidth={2} />
       </span>
       <span className="text-sm text-ink-2">
         <MdStrong>{title}</MdStrong> {children}
@@ -109,11 +130,14 @@ export function CodeBlock({
   return (
     <div className="overflow-hidden rounded-field bg-inset shadow-[inset_0_0_0_1px_var(--line)]">
       <div className="flex h-8 items-center gap-2 border-b border-line pr-2 pl-3 text-2xs text-ink-4">
-        <span className="font-mono text-2xs text-ink-3">{file}</span>
+        {file && <span className="font-mono text-2xs text-ink-3">{file}</span>}
         <span>{language}</span>
         <button
           type="button"
           onClick={() => {
+            void navigator.clipboard.writeText(
+              lines.map((tokens) => tokens.map((token) => token.text).join("")).join("\n"),
+            );
             setCopied(true);
             setTimeout(() => setCopied(false), 1500);
           }}
@@ -130,9 +154,9 @@ export function CodeBlock({
           {copied ? "Copied" : "Copy"}
         </button>
       </div>
-      <div className="py-2.5 pr-3 font-mono text-xs leading-5 text-ink">
+      <div className="quiet-scroll overflow-x-auto py-2.5 pr-3 font-mono text-xs leading-5 text-ink">
         {lines.map((tokens, i) => (
-          <div key={i} className="flex">
+          <div key={i} className="flex w-max min-w-full">
             <span className="w-7 shrink-0 pr-3 text-right text-ink-6">{i + 1}</span>
             <span className="whitespace-pre">
               {tokens.map((token, j) => (

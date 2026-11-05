@@ -1,3 +1,4 @@
+import { binaryVersion } from "@native/agents/version";
 import { existsSync } from "fs";
 import * as agentRepo from "@native/db/repositories/agent.repo";
 import * as agentAccountRepo from "@native/db/repositories/agent-account.repo";
@@ -16,6 +17,7 @@ export interface AvailableAgent {
   command: string | null;
   configDir: string;
   installed: boolean;
+  version: string | null;
   suggestedAccount: SuggestedAccount | null;
 }
 
@@ -46,6 +48,7 @@ export async function detectAvailableAgents(): Promise<AvailableAgent[]> {
         command,
         configDir,
         installed,
+        version: command ? await binaryVersion(command) : null,
         suggestedAccount,
       };
     }),

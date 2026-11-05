@@ -1,4 +1,4 @@
-import { DataTransferBoth } from "iconoir-react";
+import { ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function SelectButton({
@@ -22,8 +22,10 @@ export function SelectButton({
         className,
       )}
     >
-      <span className="flex-1 text-left">{value}</span>
-      <DataTransferBoth width={12} height={12} strokeWidth={2} className="rotate-90 text-ink-3" />
+      <span title={value} className="min-w-0 flex-1 truncate text-left">
+        {value}
+      </span>
+      <ChevronsUpDown width={12} height={12} strokeWidth={2} className="shrink-0 text-ink-3" />
     </button>
   );
 }

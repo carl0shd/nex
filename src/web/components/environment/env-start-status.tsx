@@ -1,4 +1,4 @@
-import { OpenNewWindow } from "iconoir-react";
+import { ExternalLink } from "lucide-react";
 import { DitherProgress } from "@/components/atoms/dither-progress";
 import { Orbit } from "@/components/atoms/orbit";
 import { StatusDot } from "@/components/atoms/status-dot";
@@ -33,7 +33,7 @@ function AddressPill({ address }: { address: string }) {
     >
       <StatusDot tone="green" size={5} />
       {address}
-      <OpenNewWindow width={10} height={10} strokeWidth={2} className="text-ink-4" />
+      <ExternalLink width={10} height={10} strokeWidth={2} className="text-ink-4" />
     </button>
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AppWindow, Copy, OpenNewWindow, Pause, Play, Refresh, Terminal } from "iconoir-react";
+import { AppWindow, Copy, ExternalLink, Pause, Play, RotateCcw, Terminal } from "lucide-react";
 import { StatusDot, type DotTone } from "@/components/atoms/status-dot";
 import { AnchoredPopover } from "@/components/primitives/anchored-popover";
 import { Menu, MenuItem, MenuLabel, MenuSeparator } from "@/components/primitives/menu";
@@ -37,7 +37,7 @@ function ServiceRow({ service }: { service: TaskService }) {
         </span>
       </span>
       {service.url && (
-        <OpenNewWindow width={11} height={11} strokeWidth={2} className="shrink-0 text-ink-4" />
+        <ExternalLink width={11} height={11} strokeWidth={2} className="shrink-0 text-ink-4" />
       )}
     </button>
   );
@@ -67,7 +67,7 @@ export function EnvMenu({
         Open in its own window
       </MenuItem>
       <MenuSeparator />
-      <MenuItem icon={Refresh} onSelect={run}>
+      <MenuItem icon={RotateCcw} onSelect={run}>
         Restart environment
       </MenuItem>
       <MenuItem icon={paused ? Play : Pause} onSelect={run}>

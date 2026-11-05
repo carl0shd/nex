@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
-import { CursorPointer, Page, Text, Xmark } from "iconoir-react";
+import { FileIcon, MousePointer2, TextIcon, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type Attachment =
-  | { id: string; kind: "image"; name: string; src?: string }
-  | { id: string; kind: "text"; name: string; lines: number; language?: string }
-  | { id: string; kind: "file"; name: string; size: string }
+  | { id: string; kind: "image"; name: string; src?: string; file?: File }
+  | { id: string; kind: "text"; name: string; lines: number; language?: string; content?: string }
+  | { id: string; kind: "file"; name: string; size: string; file?: File; path?: string }
   | { id: string; kind: "element"; name: string; selector: string; page: string };
 
 function Removable({ children, onRemove }: { children: ReactNode; onRemove?: () => void }) {
@@ -19,7 +19,7 @@ function Removable({ children, onRemove }: { children: ReactNode; onRemove?: () 
           onClick={onRemove}
           className="interactive press absolute -top-1 -right-1 flex size-4 cursor-pointer items-center justify-center rounded-full bg-ink-6 text-ink shadow-[0_0_0_2px_var(--surface-raised)] select-none hover:bg-ink-5"
         >
-          <Xmark width={8} height={8} strokeWidth={2.75} />
+          <X width={8} height={8} strokeWidth={2.75} />
         </button>
       )}
     </span>
@@ -78,7 +78,7 @@ export function FileCard({
   meta: string;
   pasted?: boolean;
 }) {
-  const Icon = pasted ? Text : Page;
+  const Icon = pasted ? TextIcon : FileIcon;
   return (
     <span className="flex h-10 items-center gap-2 rounded-control bg-elevated pr-2.5 pl-1.5 shadow-[inset_0_0_0_1px_var(--line-strong)]">
       <span className="flex size-7 items-center justify-center rounded-chip bg-control-off text-ink-3">
@@ -106,7 +106,7 @@ export function ElementCard({
   return (
     <span className="flex h-8 items-center gap-2 rounded-control bg-elevated pr-1.5 pl-2 shadow-[inset_0_0_0_1px_var(--line-strong)]">
       <span className="flex size-5 items-center justify-center rounded-[5px] bg-blue/16 text-blue">
-        <CursorPointer width={11} height={11} strokeWidth={2} />
+        <MousePointer2 width={11} height={11} strokeWidth={2} />
       </span>
       <span className="flex flex-col leading-tight">
         <span className="text-xs text-ink">{name}</span>
@@ -121,7 +121,7 @@ export function ElementCard({
           onClick={onRemove}
           className="interactive press ml-1 flex size-5 cursor-pointer items-center justify-center rounded-[5px] text-ink-4 select-none hover:bg-hover hover:text-ink-2"
         >
-          <Xmark width={10} height={10} strokeWidth={2.5} />
+          <X width={10} height={10} strokeWidth={2.5} />
         </button>
       )}
     </span>

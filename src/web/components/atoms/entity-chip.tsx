@@ -11,24 +11,30 @@ const SIZE: Record<BadgeSize, string> = {
 export function Monogram({
   children,
   color = "var(--accent)",
+  image,
   size = "sm",
   className,
 }: {
   children: React.ReactNode;
   color?: string;
+  image?: string;
   size?: BadgeSize;
   className?: string;
 }) {
   return (
     <span
       className={cn(
-        "flex shrink-0 items-center justify-center font-semibold text-white",
+        "flex shrink-0 items-center justify-center overflow-hidden font-semibold text-white",
         SIZE[size],
         className,
       )}
       style={{ background: color }}
     >
-      {children}
+      {image ? (
+        <img src={image} alt="" draggable={false} className="size-full object-cover" />
+      ) : (
+        children
+      )}
     </span>
   );
 }

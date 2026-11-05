@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowUp } from "iconoir-react";
+import { ArrowUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function SelectionAsk({

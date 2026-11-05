@@ -1,19 +1,18 @@
-import { useRef, useState, type KeyboardEvent } from "react";
-import { ColorSwatches } from "@/components/atoms/color-swatches";
+import { useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import { Monogram } from "@/components/atoms/entity-chip";
-import { Kbd } from "@/components/atoms/kbd";
-import { SegmentedControl } from "@/components/atoms/segmented-control";
+import { Kbd, KeyText } from "@/components/atoms/kbd";
+import { WorkspaceLook } from "@/components/sidebar/workspace-look";
 import { useDismiss } from "@/hooks/use-dismiss";
-
-export type WorkspaceBadgeKind = "initial" | "icon" | "image";
+import { cn } from "@/lib/utils";
 
 export interface NewWorkspace {
   name: string;
   color: string;
-  badge: WorkspaceBadgeKind;
+  image: string | null;
 }
 
 const DEFAULT_COLOR = "#2f6fd6";
+const LOOK_ROOM = 220;
 
 export function NewWorkspaceRow({
   onCreate,
@@ -24,28 +23,30 @@ export function NewWorkspaceRow({
 }) {
   const [name, setName] = useState("");
   const [color, setColor] = useState(DEFAULT_COLOR);
-  const [badge, setBadge] = useState<WorkspaceBadgeKind>("initial");
+  const [image, setImage] = useState<string | null>(null);
   const [lookOpen, setLookOpen] = useState(true);
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [lookAbove, setLookAbove] = useState(false);
   useDismiss(rootRef, true, onCancel);
+  useLayoutEffect(() => {
+    const bottom = rootRef.current?.getBoundingClientRect().bottom ?? 0;
+    setLookAbove(window.innerHeight - bottom < LOOK_ROOM);
+  }, []);
 
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.key === "Enter" && name.trim()) {
       event.preventDefault();
-      onCreate({ name: name.trim(), color, badge });
+      onCreate({ name: name.trim(), color, image });
     } else if (event.key === "Escape") {
       event.preventDefault();
       onCancel();
-    } else if (event.key === "Tab") {
-      event.preventDefault();
-      setLookOpen((open) => !open);
     }
   };
 
   return (
     <div ref={rootRef} className="relative mt-0.5" onKeyDown={onKeyDown}>
-      <div className="flex h-[34px] items-center gap-2 rounded-control bg-hover pr-1.5 pl-2 shadow-[0_0_0_1px_var(--green),0_0_0_3px_var(--accent-tint)]">
+      <div className="flex h-[34px] items-center gap-2 rounded-control bg-hover pr-1.5 pl-2 shadow-[0_0_0_1px_color-mix(in_srgb,var(--accent)_50%,transparent),0_0_0_3px_var(--accent-tint)]">
         <button
           type="button"
           aria-label="Color and badge"
@@ -56,7 +57,9 @@ export function NewWorkspaceRow({
           }}
           className="interactive press flex cursor-pointer select-none"
         >
-          <Monogram color={color}>{name.trim()[0]?.toUpperCase() ?? "W"}</Monogram>
+          <Monogram color={color} image={image ?? undefined}>
+            {name.trim()[0]?.toUpperCase() ?? "W"}
+          </Monogram>
         </button>
         <input
           ref={inputRef}
@@ -70,29 +73,24 @@ export function NewWorkspaceRow({
         <Kbd>↵</Kbd>
       </div>
       {lookOpen && (
-        <div
-          role="dialog"
-          aria-label="Workspace look"
-          className="enter-pop absolute top-full left-0 z-20 mt-2 flex w-[244px] flex-col gap-3 rounded-menu bg-surface-raised p-3 shadow-overlay"
-          style={{ transformOrigin: "top left" }}
-        >
-          <span className="text-xs text-ink-3">Color</span>
-          <ColorSwatches value={color} onChange={setColor} size="sm" />
-          <span className="text-xs text-ink-3">Badge</span>
-          <SegmentedControl
-            options={["initial", "icon", "image"] as const}
-            labels={{ initial: "Initial", icon: "Icon", image: "Image" }}
-            value={badge}
-            onChange={setBadge}
-            size="sm"
-            className="flex [&>[data-thumb-item]]:flex-1 [&>[data-thumb-item]]:justify-center"
-          />
-          <span className="flex gap-3 border-t border-line pt-2.5 text-2xs text-ink-4">
-            <span>↵ create</span>
-            <span>tab look</span>
-            <span>esc cancel</span>
-          </span>
-        </div>
+        <WorkspaceLook
+          color={color}
+          hasImage={Boolean(image)}
+          onColorChange={setColor}
+          onImageChange={(next) => {
+            setImage(next);
+            inputRef.current?.focus();
+          }}
+          className={cn("absolute left-0 z-20", lookAbove ? "bottom-full mb-2" : "top-full mt-2")}
+          footer={
+            <>
+              <span>
+                <KeyText>↵ create</KeyText>
+              </span>
+              <span>esc cancel</span>
+            </>
+          }
+        />
       )}
     </div>
   );

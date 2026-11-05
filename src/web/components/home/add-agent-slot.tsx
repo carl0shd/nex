@@ -1,5 +1,6 @@
-import { Plus } from "iconoir-react";
+import { Plus } from "lucide-react";
 import { Kbd } from "@/components/atoms/kbd";
+import { shortcutLabel } from "@/lib/app-shortcuts";
 
 export function AddAgentSlot({ onClick }: { onClick?: () => void }) {
   return (
@@ -13,7 +14,7 @@ export function AddAgentSlot({ onClick }: { onClick?: () => void }) {
       </span>
       <span className="text-base font-medium text-ink">Run another agent alongside</span>
       <span className="flex items-center gap-1.5 text-xs">
-        Each task works in its own worktree. <Kbd>⌘T</Kbd>
+        Each task works in its own worktree. <Kbd>{shortcutLabel("new-task")}</Kbd>
       </span>
     </button>
   );

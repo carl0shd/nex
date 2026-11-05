@@ -1,4 +1,4 @@
-import { Flash } from "iconoir-react";
+import { Zap } from "lucide-react";
 import { usageTone, type UsageTone } from "@/lib/usage";
 import { cn } from "@/lib/utils";
 
@@ -33,7 +33,7 @@ export function UsagePill({
           : "bg-island shadow-island hover:bg-surface-raised hover:text-ink",
       )}
     >
-      <Flash width={12} height={12} strokeWidth={2} className={tone.icon} />
+      <Zap width={12} height={12} strokeWidth={2} className={tone.icon} />
       <span className={cn("block h-1 w-12 overflow-hidden rounded-full", tone.track)}>
         <span
           className={cn("block h-full rounded-full", tone.fill)}

@@ -1,4 +1,4 @@
-import { Check } from "iconoir-react";
+import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const SIZE = { sm: { box: "size-[13px]", check: 8 }, md: { box: "size-4", check: 9 } } as const;

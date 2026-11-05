@@ -1,5 +1,5 @@
-import type { ComponentType, ReactNode } from "react";
-import { NavArrowDown, NavArrowRight } from "iconoir-react";
+import { useState, type ComponentType, type ReactNode } from "react";
+import { ChevronRight } from "lucide-react";
 import { LogoTile } from "@/components/atoms/logo-tile";
 import { Shimmer } from "@/components/atoms/shimmer";
 import { Spinner } from "@/components/atoms/spinner";
@@ -90,7 +90,6 @@ export function BlockRow({
   actions?: ReactNode;
   onToggle?: () => void;
 }) {
-  const Chevron = chevron === "down" ? NavArrowDown : NavArrowRight;
   return (
     <div
       className={cn("flex h-[30px] min-w-0 items-center gap-[9px]", onToggle && "cursor-pointer")}
@@ -129,7 +128,15 @@ export function BlockRow({
       </span>
       {chevron && (
         <span className="flex shrink-0 text-ink-4">
-          <Chevron width={12} height={12} strokeWidth={2} />
+          <ChevronRight
+            width={12}
+            height={12}
+            strokeWidth={2}
+            className={cn(
+              "transition-[rotate] duration-200 ease-out-strong",
+              chevron === "down" && "rotate-90",
+            )}
+          />
         </span>
       )}
       {actions && <span className="flex shrink-0">{actions}</span>}
@@ -142,7 +149,7 @@ export function BlockNote({ children, mono = false }: { children: ReactNode; mon
     <span
       className={cn(
         "-mt-1 ml-[23px] block",
-        mono ? "font-mono text-2xs text-ink-4" : "text-xs text-ink-3",
+        mono ? "truncate font-mono text-2xs text-ink-4" : "text-xs text-ink-3",
       )}
     >
       {children}
@@ -221,28 +228,49 @@ export type OutputLine = { text: string; tone?: "muted" | "ink" | "red" | "orang
 
 const LINE_TONE = { muted: "", ink: "text-ink-2", red: "text-red", orange: "text-orange" };
 
-export function OutputLines({ lines, more }: { lines: OutputLine[]; more?: { hidden: number } }) {
+export function OutputLines({
+  lines,
+  visible,
+  onOpenInTerminal,
+}: {
+  lines: OutputLine[];
+  visible?: number;
+  onOpenInTerminal?: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const hidden = visible === undefined ? 0 : Math.max(0, lines.length - visible);
+  const shown = expanded || !hidden ? lines : lines.slice(-visible!);
   return (
-    <BlockDetail>
-      {lines.map((line, i) => (
-        <span key={i} className={cn("block whitespace-pre", LINE_TONE[line.tone ?? "muted"])}>
-          {line.text}
-        </span>
-      ))}
-      {more && (
+    <BlockDetail className="flex min-w-0 flex-col">
+      <div className="quiet-scroll overflow-x-auto">
+        <div className="w-max min-w-full">
+          {shown.map((line, i) => (
+            <span key={i} className={cn("block whitespace-pre", LINE_TONE[line.tone ?? "muted"])}>
+              {line.text || " "}
+            </span>
+          ))}
+        </div>
+      </div>
+      {(hidden > 0 || onOpenInTerminal) && (
         <div className="mt-1.5 flex gap-3.5 border-t border-line-soft pt-1.5 font-sans text-2xs">
-          <button
-            type="button"
-            className="interactive press cursor-pointer text-ink-2 select-none hover:text-ink"
-          >
-            Show {more.hidden} more lines
-          </button>
-          <button
-            type="button"
-            className="interactive press cursor-pointer select-none hover:text-ink-2"
-          >
-            Open in terminal
-          </button>
+          {hidden > 0 && (
+            <button
+              type="button"
+              onClick={() => setExpanded(!expanded)}
+              className="interactive press cursor-pointer text-ink-2 select-none hover:text-ink"
+            >
+              {expanded ? "Show less" : `Show ${hidden} more ${hidden === 1 ? "line" : "lines"}`}
+            </button>
+          )}
+          {onOpenInTerminal && (
+            <button
+              type="button"
+              onClick={onOpenInTerminal}
+              className="interactive press cursor-pointer select-none hover:text-ink-2"
+            >
+              Open in terminal
+            </button>
+          )}
         </div>
       )}
     </BlockDetail>
@@ -279,6 +307,14 @@ export function FileList({ files }: { files: { path: string; meta: string }[] })
   );
 }
 
+function highlighter(term: string): RegExp {
+  try {
+    return new RegExp(`(${term})`, "gi");
+  } catch {
+    return new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+  }
+}
+
 export function GrepMatches({
   term,
   matches,
@@ -286,58 +322,80 @@ export function GrepMatches({
   term: string;
   matches: { location: string; line: string }[];
 }) {
+  const pattern = highlighter(term);
   return (
     <BlockDetail className="px-3 py-1.5">
-      {matches.map((match) => {
-        const [before, ...rest] = match.line.split(term);
-        return (
-          <div key={match.location} className="flex h-[22px] items-center gap-2.5">
-            <span className="w-[150px] shrink-0 text-ink-4">{match.location}</span>
-            <span className="truncate whitespace-nowrap">
-              {before}
-              {rest.length > 0 && (
-                <>
-                  <span className="rounded-[3px] bg-accent-tint px-0.5 text-ink">{term}</span>
-                  {rest.join(term)}
-                </>
-              )}
+      {matches.map((match, index) => (
+        <div key={`${match.location}-${index}`} className="flex h-[22px] items-center gap-2.5">
+          {match.location && (
+            <span title={match.location} className="w-[150px] shrink-0 truncate text-ink-4">
+              {match.location}
             </span>
-          </div>
-        );
-      })}
-    </BlockDetail>
-  );
-}
-
-export function WebResults({
-  results,
-}: {
-  results: { letter: string; title: string; domain: string }[];
-}) {
-  return (
-    <BlockDetail padding="row" prose>
-      {results.map((result) => (
-        <div key={result.title} className="flex h-[26px] items-center gap-2">
-          <LogoTile size="xs">{result.letter}</LogoTile>
-          <span className="truncate text-xs text-ink-2">{result.title}</span>
-          <span className="ml-auto shrink-0 text-2xs text-ink-4">{result.domain}</span>
+          )}
+          <span className="truncate whitespace-pre">
+            {match.line.split(pattern).map((part, i) =>
+              i % 2 === 1 ? (
+                <span key={i} className="rounded-[3px] bg-accent-tint px-0.5 text-ink">
+                  {part}
+                </span>
+              ) : (
+                part
+              ),
+            )}
+          </span>
         </div>
       ))}
     </BlockDetail>
   );
 }
 
-export function ImagePreview() {
+export function WebResults({
+  results,
+  onOpen,
+}: {
+  results: { letter: string; title: string; domain: string; url?: string }[];
+  onOpen?: (url: string) => void;
+}) {
   return (
-    <BlockDetail padding="image">
-      <div className="flex h-[136px] w-[220px] gap-2 rounded-chip bg-surface-raised p-2.5 shadow-[inset_0_0_0_1px_var(--line)]">
-        <span className="w-9 rounded-[4px] bg-elevated" />
-        <span className="flex flex-1 flex-col gap-1.5">
-          <span className="h-2 w-3/5 rounded-[3px] bg-control-off" />
-          <span className="flex-1 rounded-[4px] bg-elevated" />
-          <span className="h-2 w-2/5 rounded-[3px] bg-control-off" />
-        </span>
-      </div>
+    <BlockDetail padding="row" prose>
+      {results.map((result) => (
+        <button
+          key={result.url ?? result.title}
+          type="button"
+          title={result.url}
+          onClick={() => result.url && onOpen?.(result.url)}
+          className="interactive press-wide flex h-[26px] w-full cursor-pointer items-center gap-2 text-left select-none [&:hover_.web-title]:text-ink"
+        >
+          <LogoTile size="xs">{result.letter}</LogoTile>
+          <span className="web-title truncate text-xs text-ink-2 transition-colors duration-150">
+            {result.title}
+          </span>
+          <span className="ml-auto shrink-0 text-2xs text-ink-4">{result.domain}</span>
+        </button>
+      ))}
+    </BlockDetail>
+  );
+}
+
+export function ImagePreview({ src, alt = "" }: { src?: string; alt?: string }) {
+  return (
+    <BlockDetail padding="image" className="self-start">
+      {src ? (
+        <img
+          src={src}
+          alt={alt}
+          className="block max-h-[220px] max-w-[320px] rounded-chip object-contain shadow-[0_0_0_1px_var(--line)]"
+        />
+      ) : (
+        <div className="flex h-[136px] w-[220px] gap-2 rounded-chip bg-surface-raised p-2.5 shadow-[inset_0_0_0_1px_var(--line)]">
+          <span className="w-9 rounded-[4px] bg-elevated" />
+          <span className="flex flex-1 flex-col gap-1.5">
+            <span className="h-2 w-3/5 rounded-[3px] bg-control-off" />
+            <span className="flex-1 rounded-[4px] bg-elevated" />
+            <span className="h-2 w-2/5 rounded-[3px] bg-control-off" />
+          </span>
+        </div>
+      )}
     </BlockDetail>
   );
 }

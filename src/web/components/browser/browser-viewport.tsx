@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { CursorPointer, EditPencil, SquareDashed, Text, Xmark } from "iconoir-react";
+import { MousePointer2, Pen, SquareDashed, Type, X } from "lucide-react";
 import { ClaudeTile } from "@/components/atoms/agent-tile";
 import { Button } from "@/components/atoms/button";
 import { cn } from "@/lib/utils";
@@ -96,11 +96,11 @@ export function ClaudeCursor({ x, y, action }: { x: number; y: number; action: s
   );
 }
 
-const TOOLS: { tool: AnnotateTool; label: string; icon: typeof CursorPointer }[] = [
-  { tool: "pick", label: "Pick", icon: CursorPointer },
-  { tool: "draw", label: "Draw", icon: EditPencil },
+const TOOLS: { tool: AnnotateTool; label: string; icon: typeof MousePointer2 }[] = [
+  { tool: "pick", label: "Pick", icon: MousePointer2 },
+  { tool: "draw", label: "Draw", icon: Pen },
   { tool: "box", label: "Box", icon: SquareDashed },
-  { tool: "text", label: "Text", icon: Text },
+  { tool: "text", label: "Text", icon: Type },
 ];
 
 export function AnnotateToolbar({
@@ -150,7 +150,7 @@ export function AnnotateToolbar({
         onClick={onStop}
         className="interactive press flex size-[30px] cursor-pointer items-center justify-center rounded-control text-ink-2 select-none hover:bg-hover hover:text-ink"
       >
-        <Xmark width={13} height={13} strokeWidth={2} />
+        <X width={13} height={13} strokeWidth={2} />
       </button>
     </div>
   );

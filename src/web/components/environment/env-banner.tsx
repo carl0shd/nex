@@ -1,4 +1,4 @@
-import { Check } from "iconoir-react";
+import { Check } from "lucide-react";
 import { Button } from "@/components/atoms/button";
 import { Orbit } from "@/components/atoms/orbit";
 import { StatusDot } from "@/components/atoms/status-dot";

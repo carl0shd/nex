@@ -6,33 +6,33 @@ import * as agentAccountRepo from "@native/db/repositories/agent-account.repo";
 import { getNexDir } from "@native/paths";
 import type { AgentAccount, CloneAgentAccountInput } from "@native/db/types";
 
+export function copyAgentConfig(src: string, accountDir: string): void {
+  const settingsFile = join(src, "settings.json");
+  if (existsSync(settingsFile)) copyFileSync(settingsFile, join(accountDir, "settings.json"));
+
+  for (const dir of ["commands", "skills", "agents"]) {
+    const srcDir = join(src, dir);
+    try {
+      if (statSync(srcDir).isDirectory()) {
+        cpSync(srcDir, join(accountDir, dir), { recursive: true });
+      }
+    } catch {
+      /* empty */
+    }
+  }
+
+  const claudeMd = join(homedir(), "CLAUDE.md");
+  if (existsSync(claudeMd)) copyFileSync(claudeMd, join(accountDir, "CLAUDE.md"));
+}
+
 export function cloneAgentAccount(input: CloneAgentAccountInput): AgentAccount {
   const agent = agentRepo.getById(input.agentId);
   if (!agent) throw new Error(`Agent not found: ${input.agentId}`);
 
   const accountDir = join(getNexDir(), "accounts", input.name);
   mkdirSync(accountDir, { recursive: true });
-
-  if (input.copyConfig && agent.defaultConfigDir) {
-    const src = agent.defaultConfigDir;
-
-    const settingsFile = join(src, "settings.json");
-    if (existsSync(settingsFile)) copyFileSync(settingsFile, join(accountDir, "settings.json"));
-
-    for (const dir of ["commands", "skills", "agents"]) {
-      const srcDir = join(src, dir);
-      try {
-        if (statSync(srcDir).isDirectory()) {
-          cpSync(srcDir, join(accountDir, dir), { recursive: true });
-        }
-      } catch {
-        /* empty */
-      }
-    }
-
-    const claudeMd = join(homedir(), "CLAUDE.md");
-    if (existsSync(claudeMd)) copyFileSync(claudeMd, join(accountDir, "CLAUDE.md"));
-  }
+  if (input.copyConfig && agent.defaultConfigDir)
+    copyAgentConfig(agent.defaultConfigDir, accountDir);
 
   return agentAccountRepo.create({
     agentId: agent.id,

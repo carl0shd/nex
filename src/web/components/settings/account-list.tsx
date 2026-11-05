@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { EditPencil, Folder, Lock, LogOut, MoreHoriz, Palette, Star } from "iconoir-react";
+import { Ellipsis, Folder, Lock, LogOut, PenLine, Star } from "lucide-react";
 import { Button } from "@/components/atoms/button";
+import { InlineRename } from "@/components/atoms/inline-rename";
 import { Monogram } from "@/components/atoms/entity-chip";
 import { IconButton } from "@/components/atoms/icon-button";
 import { Meter } from "@/components/atoms/meter";
@@ -25,11 +26,15 @@ export interface ClaudeAccount {
 function AccountMenu({
   account,
   onMakeDefault,
+  onRename,
+  onShowProfile,
   onRemove,
   onClose,
 }: {
   account: ClaudeAccount;
   onMakeDefault: () => void;
+  onRename?: () => void;
+  onShowProfile?: () => void;
   onRemove: () => void;
   onClose: () => void;
 }) {
@@ -44,18 +49,19 @@ function AccountMenu({
           Make default
         </MenuItem>
       )}
-      <MenuItem icon={EditPencil} onSelect={run()}>
-        Rename
-      </MenuItem>
-      <MenuItem icon={Palette} onSelect={run()}>
-        Change color
-      </MenuItem>
-      <MenuItem icon={Folder} onSelect={run()}>
-        Show profile in Finder
-      </MenuItem>
+      {onRename && (
+        <MenuItem icon={PenLine} onSelect={run(onRename)}>
+          Rename
+        </MenuItem>
+      )}
+      {onShowProfile && (
+        <MenuItem icon={Folder} onSelect={run(onShowProfile)}>
+          Show profile in Finder
+        </MenuItem>
+      )}
       <MenuSeparator />
       <MenuItem icon={LogOut} danger onSelect={run(onRemove)}>
-        Sign out and remove
+        Remove from Nex
       </MenuItem>
     </Menu>
   );
@@ -66,6 +72,8 @@ function AccountRow({
   menuOpen,
   onMenuOpenChange,
   onMakeDefault,
+  onRename,
+  onShowProfile,
   onRemove,
   onSignIn,
 }: {
@@ -73,9 +81,12 @@ function AccountRow({
   menuOpen: boolean;
   onMenuOpenChange: (open: boolean) => void;
   onMakeDefault: () => void;
+  onRename?: (name: string) => void;
+  onShowProfile?: () => void;
   onRemove: () => void;
   onSignIn?: () => void;
 }) {
+  const [renaming, setRenaming] = useState(false);
   return (
     <div
       className={cn(
@@ -87,13 +98,27 @@ function AccountRow({
         {account.name[0]}
       </Monogram>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="flex items-center gap-2 text-sm font-medium text-ink">
-          {account.name}
+        <span className="flex min-w-0 items-center gap-2 text-sm font-medium text-ink">
+          {renaming ? (
+            <InlineRename
+              label="Account name"
+              name={account.name}
+              className="-ml-1.5 h-5 max-w-[240px] flex-none rounded-[5px] text-sm leading-5 font-medium [field-sizing:content]"
+              onDone={(next) => {
+                setRenaming(false);
+                if (next) onRename?.(next);
+              }}
+            />
+          ) : (
+            <span className="truncate" title={account.name}>
+              {account.name}
+            </span>
+          )}
           {account.isDefault && <ValuePill tone="accent">Default</ValuePill>}
         </span>
-        <span className="truncate font-mono text-2xs text-ink-4">
+        <span className="truncate text-xs text-ink-4">
           {account.email}
-          {account.expired && <span className="font-sans text-orange"> · login expired</span>}
+          {account.expired && <span className="text-orange"> · login expired</span>}
         </span>
       </span>
       {account.expired ? (
@@ -108,6 +133,7 @@ function AccountRow({
         onOpenChange={onMenuOpenChange}
         side="bottom"
         align="end"
+        strategy="fixed"
         trigger={
           <IconButton
             aria-label="Account actions"
@@ -116,13 +142,15 @@ function AccountRow({
             pressed={menuOpen}
             onClick={() => onMenuOpenChange(!menuOpen)}
           >
-            <MoreHoriz width={14} height={14} strokeWidth={2} />
+            <Ellipsis width={14} height={14} strokeWidth={2} />
           </IconButton>
         }
       >
         <AccountMenu
           account={account}
           onMakeDefault={onMakeDefault}
+          onRename={onRename && (() => setRenaming(true))}
+          onShowProfile={onShowProfile}
           onRemove={onRemove}
           onClose={() => onMenuOpenChange(false)}
         />
@@ -135,12 +163,16 @@ export function AccountList({
   accounts,
   defaultMenuOpen,
   onMakeDefault,
+  onRename,
+  onShowProfile,
   onRemove,
   onSignIn,
 }: {
   accounts: readonly ClaudeAccount[];
   defaultMenuOpen?: string;
   onMakeDefault: (id: string) => void;
+  onRename?: (id: string, name: string) => void;
+  onShowProfile?: (id: string) => void;
   onRemove: (id: string) => void;
   onSignIn?: (id: string) => void;
 }) {
@@ -154,6 +186,8 @@ export function AccountList({
           menuOpen={openMenu === account.id}
           onMenuOpenChange={(open) => setOpenMenu(open ? account.id : null)}
           onMakeDefault={() => onMakeDefault(account.id)}
+          onRename={onRename && ((name) => onRename(account.id, name))}
+          onShowProfile={onShowProfile && (() => onShowProfile(account.id))}
           onRemove={() => onRemove(account.id)}
           onSignIn={() => onSignIn?.(account.id)}
         />
@@ -192,7 +226,7 @@ export function RemoveAccountDialog({
           <span className="ml-auto" />
           <Button onClick={onCancel}>Cancel</Button>
           <Button variant="danger" onClick={onConfirm}>
-            Sign out and remove
+            Remove
           </Button>
         </>
       }
@@ -200,7 +234,7 @@ export function RemoveAccountDialog({
       <p className="m-0 text-sm leading-[19px] text-ink-3">{description}</p>
       <p className="m-0 mt-3.5 flex items-start gap-2 text-xs leading-[18px] text-ink-4">
         <Lock width={13} height={13} strokeWidth={2} className="mt-0.5 shrink-0" />
-        Nex signs out its own Claude Code profile. Your claude.ai account and other logins are not
+        Nex only forgets this account. Your claude.ai account and its Claude Code login are not
         touched.
       </p>
     </ModalCard>

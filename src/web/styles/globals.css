@@ -25,6 +25,7 @@
   --surface-raised: #ffffff;
   --elevated: #ffffff;
   --inset: #efeeeb;
+  --backdrop: #e6e5e0;
   --hover: rgb(29 29 29 / 5%);
   --hover-2: rgb(29 29 29 / 8%);
   --field: rgb(29 29 29 / 4%);
@@ -97,9 +98,14 @@
   --shadow-card: 0 0 0 1px var(--line), 0 1px 2px rgb(0 0 0 / 6%);
   --shadow-raised:
     0 0 0 1px var(--line), 0 2px 4px rgb(0 0 0 / 6%), 0 24px 48px -20px rgb(0 0 0 / 18%);
-  --shadow-overlay: 0 0 0 1px var(--line-strong), 0 18px 40px -12px rgb(0 0 0 / 22%);
+  /* Rings around floating surfaces are opaque: a translucent one brightens over whatever is behind. */
+  --shadow-overlay:
+    0 0 0 1px color-mix(in srgb, var(--elevated), var(--ink) 12%),
+    0 18px 40px -12px rgb(0 0 0 / 22%);
+  --shadow-toast: 0 0 0 1px rgb(29 29 29 / 6%), 0 24px 48px -16px rgb(0 0 0 / 18%);
   --shadow-modal:
-    0 0 0 1px var(--line), 0 24px 48px -16px rgb(0 0 0 / 22%), 0 2px 6px rgb(0 0 0 / 8%);
+    0 0 0 1px color-mix(in srgb, var(--surface-raised), var(--ink) 10%),
+    0 24px 48px -16px rgb(0 0 0 / 22%), 0 2px 6px rgb(0 0 0 / 8%);
   --shadow-inset-field: inset 0 0 0 1px var(--line-strong);
   --shadow-focus: inset 0 0 0 1px rgb(29 29 29 / 28%), 0 0 0 3px rgb(29 29 29 / 6%);
 }
@@ -111,6 +117,7 @@
   --surface-raised: #1e1f1d;
   --elevated: #242522;
   --inset: #141513;
+  --backdrop: #0d0e0c;
   --hover: rgb(236 235 230 / 6%);
   --hover-2: rgb(236 235 230 / 8%);
   --field: rgb(236 235 230 / 5%);
@@ -181,9 +188,12 @@
   --shadow-card: 0 0 0 1px var(--line), 0 1px 2px rgb(0 0 0 / 20%);
   --shadow-raised:
     0 0 0 1px var(--line), 0 2px 4px rgb(0 0 0 / 22%), 0 24px 48px -20px rgb(0 0 0 / 60%);
-  --shadow-overlay: 0 0 0 1px rgb(236 235 230 / 9%), 0 18px 40px -12px rgb(0 0 0 / 75%);
+  --shadow-overlay:
+    0 0 0 1px color-mix(in srgb, var(--elevated), var(--ink) 9%), 0 18px 40px -12px rgb(0 0 0 / 75%);
+  --shadow-toast: 0 0 0 1px rgb(236 235 230 / 7%), 0 24px 48px -16px rgb(0 0 0 / 65%);
   --shadow-modal:
-    0 0 0 1px rgb(236 235 230 / 8%), 0 24px 48px -16px rgb(0 0 0 / 65%), 0 2px 6px rgb(0 0 0 / 30%);
+    0 0 0 1px color-mix(in srgb, var(--surface-raised), var(--ink) 8%),
+    0 24px 48px -16px rgb(0 0 0 / 65%), 0 2px 6px rgb(0 0 0 / 30%);
   --shadow-inset-field: inset 0 0 0 1px var(--line-strong);
   --shadow-focus: inset 0 0 0 1px rgb(236 235 230 / 24%), 0 0 0 3px rgb(236 235 230 / 5%);
 }
@@ -195,6 +205,7 @@
   --color-surface-raised: var(--surface-raised);
   --color-elevated: var(--elevated);
   --color-inset: var(--inset);
+  --color-backdrop: var(--backdrop);
   --color-hover: var(--hover);
   --color-hover-2: var(--hover-2);
   --color-field: var(--field);
@@ -228,11 +239,6 @@
   --color-violet-deep: var(--violet-deep);
   --color-scrim: var(--scrim);
   --color-violet-ink: var(--violet-ink);
-  --color-brand-linear: #5e6ad2;
-  --color-brand-slack: #4a154b;
-  --color-brand-figma: #f24e1e;
-  --color-brand-jira: #2684ff;
-  --color-brand-sentry: #362d59;
   --color-violet-tint: var(--violet-tint);
   --color-claude: var(--claude);
   --color-claude-tile: var(--claude-tile);
@@ -260,6 +266,7 @@
   --shadow-card: var(--shadow-card);
   --shadow-raised: var(--shadow-raised);
   --shadow-overlay: var(--shadow-overlay);
+  --shadow-toast: var(--shadow-toast);
   --shadow-modal: var(--shadow-modal);
   --shadow-focus: var(--shadow-focus);
 
@@ -304,8 +311,6 @@
 /* ── base ─────────────────────────────────────────────── */
 
 html {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
@@ -445,14 +450,15 @@ a {
 }
 
 :focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--accent-ink) 55%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--ink) 30%, transparent);
   outline-offset: 2px;
 }
 
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible,
-[contenteditable]:focus-visible {
+[contenteditable]:focus-visible,
+[role="slider"]:focus-visible {
   outline: none;
 }
 
@@ -1739,6 +1745,22 @@ body {
   line-height: 20px;
 }
 
+@layer base {
+  :where(.select-text) {
+    cursor: text;
+  }
+}
+
+::highlight(nex-search) {
+  background-color: color-mix(in srgb, var(--orange) 26%, transparent);
+  color: var(--ink);
+}
+
+::highlight(nex-search-current) {
+  background-color: color-mix(in srgb, var(--orange) 55%, transparent);
+  color: var(--ink);
+}
+
 .stream-caret {
   width: 7px;
   height: 14px;
@@ -1863,31 +1885,38 @@ body {
   pointer-events: none;
   border-radius: inherit;
   overflow: hidden;
+  transition: opacity 150ms steps(3, end);
 }
 
-.effort-dither > span {
+/* One field, one moving left edge: each column covers itself to the right edge and takes the dot
+   pattern for its distance from that edge, so a step only adds or removes one layer of dots. */
+.effort-dither-layer,
+.effort-dither-edge {
   position: absolute;
   inset: 0;
-  background: conic-gradient(at 3px 3px, transparent 75%, var(--dot) 0) var(--px) var(--py) / 12px
+  background: conic-gradient(at 3px 3px, transparent 75%, currentColor 0) var(--px) var(--py) / 12px
     12px;
+  transition: color 300ms steps(3, end);
 }
 
 .effort-dither-layer {
-  clip-path: inset(0 0 0 var(--x));
-  animation: effort-dither-fill 1200ms steps(12, start) var(--delay, 120ms) both;
+  clip-path: inset(0 0 0 var(--left));
 }
 
 .effort-dither-edge {
-  opacity: 0;
   clip-path: inset(0 calc(100% - var(--x)) 0 calc(var(--x) - 21px));
   animation: effort-dither-breathe 4.8s step-end infinite;
-  animation-delay: calc(1500ms + var(--rank) * 200ms);
 }
 
-@keyframes effort-dither-fill {
-  from {
-    clip-path: inset(0 calc(100% - var(--from)) 0 var(--from));
-  }
+/* Stars: a canvas of dither dots; the fade keeps the left side quiet behind the label. */
+.dither-stars {
+  overflow: hidden;
+  mask-image: linear-gradient(to left, black 55%, rgb(0 0 0 / 55%));
+}
+
+.effort-dither-layer[data-hidden],
+.effort-dither-edge[data-hidden] {
+  visibility: hidden;
 }
 
 @keyframes effort-dither-breathe {
@@ -1943,7 +1972,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .effort-dither > span {
+  .effort-dither-edge {
     animation: none !important;
   }
 }
@@ -1966,6 +1995,36 @@ body {
   border-radius: 99px;
   background: var(--accent-ink);
   animation: voice-pulse 1.3s ease-in-out infinite;
+}
+
+.voice-orb > span {
+  transition: translate 600ms var(--ease-out-strong);
+}
+
+.voice-orb.is-quiet > span {
+  animation: voice-rest 2.4s ease-in-out infinite;
+}
+
+.voice-orb.is-quiet > span:nth-child(1) {
+  translate: 0 -3px;
+}
+
+.voice-orb.is-quiet > span:nth-child(2) {
+  translate: 2.6px 1.5px;
+}
+
+.voice-orb.is-quiet > span:nth-child(3) {
+  translate: -2.6px 1.5px;
+}
+
+@keyframes voice-rest {
+  0%,
+  100% {
+    scale: 0.7;
+  }
+  50% {
+    scale: 0.85;
+  }
 }
 
 .voice-orb > span:nth-child(1) {
@@ -2021,6 +2080,11 @@ body {
   height: 2px;
   background: repeating-linear-gradient(to top, var(--accent-ink) 0 2px, transparent 2px 4px);
   animation: level-bar 1.2s steps(4, end) infinite;
+}
+
+.level-meter.is-live > span {
+  animation: none;
+  transition: height 80ms var(--ease-out-strong);
 }
 
 .level-meter > span:nth-child(2) {
@@ -2092,10 +2156,78 @@ body {
   pointer-events: none;
 }
 
+.details-editor .tiptap {
+  min-height: 66px;
+}
+
+.details-editor .tiptap p.is-editor-empty:first-child::before {
+  color: var(--ink-5);
+}
+
 /* Thin, quiet scrollbars. Pierre's diff needs its own ::-webkit-scrollbar rules, so it is skipped. */
 :not(.nex-diff-list, .nex-diff-list *) {
   scrollbar-width: thin;
   scrollbar-color: var(--line-strong) transparent;
+}
+
+.ghost-text {
+  color: var(--ink-4);
+  pointer-events: none;
+  user-select: none;
+}
+
+.no-scrollbar.no-scrollbar {
+  scrollbar-width: none;
+}
+
+/* Menus draw their own pill thumb, inset from the rounded corners; Chromium skips these rules
+   while scrollbar-width or scrollbar-color is set. */
+.menu-scroll {
+  scrollbar-width: auto;
+  scrollbar-color: auto;
+}
+.menu-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+.menu-scroll::-webkit-scrollbar-track {
+  margin: 4px 0;
+  background: transparent;
+}
+.menu-scroll::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: var(--line-strong) padding-box;
+}
+.menu-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: var(--ink-5);
+}
+
+.quiet-scroll {
+  scrollbar-width: auto;
+  scrollbar-color: auto;
+}
+.quiet-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.quiet-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.quiet-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: transparent padding-box;
+  transition: background-color 150ms ease-out;
+}
+.menu-scroll::-webkit-scrollbar-corner,
+.quiet-scroll::-webkit-scrollbar-corner {
+  background: transparent;
+}
+.quiet-scroll:hover::-webkit-scrollbar-thumb {
+  background-color: var(--line-strong);
+}
+.quiet-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: var(--ink-5);
 }
 
 /* @pierre/diffs renders each file into a shadow root; custom properties on the host are what reach it. */
@@ -2146,14 +2278,31 @@ body {
 }
 
 /* Task notes: the app disables selection globally, the editor brings it back. */
+.notes-editor {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+}
+
+.notes-editor > div:first-child {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
 .notes-editor .tiptap {
+  flex: 1;
   min-height: 100%;
   font-size: 13px;
   line-height: 21px;
   color: var(--ink-2);
   outline: none;
-  cursor: text;
+  cursor: default;
   user-select: text;
+}
+
+.notes-editor .tiptap :is(p, li, h2, h3, pre, blockquote) {
+  cursor: text;
 }
 
 .notes-editor .tiptap ::selection {
@@ -2332,16 +2481,61 @@ body {
   animation: rise-in 500ms var(--ease-out-strong) both;
 }
 
-/* Usage meters fill from the left; the projection and sparkline fade in once the fill lands. */
-@keyframes grow-x {
+@keyframes message-in {
   from {
-    transform: scaleX(0);
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
   }
 }
 
-@utility grow-x {
-  transform-origin: left center;
-  animation: grow-x 700ms var(--ease-out-strong) 80ms both;
+/* A message you send grows from the corner it is anchored to; agent steps rise in place. */
+@utility enter-message {
+  transform-origin: bottom right;
+  animation: message-in 280ms var(--ease-out-strong) both;
+}
+
+@utility enter-step {
+  animation: rise-in 260ms var(--ease-out-strong) both;
+}
+
+/* Usage meters fill from the left; the projection and sparkline fade in once the fill lands. */
+@keyframes bar-grow {
+  from {
+    width: 0;
+  }
+}
+
+@utility bar-grow {
+  animation: bar-grow 800ms var(--ease-out-strong) 120ms both;
+}
+
+@utility bar-grow-late {
+  animation: bar-grow 700ms var(--ease-out-strong) 500ms both;
+}
+
+/* Dash offsets break under vector-effect: non-scaling-stroke, so the line is revealed by a clip. */
+@keyframes draw-x {
+  from {
+    clip-path: inset(-4px 100% -4px -4px);
+  }
+  to {
+    clip-path: inset(-4px -4px -4px -4px);
+  }
+}
+
+@utility draw-x {
+  animation: draw-x 900ms var(--ease-out-strong) 150ms both;
+}
+
+@keyframes dot-in {
+  from {
+    opacity: 0;
+    scale: 0;
+  }
+}
+
+@utility dot-in-late {
+  animation: dot-in 250ms var(--ease-out-strong) 950ms both;
 }
 
 @keyframes fade-from-zero {
@@ -2356,6 +2550,38 @@ body {
 
 @utility enter-fade {
   animation: fade-from-zero 200ms ease-out both;
+}
+
+/* A row's resting detail cross-fades into its hover action, in step with the GlideMenu highlight. */
+.hover-swap {
+  display: grid;
+  align-items: center;
+  justify-items: end;
+}
+.hover-swap > * {
+  grid-area: 1 / 1;
+  transition:
+    opacity 150ms var(--ease-out-strong),
+    scale 150ms var(--ease-out-strong);
+}
+.hover-swap > [data-swap="hover"] {
+  opacity: 0;
+  scale: 0.9;
+  pointer-events: none;
+}
+:is([data-menu-row], .hover-swap-host):is(:hover, :focus-visible, :focus-within)
+  .hover-swap
+  > [data-swap="rest"],
+.hover-swap[data-pinned] > [data-swap="rest"] {
+  opacity: 0;
+}
+:is([data-menu-row], .hover-swap-host):is(:hover, :focus-visible, :focus-within)
+  .hover-swap
+  > [data-swap="hover"],
+.hover-swap[data-pinned] > [data-swap="hover"] {
+  opacity: 1;
+  scale: 1;
+  pointer-events: auto;
 }
 
 /* An undoable toast drains its bar over the time it stays; the duration comes inline. */
@@ -2402,4 +2628,19 @@ body {
   background:
     conic-gradient(at 1px 1px, transparent 75%, currentColor 0) 0 0 / 3px 3px,
     color-mix(in srgb, currentColor 22%, transparent);
+}
+
+.motion-reduce *,
+.motion-reduce *::before,
+.motion-reduce *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+.reduce-transparency {
+  --glass: var(--surface-raised);
+}
+.reduce-transparency * {
+  backdrop-filter: none !important;
 }

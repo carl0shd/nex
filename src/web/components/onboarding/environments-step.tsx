@@ -1,5 +1,6 @@
 import type { ComponentType, ReactNode } from "react";
-import { Apple, BoxIso, Cpu, Database, Globe, OpenNewWindow, WarningCircle } from "iconoir-react";
+import { CircleAlert, Cpu, Database, ExternalLink, Globe, Package } from "lucide-react";
+import { AppleMark } from "@/components/atoms/brand-icons";
 import { Button } from "@/components/atoms/button";
 import { DitherProgress } from "@/components/atoms/dither-progress";
 import { StatusDot } from "@/components/atoms/status-dot";
@@ -130,7 +131,7 @@ function FoundServices({
   return (
     <Card>
       <div className="flex items-center gap-3 border-b border-line px-3.5 py-3">
-        <IconTile icon={BoxIso} tone="green" />
+        <IconTile icon={Package} tone="green" />
         <span className="flex flex-1 flex-col">
           <span className="text-sm font-medium text-ink">Found in {project}</span>
           <span className="font-mono text-2xs text-ink-4">docker-compose.yml · package.json</span>
@@ -237,7 +238,7 @@ function EnvPreview({
   return (
     <figure className="m-0 flex flex-col gap-5 rounded-sheet bg-surface p-7 shadow-[0_0_0_1px_var(--line),0_24px_48px_-20px_rgb(0_0_0/60%)]">
       <div className="flex items-center gap-3">
-        <IconTile icon={BoxIso} />
+        <IconTile icon={Package} />
         <span className="flex flex-col">
           <span className="text-sm font-semibold text-ink">
             {project} <span className="font-normal text-ink-3">· {tasks.length} tasks at once</span>
@@ -361,7 +362,7 @@ export function EnvironmentsStep({
 
   return (
     <OnboardingStep
-      step={5}
+      step={4}
       title={copy[setup.phase].title}
       description={copy[setup.phase].description}
       onBack={onBack}
@@ -385,7 +386,7 @@ export function EnvironmentsStep({
             <span className="text-xs font-medium text-ink-3">Installs once on this Mac</span>
             <Card className="[&>*+*]:border-t [&>*+*]:border-line">
               <InstallRow
-                icon={Apple}
+                icon={AppleMark}
                 title="Apple container"
                 detail="Linux runtime made by Apple · about 180 MB"
               />
@@ -432,14 +433,14 @@ export function EnvironmentsStep({
           </span>
           <Button size="sm" className="font-mono text-2xs">
             https://hello.nex
-            <OpenNewWindow width={11} height={11} strokeWidth={2} />
+            <ExternalLink width={11} height={11} strokeWidth={2} />
           </Button>
         </div>
       )}
 
       {setup.phase === "unsupported" && (
         <div className="flex items-start gap-3 rounded-panel bg-surface px-4 py-3.5 shadow-card">
-          <IconTile icon={WarningCircle} tone="orange" />
+          <IconTile icon={CircleAlert} tone="orange" />
           <span className="flex flex-col gap-1">
             <span className="text-sm font-medium text-ink">Tasks still work as today</span>
             <span className="text-xs leading-[18px] text-ink-3">

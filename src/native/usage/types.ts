@@ -18,6 +18,7 @@ export interface DayTotal {
 
 export interface SessionUsage {
   sessionId: string;
+  accountId: string | null;
   name: string;
   branch: string;
   projectName: string;
@@ -46,6 +47,16 @@ export interface AccountUsage {
   sevenDayResetsAt: string | null;
   limits: LimitGauge[];
   todayCostUsd: number;
+  spend: SpendSummary;
+}
+
+export interface SpendSummary {
+  today: {
+    total: UsageTotals;
+    inNex: UsageTotals;
+    outsideNex: UsageTotals;
+  };
+  trend: DayTotal[];
 }
 
 export interface UsageSummary {

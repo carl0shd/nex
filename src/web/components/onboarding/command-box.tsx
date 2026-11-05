@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, Copy } from "iconoir-react";
+import { Check, Copy } from "lucide-react";
 import { IconButton } from "@/components/atoms/icon-button";
 
 export function CommandBox({ command }: { command: string }) {

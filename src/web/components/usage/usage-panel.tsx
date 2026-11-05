@@ -1,4 +1,4 @@
-import { Refresh } from "iconoir-react";
+import { RotateCw } from "lucide-react";
 import { ClaudeTile } from "@/components/atoms/agent-tile";
 import { IconButton } from "@/components/atoms/icon-button";
 import { Kbd } from "@/components/atoms/kbd";
@@ -7,6 +7,7 @@ import GlideMenu from "@/components/primitives/glide-menu";
 import { AccountSwitch, type UsageAccount } from "@/components/usage/account-switch";
 import { SessionLimit, type SessionWindow } from "@/components/usage/session-limit";
 import { SpendTrend, type DailySpend } from "@/components/usage/spend-trend";
+import { shortcutLabel } from "@/lib/app-shortcuts";
 
 export type UsageTaskStatus = "running" | "waiting" | "idle";
 
@@ -81,7 +82,7 @@ export function UsagePanel({
         <AccountSwitch accounts={accounts} value={account} onChange={onAccountChange} />
         <span className="ml-auto text-2xs text-ink-4">{updated}</span>
         <IconButton aria-label="Refresh" size="sm" onClick={onRefresh} className="size-[26px]">
-          <Refresh width={13} height={13} strokeWidth={2} />
+          <RotateCw width={13} height={13} strokeWidth={2} />
         </IconButton>
       </div>
 
@@ -104,7 +105,7 @@ export function UsagePanel({
           className="interactive press ml-auto flex h-[26px] cursor-pointer items-center gap-1.5 rounded-full pr-1.5 pl-2.5 text-xs font-medium text-ink-2 select-none hover:bg-hover hover:text-ink"
         >
           Usage details
-          <Kbd>⌘U</Kbd>
+          <Kbd>{shortcutLabel("usage")}</Kbd>
         </button>
       </div>
     </div>

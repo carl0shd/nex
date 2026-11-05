@@ -1,4 +1,4 @@
-import { app } from "electron";
+import { app, dialog } from "electron";
 import { join } from "path";
 import { electronApp, optimizer } from "@electron-toolkit/utils";
 import { createMainWindow, getMainWindow, setQuitting } from "./app-window";
@@ -11,6 +11,9 @@ import { flushAllBuffers, killAllTerminals, sweepOrphanBuffers } from "@native/p
 import { getAllIds, resetAllStatus } from "@native/db/repositories/terminal.repo";
 import { disposeSpeech, initSpeech } from "@native/speech/manager";
 import { isDev } from "@native/paths";
+import { agentStates, stopAllAgents } from "@native/agents/agent-runner";
+import { readPreferences } from "@native/main/preferences";
+import { removeLegacyHooks } from "@native/hooks/cleanup";
 import { fixEnv } from "./fix-env";
 
 if (isDev()) {
@@ -34,6 +37,7 @@ app.whenReady().then(() => {
   resetAllStatus();
   sweepOrphanBuffers(new Set(getAllIds()));
   registerIPCHandlers();
+  removeLegacyHooks();
   initSpeech();
   createApplicationMenu();
 
@@ -53,9 +57,33 @@ app.whenReady().then(() => {
   });
 });
 
-app.on("before-quit", () => {
+let quitConfirmed = false;
+
+app.on("before-quit", (event) => {
+  const working = Object.values(agentStates()).filter((state) => state === "running").length;
+  if (!quitConfirmed && working > 0 && readPreferences().quitWithAgents !== "quit") {
+    event.preventDefault();
+    const message =
+      working === 1 ? "An agent is still working" : `${working} agents are still working`;
+    void dialog
+      .showMessageBox({
+        type: "warning",
+        message,
+        detail: "Quitting stops them. Their changes stay in the worktrees.",
+        buttons: ["Quit", "Cancel"],
+        defaultId: 1,
+        cancelId: 1,
+      })
+      .then(({ response }) => {
+        if (response !== 0) return;
+        quitConfirmed = true;
+        app.quit();
+      });
+    return;
+  }
   setQuitting(true);
   flushAllBuffers();
+  stopAllAgents();
 });
 
 app.on("will-quit", () => {

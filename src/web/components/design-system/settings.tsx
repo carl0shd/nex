@@ -13,7 +13,10 @@ import {
   type PackageLicense,
 } from "@/components/settings/licenses-view";
 import { Overlay } from "@/components/primitives/overlay";
-import { SettingsPage } from "@/components/settings/settings-page";
+import { SettingsPage, type SettingsData } from "@/components/settings/settings-page";
+import type { Preferences } from "@native/db/types";
+import { DEFAULT_PREFERENCES } from "@/lib/preferences";
+import type { ThemePreference } from "@/lib/theme";
 import type { SettingsWorkspace } from "@/components/settings/workspace-card";
 
 const ACCOUNTS: ClaudeAccount[] = [
@@ -63,20 +66,67 @@ const WORKSPACES: SettingsWorkspace[] = [
   },
 ];
 
-const MACHINE = {
-  runtime: "Apple container 1.5",
-  environments: 3,
-  usedGb: 5.2,
-  totalGb: 8,
-  healthy: true,
+const SAMPLE_DATA: SettingsData = {
+  version: "2.0.0",
+  dataDir: "~/.nex",
+  openAtLogin: false,
+  theme: "dark",
+  showSidebar: true,
+  accounts: ACCOUNTS,
+  workspaces: WORKSPACES,
+  claudeCode: {
+    version: "2.1.280",
+    path: "/opt/homebrew/bin/claude",
+    compat: "ok",
+    upgrading: false,
+  },
+  licenses: LICENSES,
+  models: [
+    { value: "opus[1m]", label: "Opus 5.5" },
+    { value: "sonnet", label: "Sonnet 5" },
+  ],
+  model: "opus[1m]",
+  ides: ["Cursor", "Zed"],
+  terminals: ["Terminal", "Ghostty"],
+  shells: ["/bin/zsh", "/bin/bash"],
+  microphones: [{ value: "1", label: "MacBook Pro Microphone" }],
+  languages: [{ value: "es-CO", label: "Español · Colombia" }],
+  microphone: "1",
+  language: "es-CO",
+  lastScan: "2 min ago",
 };
 
-const CLAUDE_CODE = {
-  version: "2.4.1",
-  path: "/opt/homebrew/bin/claude",
-  upToDate: true,
-  liveTranscripts: 6,
-};
+function SettingsPageDemo() {
+  const [values, setValues] = useState<Preferences>(DEFAULT_PREFERENCES);
+  const [theme, setTheme] = useState<ThemePreference>("dark");
+  const noop = () => {};
+  return (
+    <SettingsPage
+      values={values}
+      data={{ ...SAMPLE_DATA, theme }}
+      actions={{
+        onPreference: (key, value) => setValues((current) => ({ ...current, [key]: value })),
+        onOpenAtLogin: noop,
+        onTheme: setTheme,
+        onShowSidebar: noop,
+        onMakeDefault: noop,
+        onShowProfile: noop,
+        onRenameAccount: noop,
+        onRemoveAccount: noop,
+        onAddAccount: noop,
+        onSignInAgain: noop,
+        onOpenProject: noop,
+        onAddProject: noop,
+        onPlaySound: noop,
+        onMicrophone: noop,
+        onLanguage: noop,
+        onRescan: noop,
+        onUpgradeClaude: noop,
+        onShowDataFolder: noop,
+      }}
+    />
+  );
+}
 
 function LicensesDemo() {
   const [open, setOpen] = useState<PackageLicense | null>(null);
@@ -103,14 +153,7 @@ export function SettingsPageSection() {
     >
       <Specimen name="SettingsPage · scroll, search with ⌘F, jump from the index" bare>
         <div className="h-[860px] w-full overflow-hidden rounded-card bg-page shadow-card">
-          <SettingsPage
-            accounts={ACCOUNTS}
-            workspaces={WORKSPACES}
-            machine={MACHINE}
-            claudeCode={CLAUDE_CODE}
-            licenses={LICENSES}
-            version="2.0.0"
-          />
+          <SettingsPageDemo />
         </div>
       </Specimen>
       <Specimen name="Claude accounts · menu and Sign out and remove" bare>

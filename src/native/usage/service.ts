@@ -13,7 +13,12 @@ import {
   type AccountUsageResponse,
 } from "@native/usage/api";
 import { resolveKeychainService } from "@native/usage/binding";
-import { isExpired, readCredentials } from "@native/usage/credentials";
+import {
+  isExpired,
+  readCredentials,
+  refreshCredentials,
+  type OAuthCredentials,
+} from "@native/usage/credentials";
 import { addTokens, costOf, emptyTokens, totalTokens } from "@native/usage/pricing";
 import type {
   AccountLimitStatus,
@@ -26,6 +31,7 @@ import type {
   UsageStats,
   UsageSummary,
   UsageTotals,
+  SpendSummary,
 } from "@native/usage/types";
 
 const LIMITS_TTL_MS = 5 * 60_000;
@@ -122,13 +128,31 @@ function failureFor(error: unknown, previous: CachedLimits | undefined): Account
   return "error";
 }
 
+async function fetchUsageRefreshing(
+  credentials: OAuthCredentials,
+  service: string | null,
+  configDir: string,
+): Promise<AccountUsageResponse> {
+  try {
+    return await fetchAccountUsage(credentials.accessToken);
+  } catch (error) {
+    if (!(error instanceof UnauthorizedError)) throw error;
+    const refreshed = await refreshCredentials(service, configDir);
+    if (!refreshed) throw error;
+    return fetchAccountUsage(refreshed.accessToken);
+  }
+}
+
 async function loadLimits(account: AgentAccount): Promise<CachedLimits> {
   const cached = limitsCache.get(account.id);
   const now = Date.now();
   if (cached && (now - cached.fetchedAt < LIMITS_TTL_MS || now < cached.retryAfter)) return cached;
 
   const service = await resolveKeychainService(account);
-  const credentials = await readCredentials(service, account.configDir);
+  let credentials = await readCredentials(service, account.configDir);
+  if (credentials && isExpired(credentials)) {
+    credentials = (await refreshCredentials(service, account.configDir)) ?? credentials;
+  }
 
   let entry: CachedLimits;
   if (!credentials) {
@@ -150,7 +174,7 @@ async function loadLimits(account: AgentAccount): Promise<CachedLimits> {
   } else {
     try {
       entry = {
-        response: await fetchAccountUsage(credentials.accessToken),
+        response: await fetchUsageRefreshing(credentials, service, account.configDir),
         status: "ok",
         subscriptionType: credentials.subscriptionType,
         fetchedAt: now,
@@ -201,6 +225,7 @@ function sessionContext(): SessionContext {
       const workspace = project ? workspaces.get(project.workspaceId) : undefined;
       return {
         sessionId: session.id,
+        accountId: session.accountId ?? null,
         name: session.name,
         branch: session.branch,
         projectName: project?.name ?? "",
@@ -274,24 +299,38 @@ async function accountUsage(today: string): Promise<AccountUsage[]> {
         sevenDayResetsAt: response?.sevenDayResetsAt ?? null,
         limits,
         todayCostUsd: todayByAccount.get(account.id)?.costUsd ?? 0,
+        spend: spendSummary(today, account.id),
       };
     }),
   );
 }
 
-export async function getUsageSummary(): Promise<UsageSummary> {
-  const today = todayKey();
-  const context = sessionContext();
-
-  const todayBuckets = usageRepo.sumByDay({ fromDay: today, toDay: today });
+function spendSummary(today: string, accountId?: string): SpendSummary {
+  const todayBuckets = usageRepo.sumByDay({ fromDay: today, toDay: today }, accountId);
   const trendRange: DayRange = { fromDay: shiftDay(today, -(TREND_DAYS - 1)), toDay: today };
-  const trendBuckets = usageRepo.sumByDay(trendRange);
-
   const trendByDay = new Map(eachDay(trendRange).map((day) => [day, emptyTotals()]));
-  for (const bucket of trendBuckets) {
+  for (const bucket of usageRepo.sumByDay(trendRange, accountId)) {
     const totals = trendByDay.get(bucket.day);
     if (totals) accumulate(totals, bucket);
   }
+  return {
+    today: {
+      total: fold(todayBuckets),
+      inNex: fold(todayBuckets.filter((bucket) => bucket.inNex)),
+      outsideNex: fold(todayBuckets.filter((bucket) => !bucket.inNex)),
+    },
+    trend: [...trendByDay].map(([day, totals]) => ({
+      day,
+      costUsd: totals.costUsd,
+      tokens: totalTokens(totals.tokens),
+    })),
+  };
+}
+
+export async function getUsageSummary(): Promise<UsageSummary> {
+  const today = todayKey();
+  const context = sessionContext();
+  const spend = spendSummary(today);
 
   const accounts = await accountUsage(today);
   let worstPercent: number | null = null;
@@ -306,16 +345,8 @@ export async function getUsageSummary(): Promise<UsageSummary> {
   }
 
   return {
-    today: {
-      total: fold(todayBuckets),
-      inNex: fold(todayBuckets.filter((bucket) => bucket.inNex)),
-      outsideNex: fold(todayBuckets.filter((bucket) => !bucket.inNex)),
-    },
-    trend: [...trendByDay].map(([day, totals]) => ({
-      day,
-      costUsd: totals.costUsd,
-      tokens: totalTokens(totals.tokens),
-    })),
+    today: spend.today,
+    trend: spend.trend,
     sessions: sessionUsage(usageRepo.sumForAgentSessions(context.agentSessionIds), context).filter(
       (session) => session.status !== "done",
     ),

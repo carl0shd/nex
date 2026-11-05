@@ -1,33 +1,27 @@
 import type { ComponentType } from "react";
+import { useHotkeys, type Hotkey } from "@tanstack/react-hotkeys";
 import {
+  Ban,
   Check,
-  EditPencil,
-  Map as MapIcon,
+  ChevronDown,
+  Hand,
+  MapIcon,
   Minus,
-  NavArrowDown,
-  OpenSelectHandGesture,
-  Prohibition,
+  PenLine,
   ShieldCheck,
-  WarningTriangle,
-} from "iconoir-react";
+  TriangleAlert,
+} from "lucide-react";
 import { Kbd } from "@/components/atoms/kbd";
 import { SegmentedControl } from "@/components/atoms/segmented-control";
 import { ComposerPill } from "@/components/composer/composer-pill";
-import { Menu, MenuLabel } from "@/components/primitives/menu";
+import { Menu } from "@/components/primitives/menu";
 import { cn } from "@/lib/utils";
 
 type Icon = ComponentType<{ width?: number; height?: number; strokeWidth?: number }>;
 
-export type PermissionMode = "plan" | "manual" | "dontask" | "edits" | "auto" | "bypass";
+import { PERMISSION_MODES, type PermissionMode } from "@/lib/permission-modes";
 
-const PERMISSION_MODES: readonly PermissionMode[] = [
-  "plan",
-  "manual",
-  "dontask",
-  "edits",
-  "auto",
-  "bypass",
-];
+export type { PermissionMode };
 
 type Capability = { label: string; access: "allowed" | "asks" | "never" };
 
@@ -49,7 +43,7 @@ const MODE: Record<
     ],
   },
   manual: {
-    icon: OpenSelectHandGesture,
+    icon: Hand,
     name: "Ask first",
     chip: "Ask first",
     summary: "Claude checks with you before every change",
@@ -62,7 +56,7 @@ const MODE: Record<
     ],
   },
   dontask: {
-    icon: Prohibition,
+    icon: Ban,
     name: "Don't ask",
     chip: "Don't ask",
     summary: "Only what you already allowed, the rest is denied",
@@ -75,7 +69,7 @@ const MODE: Record<
     ],
   },
   edits: {
-    icon: EditPencil,
+    icon: PenLine,
     name: "Accept edits",
     chip: "Accept edits",
     summary: "Edits go through, commands still ask",
@@ -101,7 +95,7 @@ const MODE: Record<
     ],
   },
   bypass: {
-    icon: WarningTriangle,
+    icon: TriangleAlert,
     name: "Bypass permissions",
     chip: "Bypass",
     summary: "Everything runs without asking",
@@ -156,30 +150,35 @@ export function PermissionChip({
         <ModeIcon width={11} height={11} strokeWidth={2.25} />
       </span>
       {MODE[mode].chip}
-      <NavArrowDown width={10} height={10} strokeWidth={2.25} className="opacity-70" />
+      <ChevronDown width={10} height={10} strokeWidth={2.25} className="opacity-70" />
     </ComposerPill>
   );
 }
 
 export function PermissionMenu({
   mode,
+  modes = PERMISSION_MODES,
   onChange,
   defaultMode = "auto",
 }: {
   mode: PermissionMode;
+  modes?: readonly PermissionMode[];
   onChange: (mode: PermissionMode) => void;
   defaultMode?: PermissionMode;
 }) {
   const current = MODE[mode];
+  useHotkeys(
+    modes.map((option, index) => ({
+      hotkey: String(index + 1) as Hotkey,
+      callback: () => onChange(option),
+    })),
+  );
   return (
     <Menu width={320} origin="bottom left" className="rounded-panel bg-surface-raised">
-      <MenuLabel className="h-7" trailing={<span className="text-ink">{current.chip}</span>}>
-        Permissions
-      </MenuLabel>
       <div className="px-1 pt-0.5">
         <SegmentedControl
           variant="bar"
-          options={PERMISSION_MODES}
+          options={modes}
           value={mode}
           onChange={onChange}
           icons={ICONS}
@@ -203,11 +202,12 @@ export function PermissionMenu({
       </div>
       <div className="mt-1 flex items-center gap-2 border-t border-line px-2.5 pt-2 pb-1 text-2xs text-ink-4">
         <span className="flex items-center gap-[5px]">
-          <Kbd>⇧⇥</Kbd>
+          <Kbd>⌘ ←</Kbd>
+          <Kbd>⌘ →</Kbd>
           cycle
         </span>
         <span className="flex items-center gap-[5px]">
-          <Kbd>1</Kbd>–<Kbd>6</Kbd>
+          <Kbd>1</Kbd>–<Kbd>{modes.length}</Kbd>
         </span>
         <span className="ml-auto text-ink-3">Default: {MODE[defaultMode].chip}</span>
       </div>

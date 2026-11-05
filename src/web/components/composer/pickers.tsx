@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Folder, NavArrowLeft, NavArrowRight, Page } from "iconoir-react";
+import { ChevronLeft, ChevronRight, FileIcon, Folder } from "lucide-react";
 import { Kbd } from "@/components/atoms/kbd";
 import { MenuLabel } from "@/components/primitives/menu";
 import type {
@@ -111,7 +111,7 @@ function PickerRow({
 
 function fileIcon(entry: FileEntry) {
   if (entry.folder) return { Icon: Folder, tone: "text-ink-3" };
-  return { Icon: Page, tone: CONFIG_FILE.test(entry.name) ? "text-orange" : "text-blue" };
+  return { Icon: FileIcon, tone: CONFIG_FILE.test(entry.name) ? "text-orange" : "text-blue" };
 }
 
 function FileRow({
@@ -147,7 +147,7 @@ function FileRow({
             {entry.status}
           </span>
         )}
-        {entry.folder && <NavArrowRight width={11} height={11} className="text-ink-4" />}
+        {entry.folder && <ChevronRight width={11} height={11} className="text-ink-4" />}
       </span>
     </PickerRow>
   );
@@ -158,7 +158,7 @@ function FolderHeader({ folder }: { folder: string }) {
   const slash = trimmed.lastIndexOf("/");
   return (
     <div className="flex h-[30px] items-center gap-1.5 px-2.5 text-2xs text-ink-4">
-      <NavArrowLeft width={11} height={11} strokeWidth={2} />
+      <ChevronLeft width={11} height={11} strokeWidth={2} />
       <span className="font-mono">{trimmed.slice(0, slash + 1)}</span>
       <span className="font-mono text-ink">{trimmed.slice(slash + 1)}/</span>
       <span className="ml-auto flex items-center gap-1">
@@ -275,7 +275,9 @@ function CommandRow({
         </span>
         <span className="truncate text-2xs text-ink-4">{command.description}</span>
       </span>
-      <span className={cn("ml-auto text-3xs", source.tone)}>{source.tag}</span>
+      <span className={cn("ml-auto shrink-0 text-3xs whitespace-nowrap", source.tone)}>
+        {source.tag}
+      </span>
     </PickerRow>
   );
 }

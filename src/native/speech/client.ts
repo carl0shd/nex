@@ -46,8 +46,9 @@ export interface StartSessionOptions {
 
 type EventMsg = HelperMessage & {
   type: "event";
-  event: "state" | "result" | "error" | "stopped";
+  event: "state" | "result" | "error" | "stopped" | "level";
   state?: SessionState;
+  level?: number;
   text?: string;
   isFinal?: boolean;
   confidence?: number;
@@ -132,6 +133,7 @@ export async function startSession(
     onResult?: (result: SessionResult) => void;
     onError?: (error: SessionError) => void;
     onEnd?: () => void;
+    onLevel?: (level: number) => void;
   },
 ): Promise<void> {
   if (active) throw new Error("Speech session already running");
@@ -180,6 +182,9 @@ export async function startSession(
         break;
       case "stopped":
         cleanup();
+        break;
+      case "level":
+        if (typeof msg.level === "number") handlers.onLevel?.(msg.level);
         break;
     }
   };

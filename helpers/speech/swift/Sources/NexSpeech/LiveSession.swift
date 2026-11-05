@@ -75,11 +75,6 @@ final class LiveSession {
     }
     self.recognizer = recognizer
 
-    let request = SFSpeechAudioBufferRecognitionRequest()
-    request.shouldReportPartialResults = interimResults
-    request.requiresOnDeviceRecognition = onDevice && recognizer.supportsOnDeviceRecognition
-    request.taskHint = continuous ? .dictation : .unspecified
-    self.recognitionRequest = request
 
     let engine = AVAudioEngine()
     self.audioEngine = engine
@@ -124,6 +119,7 @@ final class LiveSession {
 
     inputNode.installTap(onBus: 0, bufferSize: 1024, format: inputFmt) { [weak self] buffer, _ in
       self?.recognitionRequest?.append(buffer)
+      self?.reportLevel(buffer)
     }
 
     engine.prepare()
@@ -134,16 +130,43 @@ final class LiveSession {
       return
     }
 
-    self.recognitionTask = recognizer.recognitionTask(with: request) { [weak self] result, error in
-      guard let self else { return }
+    beginTask()
+
+    playCue("mic-on")
+    emitState("listening")
+  }
+
+  // Apple ends a recognition task after each final result and after a stretch of silence
+  // ("No speech detected", 1110); in continuous mode the engine keeps running and a new task takes over.
+  private var failedTasks = 0
+  private static let maxFailedTasks = 20
+
+  private func beginTask() {
+    guard let recognizer, !isStopping, !isStopped else { return }
+    let request = SFSpeechAudioBufferRecognitionRequest()
+    request.shouldReportPartialResults = interimResults
+    request.requiresOnDeviceRecognition = onDevice && recognizer.supportsOnDeviceRecognition
+    request.taskHint = continuous ? .dictation : .unspecified
+    recognitionRequest = request
+    lastEmittedText = ""
+
+    recognitionTask = recognizer.recognitionTask(with: request) { [weak self] result, error in
+      guard let self, self.recognitionRequest === request else { return }
       if let error {
         if self.isStopping || self.isStopped { return }
+        self.failedTasks += 1
+        if self.continuous && self.failedTasks < Self.maxFailedTasks {
+          self.recognitionTask?.cancel()
+          self.beginTask()
+          return
+        }
         let nsErr = error as NSError
-        if nsErr.code == 1110 { return } // user cancelled
+        if nsErr.code == 1110 { return }
         self.emitError(code: "backend-failure", message: error.localizedDescription)
         return
       }
       guard let result else { return }
+      self.failedTasks = 0
       let isFinal = result.isFinal
       let best = result.bestTranscription
       let text = best.formattedString
@@ -159,12 +182,12 @@ final class LiveSession {
       if let c = lastSegment.map({ Double($0.confidence) }), c > 0 {
         payload["confidence"] = c
       }
-      sendEvent(id: self.sessionId, event: "result", payload: payload)
-      if isFinal && !self.continuous { self.stopInternal() }
+      if !text.isEmpty || isFinal {
+        sendEvent(id: self.sessionId, event: "result", payload: payload)
+      }
+      guard isFinal else { return }
+      if self.continuous { self.beginTask() } else { self.stopInternal() }
     }
-
-    playCue("mic-on")
-    emitState("listening")
   }
 
   func stop() {
@@ -204,6 +227,19 @@ final class LiveSession {
     audioEngine = nil
     recognizer = nil
     isStopped = true
+  }
+
+  private var levelBuffers = 0
+
+  private func reportLevel(_ buffer: AVAudioPCMBuffer) {
+    levelBuffers += 1
+    guard levelBuffers % 4 == 0, let samples = buffer.floatChannelData?[0] else { return }
+    let count = Int(buffer.frameLength)
+    guard count > 0 else { return }
+    var sum: Float = 0
+    for index in 0..<count { sum += samples[index] * samples[index] }
+    let rms = (sum / Float(count)).squareRoot()
+    sendEvent(id: sessionId, event: "level", payload: ["level": Double(min(1, rms * 8))])
   }
 
   private func emitState(_ state: String) {

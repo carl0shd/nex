@@ -11,6 +11,7 @@ import type { AgentStatusMarkers } from "@native/agents/status-markers";
 import { createStatusDetector, type StatusDetectorHandle } from "@native/pty/status-detector";
 import { whichBinary } from "@native/which";
 import { getNexDir } from "@native/paths";
+import { preferredShell } from "@native/main/preferences";
 
 interface ManagedTerminal {
   id: string;
@@ -139,7 +140,7 @@ export function unmarkTerminalFresh(id: string): void {
 
 function defaultShell(): string {
   if (process.platform === "win32") return process.env.COMSPEC || "cmd.exe";
-  return process.env.SHELL || "/bin/bash";
+  return preferredShell() || process.env.SHELL || "/bin/bash";
 }
 
 function resolveCommand(cmd: string, envPath: string): string {

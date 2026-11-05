@@ -1,18 +1,25 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Computer, HalfMoon, Play, Plus, SunLight } from "iconoir-react";
+import { useHotkey } from "@tanstack/react-hotkeys";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { Monitor, Moon, Play, Plus, Sun } from "lucide-react";
+import type { Preferences } from "@native/db/types";
 import { ClaudeTile } from "@/components/atoms/agent-tile";
 import { Button } from "@/components/atoms/button";
+import { DitherStars } from "@/components/atoms/dither-stars";
 import { IconButton } from "@/components/atoms/icon-button";
 import { KeyCaps } from "@/components/atoms/kbd";
+import { NexLogo } from "@/components/atoms/nex-logo";
 import { SearchField } from "@/components/atoms/search-field";
 import { SegmentedControl } from "@/components/atoms/segmented-control";
-import { Switch } from "@/components/atoms/switch";
 import { TextField } from "@/components/atoms/text-field";
-import { ValuePill } from "@/components/atoms/value-pill";
 import GlideMenu from "@/components/primitives/glide-menu";
 import { Overlay } from "@/components/primitives/overlay";
 import { SelectMenu, type SelectOption } from "@/components/primitives/select-menu";
-import { SettingRow, SettingsCard, SettingsGroupHeader } from "@/components/primitives/setting-row";
+import {
+  SettingRow,
+  SettingSwitchRow,
+  SettingsCard,
+  SettingsGroupHeader,
+} from "@/components/primitives/setting-row";
 import {
   AccountList,
   RemoveAccountDialog,
@@ -23,14 +30,16 @@ import {
   LicensesView,
   type PackageLicense,
 } from "@/components/settings/licenses-view";
-import { MachineCard, type MachineStatus } from "@/components/settings/machine-card";
 import { SettingsIndex, type SettingsIndexGroup } from "@/components/settings/settings-index";
 import { SettingsSection } from "@/components/settings/settings-section";
 import * as OPTIONS from "@/components/settings/settings-values";
-import type { SettingsValues } from "@/components/settings/settings-values";
 import { ShortcutRow } from "@/components/settings/shortcut-row";
 import { WorkspaceCard, type SettingsWorkspace } from "@/components/settings/workspace-card";
+import { DEFAULT_SHORTCUTS, shortcutConflict, type ShortcutId } from "@/lib/app-shortcuts";
+import { hotkeyCaps } from "@/lib/shortcut";
+import { MIN_CLAUDE_VERSION, type ClaudeCompat } from "@/lib/claude-version";
 import { filterSections } from "@/lib/settings-search";
+import type { ThemePreference } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 interface Block {
@@ -55,16 +64,52 @@ interface Section {
   groups: Group[];
 }
 
-export interface ClaudeCodeInstall {
+export interface SettingsData {
   version: string;
-  path: string;
-  upToDate: boolean;
-  liveTranscripts: number;
+  dataDir: string;
+  openAtLogin: boolean;
+  theme: ThemePreference;
+  showSidebar: boolean;
+  accounts: readonly ClaudeAccount[];
+  workspaces: readonly SettingsWorkspace[];
+  claudeCode: { version: string; path: string; compat: ClaudeCompat; upgrading: boolean } | null;
+  models: readonly SelectOption<string>[];
+  model: string;
+  licenses: readonly PackageLicense[];
+  ides: readonly string[];
+  terminals: readonly string[];
+  shells: readonly string[];
+  microphones: readonly SelectOption<string>[];
+  languages: readonly SelectOption<string>[];
+  microphone: string;
+  language: string;
+  lastScan: string;
 }
 
-type SwitchKey = {
-  [K in keyof SettingsValues]: SettingsValues[K] extends boolean ? K : never;
-}[keyof SettingsValues];
+export interface SettingsActions {
+  onPreference: <K extends keyof Preferences>(key: K, value: Preferences[K]) => void;
+  onOpenAtLogin: (openAtLogin: boolean) => void;
+  onTheme: (theme: ThemePreference) => void;
+  onShowSidebar: (show: boolean) => void;
+  onMakeDefault: (accountId: string) => void;
+  onShowProfile: (accountId: string) => void;
+  onRenameAccount: (accountId: string, name: string) => void;
+  onRemoveAccount: (accountId: string) => void;
+  onAddAccount: () => void;
+  onSignInAgain: (accountId: string) => void;
+  onOpenProject: (projectId: string) => void;
+  onAddProject: (workspaceId: string) => void;
+  onPlaySound: (sound: string) => void;
+  onMicrophone: (microphone: string) => void;
+  onLanguage: (language: string) => void;
+  onRescan: () => void;
+  onUpgradeClaude: () => void;
+  onShowDataFolder: () => void;
+}
+
+type SelectKey = {
+  [K in keyof Preferences]: Preferences[K] extends string ? K : never;
+}[keyof Preferences];
 
 const PARTS: { id: Section["part"]; label: string }[] = [
   { id: "general", label: "General" },
@@ -72,10 +117,49 @@ const PARTS: { id: Section["part"]; label: string }[] = [
   { id: "nex", label: "Nex" },
 ];
 
+const LISTED_SHORTCUTS: readonly ShortcutId[] = [
+  "new-task",
+  "palette",
+  "next",
+  "previous",
+  "tasks",
+  "views",
+  "dictate",
+  "usage",
+  "workspace",
+  "sidebar",
+];
+
+const SYSTEM_SHELL = "";
+
+const COMPAT_NOTE: Record<ClaudeCompat, string> = {
+  ok: "",
+  outdated: ` · Nex needs v${MIN_CLAUDE_VERSION} or newer`,
+  newer: " · newer than the version Nex was tested with",
+};
+
 const row = (label: string, description: string | undefined, control: ReactNode): Block => ({
   key: label,
   keywords: description ? [label, description] : [label],
   node: <SettingRow label={label} description={description} control={control} />,
+});
+
+const switchRow = (
+  label: string,
+  description: string | undefined,
+  checked: boolean,
+  onChange: (checked: boolean) => void,
+): Block => ({
+  key: label,
+  keywords: description ? [label, description] : [label],
+  node: (
+    <SettingSwitchRow
+      label={label}
+      description={description}
+      checked={checked}
+      onChange={onChange}
+    />
+  ),
 });
 
 const custom = (key: string, keywords: string[], node: ReactNode): Block => ({
@@ -92,50 +176,59 @@ const card = (key: string, blocks: Block[], label?: string, trailing?: ReactNode
   blocks,
 });
 
+const appOptions = (apps: readonly string[], current: string) =>
+  [...new Set([...apps, current])].map((app) => ({ value: app, label: app }));
+
 function Field({
   label,
   value,
   placeholder,
   width = 200,
+  readOnly = false,
+  onCommit,
 }: {
   label: string;
-  value?: string;
+  value: string;
   placeholder?: string;
   width?: number;
+  readOnly?: boolean;
+  onCommit?: (value: string) => void;
 }) {
   return (
     <span style={{ width }}>
       <TextField
+        key={value}
         defaultValue={value}
         placeholder={placeholder}
+        readOnly={readOnly}
+        title={readOnly ? value : undefined}
         aria-label={label}
         mono
         size="md"
         className="h-[30px] rounded-control text-xs"
+        onBlur={(event) => {
+          const next = event.currentTarget.value.trim();
+          if (next !== value) onCommit?.(next);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") event.currentTarget.blur();
+        }}
       />
     </span>
   );
 }
 
 export function SettingsPage({
-  accounts: initialAccounts,
-  workspaces,
-  machine,
-  claudeCode,
-  licenses,
-  version,
+  values,
+  data,
+  actions,
   className,
 }: {
-  accounts: readonly ClaudeAccount[];
-  workspaces: readonly SettingsWorkspace[];
-  machine: MachineStatus;
-  claudeCode: ClaudeCodeInstall;
-  licenses: readonly PackageLicense[];
-  version: string;
+  values: Preferences;
+  data: SettingsData;
+  actions: SettingsActions;
   className?: string;
 }) {
-  const [values, setValues] = useState<SettingsValues>(OPTIONS.DEFAULT_SETTINGS);
-  const [accounts, setAccounts] = useState(initialAccounts);
   const [removing, setRemoving] = useState<ClaudeAccount | null>(null);
   const [view, setView] = useState<"settings" | "licenses">("settings");
   const [license, setLicense] = useState<PackageLicense | null>(null);
@@ -143,16 +236,22 @@ export function SettingsPage({
   const [active, setActive] = useState("general");
   const scrollRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
-
+  const settingsScroll = useRef(0);
+  useLayoutEffect(() => {
+    const root = scrollRef.current;
+    if (root) root.scrollTop = view === "licenses" ? 0 : settingsScroll.current;
+  }, [view]);
+  const showLicenses = () => {
+    settingsScroll.current = scrollRef.current?.scrollTop ?? 0;
+    setView("licenses");
+  };
   const set =
-    <K extends keyof SettingsValues>(key: K) =>
-    (value: SettingsValues[K]) =>
-      setValues((current) => ({ ...current, [key]: value }));
+    <K extends keyof Preferences>(key: K) =>
+    (value: Preferences[K]) =>
+      actions.onPreference(key, value);
 
-  const toggle = (key: SwitchKey) => <Switch checked={values[key]} onChange={set(key)} />;
-
-  const select = <K extends keyof SettingsValues>(
-    key: K,
+  const select = (
+    key: SelectKey,
     options: readonly SelectOption<string>[],
     { width, mono = false }: { width?: string; mono?: boolean } = {},
   ) => (
@@ -160,12 +259,26 @@ export function SettingsPage({
       value={values[key] as string}
       options={options}
       mono={mono}
-      onChange={(value) => set(key)(value as SettingsValues[K])}
+      onChange={(value) => actions.onPreference(key, value as never)}
       className={width && cn("min-w-0", width)}
     />
   );
 
-  const fallback = accounts.find((account) => account.isDefault && account.id !== removing?.id);
+  const allShortcuts = DEFAULT_SHORTCUTS.map((shortcut) => ({
+    ...shortcut,
+    hotkey: values.shortcuts[shortcut.id] ?? shortcut.hotkey,
+  }));
+  const shortcuts = allShortcuts.filter((shortcut) => LISTED_SHORTCUTS.includes(shortcut.id));
+  const dictateKeys = hotkeyCaps(
+    shortcuts.find((shortcut) => shortcut.id === "dictate")?.hotkey ?? "",
+  );
+  const fallback = data.accounts.find(
+    (account) => account.isDefault && account.id !== removing?.id,
+  );
+  const shellOptions = [
+    { value: SYSTEM_SHELL, label: "Login shell" },
+    ...data.shells.map((shell) => ({ value: shell, label: shell })),
+  ];
 
   const sections: Section[] = [
     {
@@ -175,20 +288,25 @@ export function SettingsPage({
       part: "general",
       groups: [
         card("general", [
-          row("Open at login", "Start Nex when you sign in to your Mac.", toggle("openAtLogin")),
+          switchRow(
+            "Open at login",
+            "Start Nex when you sign in to your Mac.",
+            data.openAtLogin,
+            actions.onOpenAtLogin,
+          ),
           row(
             "Open in IDE",
-            "The editor “Open in IDE” launches for a task.",
-            select("ide", OPTIONS.IDES),
+            "The editor a task opens in from its menu.",
+            select("ide", appOptions(data.ides, values.ide)),
           ),
           row(
             "Open in terminal",
-            "Used by “Open in terminal” on a task or worktree.",
-            select("terminal", OPTIONS.TERMINALS),
+            "The terminal app a task opens in from its menu.",
+            select("terminalApp", appOptions(data.terminals, values.terminalApp)),
           ),
           row(
             "When you quit with agents working",
-            "Quitting stops every Claude Code session Nex started.",
+            "Quitting stops every agent Nex started.",
             <SegmentedControl
               options={["ask", "quit"] as const}
               labels={{ ask: "Ask first", quit: "Quit anyway" }}
@@ -196,10 +314,11 @@ export function SettingsPage({
               onChange={set("quitWithAgents")}
             />,
           ),
-          row(
+          switchRow(
             "Confirm before closing a task",
-            "Closing removes its worktree unless you keep it.",
-            toggle("confirmClose"),
+            "Tasks with uncommitted changes always ask.",
+            values.confirmClose,
+            set("confirmClose"),
           ),
         ]),
       ],
@@ -217,9 +336,9 @@ export function SettingsPage({
             <SegmentedControl
               options={["system", "dark", "light"] as const}
               labels={{ system: "System", dark: "Dark", light: "Light" }}
-              icons={{ system: Computer, dark: HalfMoon, light: SunLight }}
-              value={values.theme}
-              onChange={set("theme")}
+              icons={{ system: Monitor, dark: Moon, light: Sun }}
+              value={data.theme}
+              onChange={actions.onTheme}
             />,
           ),
           row(
@@ -232,25 +351,23 @@ export function SettingsPage({
               onChange={set("interfaceSize")}
             />,
           ),
-          row(
-            "Code font",
-            "Diffs, terminals and inline code.",
-            <>
-              {select("codeFont", OPTIONS.CODE_FONTS)}
-              {select("codeFontSize", OPTIONS.FONT_SIZES, { width: "w-16" })}
-            </>,
-          ),
-          row(
+          switchRow(
             "Reduce transparency",
             "Makes the floating chrome solid instead of frosted.",
-            toggle("reduceTransparency"),
+            values.reduceTransparency,
+            set("reduceTransparency"),
           ),
           row(
             "Reduce motion",
             "Turns off slides, shimmers and the effort fill.",
             select("motion", OPTIONS.MOTION),
           ),
-          row("Show sidebar", "Workspaces, projects and active tasks.", toggle("showSidebar")),
+          switchRow(
+            "Show sidebar",
+            "Workspaces, projects and active tasks.",
+            data.showSidebar,
+            actions.onShowSidebar,
+          ),
         ]),
       ],
     },
@@ -263,25 +380,29 @@ export function SettingsPage({
         card(
           "notify",
           [
-            row(
+            switchRow(
               "An agent needs you",
               "A permission prompt or a question is waiting.",
-              toggle("notifyNeedsYou"),
+              values.notifyNeedsYou,
+              set("notifyNeedsYou"),
             ),
-            row(
+            switchRow(
               "An agent finished",
-              "The task stopped and is ready for review.",
-              toggle("notifyFinished"),
+              "A turn ended, or it pushed or opened a pull request.",
+              values.notifyFinished,
+              set("notifyFinished"),
             ),
-            row(
+            switchRow(
               "Something went wrong",
-              "A session crashed, lost connection or hit a limit.",
-              toggle("notifyErrors"),
+              "An agent stopped with an error.",
+              values.notifyErrors,
+              set("notifyErrors"),
             ),
-            row(
+            switchRow(
               "Usage warnings",
-              "Near the session limit or your daily spend alert.",
-              toggle("notifyUsage"),
+              "Near an account limit or your daily spend alert.",
+              values.notifyUsage,
+              set("notifyUsage"),
             ),
           ],
           "Notify me when",
@@ -294,17 +415,29 @@ export function SettingsPage({
               "Played with each notification.",
               <>
                 {select("sound", OPTIONS.SOUNDS)}
-                <IconButton aria-label="Play sound" size="sm">
+                <IconButton
+                  aria-label="Play sound"
+                  size="sm"
+                  disabled={values.sound === "None"}
+                  onClick={() => actions.onPlaySound(values.sound)}
+                  className="disabled:pointer-events-none disabled:opacity-40"
+                >
                   <Play width={12} height={12} strokeWidth={2} />
                 </IconButton>
               </>,
             ),
-            row(
-              "Only when Nex is in the background",
-              "No banners for the task you are looking at.",
-              toggle("onlyInBackground"),
+            switchRow(
+              "Skip the task you are looking at",
+              "Only notify about tasks you are not looking at.",
+              values.onlyInBackground,
+              set("onlyInBackground"),
             ),
-            row("Badge on the Dock icon", "Count of agents waiting on you.", toggle("dockBadge")),
+            switchRow(
+              "Badge on the Dock icon",
+              "Count of agents waiting on you.",
+              values.dockBadge,
+              set("dockBadge"),
+            ),
           ],
           "Delivery",
         ),
@@ -322,21 +455,21 @@ export function SettingsPage({
           blocks: [
             custom(
               "shortcuts",
-              values.shortcuts.flatMap((shortcut) => [shortcut.label, ...shortcut.keys]),
+              shortcuts.flatMap((shortcut) => [shortcut.label, ...hotkeyCaps(shortcut.hotkey)]),
               <GlideMenu
                 className="flex flex-col [&>button+button]:border-t [&>button+button]:border-line"
                 highlightClassName="inset-x-0 bg-hover"
               >
-                {values.shortcuts.map((shortcut) => (
+                {shortcuts.map((shortcut) => (
                   <ShortcutRow
                     key={shortcut.id}
                     shortcut={shortcut}
-                    onChange={(keys) =>
-                      set("shortcuts")(
-                        values.shortcuts.map((item) =>
-                          item.id === shortcut.id ? { ...item, keys, through: undefined } : item,
-                        ),
-                      )
+                    conflict={(hotkey) => shortcutConflict(shortcut.id, hotkey, shortcuts)}
+                    onChange={(hotkey) =>
+                      actions.onPreference("shortcuts", {
+                        ...values.shortcuts,
+                        [shortcut.id]: hotkey,
+                      })
                     }
                   />
                 ))}
@@ -355,7 +488,8 @@ export function SettingsPage({
                 <Button
                   variant="quiet"
                   size="sm"
-                  onClick={() => set("shortcuts")(OPTIONS.DEFAULT_SHORTCUTS)}
+                  disabled={Object.keys(values.shortcuts).length === 0}
+                  onClick={() => actions.onPreference("shortcuts", {})}
                 >
                   Reset to defaults
                 </Button>
@@ -381,7 +515,7 @@ export function SettingsPage({
             </span>
           ),
           trailing: (
-            <Button variant="quiet" size="sm">
+            <Button variant="quiet" size="sm" onClick={actions.onAddAccount}>
               <Plus width={12} height={12} strokeWidth={2.25} />
               Add account
             </Button>
@@ -389,16 +523,15 @@ export function SettingsPage({
           blocks: [
             custom(
               "accounts",
-              accounts.flatMap((account) => [account.name, account.email, "accounts"]),
+              data.accounts.flatMap((account) => [account.name, account.email, "accounts"]),
               <AccountList
-                accounts={accounts}
-                onMakeDefault={(id) =>
-                  setAccounts((list) =>
-                    list.map((account) => ({ ...account, isDefault: account.id === id })),
-                  )
-                }
+                accounts={data.accounts}
+                onMakeDefault={actions.onMakeDefault}
+                onShowProfile={actions.onShowProfile}
+                onRename={actions.onRenameAccount}
+                onSignIn={actions.onSignInAgain}
                 onRemove={(id) =>
-                  setRemoving(accounts.find((account) => account.id === id) ?? null)
+                  setRemoving(data.accounts.find((account) => account.id === id) ?? null)
                 }
               />,
             ),
@@ -408,33 +541,19 @@ export function SettingsPage({
           "defaults",
           [
             row(
-              "Account",
-              "Used when a task does not pick one.",
-              <SelectMenu
-                value={values.defaultAccount}
-                options={accounts.map((account) => ({ value: account.id, label: account.name }))}
-                onChange={set("defaultAccount")}
-              />,
-            ),
-            row(
               "Model",
-              "Passed to Claude Code as --model.",
-              select("model", OPTIONS.MODEL_OPTIONS),
+              "The model a new task starts with.",
+              <SelectMenu value={data.model} options={data.models} onChange={set("model")} />,
             ),
             row(
               "Effort",
               "How long Claude thinks before it acts.",
-              select("effort", OPTIONS.EFFORTS),
+              select("effort", OPTIONS.EFFORT_OPTIONS),
             ),
             row(
               "Permissions",
               "What Claude may do without asking.",
-              select("permissions", OPTIONS.PERMISSIONS),
-            ),
-            row(
-              "Resume last session",
-              "Reopening a task continues its conversation.",
-              toggle("resumeSession"),
+              select("permissions", OPTIONS.PERMISSION_OPTIONS),
             ),
           ],
           "Defaults for new tasks",
@@ -444,24 +563,31 @@ export function SettingsPage({
           [
             row(
               "Claude Code",
-              `v${claudeCode.version} · ${claudeCode.upToDate ? "up to date" : "update available"}`,
-              <>
-                <Field label="Claude Code path" value={claudeCode.path} />
-                <Button size="sm">Change</Button>
-              </>,
+              data.claudeCode
+                ? `v${data.claudeCode.version}${COMPAT_NOTE[data.claudeCode.compat]}`
+                : "Not found on this Mac",
+              data.claudeCode && (
+                <>
+                  <Field label="Claude Code path" value={data.claudeCode.path} readOnly />
+                  <Button
+                    size="sm"
+                    disabled={data.claudeCode.upgrading}
+                    onClick={actions.onUpgradeClaude}
+                  >
+                    {data.claudeCode.upgrading ? "Updating…" : "Update"}
+                  </Button>
+                </>
+              ),
             ),
             row(
               "Extra arguments",
-              "Appended to every claude command Nex runs.",
-              <Field label="Extra arguments" placeholder="--verbose" />,
-            ),
-            row(
-              "Live agent view",
-              `Hooks in ~/.claude/settings.json · ${claudeCode.liveTranscripts} live transcripts`,
-              <>
-                <ValuePill tone="green">Connected</ValuePill>
-                <Button size="sm">Reinstall hooks</Button>
-              </>,
+              "Appended to every claude command Nex runs. Applies when an agent starts.",
+              <Field
+                label="Extra arguments"
+                value={values.extraArgs}
+                placeholder="--verbose"
+                onCommit={set("extraArgs")}
+              />,
             ),
           ],
           "Claude Code",
@@ -471,172 +597,27 @@ export function SettingsPage({
     {
       id: "workspaces",
       title: "Workspaces & projects",
-      description: "Each project keeps its own base branch, setup script and quick commands.",
+      description: "Each project keeps its own base branch, setup and quick commands.",
       part: "work",
       groups: [
         {
           key: "workspaces",
           card: false,
-          label: "Workspaces",
-          trailing: (
-            <>
-              <Button variant="quiet" size="sm">
-                Import from GitHub
-              </Button>
-              <Button variant="quiet" size="sm">
-                <Plus width={12} height={12} strokeWidth={2.25} />
-                Add workspace
-              </Button>
-            </>
-          ),
-          blocks: workspaces.map((workspace) =>
+          blocks: data.workspaces.map((workspace) =>
             custom(
               workspace.id,
               [
                 workspace.name,
                 ...workspace.projects.flatMap((project) => [project.name, project.path]),
               ],
-              <WorkspaceCard workspace={workspace} />,
+              <WorkspaceCard
+                workspace={workspace}
+                onOpenProject={actions.onOpenProject}
+                onAddProject={() => actions.onAddProject(workspace.id)}
+              />,
             ),
           ),
         },
-        card(
-          "history",
-          [
-            row(
-              "Keep closed tasks",
-              "Their conversation and notes stay searchable.",
-              select("history", OPTIONS.HISTORY, { width: "w-[120px]" }),
-            ),
-          ],
-          "History",
-        ),
-      ],
-    },
-    {
-      id: "worktrees",
-      title: "Worktrees",
-      description: "Every task gets its own git worktree and branch.",
-      part: "work",
-      groups: [
-        card("worktrees", [
-          row(
-            "Worktrees folder",
-            "Where Nex creates a worktree for each task.",
-            <>
-              <Field label="Worktrees folder" value="~/.nex/worktrees" />
-              <Button size="sm">Change</Button>
-            </>,
-          ),
-          row(
-            "Branch prefix",
-            "Prepended to every new task branch.",
-            <Field label="Branch prefix" value={values.branchPrefix} width={120} />,
-          ),
-          row(
-            "Copy into new worktrees",
-            "Untracked files a worktree needs to run.",
-            <Field label="Copy into new worktrees" value={values.copyIntoWorktrees} />,
-          ),
-          row(
-            "Run the project setup script",
-            "Installs dependencies right after the worktree is created.",
-            toggle("runSetup"),
-          ),
-          row(
-            "When a task is closed",
-            "What happens to its worktree folder.",
-            <SegmentedControl
-              options={["ask", "keep", "remove"] as const}
-              labels={{ ask: "Ask", keep: "Keep", remove: "Remove" }}
-              value={values.onClose}
-              onChange={set("onClose")}
-            />,
-          ),
-          row(
-            "Delete the branch too",
-            "Only when the worktree is removed and the branch is merged.",
-            toggle("deleteBranch"),
-          ),
-        ]),
-      ],
-    },
-    {
-      id: "environments",
-      title: "Environments",
-      description: "Each task can run its own services and data.",
-      part: "work",
-      groups: [
-        {
-          key: "machine",
-          card: false,
-          blocks: [
-            custom(
-              "machine",
-              ["Linux machine", "Restart machine", machine.runtime],
-              <MachineCard machine={machine} />,
-            ),
-          ],
-        },
-        card(
-          "behaviour",
-          [
-            row(
-              "Memory for the machine",
-              "Shared by every environment. Changing it restarts the machine.",
-              select("memory", OPTIONS.MEMORY, { width: "w-[100px]" }),
-            ),
-            row(
-              "Run at most",
-              "New tasks wait for room once this many are running.",
-              select("runAtMost", OPTIONS.RUN_AT_MOST),
-            ),
-            row(
-              "Pause idle environments after",
-              "Frees memory. They resume when you open the task.",
-              select("pauseAfter", OPTIONS.PAUSE_AFTER, { width: "w-[110px]" }),
-            ),
-            row(
-              "Start when a task is created",
-              "Otherwise it starts the first time you open the task.",
-              toggle("startOnCreate"),
-            ),
-          ],
-          "Behaviour",
-        ),
-        card(
-          "browser",
-          [
-            row(
-              "Address",
-              "Every task opens at workspace-task.nex in any browser.",
-              <>
-                <Field label="Address" value=".nex" width={80} />
-                <Button variant="quiet" size="sm">
-                  Test
-                </Button>
-              </>,
-            ),
-            row(
-              "HTTPS certificate",
-              "Trusted only on this Mac. Needed for cookies and service workers.",
-              <>
-                <ValuePill tone="green">Trusted</ValuePill>
-                <Button size="sm">Reinstall</Button>
-              </>,
-            ),
-          ],
-          "Browser",
-        ),
-        card("remove-environments", [
-          row(
-            "Remove environments",
-            "Deletes the machine, clean bases and the .nex setup. Projects are not touched.",
-            <Button variant="destructive" size="sm">
-              Uninstall…
-            </Button>,
-          ),
-        ]),
       ],
     },
     {
@@ -648,8 +629,13 @@ export function SettingsPage({
         card("terminal", [
           row(
             "Shell",
-            "Login shell for new terminals.",
-            select("shell", OPTIONS.SHELLS, { width: "w-[140px]", mono: true }),
+            "For new terminals. Login shell uses your account’s default.",
+            select("shell", shellOptions, { width: "w-[160px]", mono: true }),
+          ),
+          row(
+            "Font size",
+            undefined,
+            select("codeFontSize", OPTIONS.FONT_SIZES, { width: "w-16" }),
           ),
           row(
             "Cursor",
@@ -666,16 +652,17 @@ export function SettingsPage({
             "Lines kept per terminal.",
             select("scrollback", OPTIONS.SCROLLBACK, { width: "w-[120px]" }),
           ),
-          row(
+          switchRow(
             "Copy on select",
             "Selected text goes straight to the clipboard.",
-            toggle("copyOnSelect"),
+            values.copyOnSelect,
+            set("copyOnSelect"),
           ),
-          row("Option as Meta", "For readline and Emacs shortcuts.", toggle("optionAsMeta")),
-          row(
-            "Stop quick commands when a task closes",
-            "Dev servers and watchers started from the task bar.",
-            toggle("stopCommands"),
+          switchRow(
+            "Option as Meta",
+            "For readline and Emacs shortcuts.",
+            values.optionAsMeta,
+            set("optionAsMeta"),
           ),
         ]),
       ],
@@ -697,27 +684,6 @@ export function SettingsPage({
               onChange={set("diffView")}
             />,
           ),
-          row(
-            "Compare against",
-            "Everything since the task branched, or only uncommitted work.",
-            select("compare", OPTIONS.COMPARE),
-          ),
-          row(
-            "Highlight word changes",
-            "Tint the changed tokens inside a modified line.",
-            toggle("wordDiff"),
-          ),
-          row(
-            "Ignore whitespace",
-            "Hide lines that only differ in indentation or spacing.",
-            toggle("ignoreWhitespace"),
-          ),
-          row("Show file tree", "Keep the changed-files panel open.", toggle("fileTree")),
-          row(
-            "Collapse large files",
-            "Files with more changed lines start folded.",
-            select("collapse", OPTIONS.COLLAPSE),
-          ),
         ]),
       ],
     },
@@ -727,19 +693,7 @@ export function SettingsPage({
       description: "The Notes tab of every task.",
       part: "work",
       groups: [
-        card("notes", [
-          row(
-            "Start new notes from",
-            "Prefill each task’s notes.",
-            select("noteTemplate", OPTIONS.NOTE_TEMPLATES),
-          ),
-          row(
-            "Markdown shortcuts",
-            "Type #, -, [] or ``` to format as you write.",
-            toggle("markdownShortcuts"),
-          ),
-          row("Spellcheck", undefined, toggle("spellcheck")),
-        ]),
+        card("notes", [switchRow("Spellcheck", undefined, values.spellcheck, set("spellcheck"))]),
       ],
     },
     {
@@ -749,21 +703,28 @@ export function SettingsPage({
       part: "work",
       groups: [
         card("dictation", [
-          row("Microphone", undefined, select("microphone", OPTIONS.MICROPHONES)),
+          row(
+            "Microphone",
+            undefined,
+            <SelectMenu
+              value={data.microphone}
+              options={data.microphones}
+              onChange={actions.onMicrophone}
+            />,
+          ),
           row(
             "Language",
             "What you speak. Change it per message from the mic menu.",
-            select("language", OPTIONS.LANGUAGES),
+            <SelectMenu
+              value={data.language}
+              options={data.languages}
+              onChange={actions.onLanguage}
+            />,
           ),
           row(
             "Shortcut",
-            "Hold to talk, release to stop.",
-            <>
-              <KeyCaps keys={["⌥", "Space"]} />
-              <Button variant="quiet" size="sm">
-                Change
-              </Button>
-            </>,
+            "Starts and stops dictation. Change it in Shortcuts.",
+            <KeyCaps keys={[dictateKeys.join("")]} />,
           ),
         ]),
       ],
@@ -775,85 +736,77 @@ export function SettingsPage({
       part: "nex",
       groups: [
         card("usage", [
-          row(
+          switchRow(
             "Show usage in the titlebar",
             "Session limit and today’s spend.",
-            toggle("showUsage"),
+            values.showUsage,
+            set("showUsage"),
           ),
           row(
             "Warn me at",
-            "Of the 5-hour session limit.",
+            "Of an account’s session or weekly limit.",
             select("warnAt", OPTIONS.WARN_AT, { width: "w-[100px]" }),
           ),
           row(
             "Daily spend alert",
-            "Notifies you once a day when crossed.",
-            <Field label="Daily spend alert" value={values.dailyAlert} width={100} />,
+            "Notifies you once a day when crossed. Empty turns it off.",
+            <Field
+              label="Daily spend alert"
+              value={values.dailyAlert}
+              placeholder="$20.00"
+              width={100}
+              onCommit={set("dailyAlert")}
+            />,
           ),
           row(
             "Usage data",
-            "Read from Claude Code logs · last scan 2 min ago",
-            <Button size="sm">Rescan usage</Button>,
+            `Read from Claude Code logs · last scan ${data.lastScan}`,
+            <Button size="sm" onClick={actions.onRescan}>
+              Rescan usage
+            </Button>,
           ),
         ]),
       ],
     },
     {
       id: "about",
-      title: "Updates & about",
-      description: "Version, updates and your data.",
+      title: "About",
+      description: "Version and your data.",
       part: "nex",
       groups: [
-        card("updates", [
-          row(
-            `Nex ${version}`,
-            "Up to date · checked today at 9:41",
-            <Button size="sm">Check for updates</Button>,
-          ),
-          row(
-            "Update channel",
-            undefined,
-            <SegmentedControl
-              options={["stable", "beta"] as const}
-              labels={{ stable: "Stable", beta: "Beta" }}
-              value={values.channel}
-              onChange={set("channel")}
-            />,
-          ),
-          row(
-            "Install updates automatically",
-            "Restarts only when no agent is working.",
-            toggle("autoUpdate"),
+        card("about", [
+          custom(
+            "version",
+            ["Nex", data.version],
+            <div className="relative">
+              <DitherStars />
+              <div className="relative">
+                <SettingRow
+                  label={`Nex ${data.version}`}
+                  leading={<NexLogo height={20} />}
+                  control={null}
+                />
+              </div>
+            </div>,
           ),
           row(
             "Open source licenses",
             undefined,
-            <Button variant="quiet" size="sm" onClick={() => setView("licenses")}>
+            <Button variant="quiet" size="sm" onClick={showLicenses}>
               View
             </Button>,
           ),
+          row(
+            "Data folder",
+            "Tasks, notes and settings live here.",
+            <>
+              <Field label="Data folder" value={data.dataDir} width={250} readOnly />
+              <Button size="sm" onClick={actions.onShowDataFolder}>
+                Show
+              </Button>
+            </>,
+          ),
         ]),
-        card(
-          "data",
-          [
-            row(
-              "Data folder",
-              "Tasks, notes and settings live here.",
-              <>
-                <Field label="Data folder" value="~/Library/Application Support/Nex" width={250} />
-                <Button size="sm">Show</Button>
-              </>,
-            ),
-            row(
-              "Reset Nex",
-              "Clears settings and history. Worktrees and accounts stay.",
-              <Button variant="destructive" size="sm">
-                Reset…
-              </Button>,
-            ),
-          ],
-          "Data",
-        ),
       ],
     },
   ];
@@ -885,16 +838,9 @@ export function SettingsPage({
     return () => observer.disconnect();
   }, [view, visibleIds]);
 
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.metaKey && event.key === "f" && view === "settings") {
-        event.preventDefault();
-        searchRef.current?.querySelector("input")?.focus();
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [view]);
+  useHotkey("Mod+F", () => searchRef.current?.querySelector("input")?.focus(), {
+    enabled: view === "settings",
+  });
 
   const jumpTo = (id: string) => {
     const root = scrollRef.current;
@@ -910,7 +856,7 @@ export function SettingsPage({
         {view === "licenses" ? (
           <div className="flex justify-center px-[60px] py-14">
             <LicensesView
-              packages={licenses}
+              packages={data.licenses}
               onBack={() => setView("settings")}
               onOpen={setLicense}
             />
@@ -969,18 +915,18 @@ export function SettingsPage({
         )}
       </div>
       {license && (
-        <Overlay offset={120} onClose={() => setLicense(null)}>
+        <Overlay fullWindow onClose={() => setLicense(null)}>
           <LicenseSheet item={license} onClose={() => setLicense(null)} />
         </Overlay>
       )}
       {removing && (
-        <Overlay offset={160} onClose={() => setRemoving(null)}>
+        <Overlay fullWindow onClose={() => setRemoving(null)}>
           <RemoveAccountDialog
             account={removing}
             fallback={fallback?.name}
             onCancel={() => setRemoving(null)}
             onConfirm={() => {
-              setAccounts((list) => list.filter((account) => account.id !== removing.id));
+              actions.onRemoveAccount(removing.id);
               setRemoving(null);
             }}
           />

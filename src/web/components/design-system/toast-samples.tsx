@@ -99,19 +99,6 @@ export const UPDATE: ToastProps = {
   ],
 };
 
-export const FIRST_RUN: ToastProps = {
-  tone: "green",
-  status: "You're set",
-  title: "Claude is on your first task",
-  body: "A few things worth knowing:",
-  tips: [
-    { keys: "⌘T", label: "Start another task" },
-    { keys: "⌘K", label: "Jump to any task, file or action" },
-    { keys: "⇧ scroll", label: "Move between agents" },
-  ],
-  actions: [{ label: "Got it", kind: "neutral" }],
-};
-
 export const COPIED: CompactToastProps = { tone: "green", title: "Path copied" };
 
 export const PUSHED: CompactToastProps = {

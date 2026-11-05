@@ -8,12 +8,13 @@ export type SidebarTask = {
   env?: "starting" | "down";
 };
 
-export type SidebarProject = { name: string; tasks: SidebarTask[] };
+export type SidebarProject = { id?: string; name: string; tasks: SidebarTask[] };
 
 export type SidebarWorkspace = {
   id: string;
   name: string;
   color: string;
+  image?: string;
   projects: SidebarProject[];
   expanded: boolean;
 };

@@ -1,6 +1,5 @@
-import { Folder, GitBranch, MoreHoriz, NavArrowRight, Plus } from "iconoir-react";
+import { ChevronRight, Folder, GitBranch, Plus } from "lucide-react";
 import { Monogram } from "@/components/atoms/entity-chip";
-import { IconButton } from "@/components/atoms/icon-button";
 import GlideMenu from "@/components/primitives/glide-menu";
 
 export interface SettingsProject {
@@ -15,6 +14,7 @@ export interface SettingsWorkspace {
   id: string;
   name: string;
   color: string;
+  image?: string;
   projects: readonly SettingsProject[];
 }
 
@@ -30,15 +30,21 @@ function ProjectRow({ project, onOpen }: { project: SettingsProject; onOpen?: ()
     >
       <Folder width={14} height={14} strokeWidth={2} className="shrink-0 text-ink-4" />
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className="text-sm font-medium text-ink">{project.name}</span>
+        <span className="truncate text-sm font-medium text-ink" title={project.name}>
+          {project.name}
+        </span>
         <span className="truncate font-mono text-2xs text-ink-4">{project.path}</span>
       </span>
-      <span className="flex h-5 items-center gap-1 rounded-chip px-1.5 font-mono text-3xs text-ink-3 shadow-[inset_0_0_0_1px_var(--line-strong)]">
-        <GitBranch width={10} height={10} strokeWidth={2} />
-        {project.branch}
+      <span className="flex h-5 max-w-[160px] shrink-0 items-center gap-1 rounded-chip px-1.5 font-mono text-3xs text-ink-3 shadow-[inset_0_0_0_1px_var(--line-strong)]">
+        <GitBranch width={10} height={10} strokeWidth={2} className="shrink-0" />
+        <span className="truncate" title={project.branch}>
+          {project.branch}
+        </span>
       </span>
-      <span className="w-12 text-right text-2xs text-ink-4">{count(project.tasks, "task")}</span>
-      <NavArrowRight width={13} height={13} strokeWidth={2} className="text-ink-4" />
+      <span className="w-12 shrink-0 text-right text-2xs text-ink-4">
+        {count(project.tasks, "task")}
+      </span>
+      <ChevronRight width={13} height={13} strokeWidth={2} className="shrink-0 text-ink-4" />
     </button>
   );
 }
@@ -55,14 +61,20 @@ export function WorkspaceCard({
   return (
     <div className="rounded-panel bg-surface p-1.5 shadow-card">
       <div className="flex h-11 items-center gap-2.5 pr-1 pl-2">
-        <Monogram size="md" className="size-[26px] rounded-[7px]" color={workspace.color}>
+        <Monogram
+          size="md"
+          className="size-[26px] shrink-0 rounded-[7px]"
+          color={workspace.color}
+          image={workspace.image}
+        >
           {workspace.name[0]}
         </Monogram>
-        <span className="text-sm font-semibold text-ink">{workspace.name}</span>
-        <span className="text-xs text-ink-4">{count(workspace.projects.length, "project")}</span>
-        <IconButton aria-label={`${workspace.name} actions`} size="sm" className="ml-auto">
-          <MoreHoriz width={14} height={14} strokeWidth={2} />
-        </IconButton>
+        <span className="truncate text-sm font-semibold text-ink" title={workspace.name}>
+          {workspace.name}
+        </span>
+        <span className="shrink-0 text-xs text-ink-4">
+          {count(workspace.projects.length, "project")}
+        </span>
       </div>
       <div className="rounded-field bg-inset p-1 shadow-[inset_0_0_0_1px_var(--line-soft)]">
         <GlideMenu className="flex flex-col">

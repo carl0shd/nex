@@ -1,7 +1,9 @@
-import { useState, type KeyboardEvent } from "react";
-import { BoxIso, GitBranch, Link, Play, Sparks } from "iconoir-react";
+import { useHotkey } from "@tanstack/react-hotkeys";
+import { useEffect, useRef, useState } from "react";
+import { GitBranch, Link, Package, Play, Sparkles } from "lucide-react";
 import { Button } from "@/components/atoms/button";
 import { Monogram } from "@/components/atoms/entity-chip";
+import { Spinner } from "@/components/atoms/spinner";
 import {
   BranchEditor,
   EnvironmentEditor,
@@ -57,73 +59,116 @@ export function AddProjectDialog({
   onAdd,
   onCancel,
   onChooseFolder,
+  onDropFolder,
   onClone,
   onPasteUrl,
+  editing = false,
 }: {
-  workspace: { name: string; color: string };
+  editing?: boolean;
+  workspace: { name: string; color: string; image?: string };
   found: readonly FoundRepo[];
-  detect: (repo: FoundRepo) => ProjectConfig;
+  detect: (repo: FoundRepo) => ProjectConfig | Promise<ProjectConfig>;
   initialRepo?: FoundRepo | null;
   initialSection?: Section | null;
   onAdd: (project: NewProject) => void;
   onCancel: () => void;
-  onChooseFolder?: () => void;
+  onChooseFolder?: () => Promise<FoundRepo | null>;
+  onDropFolder?: (file: File) => Promise<FoundRepo | null>;
   onClone?: () => void;
   onPasteUrl?: () => void;
 }) {
   const [repo, setRepo] = useState<FoundRepo | null>(initialRepo);
-  const [config, setConfig] = useState<ProjectConfig | null>(() =>
-    initialRepo ? detect(initialRepo) : null,
-  );
+  const [config, setConfig] = useState<ProjectConfig | null>(() => {
+    const detected = initialRepo ? detect(initialRepo) : null;
+    return detected instanceof Promise ? null : detected;
+  });
   const [open, setOpen] = useState<Section | null>(initialSection);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useEffect(() => dialogRef.current?.focus({ preventScroll: true }), []);
+  useEffect(() => {
+    if (!initialRepo || config) return;
+    void Promise.resolve(detect(initialRepo)).then(setConfig);
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const pick = (next: FoundRepo) => {
+  const pick = async (next: FoundRepo) => {
     setRepo(next);
-    setConfig(detect(next));
+    setConfig(null);
     setOpen(null);
+    setConfig(await detect(next));
   };
+  const chooseFolder = async () => {
+    const chosen = await onChooseFolder?.();
+    if (chosen) await pick(chosen);
+  };
+  const dropFolder = async (file: File) => {
+    const dropped = await onDropFolder?.(file);
+    if (dropped) await pick(dropped);
+  };
+  useHotkey("Mod+O", () => void chooseFolder(), {
+    target: dialogRef,
+    enabled: Boolean(onChooseFolder) && !repo,
+  });
   const add = () => repo && config && onAdd({ repo, config });
   const toggle = (section: Section) => () =>
     setOpen((current) => (current === section ? null : section));
 
-  const onKeyDown = (event: KeyboardEvent) => {
-    if (event.key === "Escape") onCancel();
-    if (event.key === "Enter" && event.metaKey) {
-      event.preventDefault();
-      add();
-    }
-  };
+  useHotkey("Escape", onCancel, { target: dialogRef });
+  useHotkey("Mod+Enter", add, { target: dialogRef });
 
   return (
     <div
       role="dialog"
-      aria-label={`Add a project to ${workspace.name}`}
-      onKeyDown={onKeyDown}
-      className="enter-pop relative w-[580px] overflow-hidden rounded-sheet bg-surface-raised shadow-modal"
+      aria-label={editing && repo ? `Edit ${repo.name}` : `Add a project to ${workspace.name}`}
+      ref={dialogRef}
+      tabIndex={-1}
+      className="enter-pop relative w-[580px] rounded-sheet outline-none bg-surface-raised shadow-modal"
       style={{ transformOrigin: "top center" }}
     >
       <div className="flex items-center gap-2.5 px-[22px] pt-5">
-        <Monogram color={workspace.color} className="size-[22px] rounded-[6px] text-3xs">
+        <Monogram
+          color={workspace.color}
+          image={workspace.image}
+          className="size-[22px] rounded-[6px] text-3xs"
+        >
           {workspace.name[0]}
         </Monogram>
         <h2 className="m-0 text-lg font-semibold tracking-[-0.012em] text-ink">
-          {repo ? "Add a project" : `Add a project to ${workspace.name}`}
+          {editing && repo
+            ? `Edit ${repo.name}`
+            : repo
+              ? "Add a project"
+              : `Add a project to ${workspace.name}`}
         </h2>
       </div>
 
-      {!repo || !config ? (
+      {!repo ? (
         <>
           <div className="px-[22px] pt-4">
-            <RepoDropZone onChooseFolder={onChooseFolder} onClone={onClone} />
+            <RepoDropZone
+              onChooseFolder={onChooseFolder && (() => void chooseFolder())}
+              onClone={onClone}
+              onDropFolder={onDropFolder && ((file) => void dropFolder(file))}
+            />
           </div>
-          <div className="px-[22px] pt-[18px] pb-1">
-            <FoundRepos repos={found} onPick={pick} />
-          </div>
+          {found.length > 0 && (
+            <div className="px-[22px] pt-[18px] pb-1">
+              <FoundRepos repos={found} onPick={(next) => void pick(next)} />
+            </div>
+          )}
         </>
+      ) : !config ? (
+        <div className="flex flex-col gap-3 px-[22px] pt-4 pb-1">
+          <PickedRepo repo={repo} onChange={editing ? undefined : () => setRepo(null)} />
+          <span className="flex items-center gap-2 px-0.5 text-xs text-ink-3">
+            <Spinner className="size-3" />
+            Reading {repo.name}…
+          </span>
+        </div>
       ) : (
         <>
           <div className="px-[22px] pt-4">
-            <PickedRepo repo={repo} onChange={() => setRepo(null)} />
+            <PickedRepo repo={repo} onChange={editing ? undefined : () => setRepo(null)} />
           </div>
           <div className="flex flex-col px-[22px] pt-4 pb-1">
             <span className="px-0.5 pb-1.5 text-xs text-ink-3">Nex will set it up like this</span>
@@ -141,7 +186,7 @@ export function AddProjectDialog({
                 />
               </SetupSection>
               <SetupSection
-                icon={config.environment ? Sparks : BoxIso}
+                icon={config.environment ? Sparkles : Package}
                 phrase={setupPhrase(config.setup)}
                 open={open === "setup"}
                 onToggle={toggle("setup")}
@@ -154,7 +199,7 @@ export function AddProjectDialog({
               </SetupSection>
               {config.environment && (
                 <SetupSection
-                  icon={BoxIso}
+                  icon={Package}
                   phrase={[{ text: "Each task runs in its own environment" }]}
                   open={open === "environment"}
                   onToggle={toggle("environment")}
@@ -181,7 +226,7 @@ export function AddProjectDialog({
       )}
 
       <div className="flex items-center gap-2 px-[22px] pt-3.5 pb-5">
-        {!repo && (
+        {!repo && onPasteUrl && (
           <Button variant="quiet" size="sm" onClick={onPasteUrl}>
             <Link width={12} height={12} strokeWidth={2.25} />
             Paste a git URL
@@ -191,8 +236,15 @@ export function AddProjectDialog({
         <Button size="sm" className="h-8" onClick={onCancel}>
           Cancel
         </Button>
-        <Button variant="primary" size="sm" kbd="⌘↵" className="h-8" disabled={!repo} onClick={add}>
-          {repo ? `Add ${repo.name}` : "Add project"}
+        <Button
+          variant="primary"
+          size="sm"
+          kbd="⌘↵"
+          className="h-8"
+          disabled={!repo || !config}
+          onClick={add}
+        >
+          {editing ? "Save" : repo ? `Add ${repo.name}` : "Add project"}
         </Button>
       </div>
     </div>

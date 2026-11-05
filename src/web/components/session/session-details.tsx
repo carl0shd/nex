@@ -1,16 +1,16 @@
 import { useState, type ReactNode } from "react";
 import {
   Copy,
-  Dollar,
-  EvPlug,
+  DollarSign,
+  ExternalLink,
   Globe,
-  OpenNewWindow,
-  Refresh,
+  Plug,
+  RotateCcw,
   Settings,
   ShieldCheck,
-  Sparks,
+  Sparkles,
   Terminal,
-} from "iconoir-react";
+} from "lucide-react";
 import { ClaudeTile } from "@/components/atoms/agent-tile";
 import { Kbd } from "@/components/atoms/kbd";
 import { LogoTile } from "@/components/atoms/logo-tile";
@@ -95,7 +95,7 @@ export function EnvironmentPopover({ environment }: { environment: SessionEnviro
           label={<Mono name={service.name} detail={service.detail} />}
           trailing={
             service.url && (
-              <OpenNewWindow width={12} height={12} strokeWidth={2} className="text-ink-4" />
+              <ExternalLink width={12} height={12} strokeWidth={2} className="text-ink-4" />
             )
           }
           mono
@@ -103,7 +103,7 @@ export function EnvironmentPopover({ environment }: { environment: SessionEnviro
       ))}
       <PopoverSeparator />
       <PopoverAction icon={Globe} label="Open in the panel" />
-      <PopoverAction icon={Refresh} label="Restart environment" />
+      <PopoverAction icon={RotateCcw} label="Restart environment" />
       <PopoverAction icon={Terminal} label="Logs in Shell" />
     </SessionPopover>
   );
@@ -123,11 +123,11 @@ export function SessionInfoPopover({ session }: { session: SessionInfo }) {
         trailing={<Kbd>⇧⇥</Kbd>}
       />
       <PopoverRow
-        leading={<Sparks width={13} height={13} strokeWidth={2} />}
+        leading={<Sparkles width={13} height={13} strokeWidth={2} />}
         label={session.model}
       />
       <PopoverRow
-        leading={<Dollar width={13} height={13} strokeWidth={2} />}
+        leading={<DollarSign width={13} height={13} strokeWidth={2} />}
         label="This task"
         trailing={<span className="text-xs text-ink-4">{session.cost}</span>}
       />
@@ -164,7 +164,7 @@ export function ContextPopover({ context }: { context: SessionContext }) {
         <ContextBar key={part.label} label={part.label} tokens={part.tokens} total={context.used} />
       ))}
       <PopoverSeparator />
-      <PopoverAction icon={Refresh} label="Compact now" meta={`auto at ${context.compactAt}%`} />
+      <PopoverAction icon={RotateCcw} label="Compact now" meta={`auto at ${context.compactAt}%`} />
     </SessionPopover>
   );
 }
@@ -293,7 +293,7 @@ export function TaskSessionStrip({
         {...props("connectors")}
         chip={
           <SessionChip open={open === "connectors"} onClick={toggle("connectors")}>
-            <EvPlug width={12} height={12} strokeWidth={2} />
+            <Plug width={12} height={12} strokeWidth={2} />
             {connectedCount} connectors
             {needsAttention && <StatusDot tone="orange" />}
           </SessionChip>

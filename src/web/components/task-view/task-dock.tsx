@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Collapse, Expand, Globe, Xmark } from "iconoir-react";
+import { Globe, Maximize2, Minimize2, X } from "lucide-react";
 import { IconButton } from "@/components/atoms/icon-button";
 import { Tabs } from "@/components/atoms/tabs";
 import { DiffStat } from "@/components/task/task-tab-bar";
@@ -61,13 +61,13 @@ export function TaskDock({
             onClick={() => onExpandedChange(!expanded)}
           >
             {expanded ? (
-              <Collapse width={13} height={13} strokeWidth={2} />
+              <Minimize2 width={13} height={13} strokeWidth={2} />
             ) : (
-              <Expand width={13} height={13} strokeWidth={2} />
+              <Maximize2 width={13} height={13} strokeWidth={2} />
             )}
           </IconButton>
           <IconButton size="sm" aria-label="Close panel" onClick={onClose}>
-            <Xmark width={14} height={14} strokeWidth={2} />
+            <X width={14} height={14} strokeWidth={2} />
           </IconButton>
         </span>
       </div>

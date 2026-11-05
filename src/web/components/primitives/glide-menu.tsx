@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
 type GlideMenuProps = {
   children: ReactNode;
@@ -18,8 +18,9 @@ export default function GlideMenu({
   role,
 }: GlideMenuProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [box, setBox] = useState<{ top: number; height: number } | null>(null);
+  const [box, setBox] = useState<{ top: number; height: number; row: HTMLElement } | null>(null);
   const [visible, setVisible] = useState(false);
+  const highlightRef = useRef<HTMLSpanElement>(null);
 
   const moveTo = (target: EventTarget | null) => {
     const container = ref.current;
@@ -28,9 +29,21 @@ export default function GlideMenu({
     if (!(row instanceof HTMLElement) || !container.contains(row)) return;
     const containerRect = container.getBoundingClientRect();
     const rowRect = row.getBoundingClientRect();
-    setBox({ top: rowRect.top - containerRect.top, height: rowRect.height });
+    const top = rowRect.top - containerRect.top;
+    if (highlightRef.current) {
+      highlightRef.current.style.top = `${top}px`;
+      highlightRef.current.style.height = `${rowRect.height}px`;
+    }
+    setBox({ top, height: rowRect.height, row });
     setVisible(true);
   };
+
+  useLayoutEffect(() => {
+    const highlight = highlightRef.current;
+    if (!highlight || !box || box.row.isConnected) return;
+    highlight.style.top = "0px";
+    highlight.style.height = "0px";
+  }, [box, children]);
 
   return (
     <div
@@ -45,6 +58,7 @@ export default function GlideMenu({
       className={`group/glide-menu relative ${className}`}
     >
       <span
+        ref={highlightRef}
         aria-hidden
         className={`pointer-events-none absolute ${highlightClassName}`}
         style={{

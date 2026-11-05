@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Database, Globe, MoreHoriz, Play, Plus, Xmark } from "iconoir-react";
+import { Database, Ellipsis, Globe, Play, Plus, X } from "lucide-react";
 import { Button } from "@/components/atoms/button";
 import { Checkbox } from "@/components/atoms/checkbox";
 import { IconButton } from "@/components/atoms/icon-button";
@@ -100,9 +100,13 @@ export function BranchEditor({
       </Note>
       <Divider />
       <div className="flex items-center gap-3">
-        <span className="flex flex-1 flex-col">
-          <span className="text-sm font-medium text-ink">
-            Pull {value.base} before each new task
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="flex min-w-0 text-sm font-medium text-ink">
+            <span className="shrink-0">Pull&nbsp;</span>
+            <span title={value.base} className="truncate">
+              {value.base}
+            </span>
+            <span className="shrink-0">&nbsp;before each new task</span>
           </span>
           <span className="text-xs text-ink-3">So agents never start from a stale base.</span>
         </span>
@@ -117,7 +121,7 @@ function FileChip({ name, onRemove }: { name: string; onRemove: () => void }) {
     <span className="flex h-6 items-center gap-1 rounded-chip pr-0.5 pl-2 font-mono text-2xs text-ink shadow-[inset_0_0_0_1px_var(--line-strong)]">
       {name}
       <IconButton aria-label={`Remove ${name}`} size="sm" onClick={onRemove} className="size-5">
-        <Xmark width={10} height={10} strokeWidth={2.5} />
+        <X width={10} height={10} strokeWidth={2.5} />
       </IconButton>
     </span>
   );
@@ -253,9 +257,9 @@ export function QuickCommandsEditor({
   };
   return (
     <>
-      <div className="flex flex-col gap-1">
+      <div className="menu-scroll -mr-1.5 flex max-h-[272px] flex-col gap-1 overflow-y-auto pr-1.5">
         {value.map((item) => (
-          <div key={item.name} className="flex h-8 items-center gap-3">
+          <div key={item.name} className="flex h-8 shrink-0 items-center gap-3">
             <Switch
               size="sm"
               checked={item.on}
@@ -265,8 +269,12 @@ export function QuickCommandsEditor({
                 )
               }
             />
-            <span className="w-24 font-mono text-xs text-ink">{item.name}</span>
-            <span className="font-mono text-2xs text-ink-4">{item.command}</span>
+            <span title={item.name} className="w-32 shrink-0 truncate font-mono text-xs text-ink">
+              {item.name}
+            </span>
+            <span title={item.command} className="min-w-0 truncate font-mono text-2xs text-ink-4">
+              {item.command}
+            </span>
           </div>
         ))}
       </div>
@@ -321,7 +329,7 @@ function GroupLabel({ label, source }: { label: string; source?: string }) {
 function ServiceMenu({ name }: { name: string }) {
   return (
     <IconButton aria-label={`${name} options`} size="sm" className="size-6">
-      <MoreHoriz width={13} height={13} strokeWidth={2} />
+      <Ellipsis width={13} height={13} strokeWidth={2} />
     </IconButton>
   );
 }

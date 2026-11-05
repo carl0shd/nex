@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Copy, NavArrowLeft, NavArrowRight, OpenNewWindow, Xmark } from "iconoir-react";
+import { ChevronLeft, ChevronRight, Copy, ExternalLink, X } from "lucide-react";
 import { Button } from "@/components/atoms/button";
 import { IconButton } from "@/components/atoms/icon-button";
 import { SearchField } from "@/components/atoms/search-field";
@@ -44,11 +44,11 @@ export function LicenseSheet({ item, onClose }: { item: PackageLicense; onClose:
           size="sm"
           onClick={() => window.open(`https://www.npmjs.com/package/${item.name}`, "_blank")}
         >
-          <OpenNewWindow width={12} height={12} strokeWidth={2} />
+          <ExternalLink width={12} height={12} strokeWidth={2} />
           npm
         </Button>
         <IconButton aria-label="Close" size="sm" onClick={onClose}>
-          <Xmark width={14} height={14} strokeWidth={2} />
+          <X width={14} height={14} strokeWidth={2} />
         </IconButton>
       </div>
       <pre className="m-0 max-h-[460px] overflow-auto px-5 py-4 font-mono text-2xs leading-[18px] whitespace-pre-wrap text-ink-2 select-text">
@@ -80,7 +80,7 @@ export function LicensesView({
         onClick={onBack}
         className="interactive press -ml-1 flex w-fit cursor-pointer items-center gap-1 rounded-control px-1 text-sm text-ink-3 select-none hover:text-ink"
       >
-        <NavArrowLeft width={13} height={13} strokeWidth={2} />
+        <ChevronLeft width={13} height={13} strokeWidth={2} />
         Settings
       </button>
       <h1 className="m-0 mt-5 text-2xl font-semibold tracking-[-0.025em] text-ink">
@@ -116,7 +116,7 @@ export function LicensesView({
                 <span className="text-sm font-medium text-ink">{item.name}</span>
                 <span className="font-mono text-2xs text-ink-4">{item.version}</span>
                 <span className="ml-auto text-xs text-ink-3">{item.license}</span>
-                <NavArrowRight width={12} height={12} strokeWidth={2} className="text-ink-4" />
+                <ChevronRight width={12} height={12} strokeWidth={2} className="text-ink-4" />
               </button>
             ))}
           </GlideMenu>

@@ -1,5 +1,5 @@
-import { Search } from "iconoir-react";
-import { KeyCaps } from "@/components/atoms/kbd";
+import { Search } from "lucide-react";
+import { Kbd } from "@/components/atoms/kbd";
 import { cn } from "@/lib/utils";
 
 export function SearchField({
@@ -34,7 +34,7 @@ export function SearchField({
         onChange={(event) => onChange(event.target.value)}
         className="min-w-0 flex-1 bg-transparent text-sm text-ink outline-none select-text placeholder:text-ink-4 [&::-webkit-search-cancel-button]:hidden"
       />
-      {shortcut && <KeyCaps keys={shortcut} />}
+      {shortcut && <Kbd className="shrink-0">{shortcut.join("")}</Kbd>}
     </label>
   );
 }

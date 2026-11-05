@@ -1,3 +1,5 @@
+import type { AgentModel } from "@native/agents/agent-models";
+import type { ContextUsage } from "@native/agents/context-usage";
 import type {
   Workspace,
   CreateWorkspaceInput,
@@ -24,13 +26,30 @@ import type {
 import type { AvailableAgent, InstallAgentResult } from "@native/agents/detect";
 import type { WorktreeDiffOptions, WorktreeFileVersionsInput } from "@native/git/git";
 import type { GitInfo, CloneProgress, CloneResult } from "@native/git/clone";
+import type { RepoInspection } from "@native/git/inspect";
+import type { FinishSignInInput, ReauthResult, SignInResult } from "@native/agents/sign-in";
+import type { TranscriptChunk, TranscriptCursor } from "@native/agents/transcript";
+import type { PermissionAnswer, PermissionRequest } from "@native/agents/permissions";
+import type { AgentLiveEvent, AgentMessage, AgentRunState } from "@native/agents/agent-runner";
+import type { AgentCommand } from "@native/agents/agent-commands";
+import type { McpServer } from "@native/agents/mcp-servers";
+import type { AgentSettings } from "@native/agents/agent-settings";
 import type { GhInfo, GithubOwner, GithubRepo } from "@native/git/github";
 import type { UsageGranularity, UsageStats, UsageSummary } from "@native/usage/types";
 
 interface NexAPI {
+  getOpenAtLogin: () => Promise<boolean>;
+  setOpenAtLogin: (openAtLogin: boolean) => Promise<void>;
+  playSound: (name: string) => Promise<void>;
+  setDockBadge: (count: number) => Promise<void>;
+  listShells: () => Promise<string[]>;
+  installedApps: (names: string[]) => Promise<string[]>;
+  openWith: (appName: string, path: string) => Promise<boolean>;
+  setZoomFactor: (factor: number) => void;
   getAppInfo: () => Promise<{
     platform: string;
     version: string;
+    dataDir: string;
     versions: { electron: string; chrome: string; node: string };
   }>;
 
@@ -66,15 +85,26 @@ interface NexAPI {
   getActiveSessions: () => Promise<Session[]>;
   createSession: (input: CreateSessionInput) => Promise<Session>;
   updateSession: (id: string, input: UpdateSessionInput) => Promise<Session>;
-  deleteSession: (id: string) => Promise<void>;
+  deleteSession: (id: string, keepBranch?: boolean) => Promise<void>;
   reorderSessions: (orderedIds: string[]) => Promise<void>;
   readSessionNotes: (sessionId: string) => Promise<string>;
   writeSessionNotes: (sessionId: string, content: string) => Promise<void>;
 
   showWindow: () => Promise<void>;
   detectAgents: () => Promise<AvailableAgent[]>;
+  getAgentVersion: (agentId: string) => Promise<string | null>;
+  upgradeAgent: (agentId: string) => Promise<string | null>;
+  inspectRepo: (path: string) => Promise<RepoInspection>;
+  pathForFile: (file: File) => string;
+  openInFinder: (path: string) => Promise<boolean>;
   installAgent: (slug: string) => Promise<InstallAgentResult>;
   cloneAgentAccount: (input: CloneAgentAccountInput) => Promise<AgentAccount>;
+  signInAccount: () => Promise<SignInResult>;
+  reauthAccount: (accountId: string) => Promise<ReauthResult>;
+  cancelSignIn: () => Promise<void>;
+  finishSignIn: (input: FinishSignInInput) => Promise<AgentAccount>;
+  discardSignIn: (configDir: string) => Promise<void>;
+  onSignInUrl: (callback: (url: string) => void) => () => void;
   startWork: (input: StartWorkInput) => Promise<Session>;
   detectGit: () => Promise<GitInfo>;
   cloneRepository: (url: string, parentDir: string) => Promise<CloneResult>;
@@ -95,6 +125,35 @@ interface NexAPI {
   ) => Promise<{ oldContents: string | null; newContents: string | null }>;
   discardWorktreeFile: (worktreePath: string, path: string, prevPath?: string) => Promise<void>;
   watchWorktree: (worktreePath: string, callback: () => void) => () => void;
+  agentSend: (sessionId: string, content: AgentMessage) => Promise<void>;
+  agentWarm: (sessionId: string) => Promise<void>;
+  mcpStatus: (sessionId: string) => Promise<McpServer[]>;
+  mcpToggle: (sessionId: string, name: string, enabled: boolean) => Promise<McpServer[]>;
+  mcpReconnect: (sessionId: string, name: string) => Promise<McpServer[]>;
+  mcpSignIn: (sessionId: string, name: string) => Promise<McpServer[]>;
+  mcpRemove: (sessionId: string, name: string) => Promise<McpServer[]>;
+  agentContext: (sessionId: string) => Promise<ContextUsage | null>;
+  lastAgentContext: (sessionId: string) => Promise<ContextUsage | null>;
+  pickFiles: () => Promise<string[]>;
+  agentCommands: (sessionId: string) => Promise<AgentCommand[]>;
+  agentModels: () => Promise<AgentModel[]>;
+  onAgentModels: (callback: () => void) => () => void;
+  onAgentCommands: (callback: (info: { sessionId: string }) => void) => () => void;
+  countUncommitted: (worktreePath: string) => Promise<number>;
+  agentInterrupt: (sessionId: string) => Promise<void>;
+  agentStates: () => Promise<Record<string, AgentRunState>>;
+  getAgentSettings: (sessionId: string) => Promise<AgentSettings>;
+  configureAgent: (sessionId: string, settings: AgentSettings) => Promise<void>;
+  onAgentState: (
+    callback: (info: { sessionId: string; state: AgentRunState }) => void,
+  ) => () => void;
+  onAgentEvent: (callback: (event: AgentLiveEvent) => void) => () => void;
+  getPendingPermissions: () => Promise<PermissionRequest[]>;
+  answerPermission: (id: string, answer: PermissionAnswer) => Promise<void>;
+  onPermissionRequest: (callback: (request: PermissionRequest) => void) => () => void;
+  onPermissionResolved: (callback: (id: string) => void) => () => void;
+  readTranscript: (terminalId: string, cursor: TranscriptCursor | null) => Promise<TranscriptChunk>;
+  watchTranscript: (terminalId: string, callback: () => void) => () => void;
 
   pickImage: () => Promise<string | null>;
   pickDirectory: () => Promise<string | null>;
@@ -158,8 +217,9 @@ interface NexAPI {
     cancel: () => Promise<void>;
     onEvent: (
       callback: (event: {
-        type: "state" | "partial" | "final" | "error" | "end" | "devicesChanged";
+        type: "state" | "partial" | "final" | "error" | "end" | "devicesChanged" | "level";
         state?: string;
+        level?: number;
         text?: string;
         confidence?: number;
         timestampMs?: number;

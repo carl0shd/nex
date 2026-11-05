@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
+import { KeyText } from "@/components/atoms/kbd";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
@@ -43,7 +44,9 @@ export function Button({ variant, size, kbd, className, children, ...props }: Bu
     >
       {children}
       {kbd && (
-        <span className="rounded-chip bg-white/15 px-1.5 py-0.5 text-3xs leading-none">{kbd}</span>
+        <span className="rounded-chip bg-white/15 px-1.5 py-0.5 text-3xs leading-none">
+          <KeyText>{kbd}</KeyText>
+        </span>
       )}
     </button>
   );
