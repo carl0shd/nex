@@ -1,13 +1,11 @@
 import { RotateCw } from "lucide-react";
 import { ClaudeTile } from "@/components/atoms/agent-tile";
 import { IconButton } from "@/components/atoms/icon-button";
-import { Kbd } from "@/components/atoms/kbd";
 import { StatusDot, type DotTone } from "@/components/atoms/status-dot";
 import GlideMenu from "@/components/primitives/glide-menu";
 import { AccountSwitch, type UsageAccount } from "@/components/usage/account-switch";
 import { SessionLimit, type SessionWindow } from "@/components/usage/session-limit";
 import { SpendTrend, type DailySpend } from "@/components/usage/spend-trend";
-import { shortcutLabel } from "@/lib/app-shortcuts";
 
 export type UsageTaskStatus = "running" | "waiting" | "idle";
 
@@ -54,7 +52,6 @@ export function UsagePanel({
   tasks,
   onOpenTask,
   summary,
-  onDetails,
 }: {
   accounts: readonly UsageAccount[];
   account: string;
@@ -68,7 +65,6 @@ export function UsagePanel({
   tasks: readonly UsageTask[];
   onOpenTask?: (id: string) => void;
   summary: string;
-  onDetails?: () => void;
 }) {
   return (
     <div
@@ -99,14 +95,6 @@ export function UsagePanel({
 
       <div className="flex h-10 items-center gap-2 border-t border-line bg-inset/35 pr-2 pl-[18px]">
         <span className="text-2xs text-ink-4">{summary}</span>
-        <button
-          type="button"
-          onClick={onDetails}
-          className="interactive press ml-auto flex h-[26px] cursor-pointer items-center gap-1.5 rounded-full pr-1.5 pl-2.5 text-xs font-medium text-ink-2 select-none hover:bg-hover hover:text-ink"
-        >
-          Usage details
-          <Kbd>{shortcutLabel("usage")}</Kbd>
-        </button>
       </div>
     </div>
   );
