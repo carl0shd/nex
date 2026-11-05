@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { EditPencil, Eye, Terminal } from "iconoir-react";
+import { Eye, PenLine, Terminal } from "lucide-react";
 import { Shimmer } from "@/components/atoms/shimmer";
 import { Spinner } from "@/components/atoms/spinner";
 import { BlockDetail, BlockRow, DiffLines, type NumberedDiffLine } from "@/components/task/blocks";
@@ -16,7 +16,7 @@ export function AgentText({ children }: { children: ReactNode }) {
   return <p className="m-0 text-sm text-ink-2">{children}</p>;
 }
 
-const TOOL_ICON = { read: Eye, edit: EditPencil, bash: Terminal } as const;
+const TOOL_ICON = { read: Eye, edit: PenLine, bash: Terminal } as const;
 
 export type ToolKind = keyof typeof TOOL_ICON;
 

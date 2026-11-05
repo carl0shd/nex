@@ -1,9 +1,7 @@
 import { useState, type ReactNode } from "react";
-import { Check, Copy, Lock, OpenNewWindow, WarningCircle, Xmark } from "iconoir-react";
+import { Check, CircleAlert, Copy, ExternalLink, Lock, X } from "lucide-react";
 import { ClaudeTile } from "@/components/atoms/agent-tile";
 import { Button } from "@/components/atoms/button";
-import { ColorSwatches, type Swatch } from "@/components/atoms/color-swatches";
-import { Monogram } from "@/components/atoms/entity-chip";
 import { Orbit } from "@/components/atoms/orbit";
 import { Switch } from "@/components/atoms/switch";
 import { TextField } from "@/components/atoms/text-field";
@@ -24,23 +22,13 @@ export type AddAccountStage =
   | { stage: "failed" }
   | { stage: "expired"; account: SignedInAccount; pausedTasks: number };
 
-const ACCOUNT_COLORS: readonly Swatch[] = [
-  { name: "Green", color: "#33843F" },
-  { name: "Purple", color: "#6b21a8" },
-  { name: "Blue", color: "#3f6fb5" },
-  { name: "Amber", color: "#b07a1f" },
-  { name: "Red", color: "#c4513d" },
-  { name: "Gray", color: "#52544f" },
-];
-
 function AccountCard({ account, trailing }: { account: SignedInAccount; trailing?: ReactNode }) {
   return (
     <div className="flex items-center gap-2.5 rounded-field bg-hover px-3 py-2.5">
-      <Monogram size="md" color={account.color}>
-        {account.name[0]}
-      </Monogram>
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className="text-sm font-medium text-ink">{account.name}</span>
+        <span title={account.name} className="truncate text-sm font-medium text-ink">
+          {account.name}
+        </span>
         <span className="truncate font-mono text-2xs text-ink-4">{account.email}</span>
       </span>
       {trailing}
@@ -57,19 +45,27 @@ function PrivacyNote({ children }: { children: ReactNode }) {
   );
 }
 
-function LinkActions({ onOpenAgain }: { onOpenAgain?: () => void }) {
+function LinkActions({
+  onOpenAgain,
+  onCopyLink,
+}: {
+  onOpenAgain?: () => void;
+  onCopyLink?: () => void;
+}) {
   return (
     <div className="flex gap-1">
       {onOpenAgain && (
         <Button variant="quiet" size="sm" onClick={onOpenAgain}>
-          <OpenNewWindow width={12} height={12} strokeWidth={2} />
+          <ExternalLink width={12} height={12} strokeWidth={2} />
           Open again
         </Button>
       )}
-      <Button variant="quiet" size="sm">
-        <Copy width={12} height={12} strokeWidth={2} />
-        Copy link
-      </Button>
+      {onCopyLink && (
+        <Button variant="quiet" size="sm" onClick={onCopyLink}>
+          <Copy width={12} height={12} strokeWidth={2} />
+          Copy link
+        </Button>
+      )}
     </div>
   );
 }
@@ -84,7 +80,6 @@ function SignedInDialog({
   onClose?: () => void;
 }) {
   const [name, setName] = useState(account.name.split(" ")[0]);
-  const [color, setColor] = useState(account.color);
   const [isDefault, setIsDefault] = useState(false);
   return (
     <ModalCard
@@ -97,32 +92,20 @@ function SignedInDialog({
           variant="primary"
           kbd="⌘↵"
           className="ml-auto"
-          onClick={() => onAdd?.({ ...account, name, color, isDefault })}
+          onClick={() => onAdd?.({ ...account, name, isDefault })}
         >
           Add account
         </Button>
       }
     >
       <div className="flex flex-col gap-4">
-        <AccountCard
-          account={{ ...account, color }}
-          trailing={<ValuePill tone="accent">Connected</ValuePill>}
-        />
+        <AccountCard account={account} trailing={<ValuePill tone="accent">Connected</ValuePill>} />
         <TextField
           label="Name in Nex"
           value={name}
           onChange={(event) => setName(event.target.value)}
           size="md"
         />
-        <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium text-ink-3">Color</span>
-          <ColorSwatches
-            value={color}
-            onChange={setColor}
-            swatches={ACCOUNT_COLORS}
-            shape="square"
-          />
-        </div>
         <div className="flex items-center gap-3">
           <span className="flex flex-1 flex-col">
             <span className="text-sm font-medium text-ink">Use for new tasks</span>
@@ -139,6 +122,7 @@ export function AddAccountDialog({
   state,
   onContinue,
   onOpenAgain,
+  onCopyLink,
   onRetry,
   onAdd,
   onClose,
@@ -146,6 +130,7 @@ export function AddAccountDialog({
   state: AddAccountStage;
   onContinue?: () => void;
   onOpenAgain?: () => void;
+  onCopyLink?: () => void;
   onRetry?: () => void;
   onAdd?: (account: SignedInAccount & { isDefault: boolean }) => void;
   onClose?: () => void;
@@ -158,7 +143,6 @@ export function AddAccountDialog({
       return (
         <ModalCard
           title="Add a Claude account"
-          description="Sign in once and pick it per task."
           icon={claude}
           onClose={onClose}
           footer={
@@ -167,7 +151,7 @@ export function AddAccountDialog({
               {cancel}
               <Button variant="primary" onClick={onContinue}>
                 Continue in browser
-                <OpenNewWindow width={12} height={12} strokeWidth={2} />
+                <ExternalLink width={12} height={12} strokeWidth={2} />
               </Button>
             </>
           }
@@ -207,7 +191,7 @@ export function AddAccountDialog({
               We opened claude.ai. Nex picks it up as soon as you approve.
             </span>
             <div className="mt-4">
-              <LinkActions onOpenAgain={onOpenAgain} />
+              <LinkActions onOpenAgain={onOpenAgain} onCopyLink={onCopyLink} />
             </div>
           </div>
         </ModalCard>
@@ -218,7 +202,7 @@ export function AddAccountDialog({
       return (
         <ModalCard
           title="This account is already in Nex"
-          icon={<StatusIcon tone="orange" icon={WarningCircle} />}
+          icon={<StatusIcon tone="orange" icon={CircleAlert} />}
           onClose={onClose}
           footer={
             <>
@@ -242,11 +226,11 @@ export function AddAccountDialog({
       return (
         <ModalCard
           title="Sign-in didn’t finish"
-          icon={<StatusIcon tone="red" icon={Xmark} />}
+          icon={<StatusIcon tone="red" icon={X} />}
           onClose={onClose}
           footer={
             <>
-              <LinkActions />
+              <LinkActions onCopyLink={onCopyLink} />
               <span className="ml-auto" />
               {cancel}
               <Button variant="primary" onClick={onRetry}>
@@ -272,7 +256,7 @@ export function AddAccountDialog({
               <Button onClick={onClose}>Later</Button>
               <Button variant="primary" onClick={onContinue}>
                 Continue in browser
-                <OpenNewWindow width={12} height={12} strokeWidth={2} />
+                <ExternalLink width={12} height={12} strokeWidth={2} />
               </Button>
             </>
           }

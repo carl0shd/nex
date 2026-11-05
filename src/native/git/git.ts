@@ -11,7 +11,7 @@ function git(cwd: string, args: string[]): Promise<string> {
   });
 }
 
-function gitSilent(cwd: string, args: string[]): Promise<string> {
+export function gitSilent(cwd: string, args: string[]): Promise<string> {
   return new Promise((resolve) => {
     execFile("git", args, { cwd }, (_err, stdout) => {
       resolve((stdout || "").trim());
@@ -65,6 +65,11 @@ async function mapWithConcurrency<T, R>(
   });
   await Promise.all(workers);
   return results;
+}
+
+export async function countUncommitted(worktreePath: string): Promise<number> {
+  const output = await gitSilent(worktreePath, ["status", "--porcelain"]);
+  return output ? output.split("\n").length : 0;
 }
 
 export async function isGitRepo(path: string): Promise<boolean> {

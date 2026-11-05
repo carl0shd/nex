@@ -7,7 +7,6 @@ import {
   CREATE_FAILED,
   CREATING,
   DONE,
-  FIRST_RUN,
   LIMIT,
   NEEDS_YOU,
   PUSHED,
@@ -124,9 +123,6 @@ export function Toasts() {
             </Labeled>
             <Labeled label="Update ready">
               <Toast {...UPDATE} />
-            </Labeled>
-            <Labeled label="First run">
-              <Toast {...FIRST_RUN} />
             </Labeled>
           </Column>
         </div>

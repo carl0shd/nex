@@ -1,19 +1,21 @@
 import { useState, type ReactNode } from "react";
 import {
   AtSign,
-  Attachment,
-  Folder,
-  GridPlus,
-  GridXmark,
-  NavArrowRight,
-  Plus,
+  ChevronRight,
+  Grid2x2Plus,
+  Grid2x2X,
+  Paperclip,
+  PowerOff,
   Search,
-  Settings,
-  SlashSquare,
-} from "iconoir-react";
+  SquareSlash,
+  Trash2,
+} from "lucide-react";
 import { Button } from "@/components/atoms/button";
+import { HoverSwap } from "@/components/atoms/hover-swap";
+import { IconButton } from "@/components/atoms/icon-button";
 import { Kbd } from "@/components/atoms/kbd";
 import { LogoTile } from "@/components/atoms/logo-tile";
+import { Spinner } from "@/components/atoms/spinner";
 import { Switch } from "@/components/atoms/switch";
 import { ComposerPill } from "@/components/composer/composer-pill";
 import { Menu, MenuItem, MenuLabel, MenuSeparator } from "@/components/primitives/menu";
@@ -26,6 +28,9 @@ export interface Connector {
   detail?: string;
   enabled: boolean;
   failed?: boolean;
+  needsSignIn?: boolean;
+  removable?: boolean;
+  busy?: boolean;
 }
 
 export interface ConnectorGroup {
@@ -53,55 +58,103 @@ function ConnectorRow({
   query,
   onToggle,
   onRetry,
+  onRemove,
 }: {
   connector: Connector;
   query: string;
   onToggle: (id: string, enabled: boolean) => void;
   onRetry: (id: string) => void;
+  onRemove?: (id: string) => void;
 }) {
   const live = connector.enabled && !connector.failed;
-  return (
-    <div
-      data-menu-row
-      className="relative flex h-[34px] items-center gap-2.5 rounded-control px-2.5 select-none"
-    >
+  const identity = (
+    <>
       <LogoTile color={connector.logo.color} ink={connector.logo.ink}>
         {connector.logo.letter}
       </LogoTile>
-      <span className="flex min-w-0 flex-col">
+      <span className="flex min-w-0 flex-1 flex-col text-left">
         <span className={cn("truncate text-sm", live ? "text-ink" : "text-ink-3")}>
           <HighlightedName name={connector.name} query={query} />
         </span>
         {connector.detail && !query && (
-          <span className="text-3xs leading-3 text-ink-4">{connector.detail}</span>
+          <span title={connector.detail} className="truncate text-3xs leading-3 text-ink-4">
+            {connector.detail}
+          </span>
         )}
       </span>
-      <span className="ml-auto flex items-center gap-2">
-        {connector.failed ? (
-          <>
-            <span className="flex items-center gap-[5px] text-2xs text-red">
-              <span className="size-1.5 rounded-full bg-red" />
-              Failed
-            </span>
-            <Button
-              variant="ghost"
-              size="xs"
-              className="h-[22px] px-2"
-              onClick={() => onRetry(connector.id)}
-            >
-              Retry
-            </Button>
-          </>
+    </>
+  );
+  const rowClass =
+    "relative flex h-[38px] w-full min-w-0 shrink-0 items-center gap-2.5 rounded-control px-2.5 select-none";
+
+  const failedLabel = (
+    <span className="flex items-center gap-[5px] text-2xs text-red">
+      <span className="size-1.5 rounded-full bg-red" />
+      Failed
+    </span>
+  );
+
+  if (connector.failed && !connector.busy) {
+    return (
+      <div data-menu-row className={rowClass}>
+        {identity}
+        <span className="ml-auto flex shrink-0 items-center gap-2">
+          {onRemove ? (
+            <HoverSwap
+              rest={failedLabel}
+              hover={
+                <IconButton
+                  size="sm"
+                  aria-label={connector.removable ? "Remove" : "Turn off"}
+                  title={connector.removable ? "Remove" : "Turn off"}
+                  className="size-[22px] hover:text-red"
+                  onClick={() => onRemove(connector.id)}
+                >
+                  {connector.removable ? (
+                    <Trash2 width={12} height={12} strokeWidth={2} />
+                  ) : (
+                    <PowerOff width={12} height={12} strokeWidth={2} />
+                  )}
+                </IconButton>
+              }
+            />
+          ) : (
+            failedLabel
+          )}
+          <Button
+            variant="ghost"
+            size="xs"
+            className="h-[22px] px-2"
+            onClick={() => onRetry(connector.id)}
+          >
+            {connector.needsSignIn ? "Sign in" : "Retry"}
+          </Button>
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      data-menu-row
+      role="switch"
+      aria-checked={connector.enabled}
+      aria-label={connector.name}
+      aria-busy={connector.busy}
+      disabled={connector.busy}
+      onClick={() => onToggle(connector.id, !connector.enabled)}
+      className={cn(rowClass, "interactive press-wide cursor-pointer disabled:cursor-default")}
+    >
+      {identity}
+      <span className="ml-auto flex h-4 w-7 shrink-0 items-center justify-center">
+        {connector.busy ? (
+          <Spinner className="size-3.5" />
         ) : (
-          <Switch
-            size="sm"
-            checked={connector.enabled}
-            onChange={(enabled) => onToggle(connector.id, enabled)}
-            label={connector.name}
-          />
+          <Switch size="sm" checked={connector.enabled} display />
         )}
       </span>
-    </div>
+    </button>
   );
 }
 
@@ -111,12 +164,14 @@ export function ConnectorsMenu({
   onQueryChange,
   onToggle,
   onRetry,
+  onRemove,
 }: {
   groups: readonly ConnectorGroup[];
   query: string;
   onQueryChange: (query: string) => void;
   onToggle: (id: string, enabled: boolean) => void;
   onRetry: (id: string) => void;
+  onRemove?: (id: string) => void;
 }) {
   const [expanded, setExpanded] = useState<string[]>([]);
   const matches = groups
@@ -129,19 +184,26 @@ export function ConnectorsMenu({
       query={query}
       onToggle={onToggle}
       onRetry={onRetry}
+      onRemove={onRemove}
     />
   );
   return (
-    <Menu width={330} origin="bottom left">
-      <label className="mb-0.5 flex h-[34px] items-center gap-2 border-b border-line px-2.5 text-xs text-ink-4">
-        <Search width={12} height={12} strokeWidth={2} />
-        <input
-          value={query}
-          onChange={(event) => onQueryChange(event.target.value)}
-          placeholder="Search connectors"
-          className="min-w-0 flex-1 bg-transparent text-ink outline-none placeholder:text-ink-4"
-        />
-      </label>
+    <Menu
+      width={330}
+      origin="bottom left"
+      maxHeight={340}
+      header={
+        <label className="mb-1 flex h-[34px] shrink-0 items-center gap-2 border-b border-line px-2.5 text-xs text-ink-4">
+          <Search width={12} height={12} strokeWidth={2} />
+          <input
+            value={query}
+            onChange={(event) => onQueryChange(event.target.value)}
+            placeholder="Search connectors"
+            className="min-w-0 flex-1 bg-transparent text-ink outline-none placeholder:text-ink-4"
+          />
+        </label>
+      }
+    >
       {query
         ? matches.map(row)
         : groups.map((group) => {
@@ -170,15 +232,6 @@ export function ConnectorsMenu({
           No connectors match
         </div>
       )}
-      {!query && (
-        <>
-          <MenuSeparator />
-          <MenuItem icon={Plus}>Add a server</MenuItem>
-          <MenuItem icon={Settings} meta="Settings">
-            Manage connectors
-          </MenuItem>
-        </>
-      )}
     </Menu>
   );
 }
@@ -187,29 +240,34 @@ export function AddMenu({
   connectorCount,
   connectorsOpen,
   onConnectorsOpenChange,
+  onAddFiles,
+  onMention,
+  onCommands,
   children,
 }: {
   connectorCount: number;
   connectorsOpen: boolean;
   onConnectorsOpenChange: (open: boolean) => void;
+  onAddFiles?: () => void;
+  onMention?: () => void;
+  onCommands?: () => void;
   children?: ReactNode;
 }) {
   return (
     <div className="relative">
       <Menu width={250} origin="bottom left">
-        <MenuItem icon={Attachment} meta={<Kbd>⌘U</Kbd>}>
+        <MenuItem icon={Paperclip} meta={<Kbd>⌘U</Kbd>} onSelect={onAddFiles}>
           Add files or photos
         </MenuItem>
-        <MenuItem icon={Folder}>Add folder</MenuItem>
-        <MenuItem icon={AtSign} meta={<Kbd>@</Kbd>}>
+        <MenuItem icon={AtSign} meta={<Kbd>@</Kbd>} onSelect={onMention}>
           Mention a file
         </MenuItem>
-        <MenuItem icon={SlashSquare} meta={<Kbd>/</Kbd>}>
+        <MenuItem icon={SquareSlash} meta={<Kbd>/</Kbd>} onSelect={onCommands}>
           Commands
         </MenuItem>
         <MenuSeparator />
         <MenuItem
-          icon={GridPlus}
+          icon={Grid2x2Plus}
           active={connectorsOpen}
           onSelect={() => onConnectorsOpenChange(!connectorsOpen)}
           meta={
@@ -218,7 +276,7 @@ export function AddMenu({
                 <span className="size-1.5 rounded-full bg-green" />
                 {connectorCount}
               </span>
-              <NavArrowRight width={11} height={11} strokeWidth={2} />
+              <ChevronRight width={11} height={11} strokeWidth={2} />
             </>
           }
         >
@@ -236,7 +294,7 @@ export function ConnectorAlert({ count, onClick }: { count: number; onClick?: ()
       onClick={onClick}
       className="text-red shadow-[0_0_0_1px_color-mix(in_srgb,var(--red)_35%,transparent)] hover:bg-red-tint"
     >
-      <GridXmark width={11} height={11} strokeWidth={2} />
+      <Grid2x2X width={11} height={11} strokeWidth={2} />
       {count} connector{count === 1 ? "" : "s"} failed
     </ComposerPill>
   );

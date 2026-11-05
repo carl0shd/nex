@@ -13,6 +13,8 @@ interface AgentAccountRow {
   config_dir: string;
   is_default: number;
   keychain_service: string | null;
+  email: string | null;
+  color: string | null;
   created_at: string;
 }
 
@@ -24,6 +26,8 @@ function toAgentAccount(row: AgentAccountRow): AgentAccount {
     configDir: row.config_dir,
     isDefault: row.is_default === 1,
     keychainService: row.keychain_service,
+    email: row.email,
+    color: row.color,
     createdAt: row.created_at,
   };
 }
@@ -72,8 +76,8 @@ export function create(input: CreateAgentAccountInput): AgentAccount {
 
   const row = db
     .prepare(
-      `INSERT INTO agent_accounts (id, agent_id, name, config_dir, is_default)
-       VALUES (?, ?, ?, ?, ?) RETURNING *`,
+      `INSERT INTO agent_accounts (id, agent_id, name, config_dir, is_default, email, color)
+       VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *`,
     )
     .get(
       randomUUID(),
@@ -81,6 +85,8 @@ export function create(input: CreateAgentAccountInput): AgentAccount {
       input.name,
       input.configDir,
       input.isDefault ? 1 : 0,
+      input.email ?? null,
+      input.color ?? null,
     ) as AgentAccountRow;
   return toAgentAccount(row);
 }
@@ -101,6 +107,10 @@ export function update(id: string, input: UpdateAgentAccountInput): AgentAccount
   if (input.name !== undefined) {
     fields.push("name = ?");
     values.push(input.name);
+  }
+  if (input.email !== undefined) {
+    fields.push("email = ?");
+    values.push(input.email);
   }
   if (input.configDir !== undefined) {
     fields.push("config_dir = ?");

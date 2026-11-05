@@ -1,33 +1,37 @@
+import markUrl from "@/assets/brand/nex-mark.webp";
 import { cn } from "@/lib/utils";
 
-const MARK =
-  "M0 0V18.8005V37.4574V56.2579H18.8309H37.518V74.9148H56.3488H75.0359V93.7153H93.8668H112.554V112.372H131.241H150.072V130.886H168.759H187.59V149.686H206.277H225.108V168.343H243.795H262.626V187V205.657H243.795H225.108V224.457H206.277H187.59V243.114H168.759H150.072V261.771H131.241H112.554V280.428H93.8668H75.0359V299.085H56.3488H37.518V317.886H18.8309H0V336.543V355.2V374H18.8309H37.518V355.2H56.3488H75.0359V336.543H93.8668H112.554V317.886H131.241H150.072V299.229H168.759H187.59V280.572H206.277H225.108V261.915H243.795H262.626V243.114H281.313H300V224.457V205.8V187V168.343V149.543V130.886H281.313H262.626V112.229H243.795H225.108V93.4282H206.277H187.59V74.7713H168.759H150.072V56.1143H131.241H112.554V37.4574H93.8668H75.0359V18.8005H56.3488H37.518V0H18.8309H0Z";
+const MARK_WIDTH = 360;
+const MARK_HEIGHT = 434;
+const WORDMARK_WIDTH = 1354;
+const WORDMARK_TEXT =
+  "M677.35 89.35H756.1V334H678.75L677.35 332.6L555.9 181.75V334H477.5V89.35H555.2L555.9 90.4L677.35 241.25V89.35ZM1045.01 146.4H870.011V183.15H1029.96V240.2H870.011V276.95H1045.01V334H791.611V89.35H1045.01V146.4ZM1353.92 89.35L1255.57 211.5L1353.92 334H1252.77L1204.82 274.5L1156.87 334H1056.07L1154.42 211.5L1056.07 89.35H1156.87L1204.82 148.85L1252.77 89.35H1353.92Z";
 
 export function NexLogo({ height = 27, className }: { height?: number; className?: string }) {
   return (
-    <svg
+    <img
+      src={markUrl}
+      alt=""
+      draggable={false}
       height={height}
-      width={(height * 300) / 374}
-      viewBox="0 0 300 374"
-      aria-hidden
-      className={cn("fill-accent", className)}
-    >
-      <path d={MARK} />
-    </svg>
+      width={(height * MARK_WIDTH) / MARK_HEIGHT}
+      className={cn("shrink-0", className)}
+    />
   );
 }
 
-export function NexLogoTile({ className }: { className?: string }) {
+export function NexWordmark({ height = 24, className }: { height?: number; className?: string }) {
   return (
-    <span
+    <svg
       role="img"
       aria-label="Nex"
-      className={cn(
-        "flex size-14 items-center justify-center rounded-[16px] bg-surface shadow-[0_0_0_1px_var(--line-strong),0_8px_24px_-10px_rgb(0_0_0/60%)]",
-        className,
-      )}
+      height={height}
+      width={(height * WORDMARK_WIDTH) / MARK_HEIGHT}
+      viewBox={`0 0 ${WORDMARK_WIDTH} ${MARK_HEIGHT}`}
+      className={cn("shrink-0 text-ink", className)}
     >
-      <NexLogo height={27} />
-    </span>
+      <image href={markUrl} width={MARK_WIDTH} height={MARK_HEIGHT} />
+      <path d={WORDMARK_TEXT} fill="currentColor" />
+    </svg>
   );
 }

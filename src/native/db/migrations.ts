@@ -173,6 +173,10 @@ const migrations: string[] = [
     byte_offset INTEGER NOT NULL DEFAULT 0,
     scanned_at TEXT NOT NULL DEFAULT (datetime('now'))
   );`,
+  `ALTER TABLE sessions ADD COLUMN title TEXT NOT NULL DEFAULT '';`,
+  `ALTER TABLE agent_accounts ADD COLUMN email TEXT;
+  ALTER TABLE agent_accounts ADD COLUMN color TEXT;`,
+  `UPDATE sessions SET width = 600 WHERE width = 630;`,
 ];
 
 export function runMigrations(db: Database.Database): void {

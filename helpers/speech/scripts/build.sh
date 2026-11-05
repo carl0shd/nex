@@ -7,7 +7,8 @@
 
 set -euo pipefail
 
-cd "$(dirname "$0")/.."
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR/.."
 
 SWIFT_DIR="$(pwd)/swift"
 BIN_DIR="$(pwd)/bin"
@@ -48,13 +49,13 @@ TARGET_BIN="$APP_DIR/Contents/MacOS/$APP_NAME"
 
 # Copy the Nex app icon so the helper shows up correctly in System Settings,
 # Activity Monitor, the TCC permission dialog, etc.
-ICON_SRC="$(cd "$(dirname "$0")/../../.." && pwd)/build/icon.icns"
+ICON_SRC="$(cd "$SCRIPT_DIR/../../.." && pwd)/build/icon.icns"
 if [ -f "$ICON_SRC" ]; then
   cp "$ICON_SRC" "$APP_DIR/Contents/Resources/icon.icns"
 fi
 
 # Bundle the mic on/off cue sounds — accessed via Bundle.main from Swift.
-SOUNDS_DIR="$(dirname "$0")/../sounds"
+SOUNDS_DIR="$SCRIPT_DIR/../sounds"
 if [ -d "$SOUNDS_DIR" ]; then
   cp "$SOUNDS_DIR"/*.mp3 "$APP_DIR/Contents/Resources/" 2>/dev/null || true
 fi

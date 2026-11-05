@@ -1,6 +1,13 @@
 import type { ReactNode } from "react";
-import { Folder, Globe, Page } from "iconoir-react";
-import { LogoTile } from "@/components/atoms/logo-tile";
+import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
+import { FileIcon, Folder, Globe } from "lucide-react";
+import figmaLogo from "@/assets/images/services/figma.webp";
+import githubLogo from "@/assets/images/services/github.webp";
+import jiraLogo from "@/assets/images/services/jira.webp";
+import linearLogo from "@/assets/images/services/linear.webp";
+import notionLogo from "@/assets/images/services/notion.webp";
+import sentryLogo from "@/assets/images/services/sentry.webp";
+import slackLogo from "@/assets/images/services/slack.webp";
 import { toEntry } from "@/lib/composer-pickers";
 import { describeLink, type LinkService } from "@/lib/link-preview";
 import { cn } from "@/lib/utils";
@@ -20,7 +27,7 @@ export function InlinePill({ children, className }: { children: ReactNode; class
 
 export function FilePill({ path }: { path: string }) {
   const entry = toEntry(path);
-  const Icon = entry.folder ? Folder : Page;
+  const Icon = entry.folder ? Folder : FileIcon;
   return (
     <InlinePill>
       <span className="flex text-ink-3">
@@ -40,14 +47,14 @@ export function FilePill({ path }: { path: string }) {
   );
 }
 
-const SERVICE_LOGO: Record<Exclude<LinkService, "web">, { letter: string; className: string }> = {
-  linear: { letter: "L", className: "bg-brand-linear text-white" },
-  github: { letter: "G", className: "bg-ink text-inverse" },
-  figma: { letter: "F", className: "bg-brand-figma text-white" },
-  slack: { letter: "S", className: "bg-brand-slack text-white" },
-  notion: { letter: "N", className: "bg-ink text-inverse" },
-  jira: { letter: "J", className: "bg-brand-jira text-white" },
-  sentry: { letter: "S", className: "bg-brand-sentry text-white" },
+const SERVICE_LOGO: Record<Exclude<LinkService, "web">, string> = {
+  linear: linearLogo,
+  github: githubLogo,
+  figma: figmaLogo,
+  slack: slackLogo,
+  notion: notionLogo,
+  jira: jiraLogo,
+  sentry: sentryLogo,
 };
 
 function LinkLogo({ service }: { service: LinkService }) {
@@ -58,11 +65,13 @@ function LinkLogo({ service }: { service: LinkService }) {
       </span>
     );
   }
-  const logo = SERVICE_LOGO[service];
   return (
-    <LogoTile size="xs" className={logo.className}>
-      {logo.letter}
-    </LogoTile>
+    <img
+      src={SERVICE_LOGO[service]}
+      alt=""
+      draggable={false}
+      className="size-3.5 shrink-0 rounded-[4px]"
+    />
   );
 }
 
@@ -74,6 +83,14 @@ export function LinkPill({ url }: { url: string }) {
       <LinkLogo service={preview.service} />
       <span className={cn(preview.mono && "font-mono text-2xs")}>{preview.label}</span>
     </InlinePill>
+  );
+}
+
+export function LinkPillView({ node }: NodeViewProps) {
+  return (
+    <NodeViewWrapper as="span">
+      <LinkPill url={String(node.attrs.url ?? "")} />
+    </NodeViewWrapper>
   );
 }
 

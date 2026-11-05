@@ -61,3 +61,22 @@ export function describeLink(raw: string): LinkPreview | null {
   if (url.protocol !== "http:" && url.protocol !== "https:") return null;
   return describe(url) ?? { service: "web", label: url.hostname.replace(/^www\./, ""), mono: true };
 }
+
+export type TextPart = { kind: "text"; text: string } | { kind: "link"; url: string };
+
+const URL_IN_TEXT = /https?:\/\/[^\s<>"]+/g;
+const TRAILING_PUNCTUATION = /[.,;:!?)\]'"]+$/;
+
+export function splitLinks(text: string): TextPart[] {
+  const parts: TextPart[] = [];
+  let cursor = 0;
+  for (const match of text.matchAll(URL_IN_TEXT)) {
+    const url = match[0].replace(TRAILING_PUNCTUATION, "");
+    if (!describeLink(url)) continue;
+    if (match.index > cursor) parts.push({ kind: "text", text: text.slice(cursor, match.index) });
+    parts.push({ kind: "link", url });
+    cursor = match.index + url.length;
+  }
+  if (cursor < text.length) parts.push({ kind: "text", text: text.slice(cursor) });
+  return parts;
+}

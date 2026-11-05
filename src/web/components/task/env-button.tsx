@@ -1,4 +1,4 @@
-import { Globe } from "iconoir-react";
+import { Globe } from "lucide-react";
 import { Orbit } from "@/components/atoms/orbit";
 import { cn } from "@/lib/utils";
 

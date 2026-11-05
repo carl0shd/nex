@@ -34,6 +34,13 @@ export type CommandPickerView =
 
 const MAX_MATCHES = 8;
 const SUGGESTED_SOURCES: CommandSource[] = ["project", "personal", "builtin"];
+const SUGGESTED_PER_SOURCE = 4;
+const COMMON_BUILTINS = ["compact", "clear", "review", "init", "model", "context", "resume"];
+
+function suggestedOrder(command: SlashCommand): number {
+  const common = COMMON_BUILTINS.indexOf(command.name);
+  return common < 0 ? COMMON_BUILTINS.length : common;
+}
 
 export function toEntry(path: string, status?: FileStatus): FileEntry {
   const folder = path.endsWith("/");
@@ -125,7 +132,10 @@ export function commandPickerView(
       mode: "suggested",
       groups: SUGGESTED_SOURCES.map((source) => ({
         source,
-        commands: commands.filter((command) => command.source === source),
+        commands: commands
+          .filter((command) => command.source === source)
+          .toSorted((a, b) => suggestedOrder(a) - suggestedOrder(b))
+          .slice(0, SUGGESTED_PER_SOURCE),
       })).filter((group) => group.commands.length),
     };
   }

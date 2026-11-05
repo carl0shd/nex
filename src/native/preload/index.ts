@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from "electron";
+import { contextBridge, ipcRenderer, webFrame, webUtils } from "electron";
 import { IPC } from "@native/ipc/channels";
 import type { TerminalStatus } from "@native/db/types";
 
@@ -25,6 +25,14 @@ ipcRenderer.on(IPC.USAGE_CHANGED, () => {
 
 const api = {
   getAppInfo: () => ipcRenderer.invoke("app:get-info"),
+  getOpenAtLogin: () => ipcRenderer.invoke(IPC.APP_GET_LOGIN_ITEM),
+  setOpenAtLogin: (openAtLogin: boolean) => ipcRenderer.invoke(IPC.APP_SET_LOGIN_ITEM, openAtLogin),
+  playSound: (name: string) => ipcRenderer.invoke(IPC.APP_PLAY_SOUND, name),
+  setDockBadge: (count: number) => ipcRenderer.invoke(IPC.APP_SET_BADGE, count),
+  listShells: () => ipcRenderer.invoke(IPC.APP_LIST_SHELLS),
+  installedApps: (names: string[]) => ipcRenderer.invoke(IPC.APP_INSTALLED, names),
+  openWith: (appName: string, path: string) => ipcRenderer.invoke(IPC.APP_OPEN_WITH, appName, path),
+  setZoomFactor: (factor: number) => webFrame.setZoomFactor(factor),
 
   getWorkspaces: () => ipcRenderer.invoke("workspace:get-all"),
   getWorkspaceById: (id: string) => ipcRenderer.invoke("workspace:get-by-id", id),
@@ -63,7 +71,8 @@ const api = {
   getActiveSessions: () => ipcRenderer.invoke("session:get-active"),
   createSession: (input: unknown) => ipcRenderer.invoke("session:create", input),
   updateSession: (id: string, input: unknown) => ipcRenderer.invoke("session:update", id, input),
-  deleteSession: (id: string) => ipcRenderer.invoke("session:delete", id),
+  deleteSession: (id: string, keepBranch?: boolean) =>
+    ipcRenderer.invoke("session:delete", id, keepBranch),
   reorderSessions: (orderedIds: string[]) => ipcRenderer.invoke("session:reorder", orderedIds),
   readSessionNotes: (sessionId: string) => ipcRenderer.invoke("session:notes-read", sessionId),
   writeSessionNotes: (sessionId: string, content: string) =>
@@ -71,8 +80,23 @@ const api = {
 
   showWindow: () => ipcRenderer.invoke("window:show"),
   detectAgents: () => ipcRenderer.invoke("agents:detect"),
+  getAgentVersion: (agentId: string) => ipcRenderer.invoke("agents:version", agentId),
+  upgradeAgent: (agentId: string) => ipcRenderer.invoke(IPC.AGENT_UPGRADE, agentId),
+  inspectRepo: (path: string) => ipcRenderer.invoke("repo:inspect", path),
+  pathForFile: (file: File) => webUtils.getPathForFile(file),
+  openInFinder: (path: string) => ipcRenderer.invoke("finder:open", path),
   installAgent: (slug: string) => ipcRenderer.invoke("agents:install", slug),
   cloneAgentAccount: (input: unknown) => ipcRenderer.invoke("agent-account:clone", input),
+  signInAccount: () => ipcRenderer.invoke(IPC.ACCOUNT_SIGN_IN),
+  reauthAccount: (accountId: string) => ipcRenderer.invoke(IPC.ACCOUNT_REAUTH, accountId),
+  cancelSignIn: () => ipcRenderer.invoke(IPC.ACCOUNT_SIGN_IN_CANCEL),
+  finishSignIn: (input: unknown) => ipcRenderer.invoke(IPC.ACCOUNT_SIGN_IN_FINISH, input),
+  discardSignIn: (configDir: string) => ipcRenderer.invoke(IPC.ACCOUNT_SIGN_IN_DISCARD, configDir),
+  onSignInUrl: (callback: (url: string) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, url: string): void => callback(url);
+    ipcRenderer.on(IPC.ACCOUNT_SIGN_IN_URL, handler);
+    return () => ipcRenderer.removeListener(IPC.ACCOUNT_SIGN_IN_URL, handler);
+  },
   startWork: (input: unknown) => ipcRenderer.invoke("work:start", input),
   detectGit: () => ipcRenderer.invoke("git:detect"),
   cloneRepository: (url: string, parentDir: string) =>
@@ -120,6 +144,81 @@ const api = {
     return () => {
       ipcRenderer.removeListener(IPC.GIT_WORKTREE_CHANGED, handler);
       void ipcRenderer.invoke(IPC.GIT_WATCH_STOP, worktreePath);
+    };
+  },
+  agentSend: (sessionId: string, content: unknown) =>
+    ipcRenderer.invoke(IPC.AGENT_SEND, sessionId, content),
+  agentWarm: (sessionId: string) => ipcRenderer.invoke(IPC.AGENT_WARM, sessionId),
+  mcpStatus: (sessionId: string) => ipcRenderer.invoke(IPC.AGENT_MCP_STATUS, sessionId),
+  mcpToggle: (sessionId: string, name: string, enabled: boolean) =>
+    ipcRenderer.invoke(IPC.AGENT_MCP_TOGGLE, sessionId, name, enabled),
+  mcpReconnect: (sessionId: string, name: string) =>
+    ipcRenderer.invoke(IPC.AGENT_MCP_RECONNECT, sessionId, name),
+  mcpSignIn: (sessionId: string, name: string) =>
+    ipcRenderer.invoke(IPC.AGENT_MCP_SIGN_IN, sessionId, name),
+  agentContext: (sessionId: string) => ipcRenderer.invoke(IPC.AGENT_CONTEXT, sessionId),
+  lastAgentContext: (sessionId: string) => ipcRenderer.invoke(IPC.AGENT_CONTEXT_LAST, sessionId),
+  mcpRemove: (sessionId: string, name: string) =>
+    ipcRenderer.invoke(IPC.AGENT_MCP_REMOVE, sessionId, name),
+  pickFiles: () => ipcRenderer.invoke(IPC.DIALOG_PICK_FILES),
+  agentCommands: (sessionId: string) => ipcRenderer.invoke(IPC.AGENT_COMMANDS_GET, sessionId),
+  agentModels: () => ipcRenderer.invoke(IPC.AGENT_MODELS_GET),
+  onAgentModels: (callback: () => void) => {
+    const handler = (): void => callback();
+    ipcRenderer.on(IPC.AGENT_MODELS, handler);
+    return () => ipcRenderer.removeListener(IPC.AGENT_MODELS, handler);
+  },
+  onAgentCommands: (callback: (info: { sessionId: string }) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, info: { sessionId: string }): void =>
+      callback(info);
+    ipcRenderer.on(IPC.AGENT_COMMANDS, handler);
+    return () => ipcRenderer.removeListener(IPC.AGENT_COMMANDS, handler);
+  },
+  countUncommitted: (worktreePath: string) => ipcRenderer.invoke(IPC.GIT_UNCOMMITTED, worktreePath),
+  agentInterrupt: (sessionId: string) => ipcRenderer.invoke(IPC.AGENT_INTERRUPT, sessionId),
+  agentStates: () => ipcRenderer.invoke(IPC.AGENT_STATES),
+  getAgentSettings: (sessionId: string) => ipcRenderer.invoke(IPC.AGENT_SETTINGS_GET, sessionId),
+  configureAgent: (sessionId: string, settings: unknown) =>
+    ipcRenderer.invoke(IPC.AGENT_CONFIGURE, sessionId, settings),
+  onAgentState: (callback: (info: { sessionId: string; state: string }) => void) => {
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      info: { sessionId: string; state: string },
+    ): void => callback(info);
+    ipcRenderer.on(IPC.AGENT_STATE, handler);
+    return () => ipcRenderer.removeListener(IPC.AGENT_STATE, handler);
+  },
+  onAgentEvent: (callback: (event: unknown) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, payload: unknown): void =>
+      callback(payload);
+    ipcRenderer.on(IPC.AGENT_EVENT, handler);
+    return () => ipcRenderer.removeListener(IPC.AGENT_EVENT, handler);
+  },
+  getPendingPermissions: () => ipcRenderer.invoke(IPC.PERMISSION_PENDING),
+  answerPermission: (id: string, answer: unknown) =>
+    ipcRenderer.invoke(IPC.PERMISSION_ANSWER, id, answer),
+  onPermissionRequest: (callback: (request: unknown) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, request: unknown): void =>
+      callback(request);
+    ipcRenderer.on(IPC.PERMISSION_REQUEST, handler);
+    return () => ipcRenderer.removeListener(IPC.PERMISSION_REQUEST, handler);
+  },
+  onPermissionResolved: (callback: (id: string) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, id: string): void => callback(id);
+    ipcRenderer.on(IPC.PERMISSION_RESOLVED, handler);
+    return () => ipcRenderer.removeListener(IPC.PERMISSION_RESOLVED, handler);
+  },
+  readTranscript: (terminalId: string, cursor: unknown) =>
+    ipcRenderer.invoke(IPC.TRANSCRIPT_READ, terminalId, cursor),
+  watchTranscript: (terminalId: string, callback: () => void) => {
+    void ipcRenderer.invoke(IPC.TRANSCRIPT_WATCH_START, terminalId);
+    const handler = (_event: Electron.IpcRendererEvent, payload: { terminalId: string }): void => {
+      if (payload.terminalId === terminalId) callback();
+    };
+    ipcRenderer.on(IPC.TRANSCRIPT_CHANGED, handler);
+    return () => {
+      ipcRenderer.removeListener(IPC.TRANSCRIPT_CHANGED, handler);
+      void ipcRenderer.invoke(IPC.TRANSCRIPT_WATCH_STOP, terminalId);
     };
   },
   pickImage: () => ipcRenderer.invoke("dialog:pick-image"),

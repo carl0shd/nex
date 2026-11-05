@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Globe, Pause, Settings } from "iconoir-react";
+import { Globe, Pause, Settings } from "lucide-react";
 import { Button } from "@/components/atoms/button";
+import { HoverSwap } from "@/components/atoms/hover-swap";
 import { IconButton } from "@/components/atoms/icon-button";
 import { Orbit } from "@/components/atoms/orbit";
 import { StatusDot } from "@/components/atoms/status-dot";
@@ -53,15 +54,14 @@ function EnvironmentRow({
 }) {
   const paused = environment.state === "paused";
   return (
-    <div
-      data-menu-row
-      className="group/env relative flex h-10 items-center gap-2.5 rounded-control px-2.5"
-    >
-      {environment.state === "starting" ? (
-        <Orbit size="sm" />
-      ) : (
-        <StatusDot tone={environment.state === "down" ? "red" : paused ? "idle" : "green"} />
-      )}
+    <div data-menu-row className="relative flex h-10 items-center gap-2.5 rounded-control px-2.5">
+      <span className="flex w-3.5 shrink-0 justify-center">
+        {environment.state === "starting" ? (
+          <Orbit size="sm" />
+        ) : (
+          <StatusDot tone={environment.state === "down" ? "red" : paused ? "idle" : "green"} />
+        )}
+      </span>
       <span className="flex min-w-0 flex-1 flex-col">
         <span className={cn("truncate text-sm", paused ? "text-ink-3" : "text-ink")}>
           {environment.title}
@@ -79,19 +79,23 @@ function EnvironmentRow({
           Pause
         </Button>
       ) : (
-        <>
-          <span className="text-2xs text-ink-3 tabular-nums group-hover/env:hidden">
-            {environment.gb !== undefined && gb(environment.gb)}
-          </span>
-          <IconButton
-            aria-label={`Pause ${environment.title}`}
-            size="sm"
-            onClick={onPause}
-            className="hidden size-6 bg-hover-2 group-hover/env:flex"
-          >
-            <Pause width={11} height={11} strokeWidth={2.25} />
-          </IconButton>
-        </>
+        <HoverSwap
+          rest={
+            <span className="text-2xs text-ink-3 tabular-nums">
+              {environment.gb !== undefined && gb(environment.gb)}
+            </span>
+          }
+          hover={
+            <IconButton
+              aria-label={`Pause ${environment.title}`}
+              size="sm"
+              onClick={onPause}
+              className="size-6 bg-hover-2"
+            >
+              <Pause width={11} height={11} strokeWidth={2.25} />
+            </IconButton>
+          }
+        />
       )}
     </div>
   );

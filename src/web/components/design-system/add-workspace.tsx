@@ -1,64 +1,16 @@
 import { useState } from "react";
+import { detect, detectWithEnvironment, FOUND } from "@/components/design-system/project-samples";
 import { WORKSPACES } from "@/components/design-system/sidebar-samples";
 import { Section, Specimen } from "@/components/design-system/specimen";
 import { HomeEmpty } from "@/components/home/home-empty";
 import { Overlay } from "@/components/primitives/overlay";
-import {
-  AddProjectDialog,
-  type NewProject,
-  type ProjectConfig,
-} from "@/components/projects/add-project-dialog";
-import type { FoundRepo } from "@/components/projects/repo-picker";
+import { AddProjectDialog, type NewProject } from "@/components/projects/add-project-dialog";
+import { RemoveProjectDialog } from "@/components/projects/remove-project-dialog";
 import { NewWorkspaceRow, type NewWorkspace } from "@/components/sidebar/new-workspace-row";
+import { RemoveWorkspaceDialog } from "@/components/sidebar/remove-workspace-dialog";
 import { Sidebar } from "@/components/sidebar/sidebar";
 import type { SidebarWorkspace } from "@/components/sidebar/types";
 import { notifyCompact } from "@/lib/notify";
-
-const FOUND: FoundRepo[] = [
-  { name: "atlas", path: "~/Documents/Studio/atlas", branch: "main", active: "today" },
-  { name: "atlas-api", path: "~/code/atlas-api", branch: "main", active: "3d ago" },
-  { name: "studio-site", path: "~/code/studio-site", branch: "dev", active: "1w ago" },
-];
-
-const COMMANDS = ["dev", "test", "lint", "typecheck", "build"];
-
-function detect(repo: FoundRepo): ProjectConfig {
-  return {
-    branches: [repo.branch, "develop", "release/2.4"],
-    branch: { base: repo.branch, prefix: "feat/", pull: true },
-    setup: {
-      install: { on: true, command: "yarn install" },
-      copy: { on: true, files: [".env"] },
-      script: { on: false, path: "" },
-    },
-    detectedFrom: ["yarn.lock", ".gitignore"],
-    commands: COMMANDS.map((name, index) => ({ name, command: `yarn ${name}`, on: index < 2 })),
-  };
-}
-
-function detectWithEnvironment(repo: FoundRepo): ProjectConfig {
-  const base = detect(repo);
-  return {
-    ...base,
-    setup: { ...base.setup, install: { ...base.setup.install, on: false } },
-    commands: base.commands.map((command) => ({ ...command, on: command.name === "test" })),
-    environment: {
-      browser: [
-        { name: "web", port: 5173, command: "yarn dev", address: "studio-{task}.nex" },
-        { name: "api", port: 8000, command: "yarn dev:api", address: "api.studio-{task}.nex" },
-      ],
-      internal: [
-        { name: "postgres", port: 5432, note: "data cloned from the clean base" },
-        { name: "redis", port: 6379, note: "starts empty" },
-      ],
-      values: [{ key: "VITE_API_URL", value: "https://api.studio-{task}.nex" }],
-      cleanBase: {
-        detail: "Prepared 2h ago from main · 1.4 GB · new tasks start in ~3s",
-        steps: ["yarn install", "yarn db:migrate", "yarn db:seed"],
-      },
-    },
-  };
-}
 
 const STARTING: SidebarWorkspace[] = WORKSPACES.map((workspace) => ({
   ...workspace,
@@ -134,6 +86,8 @@ function AddWorkspaceDemo() {
             detect={detect}
             onAdd={addProject}
             onCancel={() => setAdding(null)}
+            onClone={() => {}}
+            onPasteUrl={() => {}}
           />
         </Overlay>
       )}
@@ -175,6 +129,8 @@ export function AddWorkspace() {
             initialSection="branch"
             onAdd={() => {}}
             onCancel={() => {}}
+            onClone={() => {}}
+            onPasteUrl={() => {}}
           />
         </Specimen>
         <Specimen name="Worktree setup open" bare>
@@ -186,6 +142,8 @@ export function AddWorkspace() {
             initialSection="setup"
             onAdd={() => {}}
             onCancel={() => {}}
+            onClone={() => {}}
+            onPasteUrl={() => {}}
           />
         </Specimen>
         <Specimen name="Quick commands open" bare>
@@ -197,7 +155,15 @@ export function AddWorkspace() {
             initialSection="commands"
             onAdd={() => {}}
             onCancel={() => {}}
+            onClone={() => {}}
+            onPasteUrl={() => {}}
           />
+        </Specimen>
+        <Specimen name="RemoveWorkspaceDialog · from the workspace's … menu" bare>
+          <RemoveWorkspaceDialog workspace={{ name: "Studio", projects: 3, tasks: 4 }} />
+        </Specimen>
+        <Specimen name="RemoveProjectDialog · from the project's … menu" bare>
+          <RemoveProjectDialog project={{ name: "atlas", workspace: "Studio", tasks: 2 }} />
         </Specimen>
         <Specimen name="With environments · each task runs its own services" bare>
           <AddProjectDialog
@@ -208,6 +174,8 @@ export function AddWorkspace() {
             initialSection="environment"
             onAdd={() => {}}
             onCancel={() => {}}
+            onClone={() => {}}
+            onPasteUrl={() => {}}
           />
         </Specimen>
       </div>

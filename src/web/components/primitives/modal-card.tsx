@@ -1,5 +1,5 @@
 import type { ComponentType, ReactNode } from "react";
-import { Xmark } from "iconoir-react";
+import { X } from "lucide-react";
 import { IconButton } from "@/components/atoms/icon-button";
 import { cn } from "@/lib/utils";
 
@@ -60,7 +60,7 @@ export function ModalCard({
           {description && <p className="m-0 text-sm leading-[19px] text-ink-3">{description}</p>}
         </div>
         <IconButton aria-label="Close" size="sm" onClick={onClose} className="-mt-[3px] -mr-1">
-          <Xmark width={14} height={14} strokeWidth={2} />
+          <X width={14} height={14} strokeWidth={2} />
         </IconButton>
       </div>
       {children && <div className="px-[18px] pt-4 pb-[18px]">{children}</div>}
@@ -69,6 +69,35 @@ export function ModalCard({
           {footer}
         </div>
       )}
+    </div>
+  );
+}
+
+type ConsequenceIcon = ComponentType<{ width?: number; height?: number; strokeWidth?: number }>;
+
+export function ModalConsequence({
+  icon: Icon,
+  title,
+  detail,
+  outcome,
+  warn = false,
+}: {
+  icon: ConsequenceIcon;
+  title: string;
+  detail: string;
+  outcome: string;
+  warn?: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-3 py-2">
+      <span className="flex size-7 shrink-0 items-center justify-center rounded-control bg-hover text-ink-3">
+        <Icon width={13} height={13} strokeWidth={2} />
+      </span>
+      <span className="flex flex-1 flex-col">
+        <span className="text-sm font-medium text-ink">{title}</span>
+        <span className="text-xs text-ink-3">{detail}</span>
+      </span>
+      <span className={cn("text-2xs", warn ? "text-orange" : "text-ink-4")}>{outcome}</span>
     </div>
   );
 }

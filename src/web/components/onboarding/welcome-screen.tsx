@@ -1,39 +1,54 @@
-import { useEffect, type ReactNode } from "react";
+import { useHotkey } from "@tanstack/react-hotkeys";
+import { useRef, type ReactNode, type RefObject } from "react";
 import { Button } from "@/components/atoms/button";
-import { NexLogoTile } from "@/components/atoms/nex-logo";
+import { DitherBackdrop } from "@/components/atoms/dither-backdrop";
+import { NexLogo, NexWordmark } from "@/components/atoms/nex-logo";
+import { cn } from "@/lib/utils";
 
-export function WelcomeScreen({ preview, onStart }: { preview?: ReactNode; onStart?: () => void }) {
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement;
-      if (event.defaultPrevented || target.closest("input, textarea, [contenteditable]")) return;
-      if (event.key === "Enter") onStart?.();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onStart]);
+const WORDMARK_HEIGHT = 56;
+
+export function WelcomeScreen({
+  preview,
+  logoRef: outerLogoRef,
+  onStart,
+}: {
+  preview?: ReactNode;
+  logoRef?: RefObject<HTMLDivElement | null>;
+  onStart?: () => void;
+}) {
+  useHotkey("Enter", () => onStart?.());
+  const ownLogoRef = useRef<HTMLDivElement>(null);
+  const logoRef = outerLogoRef ?? ownLogoRef;
 
   return (
-    <main className="relative flex min-h-0 flex-1 flex-col items-center overflow-hidden pt-16 text-center">
-      <NexLogoTile className="rise-in" />
-      <h1 className="rise-in m-0 mt-[22px] text-3xl font-semibold tracking-[-0.03em] text-ink [animation-delay:60ms]">
-        Welcome to Nex
-      </h1>
-      <p className="rise-in m-0 mt-2.5 max-w-[500px] text-md leading-[23px] text-ink-3 [animation-delay:120ms]">
-        Run Claude Code on many tasks at once, each in its own worktree, and watch them all work
-        from one place.
+    <main
+      className={cn(
+        "relative flex min-h-0 flex-1 flex-col items-center overflow-hidden text-center",
+        preview ? "pt-16" : "justify-center pb-4",
+      )}
+    >
+      {!preview && !outerLogoRef && <DitherBackdrop anchorRef={logoRef} className="fixed" />}
+      <div ref={logoRef} className="relative flex justify-center">
+        <NexLogo
+          height={WORDMARK_HEIGHT}
+          className="rise-in absolute top-3 left-0 opacity-25 blur-[18px] [animation-delay:200ms]"
+        />
+        <NexWordmark height={WORDMARK_HEIGHT} className="rise-in relative" />
+      </div>
+      <p className="rise-in relative m-0 mt-7 max-w-[500px] text-md leading-[23px] text-ink-3 [animation-delay:120ms]">
+        Run several coding agents at once, without them stepping on each other.
       </p>
       <Button
         variant="primary"
         size="lg"
         kbd="↵"
         onClick={onStart}
-        className="rise-in mt-[26px] [animation-delay:180ms]"
+        className="rise-in relative mt-[26px] [animation-delay:180ms]"
       >
         Get started
       </Button>
-      <span className="rise-in mt-3.5 text-xs text-ink-4 [animation-delay:220ms]">
-        About a minute · uses your existing Claude subscription
+      <span className="rise-in relative mt-3.5 text-xs text-ink-4 [animation-delay:220ms]">
+        About a minute · uses your existing agent subscription
       </span>
       {preview && (
         <div

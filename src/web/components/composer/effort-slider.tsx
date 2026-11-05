@@ -1,97 +1,18 @@
-import {
-  useRef,
-  type CSSProperties,
-  type KeyboardEvent,
-  type PointerEvent,
-  type ReactNode,
-} from "react";
+import { useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from "react";
 import { EFFORTS, EFFORT_LABEL, EFFORT_TONE, type Effort } from "@/components/composer/effort";
+import { DitherField, type DitherFamily } from "@/components/atoms/dither-field";
 import { cn } from "@/lib/utils";
 
-const STEPS = ["low", "medium", "high", "xhigh", "max"] as const;
-const ULTRA_TRACK = 0.7;
-const ULTRA_GATE = 0.73;
-const DITHER_OFFSETS = [
-  [0, 0],
-  [6, 6],
-  [6, 0],
-  [0, 6],
-  [3, 3],
-  [9, 9],
-  [9, 3],
-  [3, 9],
-  [3, 0],
-  [9, 6],
-  [9, 0],
-  [3, 6],
-] as const;
+const LAST_STEP = EFFORTS.length - 1;
+const FRONT_COLUMN: Partial<Record<Effort, number>> = { xhigh: 6, max: 3, ultracode: 0 };
 
-const tint = (token: string, percent: number) =>
-  `color-mix(in srgb, var(--${token}) ${percent}%, transparent)`;
-const repeat = (dot: string, count: number) => Array.from({ length: count }, () => dot);
-
-type DitheredEffort = "xhigh" | "max" | "ultracode";
-
-const DITHER: Record<
-  DitheredEffort,
-  { start: number; opacity: number; from: string; delay: number; edge: string; dots: string[] }
-> = {
-  xhigh: {
-    start: 138,
-    opacity: 0.72,
-    from: "75%",
-    delay: 120,
-    edge: tint("accent-ink", 46),
-    dots: [...repeat(tint("accent", 66), 2), ...repeat(tint("green", 50), 4)],
-  },
-  max: {
-    start: 75,
-    opacity: 1,
-    from: "100%",
-    delay: 120,
-    edge: tint("accent-ink", 46),
-    dots: [tint("accent", 42), ...repeat(tint("accent", 66), 4), ...repeat(tint("green", 50), 4)],
-  },
-  ultracode: {
-    start: 12,
-    opacity: 1,
-    from: "100%",
-    delay: 380,
-    edge: tint("violet-ink", 46),
-    dots: [
-      ...repeat(tint("violet-deep", 44), 4),
-      ...repeat(tint("violet-deep", 66), 4),
-      ...repeat(tint("violet", 50), 4),
-    ],
-  },
-};
-
-function isDithered(effort: Effort): effort is DitheredEffort {
-  return effort in DITHER;
-}
-
-function DitherField({ effort }: { effort: DitheredEffort }) {
-  const { start, opacity, from, delay, edge, dots } = DITHER[effort];
-  const layer = (index: number, dot: string) =>
-    ({
-      "--x": `${start + index * 21}px`,
-      "--px": `${DITHER_OFFSETS[index][0]}px`,
-      "--py": `${DITHER_OFFSETS[index][1]}px`,
-      "--dot": dot,
-      "--from": from,
-      "--delay": `${delay}ms`,
-      "--rank": dots.length - 1 - index,
-    }) as CSSProperties;
-  return (
-    <div aria-hidden className="effort-dither" style={{ opacity }}>
-      {dots.map((dot, index) => (
-        <span key={`layer-${index}`} className="effort-dither-layer" style={layer(index, dot)} />
-      ))}
-      {dots.map((_, index) => (
-        <span key={`edge-${index}`} className="effort-dither-edge" style={layer(index, edge)} />
-      ))}
-    </div>
-  );
+function EffortDither({ effort }: { effort: Effort }) {
+  const column = FRONT_COLUMN[effort];
+  const [family, setFamily] = useState<DitherFamily>("green");
+  const wanted: DitherFamily | null =
+    effort === "ultracode" ? "violet" : column === undefined ? null : "green";
+  if (wanted && wanted !== family) setFamily(wanted);
+  return <DitherField column={column ?? null} family={family} />;
 }
 
 function Backdrop({ children, className }: { children: ReactNode; className?: string }) {
@@ -111,30 +32,24 @@ export function EffortSlider({
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const ultra = value === "ultracode";
-  const step = ultra ? STEPS.length - 1 : STEPS.indexOf(value);
-  const thumbPercent = ultra ? 100 : step * 25;
+  const step = EFFORTS.indexOf(value);
+  const thumbPercent = (step / LAST_STEP) * 100;
 
-  const effortAt = (clientX: number, fromPress: boolean): Effort => {
+  const effortAt = (clientX: number): Effort => {
     const rect = trackRef.current?.getBoundingClientRect();
     if (!rect) return value;
     const fraction = Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1);
-    if (ultra) {
-      return fraction > ULTRA_GATE
-        ? "ultracode"
-        : STEPS[Math.round((Math.min(fraction, ULTRA_TRACK) / ULTRA_TRACK) * 4)];
-    }
-    const nearest = STEPS[Math.round(fraction * 4)];
-    return fromPress && value === "max" && nearest === "max" ? "ultracode" : nearest;
+    return EFFORTS[Math.round(fraction * LAST_STEP)];
   };
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     event.currentTarget.setPointerCapture(event.pointerId);
-    onChange(effortAt(event.clientX, true));
+    onChange(effortAt(event.clientX));
   };
 
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
     if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
-    const next = effortAt(event.clientX, false);
+    const next = effortAt(event.clientX);
     if (next !== value) onChange(next);
   };
 
@@ -146,7 +61,7 @@ export function EffortSlider({
       ArrowLeft: index - 1,
       ArrowDown: index - 1,
       Home: 0,
-      End: STEPS.length - 1,
+      End: LAST_STEP,
     };
     if (!(event.key in moves)) return;
     event.preventDefault();
@@ -159,7 +74,7 @@ export function EffortSlider({
       aria-label="Effort"
       className="relative isolate overflow-hidden rounded-control"
     >
-      {isDithered(value) && <DitherField key={value} effort={value} />}
+      <EffortDither effort={value} />
       <div className="relative flex h-7 items-center px-2.5 text-2xs text-ink-4">
         <Backdrop className="leading-4">Effort</Backdrop>
         <span className="ml-auto flex">
@@ -180,41 +95,30 @@ export function EffortSlider({
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onKeyDown={onKeyDown}
-        className="relative mx-4 mt-1 h-[18px] cursor-pointer rounded-[6px] outline-none select-none before:absolute before:inset-y-[3px] before:-right-[7px] before:-left-[7px] before:rounded-full before:bg-surface-raised/82 focus-visible:shadow-[0_0_0_1px_var(--line-focus)]"
+        className="relative mx-4 mt-1 h-[18px] cursor-pointer rounded-[6px] select-none before:absolute before:inset-y-[3px] before:-right-[7px] before:-left-[7px] before:rounded-full before:bg-surface-raised/82"
       >
-        <span
-          className="absolute top-[7px] left-0 h-1 rounded-full bg-line-strong transition-[width] duration-300 ease-out-strong"
-          style={{ width: ultra ? "calc(70% + 2px)" : "100%" }}
-        />
+        <span className="absolute top-[7px] left-0 h-1 w-full rounded-full bg-line-strong" />
         <span
           className={cn(
-            "absolute top-[7px] left-0 h-1 rounded-full transition-[width,opacity] duration-300 ease-out-strong",
-            ultra ? "bg-violet-deep opacity-60" : "bg-accent",
+            "absolute top-[7px] left-0 h-1 rounded-full transition-[width,background-color] duration-300 ease-out-strong",
+            ultra ? "bg-violet-deep" : "bg-accent",
           )}
-          style={{ width: ultra ? "calc(70% + 2px)" : `${thumbPercent}%` }}
+          style={{ width: `${thumbPercent}%` }}
         />
-        {STEPS.map((stepName, index) => (
+        {EFFORTS.map((stepName, index) => (
           <span
             key={stepName}
             className={cn(
-              "absolute top-1/2 -mt-0.5 -ml-0.5 size-1 rounded-full transition-[left,background-color] duration-300 ease-out-strong",
-              index <= step ? "bg-on-accent/55" : "bg-ink/22",
+              "absolute top-1/2 -mt-0.5 -ml-0.5 size-1 rounded-full transition-[background-color] duration-300 ease-out-strong",
+              index <= step
+                ? "bg-on-accent/55"
+                : stepName === "ultracode"
+                  ? "bg-violet-ink/60"
+                  : "bg-ink/22",
             )}
-            style={{ left: `${index * (ultra ? 17.5 : 25)}%` }}
+            style={{ left: `${(index / LAST_STEP) * 100}%` }}
           />
         ))}
-        <span
-          className={cn(
-            "absolute top-[5px] left-[73%] h-2 w-px rounded-[1px] bg-ink/22 transition-[opacity,scale] duration-150 ease-out-strong",
-            ultra ? "scale-y-100 opacity-100 delay-300" : "scale-y-0 opacity-0",
-          )}
-        />
-        <span
-          className={cn(
-            "absolute top-2 right-0 left-[76%] h-0.5 origin-left rounded-full bg-violet-ink transition-[scale] duration-200 ease-out-strong",
-            ultra ? "scale-x-100 delay-300" : "scale-x-0",
-          )}
-        />
         <span
           className={cn(
             "absolute top-0.5 -ml-[7px] size-3.5 rounded-full transition-[left,background-color] duration-150 ease-out-strong",

@@ -12,7 +12,7 @@ const ANSI_SEQUENCE = /\x1b\][\s\S]*?(?:\x07|\x1b\\)|\x1b(?:[@-Z\\-_]|\[[0-?]*[ 
 
 // A TUI spaces words with cursor jumps rather than spaces, so deleting them
 // welds the hint line into `esctointerrupt` and no marker can match it.
-function stripAnsi(text: string): string {
+export function stripAnsi(text: string): string {
   return text.replace(CURSOR_COLUMN, " ").replace(ANSI_SEQUENCE, "");
 }
 

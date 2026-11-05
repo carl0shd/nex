@@ -1,21 +1,21 @@
 import type { ReactNode } from "react";
 import {
+  Ban,
   Cpu,
-  EditPencil,
   Eye,
+  FileIcon,
   Folder,
-  GitCommit,
+  GitCommitHorizontal,
   Globe,
-  MediaImage,
-  Page,
-  Prohibition,
-  Refresh,
+  ImageIcon,
+  PenLine,
+  RefreshCw,
   Search,
   Slash,
-  Sparks,
+  Sparkles,
   Terminal,
-  WarningTriangle,
-} from "iconoir-react";
+  TriangleAlert,
+} from "lucide-react";
 import { InlineCode } from "@/components/atoms/inline-code";
 import {
   ParallelAgents,
@@ -61,7 +61,8 @@ import {
   MdStrong,
   MdTable,
 } from "@/components/task/markdown";
-import { QuestionCard } from "@/components/task/question-card";
+import { QuestionCardDemo } from "@/components/design-system/question-card-demo";
+import { JumpToLatest } from "@/components/task/jump-to-latest";
 import { PermissionCard } from "@/components/task/permission-card";
 import { Section } from "@/components/design-system/specimen";
 import { StatusDot } from "@/components/atoms/status-dot";
@@ -133,7 +134,7 @@ function FilesPanel() {
       />
       <Caption>Read · imagen, con miniatura</Caption>
       <BlockRow
-        icon={MediaImage}
+        icon={ImageIcon}
         verb="Read"
         target="design/login.png"
         meta="1440×900"
@@ -142,7 +143,7 @@ function FilesPanel() {
       <ImagePreview />
       <Caption>Write · archivo nuevo</Caption>
       <BlockRow
-        icon={Page}
+        icon={FileIcon}
         verb="Write"
         target="src/auth/session.test.ts"
         tags={<BlockTag tone="new">new</BlockTag>}
@@ -151,7 +152,7 @@ function FilesPanel() {
       />
       <Caption>Edit · diff abierto con números de línea</Caption>
       <BlockRow
-        icon={EditPencil}
+        icon={PenLine}
         verb="Edit"
         target="src/routes/logout.tsx"
         diff={{ added: 2, removed: 1 }}
@@ -168,7 +169,7 @@ function FilesPanel() {
       />
       <Caption>Edit · varios cambios en un archivo</Caption>
       <BlockRow
-        icon={EditPencil}
+        icon={PenLine}
         verb="Edit"
         target="src/auth/url.ts"
         tags={<BlockTag>3 edits</BlockTag>}
@@ -177,7 +178,7 @@ function FilesPanel() {
       />
       <Caption>Edit · notebook</Caption>
       <BlockRow
-        icon={EditPencil}
+        icon={PenLine}
         verb="Edit"
         target="analysis.ipynb"
         tags={<BlockTag>cell 4</BlockTag>}
@@ -240,12 +241,16 @@ function TerminalPanel() {
       />
       <OutputLines
         lines={[
+          ...Array.from({ length: 12 }, (_, i) => ({
+            text: `dist/assets/chunk-${i}.js   ${i + 3}.2 kB`,
+          })),
           { text: "vite v7.1.2 building for production..." },
           { text: "✓ 1284 modules transformed." },
           { text: "dist/index.html            0.46 kB" },
           { text: "dist/assets/index.js   412.80 kB │ gzip: 131.2 kB" },
         ]}
-        more={{ hidden: 214 }}
+        visible={4}
+        onOpenInTerminal={() => {}}
       />
       <Caption>Bash · con descripción del agente</Caption>
       <BlockRow
@@ -281,7 +286,7 @@ function TerminalPanel() {
       />
       <Caption>Git · commit</Caption>
       <BlockRow
-        icon={GitCommit}
+        icon={GitCommitHorizontal}
         verb="Commit"
         target="Use safeNext in logout"
         prose
@@ -374,7 +379,7 @@ function SearchPanel() {
       <Caption>MCP · trabajando</Caption>
       <BlockRow running verb="Figma" target="get_design_context" meta="3s" />
       <Caption>Skill</Caption>
-      <BlockRow icon={Sparks} tone="accent" verb="Using skill" target="frontend-design" prose />
+      <BlockRow icon={Sparkles} tone="accent" verb="Using skill" target="frontend-design" prose />
       <Caption>Comando /</Caption>
       <BlockRow icon={Slash} verb="Ran" target="/review" meta="from .claude/commands" />
     </Panel>
@@ -440,16 +445,9 @@ function CoordinationPanel() {
         ]}
       />
       <Caption>El agente te pregunta</Caption>
-      <QuestionCard
-        question="Where should logout go when next is missing?"
-        value="home"
-        onChange={() => {}}
-        options={[
-          { value: "home", label: "Home", hint: "Same as login today · recommended" },
-          { value: "login", label: "Login page", hint: "Ask them to sign in again" },
-          { value: "previous", label: "Previous page", hint: "Uses the referrer when it is ours" },
-        ]}
-      />
+      <QuestionCardDemo />
+      <Caption>Varias preguntas, una con selección múltiple</Caption>
+      <QuestionCardDemo multiple />
     </Panel>
   );
 }
@@ -459,9 +457,14 @@ function SystemPanel() {
     <Panel title="Sistema" description="Permisos, errores, hooks, límites y cierre del turno.">
       <Caption>Pide permiso</Caption>
       <PermissionCard title="Claude wants to edit a protected file" subject=".env.local" />
+      <Caption>Leyendo más arriba · salta a lo último</Caption>
+      <div className="flex gap-2">
+        <JumpToLatest newSteps={3} />
+        <JumpToLatest newSteps={0} needsYou />
+      </div>
       <Caption>La herramienta falló y el agente reintenta</Caption>
       <BlockRow
-        icon={WarningTriangle}
+        icon={TriangleAlert}
         tone="red"
         verb="Edit"
         target="src/auth/url.ts"
@@ -469,7 +472,7 @@ function SystemPanel() {
         metaTone="red"
       />
       <BlockRow
-        icon={EditPencil}
+        icon={PenLine}
         verb="Edit"
         target="src/auth/url.ts"
         diff={{ added: 3, removed: 1 }}
@@ -477,7 +480,7 @@ function SystemPanel() {
       />
       <Caption>Lo rechazaste</Caption>
       <BlockRow
-        icon={Prohibition}
+        icon={Ban}
         tone="muted"
         verbMuted
         verb="Denied"
@@ -488,7 +491,7 @@ function SystemPanel() {
       <SystemDivider>Interrupted by you</SystemDivider>
       <Caption>Hook del proyecto bloqueó algo</Caption>
       <BlockRow
-        icon={WarningTriangle}
+        icon={TriangleAlert}
         tone="orange"
         verb="Hook"
         target="pre-commit · lint failed"
@@ -508,7 +511,7 @@ function SystemPanel() {
       </SystemDivider>
       <Caption>Reintentando la API</Caption>
       <BlockRow
-        lead={<Refresh width={12} height={12} strokeWidth={2} className="animate-spin" />}
+        lead={<RefreshCw width={12} height={12} strokeWidth={2} className="animate-spin" />}
         tone="orange"
         verb="Retrying"
         target="API overloaded"

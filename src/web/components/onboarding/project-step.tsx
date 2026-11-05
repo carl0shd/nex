@@ -1,8 +1,10 @@
-import { Check, Folder, GitBranch } from "iconoir-react";
+import { Check, Folder, GitBranch } from "lucide-react";
 import { Button } from "@/components/atoms/button";
 import { StatusDot, type DotTone } from "@/components/atoms/status-dot";
 import { TextField } from "@/components/atoms/text-field";
+import { Spinner } from "@/components/atoms/spinner";
 import { OnboardingStep } from "@/components/onboarding/onboarding-step";
+import { RepoDropZone } from "@/components/projects/repo-picker";
 import { taskBranchName } from "@/lib/task-branch";
 import { cn } from "@/lib/utils";
 
@@ -50,6 +52,15 @@ function CommandToggle({
   );
 }
 
+const PLACEHOLDER: ProjectDraft = {
+  name: "your-repo",
+  path: "~/code/your-repo",
+  branch: "main",
+  clean: true,
+  branchPrefix: "feat/",
+  commands: [],
+};
+
 function WorktreeTree({ project }: { project: ProjectDraft }) {
   const prefix = project.branchPrefix.replace(/\/+$/, "") || "feat";
   return (
@@ -83,7 +94,7 @@ function WorktreeTree({ project }: { project: ProjectDraft }) {
                 {prefix}/{tree.branch}
               </span>
               <span className="truncate font-mono text-3xs text-ink-4">
-                ~/.nex/worktrees/{project.name}/{tree.branch}
+                {project.name}/.worktrees/{tree.branch}
               </span>
             </span>
             <span className="shrink-0 text-2xs text-ink-3">{tree.status}</span>
@@ -102,25 +113,79 @@ export function ProjectStep({
   project,
   onChange,
   onChooseFolder,
+  onDropFolder,
+  onClone,
   onBack,
+  onSkip,
   onAdd,
+  reading = false,
+  saving = false,
+}: {
+  project: ProjectDraft | null;
+  onChange: (project: ProjectDraft) => void;
+  onChooseFolder?: () => void;
+  onDropFolder?: (file: File) => void;
+  onClone?: () => void;
+  onBack?: () => void;
+  onSkip?: () => void;
+  onAdd?: () => void;
+  reading?: boolean;
+  saving?: boolean;
+}) {
+  return (
+    <OnboardingStep
+      step={3}
+      title="Add your first project"
+      description="Point Nex at a git repo. Every task gets its own worktree, so agents never step on each other."
+      onBack={onBack}
+      secondary={onSkip && { label: "Skip for now", onClick: onSkip }}
+      primary={{
+        label: saving ? "Adding…" : "Add project",
+        onClick: onAdd,
+        disabled: !project || saving,
+      }}
+      aside={<WorktreeTree project={project ?? PLACEHOLDER} />}
+    >
+      {project ? (
+        <PickedProject
+          project={project}
+          onChange={onChange}
+          onChooseFolder={onChooseFolder}
+          onClone={onClone}
+        />
+      ) : (
+        <div className="flex flex-col gap-2">
+          <RepoDropZone
+            onChooseFolder={onChooseFolder}
+            onDropFolder={onDropFolder}
+            onClone={onClone}
+          />
+          {reading && (
+            <span className="flex items-center gap-2 px-1 text-xs text-ink-3">
+              <Spinner className="size-3" />
+              Reading the repo…
+            </span>
+          )}
+        </div>
+      )}
+    </OnboardingStep>
+  );
+}
+
+function PickedProject({
+  project,
+  onChange,
+  onChooseFolder,
+  onClone,
 }: {
   project: ProjectDraft;
   onChange: (project: ProjectDraft) => void;
   onChooseFolder?: () => void;
-  onBack?: () => void;
-  onAdd?: () => void;
+  onClone?: () => void;
 }) {
   const prefix = project.branchPrefix.replace(/\/+$/, "") || "feat";
   return (
-    <OnboardingStep
-      step={4}
-      title="Add your first project"
-      description="Point Nex at a git repo. Every task gets its own worktree, so agents never step on each other."
-      onBack={onBack}
-      primary={{ label: "Add project", onClick: onAdd }}
-      aside={<WorktreeTree project={project} />}
-    >
+    <>
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-3 rounded-panel bg-surface px-4 py-3 shadow-card">
           <span className="flex size-8 items-center justify-center rounded-control bg-hover text-ink-2">
@@ -140,10 +205,14 @@ export function ProjectStep({
           <Button variant="quiet" size="xs" onClick={onChooseFolder}>
             Choose another folder
           </Button>
-          ·
-          <Button variant="quiet" size="xs">
-            Clone from GitHub
-          </Button>
+          {onClone && (
+            <>
+              ·
+              <Button variant="quiet" size="xs" onClick={onClone}>
+                Clone from GitHub
+              </Button>
+            </>
+          )}
         </div>
       </div>
       <TextField
@@ -158,28 +227,30 @@ export function ProjectStep({
           </>
         }
       />
-      <div className="flex flex-col gap-2">
-        <span className="text-xs font-medium text-ink-3">
-          Quick commands <span className="font-normal text-ink-4">· found in package.json</span>
-        </span>
-        <div className="flex flex-wrap gap-1.5">
-          {project.commands.map((command) => (
-            <CommandToggle
-              key={command.name}
-              name={command.name}
-              on={command.on}
-              onToggle={() =>
-                onChange({
-                  ...project,
-                  commands: project.commands.map((item) =>
-                    item.name === command.name ? { ...item, on: !item.on } : item,
-                  ),
-                })
-              }
-            />
-          ))}
+      {project.commands.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-medium text-ink-3">
+            Quick commands <span className="font-normal text-ink-4">· found in package.json</span>
+          </span>
+          <div className="flex flex-wrap gap-1.5">
+            {project.commands.map((command) => (
+              <CommandToggle
+                key={command.name}
+                name={command.name}
+                on={command.on}
+                onToggle={() =>
+                  onChange({
+                    ...project,
+                    commands: project.commands.map((item) =>
+                      item.name === command.name ? { ...item, on: !item.on } : item,
+                    ),
+                  })
+                }
+              />
+            ))}
+          </div>
         </div>
-      </div>
-    </OnboardingStep>
+      )}
+    </>
   );
 }

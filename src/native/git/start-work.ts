@@ -15,13 +15,16 @@ import {
 import { setupSymlinks } from "@native/git/symlinks";
 import { createTerminalForSession } from "@native/agents/agent-terminal";
 import type { Session, StartWorkInput } from "@native/db/types";
+import { sendToAgent } from "@native/agents/agent-runner";
+import { saveAgentSettings } from "@native/agents/agent-settings";
 
-function createPrimaryTerminal(session: Session): void {
-  createTerminalForSession({
+function createPrimaryTerminal(session: Session, prompt?: string): void {
+  const terminal = createTerminalForSession({
     sessionId: session.id,
     type: session.agentId ? "agent" : "shell",
     isPrimary: true,
   });
+  if (terminal.type === "agent" && prompt?.trim()) sendToAgent(session.id, prompt.trim());
 }
 
 async function writeIfMissing(path: string, content: string): Promise<void> {
@@ -64,13 +67,15 @@ export async function startWork(input: StartWorkInput): Promise<Session> {
       agentId: input.agentId,
       accountId: input.accountId,
       name: input.name,
+      title: input.title,
       branch: "",
       baseBranch: "",
       worktreePath: project.path,
       notesPath,
       symlinks: [],
     });
-    createPrimaryTerminal(session);
+    if (input.agentSettings) saveAgentSettings(session.id, input.agentSettings);
+    createPrimaryTerminal(session, input.prompt);
     return session;
   }
 
@@ -93,13 +98,15 @@ export async function startWork(input: StartWorkInput): Promise<Session> {
       agentId: input.agentId,
       accountId: input.accountId,
       name: input.name,
+      title: input.title,
       branch,
       baseBranch,
       worktreePath: wtPath,
       notesPath,
       symlinks: [".claude"],
     });
-    createPrimaryTerminal(session);
+    if (input.agentSettings) saveAgentSettings(session.id, input.agentSettings);
+    createPrimaryTerminal(session, input.prompt);
     return session;
   } catch (err) {
     await removeWorktree(project.path, wtPath).catch(() => {});

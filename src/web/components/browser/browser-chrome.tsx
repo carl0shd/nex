@@ -3,16 +3,16 @@ import {
   ArrowLeft,
   ArrowRight,
   Camera,
-  CursorPointer,
-  Expand,
+  Ellipsis,
+  Hand,
   Lock,
-  MoreHoriz,
-  OpenSelectHandGesture,
+  Maximize2,
+  MousePointer2,
   Plus,
-  Refresh,
-  SmartphoneDevice,
-  Xmark,
-} from "iconoir-react";
+  RotateCw,
+  Smartphone,
+  X,
+} from "lucide-react";
 import { IconButton } from "@/components/atoms/icon-button";
 import { Orbit } from "@/components/atoms/orbit";
 import { AnchoredPopover } from "@/components/primitives/anchored-popover";
@@ -90,7 +90,7 @@ export function BrowserTabs({
               onClick={() => onClose?.(tab.id)}
               className="interactive press flex size-5 cursor-pointer items-center justify-center rounded-[5px] text-ink-4 select-none hover:bg-hover hover:text-ink-2"
             >
-              <Xmark width={11} height={11} strokeWidth={2.25} />
+              <X width={11} height={11} strokeWidth={2.25} />
             </button>
           </div>
         );
@@ -100,7 +100,7 @@ export function BrowserTabs({
       </ChromeButton>
       <span className="ml-auto flex items-center gap-0.5">
         <ChromeButton label="Phone viewport" pressed={phone} onClick={onTogglePhone}>
-          <SmartphoneDevice width={13} height={13} strokeWidth={2} />
+          <Smartphone width={13} height={13} strokeWidth={2} />
         </ChromeButton>
         <AnchoredPopover
           open={menuOpen}
@@ -113,14 +113,14 @@ export function BrowserTabs({
               pressed={menuOpen}
               onClick={() => setMenuOpen((open) => !open)}
             >
-              <MoreHoriz width={14} height={14} strokeWidth={2} />
+              <Ellipsis width={14} height={14} strokeWidth={2} />
             </ChromeButton>
           }
         >
           <BrowserMenu {...menu} />
         </AnchoredPopover>
         <ChromeButton label="Full screen" onClick={onFullScreen}>
-          <Expand width={13} height={13} strokeWidth={2} />
+          <Maximize2 width={13} height={13} strokeWidth={2} />
         </ChromeButton>
       </span>
     </div>
@@ -166,7 +166,7 @@ export function AddressBar({
         <ArrowRight width={13} height={13} strokeWidth={2} />
       </ChromeButton>
       <ChromeButton label="Reload" onClick={onReload}>
-        <Refresh width={13} height={13} strokeWidth={2} />
+        <RotateCw width={13} height={13} strokeWidth={2} />
       </ChromeButton>
       <label className="interactive flex h-[30px] min-w-0 flex-1 cursor-text items-center gap-2 rounded-control bg-field px-3 font-mono text-2xs shadow-[inset_0_0_0_1px_var(--line-chip)] focus-within:shadow-focus">
         <Lock width={11} height={11} strokeWidth={2} className="shrink-0 text-ink-4" />
@@ -198,7 +198,7 @@ export function AddressBar({
         )}
       </label>
       <ChromeButton label="Pick an element" pressed={picking} onClick={onTogglePicker}>
-        <CursorPointer width={13} height={13} strokeWidth={2} />
+        <MousePointer2 width={13} height={13} strokeWidth={2} />
       </ChromeButton>
       <ChromeButton label="Screenshot" onClick={onScreenshot}>
         <Camera width={13} height={13} strokeWidth={2} />
@@ -229,7 +229,7 @@ export function ClaudeBrowsingBanner({
         onClick={onTakeOver}
         className="interactive press ml-auto flex h-[26px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-2.5 text-2xs font-medium whitespace-nowrap text-ink-2 shadow-[inset_0_0_0_1px_var(--line-strong)] select-none hover:bg-hover hover:text-ink"
       >
-        <OpenSelectHandGesture width={12} height={12} strokeWidth={2} />
+        <Hand width={12} height={12} strokeWidth={2} />
         Take over
       </button>
     </div>

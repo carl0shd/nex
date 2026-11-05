@@ -1,6 +1,6 @@
 import { useState, type ComponentType, type ReactNode } from "react";
 import { useEditorState, type Editor } from "@tiptap/react";
-import { Code, Link, NavArrowDown } from "iconoir-react";
+import { ChevronDown, CodeXml, Link } from "lucide-react";
 import { Menu, MenuItem } from "@/components/primitives/menu";
 import { AnchoredPopover } from "@/components/primitives/anchored-popover";
 import { cn } from "@/lib/utils";
@@ -176,7 +176,7 @@ export function FormatToolbar({ editor }: { editor: Editor }) {
             className="gap-1 pr-1.5 pl-2 text-xs font-medium"
           >
             {blockLabel}
-            <NavArrowDown width={10} height={10} strokeWidth={2.25} className="opacity-70" />
+            <ChevronDown width={10} height={10} strokeWidth={2.25} className="opacity-70" />
           </ToolbarButton>
         }
       >
@@ -206,7 +206,7 @@ export function FormatToolbar({ editor }: { editor: Editor }) {
         <span className="text-sm line-through">S</span>
       </MarkButton>
       <MarkButton editor={editor} mark="code" label="Inline code" active={state.code}>
-        <IconGlyph icon={Code} />
+        <IconGlyph icon={CodeXml} />
       </MarkButton>
       <ToolbarDivider />
       <AnchoredPopover

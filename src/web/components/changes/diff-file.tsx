@@ -1,5 +1,5 @@
 import type { FileDiffMetadata } from "@pierre/diffs";
-import { NavArrowDown } from "iconoir-react";
+import { ChevronDown } from "lucide-react";
 import { DiffStat } from "@/components/task/task-tab-bar";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +11,7 @@ export interface ChangedFile {
   added: number;
   removed: number;
   diff: FileDiffMetadata;
+  version?: number;
 }
 
 export type DiffLayout = "unified" | "split";
@@ -69,6 +70,7 @@ export function DiffFileHeader({
   const panel = variant === "panel";
   return (
     <button
+      data-diff-path={file.path}
       type="button"
       aria-expanded={expanded}
       onClick={onToggle}
@@ -78,7 +80,7 @@ export function DiffFileHeader({
         expanded && "border-b border-line",
       )}
     >
-      <NavArrowDown
+      <ChevronDown
         width={11}
         height={11}
         strokeWidth={2.25}

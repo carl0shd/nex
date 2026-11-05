@@ -1,9 +1,18 @@
 import { useState, type ReactNode } from "react";
-import { Palette, SidebarCollapse, Settings } from "iconoir-react";
+import { Palette, PanelLeft, Rocket, Settings2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router";
+import { useOnboardingStore } from "@/stores/onboarding.store";
+import { usePreferencesStore } from "@/stores/preferences.store";
+import { useSettingsStore } from "@/stores/settings.store";
 import { IconButton } from "@/components/atoms/icon-button";
 import { SearchButton } from "@/components/layout/search-button";
+import { useCommandPaletteStore } from "@/stores/command-palette.store";
 import { UsagePill } from "@/components/layout/usage-pill";
+import { AppUsagePanel } from "@/components/usage/app-usage-panel";
+import { useAppHotkey } from "@/hooks/use-app-hotkey";
+import { useLimitWarnings } from "@/hooks/use-limit-warnings";
+import { useUsageSummary } from "@/hooks/use-usage-summary";
+import { formatUsd, activeLimit } from "@/lib/usage";
 import { AnchoredPopover } from "@/components/primitives/anchored-popover";
 import { cn } from "@/lib/utils";
 
@@ -17,31 +26,50 @@ export function TitlebarView({
   usage,
   usagePanel,
   defaultUsageOpen = false,
+  usageOpen: controlledUsageOpen,
+  onUsageOpenChange,
+  settingsOpen = false,
   onToggleSidebar,
   onSearch,
+  onSettings,
   trailing,
 }: {
   collapsed?: boolean;
   usage?: Usage;
   usagePanel?: ReactNode;
   defaultUsageOpen?: boolean;
+  usageOpen?: boolean;
+  onUsageOpenChange?: (open: boolean) => void;
+  settingsOpen?: boolean;
   onToggleSidebar?: () => void;
   onSearch?: () => void;
+  onSettings?: () => void;
   trailing?: ReactNode;
 }) {
-  const [usageOpen, setUsageOpen] = useState(defaultUsageOpen);
+  const [ownUsageOpen, setOwnUsageOpen] = useState(defaultUsageOpen);
+  const usageOpen = controlledUsageOpen ?? ownUsageOpen;
+  const setUsageOpen = (open: boolean) => {
+    setOwnUsageOpen(open);
+    onUsageOpenChange?.(open);
+  };
   return (
     <header className="flex h-12 w-full shrink-0 items-center pr-3" style={DRAG}>
       <span aria-hidden className="w-[66px] shrink-0" />
-      <span className="ml-1.5 flex" style={NO_DRAG}>
+      <span className="ml-3.5 flex" style={NO_DRAG}>
         <IconButton
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           onClick={onToggleSidebar}
         >
-          <SidebarCollapse width={15} height={15} strokeWidth={2} />
+          <PanelLeft width={15} height={15} strokeWidth={2} />
         </IconButton>
       </span>
-      <span className={cn("flex", collapsed ? "ml-2.5" : "ml-[170px]")} style={NO_DRAG}>
+      <span
+        className={cn(
+          "flex transition-[margin] duration-[250ms] ease-out-strong",
+          collapsed ? "ml-2.5" : "ml-[162px]",
+        )}
+        style={NO_DRAG}
+      >
         <SearchButton onClick={onSearch} />
       </span>
       <div className="ml-auto flex items-center gap-1.5" style={NO_DRAG}>
@@ -56,7 +84,7 @@ export function TitlebarView({
                 percent={usage.percent}
                 cost={usage.cost}
                 open={usageOpen && Boolean(usagePanel)}
-                onClick={() => setUsageOpen((open) => !open)}
+                onClick={() => setUsageOpen(!usageOpen)}
               />
             }
           >
@@ -64,8 +92,13 @@ export function TitlebarView({
           </AnchoredPopover>
         )}
         {trailing}
-        <IconButton aria-label="Settings" className="size-8">
-          <Settings width={15} height={15} strokeWidth={2} />
+        <IconButton
+          aria-label="Settings"
+          pressed={settingsOpen}
+          onClick={onSettings}
+          className="size-8"
+        >
+          <Settings2 width={15} height={15} strokeWidth={2} />
         </IconButton>
       </div>
     </header>
@@ -76,18 +109,61 @@ function Titlebar(): React.JSX.Element {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const onDesignSystem = pathname === "/design-system";
+  const collapsed = useSettingsStore((s) => s.sidebarCollapsed);
+  const toggleSidebar = useSettingsStore((s) => s.toggleSidebar);
+  const showPalette = useCommandPaletteStore((s) => s.show);
+  const previewOnboarding = useOnboardingStore((s) => s.preview);
+  const { summary, reload, refresh } = useUsageSummary();
+  useLimitWarnings(summary, reload);
+  const defaultAccount = summary?.accounts.find((account) => account.isDefault);
+  const showUsage = usePreferencesStore((s) => s.prefs.showUsage);
+  const onSettings = pathname === "/settings";
+  const [usageOpen, setUsageOpen] = useState(false);
+  useAppHotkey("settings", () => navigate(onSettings ? "/" : "/settings"));
+  useAppHotkey("usage", () => setUsageOpen((open) => !open), Boolean(summary && showUsage));
 
   return (
     <TitlebarView
+      collapsed={collapsed}
+      onSearch={showPalette}
+      onToggleSidebar={toggleSidebar}
+      settingsOpen={onSettings}
+      onSettings={() => navigate(onSettings ? "/" : "/settings")}
+      usageOpen={usageOpen}
+      onUsageOpenChange={setUsageOpen}
+      usage={
+        summary && showUsage
+          ? {
+              percent: Math.round(
+                (defaultAccount ? activeLimit(defaultAccount).percent : summary.worstPercent) ?? 0,
+              ),
+              cost: formatUsd(summary.today.total.costUsd),
+            }
+          : undefined
+      }
+      usagePanel={
+        summary && (
+          <AppUsagePanel summary={summary} onRefresh={() => void refresh()} onChanged={reload} />
+        )
+      }
       trailing={
         import.meta.env.DEV && (
-          <IconButton
-            aria-label="Design system"
-            pressed={onDesignSystem}
-            onClick={() => navigate(onDesignSystem ? "/" : "/design-system")}
-          >
-            <Palette width={14} height={14} strokeWidth={2} />
-          </IconButton>
+          <>
+            <IconButton
+              aria-label="Preview first run"
+              title="Preview first run (⇧⌘O)"
+              onClick={previewOnboarding}
+            >
+              <Rocket width={14} height={14} strokeWidth={2} />
+            </IconButton>
+            <IconButton
+              aria-label="Design system"
+              pressed={onDesignSystem}
+              onClick={() => navigate(onDesignSystem ? "/" : "/design-system")}
+            >
+              <Palette width={14} height={14} strokeWidth={2} />
+            </IconButton>
+          </>
         )
       }
     />

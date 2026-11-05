@@ -48,6 +48,7 @@ export async function startSpeech(opts: {
         send({ type: isFinal ? "final" : "partial", text, confidence, timestampMs }),
       onError: ({ code, message }) => send({ type: "error", code, message }),
       onEnd: () => send({ type: "end" }),
+      onLevel: (level) => send({ type: "level", level }),
     },
   );
 }

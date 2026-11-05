@@ -1,4 +1,4 @@
-import { NavArrowLeft, Computer, HalfMoon, SunLight } from "iconoir-react";
+import { ChevronLeft, Monitor, Moon, Sun } from "lucide-react";
 import { useNavigate } from "react-router";
 import { IconButton } from "@/components/atoms/icon-button";
 import { SegmentedControl } from "@/components/atoms/segmented-control";
@@ -35,7 +35,7 @@ import { useSettingsStore } from "@/stores/settings.store";
 
 const THEMES = ["system", "dark", "light"] as const satisfies readonly ThemePreference[];
 const THEME_LABELS = { system: "System", dark: "Dark", light: "Light" };
-const THEME_ICONS = { system: Computer, dark: HalfMoon, light: SunLight };
+const THEME_ICONS = { system: Monitor, dark: Moon, light: Sun };
 
 function DesignSystem(): React.JSX.Element {
   const navigate = useNavigate();
@@ -48,7 +48,7 @@ function DesignSystem(): React.JSX.Element {
         <header className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <IconButton aria-label="Back" onClick={() => navigate("/")}>
-              <NavArrowLeft width={16} height={16} strokeWidth={2} />
+              <ChevronLeft width={16} height={16} strokeWidth={2} />
             </IconButton>
             <div className="flex flex-col">
               <h1 className="m-0 text-md font-semibold tracking-[-0.015em] text-ink">

@@ -1,17 +1,22 @@
 import { useState, type ReactNode } from "react";
-import { Check, Clock, Copy, NavArrowRight } from "iconoir-react";
+import { Check, ChevronRight, Clock4, Copy } from "lucide-react";
 import { Orbit } from "@/components/atoms/orbit";
 import { Shimmer } from "@/components/atoms/shimmer";
+import { useCounted } from "@/hooks/use-counted";
+import { compactTokens } from "@/lib/usage";
 import { cn } from "@/lib/utils";
 
-export function ThinkingLine({ seconds }: { seconds: number }) {
+export function ThinkingLine({ seconds, tokens = 0 }: { seconds: number; tokens?: number }) {
+  const counted = useCounted(tokens);
   return (
-    <div className="flex h-6 items-center gap-[9px]">
+    <div className="flex h-5 items-center gap-[9px]">
       <span className="flex size-[18px] shrink-0 items-center justify-center">
         <Orbit size="md" />
       </span>
       <Shimmer className="text-sm font-medium">Thinking</Shimmer>
-      <span className="text-xs text-ink-4 tabular-nums">{seconds}s</span>
+      <span className="text-xs text-ink-4 tabular-nums">
+        {seconds}s{counted > 0 && ` · ↓ ${compactTokens(counted)} tokens`}
+      </span>
       <span className="ml-auto text-2xs text-ink-4">esc to interrupt</span>
     </div>
   );
@@ -26,6 +31,9 @@ export function ThoughtToggle({
   open?: boolean;
   onToggle?: () => void;
 }) {
+  if (!onToggle) {
+    return <span className="flex h-6 items-center text-xs text-ink-4">Thought for {seconds}s</span>;
+  }
   return (
     <button
       type="button"
@@ -34,7 +42,7 @@ export function ThoughtToggle({
       className="interactive press flex h-6 cursor-pointer items-center gap-1.5 self-start text-xs text-ink-4 select-none hover:text-ink-3"
     >
       Thought for {seconds}s
-      <NavArrowRight
+      <ChevronRight
         width={11}
         height={11}
         strokeWidth={2}
@@ -79,23 +87,35 @@ function TextAction({
   );
 }
 
-export function QueuedMessage({ children }: { children: ReactNode }) {
+export function QueuedMessage({
+  children,
+  onSendNow,
+  onEdit,
+  onCancel,
+}: {
+  children: ReactNode;
+  onSendNow?: () => void;
+  onEdit?: () => void;
+  onCancel?: () => void;
+}) {
   return (
     <div className="mt-1.5 flex flex-col items-end gap-2 self-end">
-      <div className="max-w-[420px] rounded-[16px_16px_4px_16px] px-3.5 py-2.5 text-sm leading-[19px] text-ink-3 shadow-[inset_0_0_0_1px_var(--line-strong)]">
+      <div className="max-w-[420px] rounded-[16px_16px_4px_16px] px-3.5 py-2.5 text-sm leading-[19px] whitespace-pre-wrap text-ink-3 shadow-[inset_0_0_0_1px_var(--line-strong)]">
         {children}
       </div>
       <div className="flex items-center gap-2.5 pr-1 text-2xs text-ink-4">
         <span className="flex items-center gap-[5px]">
-          <Clock width={11} height={11} strokeWidth={2} />
+          <Clock4 width={11} height={11} strokeWidth={2} />
           Queued
         </span>
         <span className="text-ink-6">·</span>
-        <TextAction strong>Send now</TextAction>
+        <TextAction strong onClick={onSendNow}>
+          Send now
+        </TextAction>
         <span className="text-ink-6">·</span>
-        <TextAction>Edit</TextAction>
+        <TextAction onClick={onEdit}>Edit</TextAction>
         <span className="text-ink-6">·</span>
-        <TextAction>Cancel</TextAction>
+        <TextAction onClick={onCancel}>Cancel</TextAction>
       </div>
     </div>
   );
@@ -104,10 +124,12 @@ export function QueuedMessage({ children }: { children: ReactNode }) {
 export function ResponseActions({
   time,
   exact,
+  text,
   visible = false,
 }: {
   time: string;
   exact: string;
+  text?: string;
   visible?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
@@ -123,6 +145,7 @@ export function ResponseActions({
         aria-label={copied ? "Copied" : "Copy response"}
         title={copied ? undefined : "Copy"}
         onClick={() => {
+          if (text) void navigator.clipboard.writeText(text);
           setCopied(true);
           setTimeout(() => setCopied(false), 1500);
         }}
@@ -151,7 +174,15 @@ export function ResponseActions({
 
 const SEGMENTS = 20;
 
-export function ContextMeter({ percent, compactAt = 95 }: { percent: number; compactAt?: number }) {
+export function ContextMeter({
+  percent,
+  compactAt = 95,
+  onCompact,
+}: {
+  percent: number;
+  compactAt?: number;
+  onCompact?: () => void;
+}) {
   const filled = Math.round((percent / 100) * SEGMENTS);
   const warnFrom = Math.round(SEGMENTS * 0.7);
   return (
@@ -161,6 +192,7 @@ export function ContextMeter({ percent, compactAt = 95 }: { percent: number; com
         of context used · Claude compacts at {compactAt}%
         <button
           type="button"
+          onClick={onCompact}
           className="interactive press ml-auto h-5 cursor-pointer text-xs font-medium whitespace-nowrap text-ink select-none hover:text-ink-2"
         >
           Compact now

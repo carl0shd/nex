@@ -1,43 +1,12 @@
-import type { ComponentType } from "react";
-import { Database, GitBranch, Globe, Trash } from "iconoir-react";
+import { Database, GitBranch, Globe, Trash2 } from "lucide-react";
 import { Button } from "@/components/atoms/button";
-import { ModalCard, StatusIcon } from "@/components/primitives/modal-card";
-import { cn } from "@/lib/utils";
-
-type ItemIcon = ComponentType<{ width?: number; height?: number; strokeWidth?: number }>;
+import { ModalCard, ModalConsequence, StatusIcon } from "@/components/primitives/modal-card";
 
 export interface CloseTaskSummary {
   title: string;
   branch: string;
   uncommitted: number;
   environment?: { size: string; address: string };
-}
-
-function Consequence({
-  icon: Icon,
-  title,
-  detail,
-  outcome,
-  warn = false,
-}: {
-  icon: ItemIcon;
-  title: string;
-  detail: string;
-  outcome: string;
-  warn?: boolean;
-}) {
-  return (
-    <div className="flex items-center gap-3 py-2">
-      <span className="flex size-7 shrink-0 items-center justify-center rounded-control bg-hover text-ink-3">
-        <Icon width={13} height={13} strokeWidth={2} />
-      </span>
-      <span className="flex flex-1 flex-col">
-        <span className="text-sm font-medium text-ink">{title}</span>
-        <span className="text-xs text-ink-3">{detail}</span>
-      </span>
-      <span className={cn("text-2xs", warn ? "text-orange" : "text-ink-4")}>{outcome}</span>
-    </div>
-  );
 }
 
 export function CloseTaskDialog({
@@ -55,7 +24,7 @@ export function CloseTaskDialog({
     <ModalCard
       title={`Close ${task.title}?`}
       description={`The branch ${task.branch} stays in git.`}
-      icon={<StatusIcon tone="red" icon={Trash} />}
+      icon={<StatusIcon tone="red" icon={Trash2} />}
       onClose={onCancel}
       footer={
         <>
@@ -73,7 +42,7 @@ export function CloseTaskDialog({
       }
     >
       <div className="flex flex-col">
-        <Consequence
+        <ModalConsequence
           icon={GitBranch}
           title="Worktree"
           detail={
@@ -86,13 +55,13 @@ export function CloseTaskDialog({
         />
         {task.environment && (
           <>
-            <Consequence
+            <ModalConsequence
               icon={Database}
               title="Environment data"
               detail={`Its database copy and uploads · ${task.environment.size}`}
               outcome="Deleted"
             />
-            <Consequence
+            <ModalConsequence
               icon={Globe}
               title={task.environment.address}
               detail="Stops answering"

@@ -1,17 +1,19 @@
-import { EditPencil, NavArrowDown, ViewGrid } from "iconoir-react";
+import { useRef } from "react";
+import { ChevronDown, LayoutGrid, SquarePen } from "lucide-react";
 import { ColorSwatches } from "@/components/atoms/color-swatches";
 import { Monogram } from "@/components/atoms/entity-chip";
 import { SegmentedControl } from "@/components/atoms/segmented-control";
 import { TextField } from "@/components/atoms/text-field";
 import { OnboardingStep } from "@/components/onboarding/onboarding-step";
 import { cn } from "@/lib/utils";
+import { readBadgeImage } from "@/lib/workspace-image";
 
-export type WorkspaceBadge = "initial" | "icon" | "image";
+type BadgeKind = "initial" | "image";
 
 export interface WorkspaceDraft {
   name: string;
   color: string;
-  badge: WorkspaceBadge;
+  image: string | null;
 }
 
 function Skeleton({ className }: { className?: string }) {
@@ -32,17 +34,19 @@ function WorkspacePreview({ workspace }: { workspace: WorkspaceDraft }) {
           ))}
         </div>
         <span className="flex h-8 items-center gap-2 px-2 text-sm font-medium text-ink-2">
-          <EditPencil width={14} height={14} strokeWidth={2} className="text-accent-ink" />
+          <SquarePen width={14} height={14} strokeWidth={2} className="text-accent-ink" />
           New task
         </span>
         <span className="flex h-8 items-center gap-2 rounded-control bg-surface px-2 text-sm font-medium text-ink shadow-hairline">
-          <ViewGrid width={14} height={14} strokeWidth={2} />
+          <LayoutGrid width={14} height={14} strokeWidth={2} />
           Overview
         </span>
         <span className="mt-4 flex h-8 items-center gap-2 px-2">
-          <Monogram color={workspace.color}>{name[0]?.toUpperCase()}</Monogram>
+          <Monogram color={workspace.color} image={workspace.image ?? undefined}>
+            {name[0]?.toUpperCase()}
+          </Monogram>
           <span className="truncate text-sm font-semibold text-ink">{name}</span>
-          <NavArrowDown width={12} height={12} strokeWidth={2} className="text-ink-4" />
+          <ChevronDown width={12} height={12} strokeWidth={2} className="text-ink-4" />
         </span>
         <div aria-hidden className="mt-1 flex flex-col gap-3 pl-5">
           <Skeleton className="w-24" />
@@ -77,19 +81,26 @@ export function WorkspaceStep({
   onChange,
   onBack,
   onContinue,
+  saving = false,
 }: {
   workspace: WorkspaceDraft;
   onChange: (workspace: WorkspaceDraft) => void;
   onBack?: () => void;
   onContinue?: () => void;
+  saving?: boolean;
 }) {
+  const fileRef = useRef<HTMLInputElement>(null);
   return (
     <OnboardingStep
-      step={3}
+      step={2}
       title="Create a workspace"
       description="Group the repos you work on together: a client, a team, or just personal. You can add more later."
       onBack={onBack}
-      primary={{ label: "Continue", onClick: onContinue, disabled: !workspace.name.trim() }}
+      primary={{
+        label: saving ? "Creating…" : "Continue",
+        onClick: onContinue,
+        disabled: !workspace.name.trim() || saving,
+      }}
       aside={<WorkspacePreview workspace={workspace} />}
     >
       <TextField
@@ -107,12 +118,25 @@ export function WorkspaceStep({
       </div>
       <div className="flex flex-col gap-2">
         <span className="text-xs font-medium text-ink-3">Badge</span>
-        <SegmentedControl
-          options={["initial", "icon", "image"] as const}
-          labels={{ initial: "Initial", icon: "Icon", image: "Image" }}
-          value={workspace.badge}
-          onChange={(badge) => onChange({ ...workspace, badge })}
+        <SegmentedControl<BadgeKind>
+          options={["initial", "image"]}
+          labels={{ initial: "Initial", image: "Image" }}
+          value={workspace.image ? "image" : "initial"}
+          onChange={(kind) =>
+            kind === "image" ? fileRef.current?.click() : onChange({ ...workspace, image: null })
+          }
           className="self-start"
+        />
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={async (event) => {
+            const file = event.target.files?.[0];
+            event.target.value = "";
+            if (file) onChange({ ...workspace, image: await readBadgeImage(file) });
+          }}
         />
       </div>
     </OnboardingStep>

@@ -29,12 +29,14 @@ export function TaskTabBar({
   view,
   onViewChange,
   agentWaiting = false,
+  hasAgent = true,
   diff,
   trailing,
 }: {
   view: TaskView;
   onViewChange: (view: TaskView) => void;
   agentWaiting?: boolean;
+  hasAgent?: boolean;
   diff: { added: number; removed: number };
   trailing?: ReactNode;
 }) {
@@ -44,26 +46,28 @@ export function TaskTabBar({
         value={view}
         onChange={onViewChange}
         items={[
+          hasAgent
+            ? {
+                value: "agent" as const,
+                label: (
+                  <>
+                    <ClaudeTile size={16} />
+                    Agent
+                    <StatusDot tone={agentWaiting ? "orange" : "green"} />
+                  </>
+                ),
+              }
+            : { value: "shell" as const, label: "Shell" },
           {
-            value: "agent",
-            label: (
-              <>
-                <ClaudeTile size={16} />
-                Agent
-                <StatusDot tone={agentWaiting ? "orange" : "green"} />
-              </>
-            ),
-          },
-          {
-            value: "changes",
+            value: "changes" as const,
             label: (
               <>
                 Changes <DiffStat {...diff} />
               </>
             ),
           },
-          { value: "notes", label: "Notes" },
-          { value: "shell", label: "Shell" },
+          { value: "notes" as const, label: "Notes" },
+          ...(hasAgent ? [{ value: "shell" as const, label: "Shell" }] : []),
         ]}
       />
       <div className="ml-auto flex items-center gap-2">{trailing}</div>

@@ -1,4 +1,4 @@
-import { Page } from "iconoir-react";
+import { FileIcon } from "lucide-react";
 import { ImageThumb } from "@/components/composer/attachments";
 
 export function DropOverlay({ images, files }: { images: number; files: number }) {
@@ -15,7 +15,7 @@ export function DropOverlay({ images, files }: { images: number; files: number }
         ))}
         {files > 0 && images < 3 && (
           <span className="flex size-11 items-center justify-center self-center rounded-field bg-elevated text-ink-2 shadow-[inset_0_0_0_1px_var(--line-strong)]">
-            <Page width={14} height={14} strokeWidth={2} />
+            <FileIcon width={14} height={14} strokeWidth={2} />
           </span>
         )}
       </div>

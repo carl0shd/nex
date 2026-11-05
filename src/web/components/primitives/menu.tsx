@@ -1,5 +1,5 @@
 import type { ComponentType, ReactNode } from "react";
-import { Check } from "iconoir-react";
+import { Check } from "lucide-react";
 import GlideMenu from "@/components/primitives/glide-menu";
 import { cn } from "@/lib/utils";
 
@@ -7,22 +7,37 @@ type MenuIcon = ComponentType<{ width?: number; height?: number; strokeWidth?: n
 
 export function Menu({
   children,
+  header,
+  maxHeight,
   width = 300,
   origin = "top",
   className,
 }: {
   children: ReactNode;
+  header?: ReactNode;
+  maxHeight?: number;
   width?: number;
   origin?: "top" | "bottom left" | "bottom right";
   className?: string;
 }) {
+  const rows = <GlideMenu className="flex flex-col gap-0.5">{children}</GlideMenu>;
   return (
     <div
       role="menu"
-      className={cn("enter-pop rounded-menu bg-elevated p-1.5 shadow-overlay", className)}
+      className={cn(
+        "enter-pop flex flex-col rounded-menu bg-elevated p-1.5 shadow-overlay",
+        className,
+      )}
       style={{ width, transformOrigin: origin }}
     >
-      <GlideMenu className="flex flex-col gap-0.5">{children}</GlideMenu>
+      {header}
+      {maxHeight ? (
+        <div className="menu-scroll -mr-1.5 overflow-y-auto pr-1.5" style={{ maxHeight }}>
+          {rows}
+        </div>
+      ) : (
+        rows
+      )}
     </div>
   );
 }

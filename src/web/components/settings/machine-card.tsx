@@ -1,4 +1,4 @@
-import { BoxIso } from "iconoir-react";
+import { Package } from "lucide-react";
 import { Button } from "@/components/atoms/button";
 import { ValuePill } from "@/components/atoms/value-pill";
 import { usageTone, type UsageTone } from "@/lib/usage";
@@ -29,7 +29,7 @@ export function MachineCard({
   return (
     <div className="flex items-center gap-3 rounded-panel bg-surface px-4 py-3.5 shadow-card">
       <span className="flex size-8 shrink-0 items-center justify-center rounded-control bg-green-tint text-green">
-        <BoxIso width={15} height={15} strokeWidth={2} />
+        <Package width={15} height={15} strokeWidth={2} />
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="flex items-center gap-2 text-sm font-medium text-ink">

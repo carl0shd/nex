@@ -1,4 +1,4 @@
-import { Play } from "iconoir-react";
+import { Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StatusDot } from "@/components/atoms/status-dot";
 
@@ -28,17 +28,32 @@ export function Chip({ children, running = false, meta, onClick, className }: Ch
   );
 }
 
-export function CountChip({ count, className }: { count: number; className?: string }) {
+export function CountChip({
+  count,
+  open,
+  running = false,
+  onClick,
+  className,
+}: {
+  count: number;
+  open?: boolean;
+  running?: boolean;
+  onClick?: () => void;
+  className?: string;
+}) {
   return (
     <button
       type="button"
       aria-label={`${count} more`}
+      aria-expanded={open}
+      onClick={onClick}
       className={cn(
         "interactive press inline-flex h-[26px] shrink-0 cursor-pointer items-center rounded-full px-2 font-mono text-3xs text-ink-3 shadow-[inset_0_0_0_1px_var(--line-chip)] select-none hover:bg-hover",
+        open && "bg-hover text-ink-2",
         className,
       )}
     >
-      +{count}
+      {running && <span className="mr-1.5 size-1.5 rounded-full bg-green" />}+{count}
     </button>
   );
 }

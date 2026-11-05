@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { describeLink } from "@/lib/link-preview";
+import { describeLink, splitLinks } from "@/lib/link-preview";
 
 describe("describeLink", () => {
   it.each([
@@ -24,5 +24,21 @@ describe("describeLink", () => {
   it("ignores text that is not a web link", () => {
     expect(describeLink("just words")).toBeNull();
     expect(describeLink("mailto:hi@nex.dev")).toBeNull();
+  });
+});
+
+describe("splitLinks", () => {
+  it("pulls links out of surrounding text and leaves trailing punctuation as text", () => {
+    expect(
+      splitLinks("please check https://linear.app/meridianai/issue/MER-8967/fe-reload, thanks"),
+    ).toEqual([
+      { kind: "text", text: "please check " },
+      { kind: "link", url: "https://linear.app/meridianai/issue/MER-8967/fe-reload" },
+      { kind: "text", text: ", thanks" },
+    ]);
+  });
+
+  it("returns the text alone when there is no link", () => {
+    expect(splitLinks("no links here")).toEqual([{ kind: "text", text: "no links here" }]);
   });
 });

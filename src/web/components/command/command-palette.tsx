@@ -6,7 +6,7 @@ import {
   type ComponentType,
   type KeyboardEvent,
 } from "react";
-import { GitBranch, Page, Search } from "iconoir-react";
+import { FileIcon, GitBranch, Search } from "lucide-react";
 import { Kbd } from "@/components/atoms/kbd";
 import { Overlay } from "@/components/primitives/overlay";
 import { searchItems, stepIndex } from "@/lib/command-search";
@@ -31,6 +31,8 @@ export interface CommandGroup {
   id: string;
   label: string;
   items: readonly CommandItem[];
+  onlyWhenSearching?: boolean;
+  limit?: number;
 }
 
 export interface CommandChoice {
@@ -59,7 +61,7 @@ function CommandRowContent({ item }: { item: CommandItem }) {
   if (item.kind === "file") {
     return (
       <>
-        <Page width={14} height={14} strokeWidth={2} className="shrink-0 text-ink-3" />
+        <FileIcon width={14} height={14} strokeWidth={2} className="shrink-0 text-ink-3" />
         <span className="truncate font-mono text-xs text-ink">{item.label}</span>
       </>
     );
@@ -104,7 +106,11 @@ export function CommandPalette({
   const visible = useMemo(
     () =>
       groups
-        .map((group) => ({ ...group, items: searchItems(group.items, query) }))
+        .filter((group) => !group.onlyWhenSearching || query.trim())
+        .map((group) => ({
+          ...group,
+          items: searchItems(group.items, query).slice(0, group.limit),
+        }))
         .filter((group) => group.items.length > 0),
     [groups, query],
   );
@@ -225,7 +231,6 @@ export function CommandPalette({
         <div className="flex h-9 items-center gap-4 border-t border-line px-4 text-2xs text-ink-4">
           <FooterHint keys="↑↓" label="navigate" />
           <FooterHint keys="↵" label="open" />
-          <FooterHint keys="⌘↵" label="open in split" />
         </div>
       </div>
     </Overlay>

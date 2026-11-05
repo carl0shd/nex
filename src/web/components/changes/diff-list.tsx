@@ -3,12 +3,14 @@ import { registerCustomCSSVariableTheme, type CodeViewItem } from "@pierre/diffs
 import { CodeView, type CodeViewHandle } from "@pierre/diffs/react";
 import { DiffFileHeader, type ChangedFile, type DiffLayout } from "@/components/changes/diff-file";
 import type { LineRange } from "@/lib/diff-range";
+import { readDiffTextSelection } from "@/lib/diff-text-selection";
 import { getTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
-export type DiffSelection = { path: string; range: LineRange };
+export type DiffSelection = { path: string; range: LineRange; text?: string };
 
 const THEME = "nex";
+const RENDER_EVERYTHING_PX = 1_000_000;
 
 const DIFF_UNSAFE_CSS = `
   [data-code] { scrollbar-gutter: auto; padding-bottom: 4px; }
@@ -47,6 +49,12 @@ const LAYOUT = {
   panel: { gap: 10, paddingTop: 12, paddingBottom: 96 },
 };
 
+// CodeView estimates unmeasured files from these; they must match DiffFileHeader and the line CSS.
+const ITEM_METRICS = {
+  card: { diffHeaderHeight: 36, lineHeight: 20 },
+  panel: { diffHeaderHeight: 44, lineHeight: 21 },
+};
+
 export function DiffList({
   files,
   expanded,
@@ -70,6 +78,22 @@ export function DiffList({
 }) {
   registerTheme();
   const viewRef = useRef<CodeViewHandle<undefined>>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const onSelectionChangeRef = useRef(onSelectionChange);
+  useEffect(() => {
+    onSelectionChangeRef.current = onSelectionChange;
+  });
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const pickText = () => {
+      const picked = readDiffTextSelection(container);
+      if (picked) onSelectionChangeRef.current(picked);
+    };
+    container.addEventListener("mouseup", pickText);
+    return () => container.removeEventListener("mouseup", pickText);
+  }, []);
 
   const items = useMemo<CodeViewItem[]>(
     () =>
@@ -80,7 +104,7 @@ export function DiffList({
           type: "diff",
           fileDiff: file.diff,
           collapsed,
-          version: collapsed ? 1 : 0,
+          version: (file.version ?? 0) * 2 + (collapsed ? 1 : 0),
         };
       }),
     [files, expanded],
@@ -99,6 +123,7 @@ export function DiffList({
       enableLineSelection: true,
       unsafeCSS: DIFF_UNSAFE_CSS,
       layout: LAYOUT[variant],
+      itemMetrics: ITEM_METRICS[variant],
     }),
     [layout, variant],
   );
@@ -107,11 +132,21 @@ export function DiffList({
     if (scrollTo) viewRef.current?.scrollTo({ type: "item", id: scrollTo, align: "start" });
   }, [scrollTo]);
 
+  useEffect(() => {
+    const view = viewRef.current?.getInstance();
+    if (!view) return;
+    // CodeView has no switch for virtualization; an overscan taller than any diff renders everything.
+    const config = view.config as { overscrollSize: number; intersectionObserverMargin: number };
+    config.overscrollSize = RENDER_EVERYTHING_PX;
+    config.intersectionObserverMargin = RENDER_EVERYTHING_PX;
+  }, []);
+
   const byPath = useMemo(() => new Map(files.map((file) => [file.path, file])), [files]);
 
   return (
     <CodeView
       ref={viewRef}
+      containerRef={containerRef}
       items={items}
       disableWorkerPool
       className={cn("nex-diff-list", variant === "panel" && "nex-diff-panel", className)}

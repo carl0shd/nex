@@ -1,7 +1,6 @@
-import { InfoCircle, Lock, OpenNewWindow, Plus } from "iconoir-react";
+import { ExternalLink, Info, Lock, Plus } from "lucide-react";
 import { ClaudeTile } from "@/components/atoms/agent-tile";
 import { Button } from "@/components/atoms/button";
-import { Monogram } from "@/components/atoms/entity-chip";
 import { Meter } from "@/components/atoms/meter";
 import { Orbit } from "@/components/atoms/orbit";
 import { ValuePill } from "@/components/atoms/value-pill";
@@ -11,6 +10,8 @@ import { OnboardingPanel } from "@/components/onboarding/onboarding-panel";
 import { OnboardingStep } from "@/components/onboarding/onboarding-step";
 import type { ClaudeAccount } from "@/components/settings/account-list";
 import { usageTone } from "@/lib/usage";
+
+const INSTALL_DOCS_URL = "https://docs.anthropic.com/en/docs/claude-code/setup";
 
 export type ClaudeInstall =
   | { state: "ready"; version: string; path: string; accounts: readonly ClaudeAccount[] }
@@ -23,7 +24,9 @@ const INSTALL_BADGE = {
   missing: { label: "Missing", tone: "orange" },
 } as const;
 
-function foundItems(install: ClaudeInstall, git: string): CheckItem[] {
+const GIT_INSTALL_COMMAND = "xcode-select --install";
+
+function foundItems(install: ClaudeInstall, git: string | null): CheckItem[] {
   const account =
     install.state === "ready" ? install.accounts.find((item) => item.isDefault) : null;
   return [
@@ -35,11 +38,14 @@ function foundItems(install: ClaudeInstall, git: string): CheckItem[] {
           label: `Signed in as ${account.email}`,
           detail: "~/.claude",
           state: "done",
-          trailing: <Meter value={account.usedPercent} tone={usageTone(account.usedPercent)} />,
+          trailing: account.usedPercent > 0 && (
+            <Meter value={account.usedPercent} tone={usageTone(account.usedPercent)} />
+          ),
         }
       : { label: "Claude account", detail: "not signed in yet", state: "pending" },
-    { label: `Git ${git}`, detail: "worktrees supported", state: "done" },
-    { label: "Live view hooks", detail: "not installed yet · next step", state: "skipped" },
+    git
+      ? { label: `Git ${git}`, detail: "worktrees supported", state: "done" }
+      : { label: "Git", detail: "not found in your PATH", state: "failed" },
   ];
 }
 
@@ -50,9 +56,13 @@ export function AgentStep({
   onContinue,
   onAddAccount,
   onSignIn,
+  scanTime = "0.4s",
+  continuing = false,
 }: {
   install: ClaudeInstall;
-  git: string;
+  git: string | null;
+  scanTime?: string;
+  continuing?: boolean;
   onBack?: () => void;
   onContinue?: () => void;
   onAddAccount?: () => void;
@@ -69,11 +79,15 @@ export function AgentStep({
           : "Nex runs Claude Code with your own accounts."
       }
       onBack={onBack}
-      primary={{ label: "Continue", onClick: onContinue, disabled: install.state !== "ready" }}
+      primary={{
+        label: continuing ? "Setting up…" : "Continue",
+        onClick: onContinue,
+        disabled: install.state !== "ready" || !git || continuing,
+      }}
       aside={
         <OnboardingPanel
           title="What Nex found"
-          meta="Scanned in 0.4s"
+          meta={`Scanned in ${scanTime}`}
           footer={
             <>
               <Lock width={13} height={13} strokeWidth={2} />
@@ -81,7 +95,7 @@ export function AgentStep({
             </>
           }
         >
-          <CheckList items={foundItems(install, git)} mono className="px-[18px] py-3" />
+          <CheckList items={foundItems(install, git)} mono reveal className="px-[18px] py-3" />
         </OnboardingPanel>
       }
     >
@@ -93,9 +107,7 @@ export function AgentStep({
             {install.state === "missing" ? (
               <span className="text-xs text-ink-3">Not found on this Mac</span>
             ) : (
-              <span className="truncate font-mono text-2xs text-ink-4">
-                v{install.version} · {install.path}
-              </span>
+              <span className="font-mono text-2xs text-ink-4">v{install.version}</span>
             )}
           </span>
           <ValuePill tone={badge.tone}>{badge.label}</ValuePill>
@@ -106,11 +118,8 @@ export function AgentStep({
             {install.accounts.map((account) => (
               <div
                 key={account.id}
-                className="flex items-center gap-3 border-t border-line px-3.5 py-3"
+                className="flex items-center gap-3 border-t border-line px-4 py-3"
               >
-                <Monogram size="lg" color={account.color}>
-                  {account.name[0]}
-                </Monogram>
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span className="flex items-center gap-2 text-sm font-medium text-ink">
                     {account.name}
@@ -121,12 +130,14 @@ export function AgentStep({
                 <ValuePill>Signed in</ValuePill>
               </div>
             ))}
-            <div className="border-t border-line px-2 pt-1.5 pb-2">
-              <Button variant="quiet" size="sm" onClick={onAddAccount}>
-                <Plus width={12} height={12} strokeWidth={2.25} />
-                Add another account
-              </Button>
-            </div>
+            {onAddAccount && (
+              <div className="border-t border-line px-2 pt-1.5 pb-2">
+                <Button variant="quiet" size="sm" onClick={onAddAccount}>
+                  <Plus width={12} height={12} strokeWidth={2.25} />
+                  Add another account
+                </Button>
+              </div>
+            )}
           </>
         )}
 
@@ -136,10 +147,20 @@ export function AgentStep({
               Claude Code is installed but not signed in on this Mac. Sign in with your Pro, Max,
               Team or Enterprise account.
             </p>
-            <Button variant="primary" size="sm" onClick={onSignIn} className="self-end">
-              Sign in with Claude
-              <OpenNewWindow width={12} height={12} strokeWidth={2} />
-            </Button>
+            {onSignIn ? (
+              <Button variant="primary" size="sm" onClick={onSignIn} className="self-end">
+                Sign in with Claude
+                <ExternalLink width={12} height={12} strokeWidth={2} />
+              </Button>
+            ) : (
+              <>
+                <CommandBox command="claude" />
+                <div className="flex items-center gap-2 text-xs text-ink-3">
+                  <Orbit size="sm" />
+                  Run it in a terminal and sign in. Nex picks it up on its own.
+                </div>
+              </>
+            )}
           </div>
         )}
 
@@ -152,7 +173,12 @@ export function AgentStep({
             <div className="flex items-center gap-2 text-xs text-ink-3">
               <Orbit size="sm" />
               Watching for claude in your PATH…
-              <Button variant="quiet" size="xs" className="ml-auto">
+              <Button
+                variant="quiet"
+                size="xs"
+                className="ml-auto"
+                onClick={() => void window.api.openExternalUrl(INSTALL_DOCS_URL)}
+              >
                 Other ways to install
               </Button>
             </div>
@@ -160,11 +186,27 @@ export function AgentStep({
         )}
       </div>
 
+      {!git && (
+        <div className="flex flex-col gap-3 rounded-panel bg-surface px-4 py-3.5 shadow-card">
+          <span className="flex items-center gap-2 text-base font-medium text-ink">
+            Git
+            <ValuePill tone="orange">Missing</ValuePill>
+          </span>
+          <p className="m-0 text-sm text-ink-2">
+            Nex needs git to give each task its own worktree. Install it, then come back.
+          </p>
+          <CommandBox command={GIT_INSTALL_COMMAND} />
+          <div className="flex items-center gap-2 text-xs text-ink-3">
+            <Orbit size="sm" />
+            Watching for git in your PATH…
+          </div>
+        </div>
+      )}
+
       {install.state === "ready" && (
         <p className="m-0 flex items-start gap-2 text-xs leading-[18px] text-ink-4">
-          <InfoCircle width={13} height={13} strokeWidth={2} className="mt-0.5 shrink-0" />
-          Use a work and a personal account side by side. Each task picks one, and Nex shows the
-          limits of all of them.
+          <Info width={13} height={13} strokeWidth={2} className="mt-0.5 shrink-0" />
+          More than one account? You can add the rest later.
         </p>
       )}
     </OnboardingStep>

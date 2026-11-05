@@ -1,11 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useImperativeHandle, useMemo, useRef, useState, type Ref } from "react";
 import {
   EditorContent,
   Extension,
-  Node,
   NodeViewWrapper,
   ReactNodeViewRenderer,
-  mergeAttributes,
   useEditor,
   type Editor,
   type JSONContent,
@@ -24,7 +22,8 @@ import {
   type SuggestionKeyDownProps,
   type SuggestionProps,
 } from "@tiptap/suggestion";
-import { CommandPill, FilePill, LinkPill } from "@/components/composer/inline-pill";
+import { CommandPill, FilePill } from "@/components/composer/inline-pill";
+import { LinkPillNode, pasteLinks, TypedLinkToPill } from "@/components/composer/link-pill-node";
 import { CommandPicker, FilePicker } from "@/components/composer/pickers";
 import {
   commandPickerEntries,
@@ -35,7 +34,6 @@ import {
   type SlashCommand,
   type WorktreeFile,
 } from "@/lib/composer-pickers";
-import { describeLink } from "@/lib/link-preview";
 
 type PickerKind = "file" | "command";
 
@@ -69,36 +67,6 @@ function CommandMentionView(props: NodeViewProps) {
     </NodeViewWrapper>
   );
 }
-
-function LinkPillView(props: NodeViewProps) {
-  return (
-    <NodeViewWrapper as="span">
-      <LinkPill url={attr(props, "url")} />
-    </NodeViewWrapper>
-  );
-}
-
-const LinkPillNode = Node.create({
-  name: "linkPill",
-  group: "inline",
-  inline: true,
-  atom: true,
-  addAttributes() {
-    return { url: { default: "" } };
-  },
-  parseHTML() {
-    return [{ tag: "span[data-link-pill]" }];
-  },
-  renderHTML({ HTMLAttributes }) {
-    return ["span", mergeAttributes(HTMLAttributes, { "data-link-pill": "" })];
-  },
-  renderText({ node }) {
-    return String(node.attrs.url);
-  },
-  addNodeView() {
-    return ReactNodeViewRenderer(LinkPillView);
-  },
-});
 
 function argsHint(args: string) {
   const name = args.replace(/[[\]<>]/g, "");
@@ -162,6 +130,78 @@ function createPickerBridge() {
   };
 }
 
+declare module "@tiptap/core" {
+  interface Commands<ReturnType> {
+    placeholderText: { setPlaceholderText: (text: string) => ReturnType };
+    ghostText: { setGhostText: (text: string) => ReturnType };
+  }
+}
+
+const ghostKey = new PluginKey<string>("ghostText");
+
+const GhostText = Extension.create({
+  name: "ghostText",
+  addCommands() {
+    return {
+      setGhostText:
+        (text) =>
+        ({ tr }) => {
+          tr.setMeta(ghostKey, text);
+          return true;
+        },
+    };
+  },
+  addProseMirrorPlugins() {
+    return [
+      new Plugin<string>({
+        key: ghostKey,
+        state: {
+          init: () => "",
+          apply: (tr, value) => {
+            const next = tr.getMeta(ghostKey) as string | undefined;
+            return next ?? value;
+          },
+        },
+        props: {
+          decorations(state) {
+            const text = ghostKey.getState(state);
+            if (!text) return null;
+            const widget = document.createElement("span");
+            widget.className = "ghost-text";
+            widget.textContent = state.doc.textContent.trim() ? ` ${text}` : text;
+            const end = Math.max(0, state.doc.content.size - 1);
+            return DecorationSet.create(state.doc, [Decoration.widget(end, widget, { side: 1 })]);
+          },
+        },
+      }),
+    ];
+  },
+});
+
+const PlaceholderText = Extension.create<object, { text: string }>({
+  name: "placeholderText",
+  addStorage: () => ({ text: "" }),
+  addCommands() {
+    return {
+      setPlaceholderText:
+        (text) =>
+        ({ tr }) => {
+          this.storage.text = text;
+          tr.setMeta("placeholderText", text);
+          return true;
+        },
+    };
+  },
+});
+
+export interface RichEditorHandle {
+  submit: () => void;
+  insert: (text: string, at?: "cursor" | "start") => void;
+  focus: () => void;
+  replace: (text: string) => void;
+  append: (text: string) => void;
+}
+
 export function RichEditor({
   placeholder,
   defaultContent,
@@ -170,7 +210,14 @@ export function RichEditor({
   onSubmit,
   onAttachFiles,
   onPasteText,
+  onHistory,
+  onTextChange,
+  onContentChange,
+  ghostText = "",
+  ref,
 }: {
+  ghostText?: string;
+  ref?: Ref<RichEditorHandle>;
   placeholder: string;
   defaultContent?: JSONContent;
   files?: readonly WorktreeFile[];
@@ -178,16 +225,37 @@ export function RichEditor({
   onSubmit?: (text: string) => void;
   onAttachFiles?: (files: File[]) => void;
   onPasteText?: (text: string) => void;
+  onHistory?: (direction: "older" | "newer", text: string) => string | null;
+  onTextChange?: (text: string) => void;
+  onContentChange?: (content: JSONContent) => void;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [picker, setPicker] = useState<OpenPicker | null>(null);
   const [selected, setSelected] = useState(0);
   const suggestion = useRef<SuggestionProps | null>(null);
   const [bridge] = useState(createPickerBridge);
-  const callbacks = useRef({ onSubmit, onAttachFiles, onPasteText });
-  useEffect(() => {
-    callbacks.current = { onSubmit, onAttachFiles, onPasteText };
+  const callbacks = useRef({
+    onSubmit,
+    onAttachFiles,
+    onPasteText,
+    onHistory,
+    onTextChange,
+    onContentChange,
   });
+  useEffect(() => {
+    callbacks.current = {
+      onSubmit,
+      onAttachFiles,
+      onPasteText,
+      onHistory,
+      onTextChange,
+      onContentChange,
+    };
+  });
+  const pickerOpen = useRef(false);
+  useEffect(() => {
+    pickerOpen.current = picker !== null;
+  }, [picker]);
 
   const fileView = picker?.kind === "file" ? filePickerView(files, picker.query) : null;
   const commandView = picker?.kind === "command" ? commandPickerView(commands, picker.query) : null;
@@ -196,14 +264,31 @@ export function RichEditor({
   const count = fileView ? fileEntries.length : commandEntries.length;
   const current = Math.min(selected, Math.max(count - 1, 0));
 
+  const browseHistory = (editor: Editor, direction: "older" | "newer") => {
+    if (pickerOpen.current) return false;
+    const next = callbacks.current.onHistory?.(direction, serialize(editor));
+    if (next === null || next === undefined) return false;
+    editor.chain().clearContent().insertContent(next).focus("end").run();
+    return true;
+  };
+
   const extensions = useMemo(
     () => [
       Document,
       Paragraph,
       Text,
       HardBreak,
-      Placeholder.configure({ placeholder }),
+      PlaceholderText,
+      GhostText,
+      Placeholder.configure({
+        placeholder: ({ editor }) =>
+          ghostKey.getState(editor.state)
+            ? ""
+            : ((editor.storage as { placeholderText?: { text: string } }).placeholderText?.text ??
+              ""),
+      }),
       LinkPillNode,
+      TypedLinkToPill,
       CommandArgsHint,
       Mention.extend({
         name: "fileMention",
@@ -237,16 +322,22 @@ export function RichEditor({
               return true;
             },
             "Shift-Enter": ({ editor }) => editor.commands.setHardBreak(),
+            ArrowUp: ({ editor }) => browseHistory(editor, "older"),
+            ArrowDown: ({ editor }) => browseHistory(editor, "newer"),
           };
         },
       }),
     ],
-    [placeholder, bridge],
+    [bridge],
   );
 
   const editor = useEditor({
     extensions,
     content: defaultContent,
+    onUpdate: ({ editor: current }) => {
+      callbacks.current.onTextChange?.(serialize(current));
+      callbacks.current.onContentChange?.(current.getJSON());
+    },
     editorProps: {
       handlePaste(view: EditorView, event: ClipboardEvent) {
         const data = event.clipboardData;
@@ -256,23 +347,52 @@ export function RichEditor({
           return true;
         }
         const text = data.getData("text/plain");
-        const url = text.trim();
-        if (!/\s/.test(url) && describeLink(url)) {
-          const pill = view.state.schema.nodes.linkPill.create({ url });
-          view.dispatch(view.state.tr.replaceSelectionWith(pill).insertText(" "));
-          return true;
-        }
         if (text.split("\n").length > PASTED_CARD_LINES && callbacks.current.onPasteText) {
           callbacks.current.onPasteText(text);
           return true;
         }
-        return false;
+        return pasteLinks(view, text.trim());
       },
       handleDrop(_view: EditorView, event: DragEvent) {
         return Boolean(event.dataTransfer?.files.length);
       },
     },
   });
+
+  useEffect(() => {
+    if (editor && !editor.isDestroyed) editor.commands.setPlaceholderText(placeholder);
+  }, [placeholder, editor]);
+
+  useEffect(() => {
+    if (editor && !editor.isDestroyed) editor.commands.setGhostText(ghostText);
+  }, [ghostText, editor]);
+
+  useImperativeHandle(ref, () => ({
+    submit: () => {
+      if (!editor) return;
+      const text = serialize(editor);
+      if (!text) return;
+      callbacks.current.onSubmit?.(text);
+      editor.commands.clearContent(true);
+    },
+    insert: (text, at = "cursor") => {
+      editor
+        ?.chain()
+        .focus(at === "start" ? "start" : undefined)
+        .insertContent(text)
+        .run();
+    },
+    focus: () => editor?.commands.focus("end", { scrollIntoView: false }),
+    append: (text) => {
+      if (!editor) return;
+      const current = serialize(editor);
+      const spacer = current && !/\s$/.test(current) ? " " : "";
+      editor.chain().focus("end").insertContent(`${spacer}${text}`).run();
+    },
+    replace: (text) => {
+      editor?.chain().clearContent().insertContent(text).focus("end").run();
+    },
+  }));
 
   const insertFile = (entry: FileEntry) =>
     suggestion.current?.command({ id: entry.path, label: entry.path });

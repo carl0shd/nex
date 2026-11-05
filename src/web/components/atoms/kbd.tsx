@@ -1,14 +1,31 @@
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-export function Kbd({ children, className }: { children: React.ReactNode; className?: string }) {
+const NUDGED_GLYPHS: Record<string, string> = { "↵": "top-px", "@": "-top-px" };
+const NUDGED = /([↵@])/;
+
+export function KeyText({ children }: { children: ReactNode }) {
+  if (typeof children !== "string" || !NUDGED.test(children)) return children;
+  return children.split(NUDGED).map((part, index) =>
+    NUDGED_GLYPHS[part] ? (
+      <span key={index} className={cn("relative", NUDGED_GLYPHS[part])}>
+        {part}
+      </span>
+    ) : (
+      part
+    ),
+  );
+}
+
+export function Kbd({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <kbd
       className={cn(
-        "rounded-[5px] bg-elevated px-[5px] py-0.5 font-sans text-3xs leading-none text-ink-3 shadow-[inset_0_0_0_1px_var(--line-strong)]",
+        "rounded-[5px] bg-elevated px-[5px] py-0.5 font-sans text-3xs leading-3 text-ink-3 shadow-[inset_0_0_0_1px_var(--line-strong)]",
         className,
       )}
     >
-      {children}
+      <KeyText>{children}</KeyText>
     </kbd>
   );
 }
@@ -21,7 +38,7 @@ export function KeyCaps({ keys, className }: { keys: string[]; className?: strin
           key={key}
           className="inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-chip bg-elevated px-1.5 font-sans text-2xs font-medium text-ink-2 shadow-[inset_0_0_0_1px_var(--line-strong)]"
         >
-          {key}
+          <KeyText>{key}</KeyText>
         </kbd>
       ))}
     </span>

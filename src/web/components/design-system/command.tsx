@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Code, EditPencil, FolderPlus, HalfMoon, Settings, Flash } from "iconoir-react";
+import { CodeXml, FolderPlus, Moon, Settings, SquarePen, Zap } from "lucide-react";
 import {
   CommandPalette,
   type CommandChoice,
@@ -64,7 +64,7 @@ const GROUPS: CommandGroup[] = [
     id: "actions",
     label: "Actions",
     items: [
-      { kind: "action", id: "new-task", label: "New task", icon: EditPencil, kbd: "⌘T" },
+      { kind: "action", id: "new-task", label: "New task", icon: SquarePen, kbd: "⌘T" },
       {
         kind: "action",
         id: "new-project",
@@ -77,16 +77,16 @@ const GROUPS: CommandGroup[] = [
         kind: "action",
         id: "ide",
         label: "Open in IDE",
-        icon: Code,
+        icon: CodeXml,
         kbd: "⌘O",
         keywords: ["editor", "cursor", "vscode"],
       },
-      { kind: "action", id: "usage", label: "Usage details", icon: Flash, kbd: "⌘U" },
+      { kind: "action", id: "usage", label: "Usage details", icon: Zap, kbd: "⌘U" },
       {
         kind: "action",
         id: "theme",
         label: "Toggle light / dark",
-        icon: HalfMoon,
+        icon: Moon,
         kbd: "⌘⇧L",
         keywords: ["theme", "appearance"],
       },

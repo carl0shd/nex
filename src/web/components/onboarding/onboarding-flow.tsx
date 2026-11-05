@@ -5,7 +5,6 @@ import {
   type SignedInAccount,
 } from "@/components/onboarding/add-account-dialog";
 import { AgentStep, type ClaudeInstall } from "@/components/onboarding/agent-step";
-import { ConnectStep } from "@/components/onboarding/connect-step";
 import {
   EnvironmentsStep,
   type EnvService,
@@ -36,7 +35,7 @@ export interface OnboardingResult {
   firstTask: FirstTaskDraft | null;
 }
 
-const READY = 7;
+const READY = 6;
 
 export function OnboardingFlow({
   data,
@@ -45,7 +44,6 @@ export function OnboardingFlow({
   onEnvRetry,
   signIn,
   welcomePreview,
-  connectPreview,
   ready,
   initialStep = 0,
   onFinish,
@@ -57,7 +55,6 @@ export function OnboardingFlow({
   onEnvRetry?: () => void;
   signIn: () => Promise<SignedInAccount>;
   welcomePreview?: ReactNode;
-  connectPreview: ReactNode;
   ready: (result: OnboardingResult) => ReactNode;
   initialStep?: number;
   onFinish?: (result: OnboardingResult) => void;
@@ -70,7 +67,7 @@ export function OnboardingFlow({
   const [workspace, setWorkspace] = useState<WorkspaceDraft>({
     name: "Monoku",
     color: "#33843F",
-    badge: "initial",
+    image: null,
   });
   const [project, setProject] = useState(data.project);
   const [task, setTask] = useState<FirstTaskDraft>({
@@ -123,7 +120,7 @@ export function OnboardingFlow({
 
   return (
     <div className={cn("relative flex h-full flex-col bg-page", className)}>
-      {step < READY && <OnboardingChrome step={step} onSkip={() => finish(null)} />}
+      {step < READY && <OnboardingChrome step={step} />}
       {step === 0 && <WelcomeScreen preview={welcomePreview} onStart={next} />}
       {step === 1 && (
         <AgentStep
@@ -135,9 +132,6 @@ export function OnboardingFlow({
         />
       )}
       {step === 2 && (
-        <ConnectStep preview={connectPreview} onBack={back} onConnect={next} onSkip={next} />
-      )}
-      {step === 3 && (
         <WorkspaceStep
           workspace={workspace}
           onChange={setWorkspace}
@@ -145,10 +139,10 @@ export function OnboardingFlow({
           onContinue={next}
         />
       )}
-      {step === 4 && (
+      {step === 3 && (
         <ProjectStep project={project} onChange={setProject} onBack={back} onAdd={next} />
       )}
-      {step === 5 && (
+      {step === 4 && (
         <EnvironmentsStep
           project={project.name}
           services={data.services}
@@ -163,7 +157,7 @@ export function OnboardingFlow({
           onContinue={next}
         />
       )}
-      {step === 6 && (
+      {step === 5 && (
         <FirstTaskStep
           draft={task}
           onChange={setTask}
@@ -182,7 +176,7 @@ export function OnboardingFlow({
       )}
       {step === READY && ready(result)}
       {dialog && (
-        <Overlay offset={160} onClose={() => setDialog(null)}>
+        <Overlay onClose={() => setDialog(null)}>
           <AddAccountDialog
             state={dialog}
             onContinue={startSignIn}

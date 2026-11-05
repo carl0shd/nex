@@ -1,4 +1,4 @@
-import { Globe } from "iconoir-react";
+import { Globe } from "lucide-react";
 import { Orbit } from "@/components/atoms/orbit";
 import { StatusDot } from "@/components/atoms/status-dot";
 import { cn } from "@/lib/utils";
@@ -28,6 +28,7 @@ export function TaskRow({
     >
       <StatusDot tone={DOT[task.status]} />
       <span
+        title={task.title}
         className={cn(
           "truncate text-sm",
           active ? "text-ink" : task.status === "idle" ? "text-ink-3" : "text-ink-2",

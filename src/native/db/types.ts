@@ -99,6 +99,8 @@ export interface AgentAccount {
   configDir: string;
   isDefault: boolean;
   keychainService: string | null;
+  email: string | null;
+  color: string | null;
   createdAt: string;
 }
 
@@ -107,10 +109,13 @@ export interface CreateAgentAccountInput {
   name: string;
   configDir: string;
   isDefault?: boolean;
+  email?: string | null;
+  color?: string | null;
 }
 
 export interface UpdateAgentAccountInput {
   name?: string;
+  email?: string | null;
   configDir?: string;
   isDefault?: boolean;
   keychainService?: string | null;
@@ -126,6 +131,7 @@ export interface Session {
   agentId: string | null;
   accountId: string | null;
   name: string;
+  title: string;
   branch: string;
   baseBranch: string;
   worktreePath: string;
@@ -148,6 +154,7 @@ export interface CreateSessionInput {
   agentId?: string;
   accountId?: string;
   name: string;
+  title?: string;
   branch: string;
   baseBranch: string;
   worktreePath: string;
@@ -156,6 +163,7 @@ export interface CreateSessionInput {
 }
 
 export interface UpdateSessionInput {
+  title?: string;
   status?: SessionStatus;
   opens?: number;
   lastOpened?: string;
@@ -169,9 +177,12 @@ export interface UpdateSessionInput {
 export interface StartWorkInput {
   projectId: string;
   name: string;
+  title?: string;
   agentId?: string;
   accountId?: string;
   baseBranch?: string;
+  prompt?: string;
+  agentSettings?: { model: string; effort: string; mode: string };
 }
 
 export interface CloneAgentAccountInput {
@@ -215,4 +226,41 @@ export interface CreateTerminalInput {
 export interface UpdateTerminalInput {
   name?: string;
   sortOrder?: number;
+}
+
+export type InterfaceSize = "compact" | "default" | "large";
+export type MotionPreference = "system" | "reduce" | "full";
+export type TerminalCursor = "block" | "bar" | "underline";
+
+export interface Preferences {
+  ide: string;
+  terminalApp: string;
+  quitWithAgents: "ask" | "quit";
+  confirmClose: boolean;
+  interfaceSize: InterfaceSize;
+  codeFontSize: string;
+  reduceTransparency: boolean;
+  motion: MotionPreference;
+  notifyNeedsYou: boolean;
+  notifyFinished: boolean;
+  notifyErrors: boolean;
+  notifyUsage: boolean;
+  sound: string;
+  onlyInBackground: boolean;
+  dockBadge: boolean;
+  shortcuts: Record<string, string>;
+  model: string;
+  effort: string;
+  permissions: string;
+  extraArgs: string;
+  shell: string;
+  cursor: TerminalCursor;
+  scrollback: string;
+  copyOnSelect: boolean;
+  optionAsMeta: boolean;
+  diffView: "unified" | "split";
+  spellcheck: boolean;
+  showUsage: boolean;
+  warnAt: string;
+  dailyAlert: string;
 }

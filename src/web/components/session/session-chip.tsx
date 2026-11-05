@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { NavArrowDown } from "iconoir-react";
+import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function SessionChip({
@@ -25,7 +25,7 @@ export function SessionChip({
       )}
     >
       {children}
-      <NavArrowDown width={10} height={10} strokeWidth={2.5} className="text-ink-4" />
+      <ChevronDown width={10} height={10} strokeWidth={2.5} className="text-ink-4" />
     </button>
   );
 }

@@ -1,6 +1,15 @@
 import { app, ipcMain, dialog, shell, BrowserWindow } from "electron";
+import { installedApps, listShells, openWith, playSound } from "@native/main/preferences";
 import { spawn } from "child_process";
-import { statSync, readFileSync, mkdirSync, writeFileSync, existsSync } from "fs";
+import {
+  statSync,
+  readFileSync,
+  mkdirSync,
+  writeFileSync,
+  existsSync,
+  readdirSync,
+  rmSync,
+} from "fs";
 import { extname, join } from "path";
 import { IPC } from "./channels";
 import * as workspaceRepo from "@native/db/repositories/workspace.repo";
@@ -26,7 +35,41 @@ import { getStatusMarkers } from "@native/agents/status-markers";
 import { detectAvailableAgents, installAgent } from "@native/agents/detect";
 import { createTerminalForSession } from "@native/agents/agent-terminal";
 import { cloneAgentAccount } from "@native/agents/clone-account";
+import { readTranscript, watchTranscript, type TranscriptCursor } from "@native/agents/transcript";
+import { readAgentSettings, type AgentSettings } from "@native/agents/agent-settings";
+import {
+  agentCommands,
+  agentStates,
+  configureAgent,
+  mcpReconnect,
+  mcpRemove,
+  agentContext,
+  lastAgentContext,
+  mcpSignIn,
+  mcpStatus,
+  mcpToggle,
+  warmAgent,
+  type AgentMessage,
+  interruptAgent,
+  sendToAgent,
+  stopAgent,
+} from "@native/agents/agent-runner";
+import {
+  answerPermission,
+  pendingPermissions,
+  type PermissionAnswer,
+} from "@native/agents/permissions";
+import {
+  cancelSignIn,
+  discardSignIn,
+  finishSignIn,
+  signInAccount,
+  reauthAccount,
+} from "@native/agents/sign-in";
 import { startWork } from "@native/git/start-work";
+import { savedAgentModels } from "@native/agents/agent-models";
+import { getAgentVersion, upgradeAgent } from "@native/agents/version";
+import { inspectRepo } from "@native/git/inspect";
 import { detectGit, cloneRepository } from "@native/git/clone";
 import { detectGh, listGithubOwners, listGithubRepos, cloneGithubRepo } from "@native/git/github";
 import { getNexDir } from "@native/paths";
@@ -42,6 +85,7 @@ import {
   deleteBranch,
   type WorktreeDiffOptions,
   type WorktreeFileVersionsInput,
+  countUncommitted,
 } from "@native/git/git";
 import { watchWorktree } from "@native/git/watcher";
 import { scanAllTranscripts, watchTranscripts } from "@native/usage/ingest";
@@ -138,6 +182,16 @@ function deleteAgentSessionFile(terminal: Terminal): void {
  * Counted because several views can watch the same worktree at once.
  */
 const worktreeWatchers = new Map<string, { stop: () => void; count: number }>();
+const transcriptWatchers = new Map<string, { stop: () => void; count: number }>();
+
+function stopTranscriptWatchersFor(senderId: number): void {
+  const prefix = `${senderId}:`;
+  for (const [key, entry] of transcriptWatchers) {
+    if (!key.startsWith(prefix)) continue;
+    entry.stop();
+    transcriptWatchers.delete(key);
+  }
+}
 
 const usageWatchers = new Map<number, () => void>();
 
@@ -158,9 +212,21 @@ function stopWorktreeWatchersFor(senderId: number): void {
 }
 
 export function registerIPCHandlers(): void {
+  ipcMain.handle(IPC.APP_GET_LOGIN_ITEM, () => app.getLoginItemSettings().openAtLogin);
+  ipcMain.handle(IPC.APP_SET_LOGIN_ITEM, (_, openAtLogin: boolean) =>
+    app.setLoginItemSettings({ openAtLogin }),
+  );
+  ipcMain.handle(IPC.APP_PLAY_SOUND, (_, name: string) => playSound(name));
+  ipcMain.handle(IPC.APP_SET_BADGE, (_, count: number) =>
+    app.dock?.setBadge(count > 0 ? String(count) : ""),
+  );
+  ipcMain.handle(IPC.APP_LIST_SHELLS, () => listShells());
+  ipcMain.handle(IPC.APP_INSTALLED, (_, names: string[]) => installedApps(names));
+  ipcMain.handle(IPC.APP_OPEN_WITH, (_, appName: string, path: string) => openWith(appName, path));
   ipcMain.handle(IPC.APP_GET_INFO, () => ({
     platform: process.platform,
     version: app.getVersion(),
+    dataDir: getNexDir(),
     versions: {
       electron: process.versions.electron,
       chrome: process.versions.chrome,
@@ -204,10 +270,11 @@ export function registerIPCHandlers(): void {
   ipcMain.handle(IPC.SESSION_GET_ACTIVE, () => sessionRepo.getActive());
   ipcMain.handle(IPC.SESSION_CREATE, (_, input) => sessionRepo.create(input));
   ipcMain.handle(IPC.SESSION_UPDATE, (_, id, input) => sessionRepo.update(id, input));
-  ipcMain.handle(IPC.SESSION_DELETE, async (_, id: string) => {
+  ipcMain.handle(IPC.SESSION_DELETE, async (_, id: string, keepBranch = false) => {
     const session = sessionRepo.getById(id);
+    stopAgent(id);
     for (const term of terminalRepo.getBySession(id)) {
-      deleteAgentSessionFile(term);
+      if (!keepBranch) deleteAgentSessionFile(term);
       killTerminal(term.id);
       unmarkTerminalFresh(term.id);
     }
@@ -215,7 +282,7 @@ export function registerIPCHandlers(): void {
       const project = projectRepo.getById(session.projectId);
       if (project && session.worktreePath !== project.path) {
         await removeWorktree(project.path, session.worktreePath).catch(() => {});
-        await deleteBranch(project.path, session.branch).catch(() => {});
+        if (!keepBranch) await deleteBranch(project.path, session.branch).catch(() => {});
       }
     }
     sessionRepo.remove(id);
@@ -290,8 +357,20 @@ export function registerIPCHandlers(): void {
 
   ipcMain.handle(IPC.WINDOW_SHOW, () => showMainWindow());
   ipcMain.handle(IPC.DETECT_AGENTS, () => detectAvailableAgents());
+  ipcMain.handle(IPC.AGENT_VERSION, (_, agentId: string) => getAgentVersion(agentId));
+  ipcMain.handle(IPC.AGENT_UPGRADE, (_, agentId: string) => upgradeAgent(agentId));
+  ipcMain.handle(IPC.REPO_INSPECT, (_, path: string) => inspectRepo(path));
+  ipcMain.handle(IPC.FINDER_OPEN, async (_, path: string): Promise<boolean> => {
+    if (!path) return false;
+    return (await shell.openPath(path)) === "";
+  });
   ipcMain.handle(IPC.AGENT_INSTALL, (_, slug: string) => installAgent(slug));
   ipcMain.handle(IPC.AGENT_ACCOUNT_CLONE, (_, input) => cloneAgentAccount(input));
+  ipcMain.handle(IPC.ACCOUNT_SIGN_IN, () => signInAccount());
+  ipcMain.handle(IPC.ACCOUNT_SIGN_IN_CANCEL, () => cancelSignIn());
+  ipcMain.handle(IPC.ACCOUNT_REAUTH, (_, accountId: string) => reauthAccount(accountId));
+  ipcMain.handle(IPC.ACCOUNT_SIGN_IN_FINISH, (_, input) => finishSignIn(input));
+  ipcMain.handle(IPC.ACCOUNT_SIGN_IN_DISCARD, (_, configDir: string) => discardSignIn(configDir));
   ipcMain.handle(IPC.WORK_START, (_, input) => startWork(input));
   ipcMain.handle(IPC.GIT_DETECT, () => detectGit());
   ipcMain.handle(IPC.GIT_CLONE, (event, url: string, parentDir: string) =>
@@ -340,6 +419,73 @@ export function registerIPCHandlers(): void {
     });
     worktreeWatchers.set(key, { stop, count: 1 });
     event.sender.once("destroyed", () => stopWorktreeWatchersFor(event.sender.id));
+  });
+
+  ipcMain.handle(IPC.AGENT_SEND, (_, sessionId: string, content: AgentMessage) =>
+    sendToAgent(sessionId, content),
+  );
+  ipcMain.handle(IPC.AGENT_INTERRUPT, (_, sessionId: string) => interruptAgent(sessionId));
+  ipcMain.handle(IPC.AGENT_STATES, () => agentStates());
+  ipcMain.handle(IPC.AGENT_WARM, (_, sessionId: string) => warmAgent(sessionId));
+  ipcMain.handle(IPC.AGENT_MCP_STATUS, (_, sessionId: string) => mcpStatus(sessionId));
+  ipcMain.handle(IPC.AGENT_MCP_TOGGLE, (_, sessionId: string, name: string, enabled: boolean) =>
+    mcpToggle(sessionId, name, enabled),
+  );
+  ipcMain.handle(IPC.AGENT_MCP_RECONNECT, (_, sessionId: string, name: string) =>
+    mcpReconnect(sessionId, name),
+  );
+  ipcMain.handle(IPC.AGENT_MCP_SIGN_IN, (_, sessionId: string, name: string) =>
+    mcpSignIn(sessionId, name),
+  );
+  ipcMain.handle(IPC.AGENT_CONTEXT, (_, sessionId: string) => agentContext(sessionId));
+  ipcMain.handle(IPC.AGENT_CONTEXT_LAST, (_, sessionId: string) => lastAgentContext(sessionId));
+  ipcMain.handle(IPC.AGENT_MCP_REMOVE, (_, sessionId: string, name: string) =>
+    mcpRemove(sessionId, name),
+  );
+  ipcMain.handle(IPC.DIALOG_PICK_FILES, async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (!win) return [];
+    const result = await dialog.showOpenDialog(win, {
+      properties: ["openFile", "multiSelections"],
+    });
+    return result.canceled ? [] : result.filePaths;
+  });
+  ipcMain.handle(IPC.AGENT_COMMANDS_GET, (_, sessionId: string) => agentCommands(sessionId));
+  ipcMain.handle(IPC.AGENT_MODELS_GET, () => savedAgentModels());
+  ipcMain.handle(IPC.GIT_UNCOMMITTED, (_, worktreePath: string) => countUncommitted(worktreePath));
+  ipcMain.handle(IPC.AGENT_SETTINGS_GET, (_, sessionId: string) => readAgentSettings(sessionId));
+  ipcMain.handle(IPC.AGENT_CONFIGURE, (_, sessionId: string, settings: AgentSettings) =>
+    configureAgent(sessionId, settings),
+  );
+  ipcMain.handle(IPC.PERMISSION_PENDING, () => pendingPermissions());
+  ipcMain.handle(IPC.PERMISSION_ANSWER, (_, id: string, answer: PermissionAnswer) =>
+    answerPermission(id, answer),
+  );
+  ipcMain.handle(IPC.TRANSCRIPT_READ, (_, terminalId: string, cursor: TranscriptCursor | null) =>
+    readTranscript(terminalId, cursor),
+  );
+  ipcMain.handle(IPC.TRANSCRIPT_WATCH_START, (event, terminalId: string) => {
+    const key = `${event.sender.id}:${terminalId}`;
+    const existing = transcriptWatchers.get(key);
+    if (existing) {
+      existing.count += 1;
+      return;
+    }
+    const stop = watchTranscript(terminalId, () => {
+      if (event.sender.isDestroyed()) return;
+      event.sender.send(IPC.TRANSCRIPT_CHANGED, { terminalId });
+    });
+    transcriptWatchers.set(key, { stop, count: 1 });
+    event.sender.once("destroyed", () => stopTranscriptWatchersFor(event.sender.id));
+  });
+  ipcMain.handle(IPC.TRANSCRIPT_WATCH_STOP, (event, terminalId: string) => {
+    const key = `${event.sender.id}:${terminalId}`;
+    const entry = transcriptWatchers.get(key);
+    if (!entry) return;
+    entry.count -= 1;
+    if (entry.count > 0) return;
+    entry.stop();
+    transcriptWatchers.delete(key);
   });
 
   ipcMain.handle(IPC.GIT_WATCH_STOP, (event, worktreePath: string) => {
@@ -434,8 +580,12 @@ export function registerIPCHandlers(): void {
 
       const dir = join(getNexDir(), "workspace-icons");
       mkdirSync(dir, { recursive: true });
+      for (const old of readdirSync(dir)) {
+        if (old.startsWith(`${workspaceId}`)) rmSync(join(dir, old), { force: true });
+      }
 
-      const filePath = join(dir, `${workspaceId}.${ext}`);
+      // A new name per save, so the renderer never shows the cached previous image.
+      const filePath = join(dir, `${workspaceId}-${Date.now()}.${ext}`);
       writeFileSync(filePath, buffer);
 
       return filePath;

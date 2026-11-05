@@ -10,38 +10,51 @@ export function Switch({
   onChange,
   label,
   size = "md",
+  display = false,
   className,
 }: {
   checked: boolean;
-  onChange: (v: boolean) => void;
+  onChange?: (v: boolean) => void;
   label?: string;
+  display?: boolean;
   size?: keyof typeof SIZE;
   className?: string;
 }) {
   const dims = SIZE[size];
+  const track = cn(
+    "relative shrink-0 rounded-full transition-colors duration-200 ease-out-strong",
+    dims.track,
+    checked ? "bg-accent" : "bg-control-off shadow-[inset_0_0_0_1px_var(--line-strong)]",
+    className,
+  );
+  const knob = (
+    <span
+      aria-hidden
+      className={cn(
+        "absolute top-0.5 rounded-full shadow-[0_1px_2px_rgb(0_0_0/40%)] transition-[left,background-color] duration-200 ease-out-strong",
+        dims.knob,
+        checked || size === "md" ? "bg-knob" : "bg-ink-4",
+      )}
+      style={{ left: checked ? dims.on : 2 }}
+    />
+  );
+  if (display) {
+    return (
+      <span aria-hidden className={track}>
+        {knob}
+      </span>
+    );
+  }
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
       aria-label={label}
-      onClick={() => onChange(!checked)}
-      className={cn(
-        "interactive press relative shrink-0 cursor-pointer rounded-full",
-        dims.track,
-        checked ? "bg-accent" : "bg-control-off shadow-[inset_0_0_0_1px_var(--line-strong)]",
-        className,
-      )}
+      onClick={() => onChange?.(!checked)}
+      className={cn("interactive press cursor-pointer", track)}
     >
-      <span
-        aria-hidden
-        className={cn(
-          "absolute top-0.5 rounded-full shadow-[0_1px_2px_rgb(0_0_0/40%)] transition-[left,background-color] duration-200 ease-out-strong",
-          dims.knob,
-          checked || size === "md" ? "bg-knob" : "bg-ink-4",
-        )}
-        style={{ left: checked ? dims.on : 2 }}
-      />
+      {knob}
     </button>
   );
 }

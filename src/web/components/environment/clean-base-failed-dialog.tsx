@@ -1,4 +1,4 @@
-import { Database, Xmark } from "iconoir-react";
+import { Database, X } from "lucide-react";
 import { Button } from "@/components/atoms/button";
 import { CheckList, type CheckItem } from "@/components/onboarding/check-list";
 import { ModalCard, StatusIcon } from "@/components/primitives/modal-card";
@@ -26,7 +26,7 @@ export function CleanBaseFailedDialog({
   return (
     <ModalCard
       title={`Couldn’t prepare the clean base for ${failure.project}`}
-      icon={<StatusIcon tone="red" icon={Xmark} />}
+      icon={<StatusIcon tone="red" icon={X} />}
       onClose={onClose}
       footer={
         <>

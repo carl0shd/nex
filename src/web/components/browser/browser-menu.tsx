@@ -1,4 +1,4 @@
-import { NavArrowRight } from "iconoir-react";
+import { ChevronRight } from "lucide-react";
 import { Menu, MenuItem, MenuLabel, MenuSeparator } from "@/components/primitives/menu";
 
 export interface BrowserMenuProps {
@@ -24,7 +24,7 @@ function Submenu({ value }: { value: string }) {
   return (
     <>
       <span className="text-xs">{value}</span>
-      <NavArrowRight width={11} height={11} strokeWidth={2} />
+      <ChevronRight width={11} height={11} strokeWidth={2} />
     </>
   );
 }

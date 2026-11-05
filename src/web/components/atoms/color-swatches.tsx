@@ -1,4 +1,4 @@
-import { Check } from "iconoir-react";
+import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface Swatch {

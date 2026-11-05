@@ -1,4 +1,4 @@
-import { Code, GitBranch, MoreHoriz, SidebarExpand } from "iconoir-react";
+import { CodeXml, Ellipsis, GitBranch, PanelRight } from "lucide-react";
 import { Button } from "@/components/atoms/button";
 import { IconButton } from "@/components/atoms/icon-button";
 import { StatusPill } from "@/components/atoms/status-pill";
@@ -48,14 +48,14 @@ export function TaskViewHeader({
       </div>
       <div className="ml-auto flex items-center gap-1">
         <Button size="sm" onClick={onOpenInIde}>
-          <Code width={13} height={13} strokeWidth={2} />
+          <CodeXml width={13} height={13} strokeWidth={2} />
           Open in IDE
         </Button>
         <IconButton aria-label="Panel" pressed={dockOpen} onClick={onToggleDock}>
-          <SidebarExpand width={14} height={14} strokeWidth={2} />
+          <PanelRight width={14} height={14} strokeWidth={2} />
         </IconButton>
         <IconButton aria-label="More actions">
-          <MoreHoriz width={15} height={15} strokeWidth={2} />
+          <Ellipsis width={15} height={15} strokeWidth={2} />
         </IconButton>
       </div>
     </header>

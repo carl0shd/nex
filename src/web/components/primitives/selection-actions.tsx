@@ -3,16 +3,16 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import {
   ArrowUp,
-  ChatBubbleQuestion,
   Check,
-  EmojiSatisfied,
-  NavArrowRight,
-  Refresh,
-  Scissor,
-  Spark,
-  TextBox,
-  Xmark,
-} from "iconoir-react";
+  ChevronRight,
+  MessageCircleQuestionMark,
+  RotateCcw,
+  Scissors,
+  Smile,
+  Sparkle,
+  SpellCheck2,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/atoms/button";
 import { Shimmer } from "@/components/atoms/shimmer";
 import { StreamText } from "@/components/atoms/stream-text";
@@ -74,16 +74,16 @@ const iconProps = {
 } as const;
 
 const icons = {
-  explain: <ChatBubbleQuestion {...iconProps} />,
-  improve: <Spark {...iconProps} />,
-  shorten: <Scissor {...iconProps} />,
-  tone: <EmojiSatisfied {...iconProps} />,
-  grammar: <TextBox {...iconProps} />,
+  explain: <MessageCircleQuestionMark {...iconProps} />,
+  improve: <Sparkle {...iconProps} />,
+  shorten: <Scissors {...iconProps} />,
+  tone: <Smile {...iconProps} />,
+  grammar: <SpellCheck2 {...iconProps} />,
   send: <ArrowUp width="16" height="16" strokeWidth="2.4" aria-hidden="true" />,
-  chevron: <NavArrowRight {...iconProps} />,
+  chevron: <ChevronRight {...iconProps} />,
   check: <Check {...iconProps} />,
-  close: <Xmark {...iconProps} />,
-  retry: <Refresh {...iconProps} />,
+  close: <X {...iconProps} />,
+  retry: <RotateCcw {...iconProps} />,
 };
 
 /* the single "keep" affirm — solid ink with a hairline (not the atom's filled

@@ -1,7 +1,11 @@
-import { Folder, Github } from "iconoir-react";
+import { useState } from "react";
+import { Folder } from "lucide-react";
+import { GithubMark } from "@/components/atoms/brand-icons";
 import { Button } from "@/components/atoms/button";
+import { HoverSwap } from "@/components/atoms/hover-swap";
 import { Kbd } from "@/components/atoms/kbd";
 import GlideMenu from "@/components/primitives/glide-menu";
+import { cn } from "@/lib/utils";
 
 export interface FoundRepo {
   name: string;
@@ -21,12 +25,34 @@ function FolderTile() {
 export function RepoDropZone({
   onChooseFolder,
   onClone,
+  onDropFolder,
 }: {
   onChooseFolder?: () => void;
   onClone?: () => void;
+  onDropFolder?: (file: File) => void;
 }) {
+  const [over, setOver] = useState(false);
   return (
-    <div className="flex flex-col items-center gap-1.5 rounded-panel border border-dashed border-line-focus bg-hover/30 px-5 pt-[26px] pb-[22px] text-center">
+    <div
+      onDragOver={(event) => {
+        if (!onDropFolder) return;
+        event.preventDefault();
+        setOver(true);
+      }}
+      onDragLeave={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOver(false);
+      }}
+      onDrop={(event) => {
+        event.preventDefault();
+        setOver(false);
+        const file = event.dataTransfer.files[0];
+        if (file) onDropFolder?.(file);
+      }}
+      className={cn(
+        "interactive flex flex-col items-center gap-1.5 rounded-panel border border-dashed px-5 pt-[26px] pb-[22px] text-center",
+        over ? "border-accent-ink bg-accent-tint" : "border-line-focus bg-hover/30",
+      )}
+    >
       <span className="mb-1.5 flex size-10 items-center justify-center rounded-menu bg-elevated text-ink-2">
         <Folder width={18} height={18} strokeWidth={2} />
       </span>
@@ -40,10 +66,12 @@ export function RepoDropZone({
           Choose folder
           <Kbd>⌘O</Kbd>
         </Button>
-        <Button variant="ghost" size="sm" onClick={onClone}>
-          <Github width={13} height={13} strokeWidth={2} />
-          Clone from GitHub
-        </Button>
+        {onClone && (
+          <Button variant="ghost" size="sm" onClick={onClone}>
+            <GithubMark width={13} height={13} strokeWidth={2} />
+            Clone from GitHub
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -69,19 +97,25 @@ export function FoundRepos({
             type="button"
             data-menu-row
             onClick={() => onPick(repo)}
-            className="group/repo interactive press-wide relative flex h-11 w-full cursor-pointer items-center gap-3 rounded-field px-2.5 text-left select-none"
+            className="interactive press-wide relative flex h-11 w-full cursor-pointer items-center gap-3 rounded-field px-2.5 text-left select-none"
           >
             <FolderTile />
             <span className="flex min-w-0 flex-1 flex-col gap-px">
               <span className="text-sm font-medium text-ink">{repo.name}</span>
               <span className="truncate font-mono text-2xs text-ink-4">{repo.path}</span>
             </span>
-            <span className="text-2xs text-ink-4 group-hover/repo:hidden group-focus-visible/repo:hidden">
-              {repo.branch} · {repo.active}
-            </span>
-            <span className="hidden h-6 items-center rounded-full bg-ink px-2.5 text-2xs font-medium text-inverse group-hover/repo:flex group-focus-visible/repo:flex">
-              Add
-            </span>
+            <HoverSwap
+              rest={
+                <span className="text-2xs text-ink-4">
+                  {repo.branch} · {repo.active}
+                </span>
+              }
+              hover={
+                <span className="flex h-6 items-center rounded-full bg-ink px-2.5 text-2xs font-medium text-inverse">
+                  Add
+                </span>
+              }
+            />
           </button>
         ))}
       </GlideMenu>
@@ -99,9 +133,11 @@ export function PickedRepo({ repo, onChange }: { repo: FoundRepo; onChange?: () 
         <span className="text-base font-semibold text-ink">{repo.name}</span>
         <span className="truncate font-mono text-2xs text-ink-4">{repo.path}</span>
       </span>
-      <Button variant="quiet" size="sm" onClick={onChange}>
-        Change
-      </Button>
+      {onChange && (
+        <Button variant="quiet" size="sm" onClick={onChange}>
+          Change
+        </Button>
+      )}
     </div>
   );
 }

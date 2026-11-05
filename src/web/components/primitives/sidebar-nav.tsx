@@ -10,22 +10,22 @@ import {
 } from "react";
 import {
   Check,
-  EditPencil,
-  Home,
-  IceCream,
+  ChevronDown,
+  House,
+  IceCreamCone,
   LogOut,
-  NavArrowDown,
+  PanelLeft,
   Plus,
   Search,
   Settings,
-  SidebarCollapse,
+  SquarePen,
   UserPlus,
-  Xmark,
-} from "iconoir-react";
+  X,
+} from "lucide-react";
 import { createPortal } from "react-dom";
 import GlideMenu from "@/components/primitives/glide-menu";
 
-type SizedIcon = Omit<ComponentProps<typeof Home>, "width" | "height"> & { size: number };
+type SizedIcon = Omit<ComponentProps<typeof House>, "width" | "height"> & { size: number };
 
 const IconArrowBoxLeft = ({ size, ...props }: SizedIcon) => (
   <LogOut width={size} height={size} strokeWidth={2} {...props} />
@@ -34,16 +34,16 @@ const IconCheckmark1Small = ({ size, ...props }: SizedIcon) => (
   <Check width={size} height={size} strokeWidth={2} {...props} />
 );
 const IconChevronDownSmall = ({ size, ...props }: SizedIcon) => (
-  <NavArrowDown width={size} height={size} strokeWidth={2} {...props} />
+  <ChevronDown width={size} height={size} strokeWidth={2} {...props} />
 );
 const IconCrossSmall = ({ size, ...props }: SizedIcon) => (
-  <Xmark width={size} height={size} strokeWidth={2} {...props} />
+  <X width={size} height={size} strokeWidth={2} {...props} />
 );
 const IconEditBig = ({ size, ...props }: SizedIcon) => (
-  <EditPencil width={size} height={size} strokeWidth={2} {...props} />
+  <SquarePen width={size} height={size} strokeWidth={2} {...props} />
 );
 const IconHome = ({ size, ...props }: SizedIcon) => (
-  <Home width={size} height={size} strokeWidth={2} {...props} />
+  <House width={size} height={size} strokeWidth={2} {...props} />
 );
 const IconMagnifyingGlass = ({ size, ...props }: SizedIcon) => (
   <Search width={size} height={size} strokeWidth={2} {...props} />
@@ -52,13 +52,13 @@ const IconPlusMedium = ({ size, ...props }: SizedIcon) => (
   <Plus width={size} height={size} strokeWidth={2} {...props} />
 );
 const IconPopsicle2 = ({ size, ...props }: SizedIcon) => (
-  <IceCream width={size} height={size} strokeWidth={2} {...props} />
+  <IceCreamCone width={size} height={size} strokeWidth={2} {...props} />
 );
 const IconSettingsGear1 = ({ size, ...props }: SizedIcon) => (
   <Settings width={size} height={size} strokeWidth={2} {...props} />
 );
 const IconSidebarLeftArrow = ({ size, ...props }: SizedIcon) => (
-  <SidebarCollapse width={size} height={size} strokeWidth={2} {...props} />
+  <PanelLeft width={size} height={size} strokeWidth={2} {...props} />
 );
 const IconUserAdd = ({ size, ...props }: SizedIcon) => (
   <UserPlus width={size} height={size} strokeWidth={2} {...props} />

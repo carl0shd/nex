@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Xmark } from "iconoir-react";
+import { X } from "lucide-react";
 import { Kbd } from "@/components/atoms/kbd";
 import { Spinner } from "@/components/atoms/spinner";
 import { StatusDot, type DotTone } from "@/components/atoms/status-dot";
@@ -95,7 +95,7 @@ function DismissButton({ onClick, className }: { onClick?: () => void; className
         className,
       )}
     >
-      <Xmark width={11} height={11} strokeWidth={2.25} />
+      <X width={11} height={11} strokeWidth={2.25} />
     </button>
   );
 }
@@ -121,7 +121,7 @@ export function Toast({
     <div
       role="status"
       className={cn(
-        "group enter-toast relative flex w-[340px] flex-col overflow-hidden rounded-panel bg-surface-raised p-3.5 shadow-overlay",
+        "group enter-toast relative flex w-[340px] flex-col overflow-hidden rounded-panel bg-glass p-3.5 shadow-toast backdrop-blur-[28px] backdrop-saturate-[1.1]",
         className,
       )}
     >
@@ -133,14 +133,13 @@ export function Toast({
         {meta && <span className="truncate font-mono text-ink-4">· {meta}</span>}
       </div>
       {time && (
-        <span className="absolute top-3.5 right-3.5 text-2xs leading-[18px] text-ink-5 group-hover:opacity-0">
+        <span className="absolute top-3.5 right-3.5 text-2xs leading-[18px] text-ink-5 transition-opacity duration-150 ease-out-strong group-hover:opacity-0">
           {time}
         </span>
       )}
-      <DismissButton
-        onClick={onDismiss}
-        className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
-      />
+      <span className="absolute top-3 right-3 flex opacity-0 transition-opacity duration-150 ease-out-strong group-hover:opacity-100 focus-within:opacity-100">
+        <DismissButton onClick={onDismiss} />
+      </span>
 
       <span className="mt-1 text-sm leading-[18px] font-semibold text-ink">{title}</span>
       {body && <span className="mt-1.5 text-xs leading-[18px] text-ink-3">{body}</span>}
@@ -195,17 +194,19 @@ export function CompactToast({ tone, title, action, onAction, className }: Compa
     <div
       role="status"
       className={cn(
-        "enter-toast inline-flex h-9 items-center gap-2 rounded-full bg-surface-raised pr-1.5 pl-3 text-sm whitespace-nowrap text-ink shadow-overlay",
+        "enter-toast inline-flex h-9 max-w-[340px] items-center gap-2 rounded-full bg-glass pr-1.5 pl-3 text-sm whitespace-nowrap text-ink shadow-toast backdrop-blur-[28px] backdrop-saturate-[1.1]",
         className,
       )}
     >
       <StatusDot tone={DOT[tone]} />
-      {title}
+      <span className="min-w-0 truncate" title={title}>
+        {title}
+      </span>
       {action ? (
         <button
           type="button"
           onClick={onAction}
-          className="interactive press h-6 cursor-pointer rounded-full px-2.5 text-xs font-medium text-ink-2 shadow-btn select-none hover:bg-hover hover:text-ink"
+          className="interactive press h-6 shrink-0 cursor-pointer rounded-full px-2.5 text-xs font-medium text-ink-2 shadow-btn select-none hover:bg-hover hover:text-ink"
         >
           {action}
         </button>
