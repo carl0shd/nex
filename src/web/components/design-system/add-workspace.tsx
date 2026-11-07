@@ -86,8 +86,7 @@ function AddWorkspaceDemo() {
             detect={detect}
             onAdd={addProject}
             onCancel={() => setAdding(null)}
-            onClone={() => {}}
-            onPasteUrl={() => {}}
+            clone={() => null}
           />
         </Overlay>
       )}
@@ -129,8 +128,7 @@ export function AddWorkspace() {
             initialSection="branch"
             onAdd={() => {}}
             onCancel={() => {}}
-            onClone={() => {}}
-            onPasteUrl={() => {}}
+            clone={() => null}
           />
         </Specimen>
         <Specimen name="Worktree setup open" bare>
@@ -142,8 +140,7 @@ export function AddWorkspace() {
             initialSection="setup"
             onAdd={() => {}}
             onCancel={() => {}}
-            onClone={() => {}}
-            onPasteUrl={() => {}}
+            clone={() => null}
           />
         </Specimen>
         <Specimen name="Quick commands open" bare>
@@ -155,8 +152,7 @@ export function AddWorkspace() {
             initialSection="commands"
             onAdd={() => {}}
             onCancel={() => {}}
-            onClone={() => {}}
-            onPasteUrl={() => {}}
+            clone={() => null}
           />
         </Specimen>
         <Specimen name="RemoveWorkspaceDialog · from the workspace's … menu" bare>
@@ -174,8 +170,7 @@ export function AddWorkspace() {
             initialSection="environment"
             onAdd={() => {}}
             onCancel={() => {}}
-            onClone={() => {}}
-            onPasteUrl={() => {}}
+            clone={() => null}
           />
         </Specimen>
       </div>

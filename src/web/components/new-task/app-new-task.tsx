@@ -19,13 +19,12 @@ import { workspaceImageUrl } from "@/lib/workspace-image";
 import { useNewTaskStore } from "@/stores/new-task.store";
 import { useSettingsStore } from "@/stores/settings.store";
 import { useWorkspaceStore } from "@/stores/workspace.store";
+import { workspaceIcon } from "@/lib/workspace-icons";
 
 type ProjectBranches = Record<string, string[]>;
 
 function agentKind(slug: string): AgentKind {
   if (slug.startsWith("claude")) return "claude";
-  if (slug.startsWith("codex")) return "codex";
-  if (slug.startsWith("gemini")) return "gemini";
   return "shell";
 }
 
@@ -80,10 +79,11 @@ async function loadBranches(projects: Project[]): Promise<ProjectBranches> {
   const entries = await Promise.all(
     projects.map(async (project): Promise<[string, string[]]> => {
       if (!(await window.api.isGitRepo(project.path))) return [project.id, []];
-      const [base, branches] = await Promise.all([
+      const [detected, branches] = await Promise.all([
         window.api.detectBaseBranch(project.path),
         window.api.listBranches(project.path),
       ]);
+      const base = project.baseBranch || detected;
       return [project.id, [base, ...branches.filter((branch) => branch !== base)]];
     }),
   );
@@ -108,6 +108,7 @@ function toDialogProjects(
             name: workspace.name,
             color: workspace.color,
             image: workspaceImageUrl(workspace.customImage),
+            icon: workspaceIcon(workspace.icon),
           },
           branches: branches[project.id] ?? [],
           branchPrefix: project.branchPrefix,

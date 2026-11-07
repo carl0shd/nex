@@ -53,11 +53,10 @@ import {
   ThinkingLine,
   ThoughtToggle,
 } from "@/components/task/agent-flow";
-import { UserBubble } from "@/components/task/conversation";
 import { ConversationSearch } from "@/components/task/conversation-search";
 import { JumpToLatest } from "@/components/task/jump-to-latest";
-import { MessageImages } from "@/components/task/message-images";
 import { MarkdownText } from "@/components/task/markdown-text";
+import { QueuedText, UserMessage, type ImageNames } from "@/components/task/user-message";
 import { useRevealedLength } from "@/hooks/use-revealed-length";
 import { useNow } from "@/hooks/use-now";
 import { useSettled } from "@/hooks/use-settled";
@@ -73,6 +72,7 @@ import { describeTool, formatDuration, relativePath, type ToolIcon } from "@/lib
 import type { ConversationItem, ToolCall, TodoStatus } from "@/lib/transcript";
 import { exactTime, relativeTimeLong } from "@/lib/relative-time";
 import { compactTokens } from "@/lib/usage";
+import { limitResetAt, limitResetLabel } from "@/lib/usage-limit";
 import { cn } from "@/lib/utils";
 
 const ICONS: Record<ToolIcon, BlockIcon> = {
@@ -111,7 +111,7 @@ const EDIT_TOOLS = new Set(["Edit", "MultiEdit", "Write", "NotebookEdit"]);
 
 export interface ConversationActions {
   onCloseTask?: () => void;
-  onOpenImages?: (images: readonly string[], index: number) => void;
+  onOpenImages?: (images: readonly string[], index: number, names: ImageNames) => void;
   onRetryOnline?: () => void;
   onResume?: () => void;
   onStartFresh?: () => void;
@@ -120,6 +120,8 @@ export interface ConversationActions {
   onViewChanges?: () => void;
   onCompact?: () => void;
   onRestart?: () => void;
+  continueOn?: { account: string; run: () => void };
+  onNotifyAtReset?: (at: Date) => void;
 }
 
 function stepRows(steps: readonly SubagentStep[], cwd: string) {
@@ -134,6 +136,8 @@ function stepRows(steps: readonly SubagentStep[], cwd: string) {
     };
   });
 }
+
+const MIN_SHOWN_SECONDS = 2;
 
 function ToolBlock({
   call,
@@ -154,12 +158,13 @@ function ToolBlock({
 }) {
   const display = describeTool(call, cwd);
   const [open, setOpen] = useState<boolean | null>(null);
-  const now = useNow(live && !call.result && steps ? 1000 : 60_000);
   const running = live && !call.result;
+  const now = useNow(running ? 1000 : 60_000);
+  const elapsed = call.startedAt ? Math.round((now - Date.parse(call.startedAt)) / 1000) : 0;
 
   if (!call.result && ANSWERED_IN_CARD.has(call.name)) return null;
   if (running && steps?.length) {
-    const seconds = call.startedAt ? Math.round((now - Date.parse(call.startedAt)) / 1000) : 0;
+    const seconds = elapsed;
     return (
       <SubagentCard
         name={display.verb}
@@ -176,7 +181,14 @@ function ToolBlock({
   }
   if (running)
     return (
-      <BlockRow running verb={display.runningVerb} target={display.target} prose={display.prose} />
+      <BlockRow
+        running
+        verb={display.runningVerb}
+        target={display.target}
+        prose={display.prose}
+        code={Boolean(display.command)}
+        meta={elapsed >= MIN_SHOWN_SECONDS ? `${elapsed}s` : undefined}
+      />
     );
   if (display.pullRequest) {
     const pr = display.pullRequest;
@@ -205,6 +217,7 @@ function ToolBlock({
         verb={display.verb}
         target={display.target}
         prose={display.prose}
+        code={Boolean(display.command)}
         aside={display.aside}
         tags={
           display.newFile ? (
@@ -401,18 +414,21 @@ function CompactedBlock({
   );
 }
 
-const LIMIT_RESET = /resets?\s+(?:at\s+)?([^·.\n|()]+)/i;
-const LIMIT_EPOCH = /\|(\d{10})\b/;
+const NOW_TICK_MS = 60_000;
 
-function limitReset(text: string): string | undefined {
-  const epoch = text.match(LIMIT_EPOCH)?.[1];
-  if (epoch) {
-    return new Date(Number(epoch) * 1000).toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  }
-  return text.match(LIMIT_RESET)?.[1].trim();
+function LimitCard({ text, actions }: { text: string; actions: ConversationActions }) {
+  const now = new Date(useNow(NOW_TICK_MS));
+  const resetAt = limitResetAt(text, now);
+  const notify = actions.onNotifyAtReset;
+  return (
+    <UsageLimitCard
+      resets={limitResetLabel(text, now)}
+      body="Claude stopped here. Send a message once the limit resets to pick it up again."
+      account={actions.continueOn?.account}
+      onContinue={actions.continueOn?.run}
+      onNotify={resetAt && resetAt > now && notify ? () => notify(resetAt) : undefined}
+    />
+  );
 }
 
 function Item({
@@ -435,19 +451,13 @@ function Item({
   switch (item.kind) {
     case "user":
       return (
-        <div className="flex flex-col gap-2">
-          {item.images?.length ? (
-            <MessageImages
-              images={item.images}
-              onOpen={(index) => actions.onOpenImages?.(item.images ?? [], index)}
-            />
-          ) : null}
-          {item.text && (
-            <UserBubble>
-              <span className="whitespace-pre-wrap select-text">{item.text}</span>
-            </UserBubble>
-          )}
-        </div>
+        <UserMessage
+          text={item.text}
+          images={item.images}
+          cwd={cwd}
+          onOpenImages={actions.onOpenImages}
+          onOpenUrl={actions.onOpenUrl}
+        />
       );
     case "text":
       return (
@@ -489,12 +499,7 @@ function Item({
     case "thought":
       return <ThoughtBlock text={item.text} seconds={item.seconds} />;
     case "limit":
-      return (
-        <UsageLimitCard
-          resets={limitReset(item.text)}
-          body="Claude stopped here. Send a message once the limit resets to pick it up again."
-        />
-      );
+      return <LimitCard text={item.text} actions={actions} />;
   }
 }
 
@@ -607,7 +612,13 @@ function LiveBlockView({ block, cwd }: { block: LiveBlock; cwd: string }) {
     );
     const display = describeTool({ id: "live", name: block.name, input }, cwd);
     return (
-      <BlockRow running verb={display.runningVerb} target={display.target} prose={display.prose} />
+      <BlockRow
+        running
+        verb={display.runningVerb}
+        target={display.target}
+        prose={display.prose}
+        code={Boolean(display.command)}
+      />
     );
   }
   return null;
@@ -869,9 +880,7 @@ export function AgentConversation({
           })}
           {sending.map((message) => (
             <div key={message.id} className="enter-message mt-3 flex flex-col">
-              <UserBubble>
-                <span className="whitespace-pre-wrap select-text">{message.text}</span>
-              </UserBubble>
+              <UserMessage text={message.text} cwd={cwd} onOpenUrl={actions.onOpenUrl} />
             </div>
           ))}
           {queued.map((message) => (
@@ -881,7 +890,7 @@ export function AgentConversation({
                 onEdit={() => onQueuedEdit?.(message.id)}
                 onCancel={() => onQueuedCancel?.(message.id)}
               >
-                {message.text}
+                <QueuedText text={message.text} cwd={cwd} />
               </QueuedMessage>
             </div>
           ))}

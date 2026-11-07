@@ -41,6 +41,7 @@ export function PermissionCard({
         <CardButton kind="danger" disabled={answering} onClick={onDeny}>
           Deny
         </CardButton>
+        <span className="ml-auto text-2xs text-ink-4">esc to deny</span>
       </div>
     </div>
   );

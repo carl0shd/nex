@@ -6,7 +6,7 @@ import {
   type ComponentType,
   type KeyboardEvent,
 } from "react";
-import { FileIcon, GitBranch, Search } from "lucide-react";
+import { FileIcon, FolderGit2, GitBranch, Search } from "lucide-react";
 import { Kbd } from "@/components/atoms/kbd";
 import { Overlay } from "@/components/primitives/overlay";
 import { searchItems, stepIndex } from "@/lib/command-search";
@@ -25,6 +25,7 @@ interface CommandBase {
 export type CommandItem =
   | (CommandBase & { kind: "task"; project: string; status: CommandTaskStatus })
   | (CommandBase & { kind: "file" })
+  | (CommandBase & { kind: "project"; workspace: string })
   | (CommandBase & { kind: "action"; icon: CommandIcon; kbd?: string });
 
 export interface CommandGroup {
@@ -66,6 +67,20 @@ function CommandRowContent({ item }: { item: CommandItem }) {
       </>
     );
   }
+  if (item.kind === "project") {
+    return (
+      <>
+        <FolderGit2 width={14} height={14} strokeWidth={2} className="shrink-0 text-ink-3" />
+        <span className="truncate text-sm text-ink" title={item.label}>
+          {item.label}
+        </span>
+        <span className="truncate text-2xs text-ink-4" title={item.workspace}>
+          {item.workspace}
+        </span>
+        <span className="ml-auto shrink-0 text-2xs text-ink-4">New task</span>
+      </>
+    );
+  }
   const Icon = item.icon;
   return (
     <>
@@ -88,7 +103,7 @@ function FooterHint({ keys, label }: { keys: string; label: string }) {
 export function CommandPalette({
   groups,
   defaultQuery = "",
-  placeholder = "Jump to a task, file or action…",
+  placeholder = "Jump to a task, project, file or action…",
   onSelect,
   onClose,
 }: {

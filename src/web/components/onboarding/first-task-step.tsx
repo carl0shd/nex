@@ -1,10 +1,16 @@
-import type { ReactNode } from "react";
-import { Check } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { Check, ChevronDown } from "lucide-react";
 import { AgentLogo } from "@/components/atoms/agent-logo";
 import { Shimmer } from "@/components/atoms/shimmer";
 import { Spinner } from "@/components/atoms/spinner";
 import { StatusDot } from "@/components/atoms/status-dot";
+import type { Effort } from "@/components/composer/effort";
+import { ModelMenu, type ModelOption } from "@/components/composer/model-menu";
+import { PermissionMenu, type PermissionMode } from "@/components/composer/permission-menu";
 import { OnboardingStep } from "@/components/onboarding/onboarding-step";
+import { AnchoredPopover } from "@/components/primitives/anchored-popover";
+import { Menu, MenuItem } from "@/components/primitives/menu";
+import { PERMISSION_LABEL } from "@/lib/permission-modes";
 import { taskBranchName } from "@/lib/task-branch";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +26,19 @@ export interface FirstTaskContext {
   model?: string;
   mode: string;
   branchPrefix: string;
+}
+
+export interface FirstTaskSettings {
+  accounts: readonly { id: string; label: string }[];
+  account: string;
+  onAccount: (id: string) => void;
+  models: readonly ModelOption[];
+  model: string;
+  onModel: (id: string) => void;
+  effort: Effort;
+  onEffort: (effort: Effort) => void;
+  mode: PermissionMode;
+  onMode: (mode: PermissionMode) => void;
 }
 
 export type FirstTaskProgress = "idle" | "starting" | "started";
@@ -53,23 +72,122 @@ function IdeaChip({ idea, onPick }: { idea: string; onPick: () => void }) {
 function TaskPill({
   icon,
   strong = false,
+  open = false,
+  onClick,
   children,
 }: {
   icon?: ReactNode;
   strong?: boolean;
+  open?: boolean;
+  onClick?: () => void;
   children: ReactNode;
 }) {
+  const className = cn(
+    "flex h-[26px] min-w-0 items-center gap-1.5 rounded-full px-2.5 text-2xs font-medium",
+    icon && "pl-[5px]",
+    strong ? "bg-hover-2 text-ink" : "bg-hover text-ink-2",
+  );
+  if (!onClick) {
+    return (
+      <span className={className}>
+        {icon}
+        <span className="truncate">{children}</span>
+      </span>
+    );
+  }
   return (
-    <span
+    <button
+      type="button"
+      aria-expanded={open}
+      onClick={onClick}
       className={cn(
-        "flex h-[26px] min-w-0 items-center gap-1.5 rounded-full px-2.5 text-2xs font-medium",
-        icon && "pl-[5px]",
-        strong ? "bg-hover-2 text-ink" : "bg-hover text-ink-2",
+        className,
+        "interactive press cursor-pointer pr-2 select-none hover:text-ink",
+        open && "text-ink",
       )}
     >
       {icon}
       <span className="truncate">{children}</span>
-    </span>
+      <ChevronDown width={10} height={10} strokeWidth={2.25} className="shrink-0 opacity-70" />
+    </button>
+  );
+}
+
+type Picker = "account" | "model" | "mode";
+
+function TaskSettingsPills({ settings }: { settings: FirstTaskSettings }) {
+  const [open, setOpen] = useState<Picker | null>(null);
+  const popover = (picker: Picker) => ({
+    open: open === picker,
+    onOpenChange: (next: boolean) => setOpen(next ? picker : null),
+    strategy: "fixed" as const,
+  });
+  const toggle = (picker: Picker) => () => setOpen(open === picker ? null : picker);
+  const account = settings.accounts.find((item) => item.id === settings.account);
+  const model = settings.models.find((item) => item.id === settings.model);
+  return (
+    <>
+      <AnchoredPopover
+        {...popover("account")}
+        trigger={
+          <TaskPill
+            strong
+            icon={<AgentLogo agent="claude" size={16} />}
+            open={open === "account"}
+            onClick={settings.accounts.length > 1 ? toggle("account") : undefined}
+          >
+            Claude Code · {account?.label ?? "Claude Code"}
+          </TaskPill>
+        }
+      >
+        <Menu width={220}>
+          {settings.accounts.map((item) => (
+            <MenuItem
+              key={item.id}
+              checked={item.id === settings.account}
+              onSelect={() => {
+                settings.onAccount(item.id);
+                setOpen(null);
+              }}
+            >
+              {item.label}
+            </MenuItem>
+          ))}
+        </Menu>
+      </AnchoredPopover>
+      <AnchoredPopover
+        {...popover("model")}
+        trigger={
+          <TaskPill open={open === "model"} onClick={toggle("model")}>
+            {model?.name ?? settings.model}
+          </TaskPill>
+        }
+      >
+        <ModelMenu
+          models={settings.models}
+          model={settings.model}
+          onModelChange={settings.onModel}
+          effort={settings.effort}
+          onEffortChange={settings.onEffort}
+        />
+      </AnchoredPopover>
+      <AnchoredPopover
+        {...popover("mode")}
+        trigger={
+          <TaskPill open={open === "mode"} onClick={toggle("mode")}>
+            {PERMISSION_LABEL[settings.mode]}
+          </TaskPill>
+        }
+      >
+        <PermissionMenu
+          mode={settings.mode}
+          onChange={(mode) => {
+            settings.onMode(mode);
+            setOpen(null);
+          }}
+        />
+      </AnchoredPopover>
+    </>
   );
 }
 
@@ -100,7 +218,7 @@ function SetupRow({ label, meta, state }: { label: string; meta: string; state: 
       <span className={cn("shrink-0 text-sm", state === "pending" ? "text-ink-4" : "text-ink")}>
         {label}
       </span>
-      <span className="ml-auto truncate font-mono text-2xs text-ink-4">{meta}</span>
+      <span className="ml-auto truncate text-2xs text-ink-4">{meta}</span>
     </li>
   );
 }
@@ -129,7 +247,7 @@ function SetupPreview({
           <span className="truncate text-base font-medium text-ink">
             {draft.title.trim() || "Untitled task"}
           </span>
-          <span className="truncate font-mono text-2xs text-ink-4">
+          <span className="truncate text-2xs text-ink-4">
             {branch} · {context.project}
           </span>
         </span>
@@ -165,6 +283,7 @@ export function FirstTaskStep({
   draft,
   onChange,
   context,
+  settings,
   onBack,
   onSkip,
   onStart,
@@ -173,6 +292,7 @@ export function FirstTaskStep({
   draft: FirstTaskDraft;
   onChange: (draft: FirstTaskDraft) => void;
   context: FirstTaskContext;
+  settings?: FirstTaskSettings;
   progress?: FirstTaskProgress;
   onBack?: () => void;
   onSkip?: () => void;
@@ -222,11 +342,17 @@ export function FirstTaskStep({
           >
             {context.project}
           </TaskPill>
-          <TaskPill strong icon={<AgentLogo agent="claude" size={16} />}>
-            Claude Code · {context.account}
-          </TaskPill>
-          {context.model && <TaskPill>{context.model}</TaskPill>}
-          <TaskPill>{context.mode}</TaskPill>
+          {settings ? (
+            <TaskSettingsPills settings={settings} />
+          ) : (
+            <>
+              <TaskPill strong icon={<AgentLogo agent="claude" size={16} />}>
+                Claude Code · {context.account}
+              </TaskPill>
+              {context.model && <TaskPill>{context.model}</TaskPill>}
+              <TaskPill>{context.mode}</TaskPill>
+            </>
+          )}
         </div>
       </div>
       <div className="flex flex-col gap-2">

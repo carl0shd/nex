@@ -34,6 +34,7 @@ import {
   type SlashCommand,
   type WorktreeFile,
 } from "@/lib/composer-pickers";
+import { PASTED_CARD_LINES } from "@/lib/user-message";
 
 type PickerKind = "file" | "command";
 
@@ -45,7 +46,6 @@ type PickerHandlers = {
   keyDown: (kind: PickerKind, props: SuggestionKeyDownProps) => boolean;
 };
 
-const PASTED_CARD_LINES = 20;
 const PICKER_WIDTH: Record<PickerKind, number> = { file: 380, command: 400 };
 const fileKey = new PluginKey("fileMention");
 const commandKey = new PluginKey("commandMention");
@@ -334,6 +334,7 @@ export function RichEditor({
   const editor = useEditor({
     extensions,
     content: defaultContent,
+    onCreate: ({ editor: current }) => callbacks.current.onTextChange?.(serialize(current)),
     onUpdate: ({ editor: current }) => {
       callbacks.current.onTextChange?.(serialize(current));
       callbacks.current.onContentChange?.(current.getJSON());

@@ -124,6 +124,10 @@ export async function listBranches(repo: string): Promise<string[]> {
   return branches.sort((a, b) => a.localeCompare(b));
 }
 
+export async function refExists(repo: string, ref: string): Promise<boolean> {
+  return (await gitSilent(repo, ["rev-parse", "--verify", "--quiet", ref])) !== "";
+}
+
 export async function createWorktree(
   repo: string,
   branch: string,

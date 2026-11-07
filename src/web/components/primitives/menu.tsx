@@ -8,6 +8,7 @@ type MenuIcon = ComponentType<{ width?: number; height?: number; strokeWidth?: n
 export function Menu({
   children,
   header,
+  footer,
   maxHeight,
   width = 300,
   origin = "top",
@@ -15,6 +16,7 @@ export function Menu({
 }: {
   children: ReactNode;
   header?: ReactNode;
+  footer?: ReactNode;
   maxHeight?: number;
   width?: number;
   origin?: "top" | "bottom left" | "bottom right";
@@ -37,6 +39,11 @@ export function Menu({
         </div>
       ) : (
         rows
+      )}
+      {footer && (
+        <div className="mt-1 shrink-0 border-t border-line pt-1">
+          <GlideMenu className="flex flex-col gap-0.5">{footer}</GlideMenu>
+        </div>
       )}
     </div>
   );

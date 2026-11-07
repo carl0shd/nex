@@ -16,7 +16,7 @@ export function Chip({ children, running = false, meta, onClick, className }: Ch
       type="button"
       onClick={onClick}
       className={cn(
-        "interactive press inline-flex h-[26px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-[9px] font-mono text-3xs shadow-[inset_0_0_0_1px_var(--line-chip)] select-none hover:bg-hover",
+        "interactive press inline-flex h-[26px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-[9px] text-2xs shadow-[inset_0_0_0_1px_var(--line-chip)] select-none hover:bg-hover",
         running ? "text-ink-2" : "text-ink-3",
         className,
       )}
@@ -48,7 +48,7 @@ export function CountChip({
       aria-expanded={open}
       onClick={onClick}
       className={cn(
-        "interactive press inline-flex h-[26px] shrink-0 cursor-pointer items-center rounded-full px-2 font-mono text-3xs text-ink-3 shadow-[inset_0_0_0_1px_var(--line-chip)] select-none hover:bg-hover",
+        "interactive press inline-flex h-[26px] shrink-0 cursor-pointer items-center rounded-full px-2 text-2xs tabular-nums text-ink-3 shadow-[inset_0_0_0_1px_var(--line-chip)] select-none hover:bg-hover",
         open && "bg-hover text-ink-2",
         className,
       )}

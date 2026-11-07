@@ -1,4 +1,5 @@
-import { mkdir, writeFile, symlink } from "fs/promises";
+import { existsSync } from "fs";
+import { cp, mkdir, writeFile, symlink } from "fs/promises";
 import { join } from "path";
 import * as projectRepo from "@native/db/repositories/project.repo";
 import * as sessionRepo from "@native/db/repositories/session.repo";
@@ -11,10 +12,12 @@ import {
   deleteBranch,
   setupGitExclude,
   isGitRepo,
+  refExists,
 } from "@native/git/git";
 import { setupSymlinks } from "@native/git/symlinks";
 import { createTerminalForSession } from "@native/agents/agent-terminal";
-import type { Session, StartWorkInput } from "@native/db/types";
+import type { ProjectSetup, Session, StartWorkInput } from "@native/db/types";
+import { spawnTerminal } from "@native/pty/manager";
 import { sendToAgent } from "@native/agents/agent-runner";
 import { saveAgentSettings } from "@native/agents/agent-settings";
 
@@ -25,6 +28,44 @@ function createPrimaryTerminal(session: Session, prompt?: string): void {
     isPrimary: true,
   });
   if (terminal.type === "agent" && prompt?.trim()) sendToAgent(session.id, prompt.trim());
+}
+
+async function copySetupFiles(from: string, to: string, setup: ProjectSetup): Promise<void> {
+  if (!setup.copy.on) return;
+  for (const file of setup.copy.files) {
+    const source = join(from, file);
+    if (!existsSync(source)) continue;
+    await cp(source, join(to, file), { recursive: true, force: false, errorOnExist: false });
+  }
+}
+
+function setupCommand(setup: ProjectSetup): string {
+  const steps = [
+    setup.install.on ? setup.install.command.trim() : "",
+    setup.script.on && setup.script.path.trim()
+      ? `sh ${JSON.stringify(setup.script.path.trim())}`
+      : "",
+  ];
+  return steps.filter(Boolean).join(" && ");
+}
+
+function startSetup(session: Session, setup: ProjectSetup): void {
+  const command = setupCommand(setup);
+  if (!command) return;
+  const terminal = createTerminalForSession({
+    sessionId: session.id,
+    type: "shell",
+    name: "Setup",
+    runCommand: command,
+  });
+  spawnTerminal({
+    id: terminal.id,
+    type: "shell",
+    command: null,
+    args: [],
+    cwd: session.worktreePath,
+    runCommand: command,
+  });
 }
 
 async function writeIfMissing(path: string, content: string): Promise<void> {
@@ -80,11 +121,14 @@ export async function startWork(input: StartWorkInput): Promise<Session> {
   }
 
   const [detected] = await Promise.all([detectBaseBranch(project.path), fetchOrigin(project.path)]);
-  const baseBranch = input.baseBranch?.trim() || detected;
+  const baseBranch = input.baseBranch?.trim() || project.baseBranch || detected;
+  const upstream = `origin/${baseBranch}`;
+  const startPoint =
+    project.pullBase && (await refExists(project.path, upstream)) ? upstream : baseBranch;
   const prefix = (project.branchPrefix || "").replace(/\/+$/, "");
   const branch = prefix ? `${prefix}/${input.name}` : input.name;
   const wtPath = join(project.path, ".worktrees", input.name);
-  await createWorktree(project.path, branch, wtPath, baseBranch);
+  await createWorktree(project.path, branch, wtPath, startPoint);
 
   try {
     setupGitExclude(project.path);
@@ -106,7 +150,9 @@ export async function startWork(input: StartWorkInput): Promise<Session> {
       symlinks: [".claude"],
     });
     if (input.agentSettings) saveAgentSettings(session.id, input.agentSettings);
+    if (project.setup) await copySetupFiles(project.path, wtPath, project.setup);
     createPrimaryTerminal(session, input.prompt);
+    if (project.setup) startSetup(session, project.setup);
     return session;
   } catch (err) {
     await removeWorktree(project.path, wtPath).catch(() => {});

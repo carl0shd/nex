@@ -5,6 +5,7 @@ import {
   ConnectorsMenu,
   type ConnectorGroup,
 } from "@/components/composer/add-menu";
+import { AddServerDialog } from "@/components/composer/add-server-dialog";
 import { Composer } from "@/components/composer/composer";
 import { DictateButton, DictationMenu } from "@/components/composer/dictation";
 import type { Effort } from "@/components/composer/effort";
@@ -135,6 +136,8 @@ function ConnectorsDemo({ initialQuery = "" }: { initialQuery?: string }) {
           onQueryChange={setQuery}
           onToggle={() => {}}
           onRetry={() => {}}
+          onAddServer={() => {}}
+          onManage={() => {}}
         />
       </AddMenu>
     </div>
@@ -203,6 +206,9 @@ export function ComposerMenus() {
       </Specimen>
       <Specimen name="ConnectorsMenu · searching" className="items-end">
         <ConnectorsDemo initialQuery="sl" />
+      </Specimen>
+      <Specimen name="AddServerDialog · from Add a server">
+        <AddServerDialog onAdd={() => Promise.resolve()} onCancel={() => {}} />
       </Specimen>
       <Specimen name="Composer · dictating" bare>
         <ComposerFrame>

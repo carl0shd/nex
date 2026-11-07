@@ -76,6 +76,18 @@ const PR_BASE = /(?:--base|-B)\s+["']?([^\s"']+)/;
 const NEW_BRANCH =
   /\b(?:checkout\s+-b|switch\s+-c|push\s+(?:-u|--set-upstream)\s+\S+)\s+["']?([^\s"';&|]+)/;
 const GREP_LINE = /^(.+?)[:-](\d+)[:-](.*)$/;
+const COMMIT_HOOK = /\b(pre-commit|commit-msg|prepare-commit-msg|husky|lint-staged)\b|\bhooks?\b/i;
+const HOOK_NAME = /\b(pre-commit|commit-msg|prepare-commit-msg)\b/i;
+const HOOK_RUNNER = /\b(lint-staged|husky)\b/i;
+const HOOK_SUMMARY = /^husky\s+-\s|^hint:|^error: failed to push/i;
+const HOOK_ERROR = /error|✖|✗|failed|fatal|not allowed|must|invalid/i;
+const CELL_INDEX = /^cell-(\d+)$/;
+const NOTEBOOK_VERBS: Record<string, [string, string]> = {
+  insert: ["Add cell to", "Adding cell to"],
+  delete: ["Delete cell in", "Deleting cell in"],
+  replace: ["Edit", "Editing"],
+};
+const MAX_DIFF_CELLS = 250_000;
 const ANSI = new RegExp(`${String.fromCharCode(27)}\\[[0-9;?]*[ -/]*[@-~]`, "g");
 
 const text = (value: unknown) => (typeof value === "string" ? value : "");
@@ -230,6 +242,125 @@ function countRows(rows: readonly DiffRow[]) {
   };
 }
 
+export function lineDiff(before: readonly string[], after: readonly string[]): DiffRow[] {
+  if (before.length * after.length > MAX_DIFF_CELLS) {
+    return [
+      ...before.map((code, index) => ({ n: index + 1, sign: "-" as const, code })),
+      ...after.map((code, index) => ({ n: index + 1, sign: "+" as const, code })),
+    ];
+  }
+  const common = Array.from({ length: before.length + 1 }, () =>
+    Array<number>(after.length + 1).fill(0),
+  );
+  for (let i = before.length - 1; i >= 0; i--) {
+    for (let j = after.length - 1; j >= 0; j--) {
+      common[i][j] =
+        before[i] === after[j]
+          ? common[i + 1][j + 1] + 1
+          : Math.max(common[i + 1][j], common[i][j + 1]);
+    }
+  }
+  const rows: DiffRow[] = [];
+  let i = 0;
+  let j = 0;
+  while (i < before.length || j < after.length) {
+    if (i < before.length && j < after.length && before[i] === after[j]) {
+      rows.push({ n: j + 1, sign: " ", code: after[j] });
+      i++;
+      j++;
+    } else if (j < after.length && (i >= before.length || common[i][j + 1] >= common[i + 1][j])) {
+      rows.push({ n: j + 1, sign: "+", code: after[j] });
+      j++;
+    } else {
+      rows.push({ n: i + 1, sign: "-", code: before[i] });
+      i++;
+    }
+  }
+  return rows;
+}
+
+interface NotebookCell {
+  id?: string;
+  source?: string | string[];
+}
+
+function notebookCells(raw: unknown): NotebookCell[] {
+  if (typeof raw !== "string") return [];
+  try {
+    const cells = (JSON.parse(raw) as { cells?: unknown }).cells;
+    return Array.isArray(cells) ? (cells as NotebookCell[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+const sourceLines = (source: string | string[] | undefined) =>
+  (Array.isArray(source) ? source.join("") : (source ?? "")).replace(/\n$/, "").split("\n");
+
+function cellIndex(input: Record<string, unknown>, cells: readonly NotebookCell[]): number | null {
+  if (typeof input.cell_number === "number") return input.cell_number;
+  const id = text(input.cell_id);
+  if (!id) return null;
+  const found = cells.findIndex((cell) => cell.id === id);
+  if (found >= 0) return found;
+  const numbered = id.match(CELL_INDEX);
+  return numbered ? Number(numbered[1]) : null;
+}
+
+function cellNumber(mode: string, index: number | null, anchored: boolean): number | null {
+  if (mode !== "insert") return index === null ? null : index + 1;
+  if (index !== null) return index + 2;
+  return anchored ? null : 1;
+}
+
+function notebookEdit(
+  base: ToolDisplay,
+  input: Record<string, unknown>,
+  data: Record<string, unknown> | null,
+  path: string,
+): ToolDisplay {
+  const mode = text(input.edit_mode) || text(data?.edit_mode) || "replace";
+  const cells = notebookCells(data?.original_file);
+  const index = cellIndex(input, cells);
+  const cell = cellNumber(mode, index, Boolean(text(input.cell_id)));
+  const oldSource = index !== null && cells[index] ? sourceLines(cells[index].source) : null;
+  const newSource = text(input.new_source) || text(data?.new_source);
+  const rows =
+    mode === "insert"
+      ? lineDiff([], sourceLines(newSource))
+      : oldSource === null
+        ? []
+        : lineDiff(oldSource, mode === "delete" ? [] : sourceLines(newSource));
+  const [verb, runningVerb] = NOTEBOOK_VERBS[mode] ?? NOTEBOOK_VERBS.replace;
+  return {
+    ...base,
+    icon: "edit",
+    verb,
+    runningVerb,
+    target: path,
+    tag: cell === null ? undefined : `cell ${cell}`,
+    diff: rows.length ? countRows(rows) : undefined,
+    detail: rows.length ? { kind: "diff", lines: rows } : undefined,
+  };
+}
+
+function hookMessage(output: string): string {
+  const lines = output
+    .replace(ANSI, "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const useful = lines.filter((line) => !HOOK_SUMMARY.test(line));
+  return firstLine(
+    useful.find((line) => HOOK_ERROR.test(line)) ?? useful[0] ?? lines[0] ?? "",
+    200,
+  );
+}
+
+function hookName(output: string): string {
+  return (output.match(HOOK_NAME)?.[1] ?? output.match(HOOK_RUNNER)?.[1] ?? "").toLowerCase();
+}
+
 function mcpName(name: string): { server: string; tool: string } {
   const [, server = "", ...rest] = name.split("__");
   const pretty = server
@@ -335,9 +466,11 @@ function describeCall(call: ToolCall, cwd: string): ToolDisplay {
       };
       break;
     }
+    case "NotebookEdit":
+      display = notebookEdit(base, input, data, path);
+      break;
     case "Edit":
-    case "MultiEdit":
-    case "NotebookEdit": {
+    case "MultiEdit": {
       const rows = patchRows((data?.structuredPatch as PatchHunk[] | undefined) ?? []);
       const edits = Array.isArray(input.edits) ? input.edits.length : 0;
       display = {
@@ -386,6 +519,22 @@ function describeCall(call: ToolCall, cwd: string): ToolDisplay {
         detail: outputDetail((output || result?.text || "").replace(EXIT_LINE, ""), failed),
         openByDefault: failed,
       };
+      const exitFailed = failed || Boolean(exit && exit[1] !== "0");
+      const failure = (output || result?.text || "").replace(EXIT_LINE, "");
+      if (/\bgit\s+commit\b/.test(command) && exitFailed && COMMIT_HOOK.test(failure)) {
+        const message = hookMessage(failure);
+        display = {
+          ...display,
+          icon: "commit",
+          tone: "red",
+          verb: "Hook blocked commit",
+          target: hookName(failure),
+          prose: true,
+          note: message ? { text: message } : undefined,
+          openByDefault: false,
+        };
+        return display;
+      }
       if (commit && !failed) {
         display = {
           ...display,

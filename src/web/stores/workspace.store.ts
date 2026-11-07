@@ -11,6 +11,7 @@ import type {
   Terminal,
   Workspace,
 } from "@native/db/types";
+import { badgeFields, storedWorkspaceIcon, type WorkspaceIconName } from "@/lib/workspace-icons";
 
 type TerminalState = Pick<Terminal, "id" | "sessionId" | "type" | "status" | "name" | "isPrimary">;
 
@@ -27,7 +28,10 @@ interface WorkspaceStore {
   loaded: boolean;
   load: () => Promise<void>;
   createWorkspace: (
-    input: Pick<CreateWorkspaceInput, "name" | "color"> & { image: string | null },
+    input: Pick<CreateWorkspaceInput, "name" | "color"> & {
+      image: string | null;
+      icon?: WorkspaceIconName | null;
+    },
   ) => Promise<Workspace>;
   startTask: (input: StartWorkInput) => Promise<Session>;
   addShell: (sessionId: string) => Promise<string>;
@@ -41,7 +45,10 @@ interface WorkspaceStore {
   updateProject: (id: string, input: UpdateProjectInput) => Promise<void>;
   removeProject: (id: string) => Promise<void>;
   renameWorkspace: (id: string, name: string) => Promise<void>;
-  setWorkspaceLook: (id: string, look: { color?: string; image?: string | null }) => Promise<void>;
+  setWorkspaceLook: (
+    id: string,
+    look: { color?: string; image?: string | null; icon?: WorkspaceIconName | null },
+  ) => Promise<void>;
   removeWorkspace: (id: string) => Promise<void>;
   toggleWorkspace: (id: string) => void;
   expandWorkspace: (id: string) => void;
@@ -125,13 +132,13 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => {
         get().setAgentRunning(session.id, running[session.id] === "running");
     },
 
-    createWorkspace: async ({ name, color, image }) => {
+    createWorkspace: async ({ name, color, image, icon }) => {
       let workspace = await window.api.createWorkspace({
         name,
         color,
-        icon: image ? "image" : "letter",
+        icon: icon ? storedWorkspaceIcon(icon) : image ? "image" : "letter",
       });
-      const imagePath = image && (await window.api.saveWorkspaceIcon(workspace.id, image));
+      const imagePath = !icon && image && (await window.api.saveWorkspaceIcon(workspace.id, image));
       if (imagePath) {
         workspace = await window.api.updateWorkspace(workspace.id, { customImage: imagePath });
       }
@@ -148,21 +155,20 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => {
       const workspace = await window.api.updateWorkspace(id, { name });
       replaceWorkspace(workspace);
     },
-    setWorkspaceLook: async (id, { color, image }) => {
+    setWorkspaceLook: async (id, { color, image, icon }) => {
       if (color) {
         set((state) => ({
           workspaces: state.workspaces.map((item) => (item.id === id ? { ...item, color } : item)),
         }));
       }
       const customImage =
-        image === undefined ? undefined : image && (await window.api.saveWorkspaceIcon(id, image));
+        image === undefined || icon
+          ? undefined
+          : image && (await window.api.saveWorkspaceIcon(id, image));
       replaceWorkspace(
         await window.api.updateWorkspace(id, {
           ...(color && { color }),
-          ...(customImage !== undefined && {
-            customImage: customImage || null,
-            icon: customImage ? "image" : "letter",
-          }),
+          ...badgeFields(customImage, icon),
         }),
       );
     },

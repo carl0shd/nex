@@ -38,7 +38,7 @@ export function WorkspacePeek({
       style={{ transformOrigin: "top left", ...style }}
     >
       <div className="flex h-8 items-center gap-2 px-2">
-        <Monogram color={workspace.color} image={workspace.image}>
+        <Monogram color={workspace.color} image={workspace.image} icon={workspace.icon}>
           {workspace.name[0]}
         </Monogram>
         <span title={workspace.name} className="truncate text-sm font-semibold text-ink">

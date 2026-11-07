@@ -24,11 +24,18 @@ import {
   rememberAgentModels,
   toAgentModels,
 } from "@native/agents/agent-models";
-import { isRemovable, toMcpServers, type McpServer } from "@native/agents/mcp-servers";
+import {
+  isRemovable,
+  mcpAddArgs,
+  toMcpServers,
+  type McpAddInput,
+  type McpServer,
+} from "@native/agents/mcp-servers";
 import { toContextUsage, type ContextUsage } from "@native/agents/context-usage";
 import { rememberPastClaudeSession } from "@native/agents/agent-history";
-import { transcriptPath } from "@native/agents/transcript";
+import { carryTranscript, transcriptPath } from "@native/agents/transcript";
 import { requestPermission, dropPermissionsFor } from "@native/agents/permissions";
+import { clearBackground, trackBackground } from "@native/agents/background-tracker";
 import { IPC } from "@native/ipc/channels";
 
 export type AgentRunState = "running" | "idle";
@@ -226,6 +233,7 @@ function handleLine(sessionId: string, line: string) {
     setState(sessionId, "idle");
     if (agents.get(sessionId)?.restartWhenIdle) stopAgent(sessionId);
   }
+  trackBackground(sessionId, message);
   if (FORWARDED.has(message.type as string)) {
     broadcast(IPC.AGENT_EVENT, { sessionId, event: message } satisfies AgentLiveEvent);
   }
@@ -306,6 +314,7 @@ function start(sessionId: string): RunningAgent {
     if (agents.get(sessionId) !== entry) return;
     agents.delete(sessionId);
     dropPermissionsFor(sessionId);
+    clearBackground(sessionId);
     setState(sessionId, "idle");
     if (code === 0) return;
     const event = { type: "nex_exit", code, log: entry.stderr.join("\n") };
@@ -456,6 +465,19 @@ export async function mcpRemove(sessionId: string, name: string): Promise<McpSer
   return (await mcpStatus(sessionId)).filter((item) => item.name !== name);
 }
 
+export async function mcpAdd(sessionId: string, input: McpAddInput): Promise<McpServer[]> {
+  const args = mcpAddArgs(input);
+  const agent = start(sessionId);
+  await new Promise<void>((resolve, reject) =>
+    execFile(agent.command, args, { cwd: agent.cwd, env: agent.env }, (error, _stdout, stderr) =>
+      error ? reject(new Error(stderr.trim() || error.message)) : resolve(),
+    ),
+  );
+  if (agent.state === "idle") stopAgent(sessionId);
+  else agent.restartWhenIdle = true;
+  return mcpStatus(sessionId);
+}
+
 export function agentStates(): Record<string, AgentRunState> {
   return Object.fromEntries([...agents].map(([sessionId, agent]) => [sessionId, agent.state]));
 }
@@ -466,8 +488,18 @@ export function stopAgent(sessionId: string): void {
   agents.delete(sessionId);
   agent.child.kill();
   dropPermissionsFor(sessionId);
+  clearBackground(sessionId);
 }
 
 export function stopAllAgents(): void {
   for (const sessionId of [...agents.keys()]) stopAgent(sessionId);
+}
+
+export function switchAgentAccount(sessionId: string, accountId: string): void {
+  const terminal = agentTerminal(sessionId);
+  const account = agentAccountRepo.getById(accountId);
+  if (!terminal || !account) throw new Error("No such account");
+  carryTranscript(terminal.id, account.configDir);
+  sessionRepo.update(sessionId, { accountId });
+  stopAgent(sessionId);
 }

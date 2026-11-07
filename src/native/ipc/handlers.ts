@@ -10,7 +10,7 @@ import {
   readdirSync,
   rmSync,
 } from "fs";
-import { extname, join } from "path";
+import { dirname, extname, join } from "path";
 import { IPC } from "./channels";
 import * as workspaceRepo from "@native/db/repositories/workspace.repo";
 import * as projectRepo from "@native/db/repositories/project.repo";
@@ -25,22 +25,26 @@ import {
   resizeTerminal,
   killTerminal,
   getSnapshot,
+  getTerminalRuntimes,
   isAlive,
   isTerminalFresh,
   markTerminalFresh,
   unmarkTerminalFresh,
 } from "@native/pty/manager";
 import { getAgentResumeAdapter } from "@native/agents/resume";
+import { backgroundCommands } from "@native/agents/background-tracker";
 import { getStatusMarkers } from "@native/agents/status-markers";
 import { detectAvailableAgents, installAgent } from "@native/agents/detect";
 import { createTerminalForSession } from "@native/agents/agent-terminal";
 import { cloneAgentAccount } from "@native/agents/clone-account";
 import { readTranscript, watchTranscript, type TranscriptCursor } from "@native/agents/transcript";
 import { readAgentSettings, type AgentSettings } from "@native/agents/agent-settings";
+import type { McpAddInput } from "@native/agents/mcp-servers";
 import {
   agentCommands,
   agentStates,
   configureAgent,
+  mcpAdd,
   mcpReconnect,
   mcpRemove,
   agentContext,
@@ -53,6 +57,7 @@ import {
   interruptAgent,
   sendToAgent,
   stopAgent,
+  switchAgentAccount,
 } from "@native/agents/agent-runner";
 import {
   answerPermission,
@@ -68,7 +73,13 @@ import {
 } from "@native/agents/sign-in";
 import { startWork } from "@native/git/start-work";
 import { savedAgentModels } from "@native/agents/agent-models";
-import { getAgentVersion, upgradeAgent } from "@native/agents/version";
+import {
+  agentCommand,
+  getAgentVersion,
+  setAgentCommand,
+  upgradeAgent,
+} from "@native/agents/version";
+import { findLocalRepos } from "@native/git/discover";
 import { inspectRepo } from "@native/git/inspect";
 import { detectGit, cloneRepository } from "@native/git/clone";
 import { detectGh, listGithubOwners, listGithubRepos, cloneGithubRepo } from "@native/git/github";
@@ -222,6 +233,7 @@ export function registerIPCHandlers(): void {
   );
   ipcMain.handle(IPC.APP_LIST_SHELLS, () => listShells());
   ipcMain.handle(IPC.APP_INSTALLED, (_, names: string[]) => installedApps(names));
+  ipcMain.handle(IPC.REPOS_FIND, (_, exclude: string[]) => findLocalRepos(exclude));
   ipcMain.handle(IPC.APP_OPEN_WITH, (_, appName: string, path: string) => openWith(appName, path));
   ipcMain.handle(IPC.APP_GET_INFO, () => ({
     platform: process.platform,
@@ -354,11 +366,24 @@ export function registerIPCHandlers(): void {
     killTerminal(terminalId);
   });
   ipcMain.handle(IPC.PTY_GET_SNAPSHOT, (_, terminalId: string) => getSnapshot(terminalId));
+  ipcMain.handle(IPC.TERMINAL_RUNTIMES, () => getTerminalRuntimes());
 
   ipcMain.handle(IPC.WINDOW_SHOW, () => showMainWindow());
   ipcMain.handle(IPC.DETECT_AGENTS, () => detectAvailableAgents());
   ipcMain.handle(IPC.AGENT_VERSION, (_, agentId: string) => getAgentVersion(agentId));
   ipcMain.handle(IPC.AGENT_UPGRADE, (_, agentId: string) => upgradeAgent(agentId));
+  ipcMain.handle(IPC.AGENT_PICK_COMMAND, async (event, agentId: string) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (!win) return null;
+    const current = agentCommand(agentId);
+    const result = await dialog.showOpenDialog(win, {
+      title: "Choose the claude binary",
+      defaultPath: current ? dirname(current) : undefined,
+      properties: ["openFile", "showHiddenFiles"],
+    });
+    const [command] = result.filePaths;
+    return result.canceled || !command ? null : setAgentCommand(agentId, command);
+  });
   ipcMain.handle(IPC.REPO_INSPECT, (_, path: string) => inspectRepo(path));
   ipcMain.handle(IPC.FINDER_OPEN, async (_, path: string): Promise<boolean> => {
     if (!path) return false;
@@ -424,8 +449,12 @@ export function registerIPCHandlers(): void {
   ipcMain.handle(IPC.AGENT_SEND, (_, sessionId: string, content: AgentMessage) =>
     sendToAgent(sessionId, content),
   );
+  ipcMain.handle(IPC.AGENT_SWITCH_ACCOUNT, (_, sessionId: string, accountId: string) =>
+    switchAgentAccount(sessionId, accountId),
+  );
   ipcMain.handle(IPC.AGENT_INTERRUPT, (_, sessionId: string) => interruptAgent(sessionId));
   ipcMain.handle(IPC.AGENT_STATES, () => agentStates());
+  ipcMain.handle(IPC.AGENT_BACKGROUND_ALL, () => backgroundCommands());
   ipcMain.handle(IPC.AGENT_WARM, (_, sessionId: string) => warmAgent(sessionId));
   ipcMain.handle(IPC.AGENT_MCP_STATUS, (_, sessionId: string) => mcpStatus(sessionId));
   ipcMain.handle(IPC.AGENT_MCP_TOGGLE, (_, sessionId: string, name: string, enabled: boolean) =>
@@ -441,6 +470,9 @@ export function registerIPCHandlers(): void {
   ipcMain.handle(IPC.AGENT_CONTEXT_LAST, (_, sessionId: string) => lastAgentContext(sessionId));
   ipcMain.handle(IPC.AGENT_MCP_REMOVE, (_, sessionId: string, name: string) =>
     mcpRemove(sessionId, name),
+  );
+  ipcMain.handle(IPC.AGENT_MCP_ADD, (_, sessionId: string, input: McpAddInput) =>
+    mcpAdd(sessionId, input),
   );
   ipcMain.handle(IPC.DIALOG_PICK_FILES, async (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);

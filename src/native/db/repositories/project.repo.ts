@@ -1,6 +1,11 @@
 import { randomUUID } from "crypto";
 import { getDb } from "@native/db/database";
-import type { Project, CreateProjectInput, UpdateProjectInput } from "@native/db/types";
+import type {
+  Project,
+  CreateProjectInput,
+  ProjectSetup,
+  UpdateProjectInput,
+} from "@native/db/types";
 
 interface ProjectRow {
   id: string;
@@ -8,6 +13,9 @@ interface ProjectRow {
   name: string;
   path: string;
   branch_prefix: string;
+  base_branch: string;
+  pull_base: number;
+  setup: string | null;
   quick_commands: string;
   sort_order: number;
   created_at: string;
@@ -20,6 +28,9 @@ function toProject(row: ProjectRow): Project {
     name: row.name,
     path: row.path,
     branchPrefix: row.branch_prefix,
+    baseBranch: row.base_branch,
+    pullBase: row.pull_base === 1,
+    setup: row.setup ? (JSON.parse(row.setup) as ProjectSetup) : null,
     quickCommands: JSON.parse(row.quick_commands),
     sortOrder: row.sort_order,
     createdAt: row.created_at,
@@ -54,7 +65,7 @@ export function create(input: CreateProjectInput): Project {
     .get(input.workspaceId) as { next: number };
   const row = db
     .prepare(
-      "INSERT INTO projects (id, workspace_id, name, path, branch_prefix, quick_commands, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *",
+      "INSERT INTO projects (id, workspace_id, name, path, branch_prefix, base_branch, pull_base, setup, quick_commands, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *",
     )
     .get(
       randomUUID(),
@@ -62,6 +73,9 @@ export function create(input: CreateProjectInput): Project {
       input.name,
       input.path,
       input.branchPrefix ?? "",
+      input.baseBranch ?? "",
+      input.pullBase === false ? 0 : 1,
+      input.setup ? JSON.stringify(input.setup) : null,
       JSON.stringify(input.quickCommands ?? []),
       maxOrder.next,
     ) as ProjectRow;
@@ -83,6 +97,18 @@ export function update(id: string, input: UpdateProjectInput): Project {
   if (input.branchPrefix !== undefined) {
     fields.push("branch_prefix = ?");
     values.push(input.branchPrefix);
+  }
+  if (input.baseBranch !== undefined) {
+    fields.push("base_branch = ?");
+    values.push(input.baseBranch);
+  }
+  if (input.pullBase !== undefined) {
+    fields.push("pull_base = ?");
+    values.push(input.pullBase ? 1 : 0);
+  }
+  if (input.setup !== undefined) {
+    fields.push("setup = ?");
+    values.push(input.setup ? JSON.stringify(input.setup) : null);
   }
   if (input.quickCommands !== undefined) {
     fields.push("quick_commands = ?");

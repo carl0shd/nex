@@ -76,7 +76,7 @@ export function SessionLimit({
           style={{ left: `calc(${session.projected}% - 1px)` }}
         />
       </div>
-      <div className="mt-1.5 flex justify-between font-mono text-3xs text-ink-4">
+      <div className="mt-1.5 flex justify-between text-3xs tabular-nums text-ink-4">
         <span>Started {session.startedAt}</span>
         <span>Resets {session.resetsAt}</span>
       </div>

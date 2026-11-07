@@ -130,7 +130,7 @@ export function Toast({
         <span className={cn("shrink-0 font-medium whitespace-nowrap", STATUS_TEXT[tone])}>
           {status}
         </span>
-        {meta && <span className="truncate font-mono text-ink-4">· {meta}</span>}
+        {meta && <span className="truncate text-ink-4">· {meta}</span>}
       </div>
       {time && (
         <span className="absolute top-3.5 right-3.5 text-2xs leading-[18px] text-ink-5 transition-opacity duration-150 ease-out-strong group-hover:opacity-0">

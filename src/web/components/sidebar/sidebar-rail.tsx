@@ -1,3 +1,4 @@
+import { useHotkey } from "@tanstack/react-hotkeys";
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { LayoutGrid, Plus, SquarePen } from "lucide-react";
 import { Monogram } from "@/components/atoms/entity-chip";
@@ -107,6 +108,15 @@ export function SidebarRail({
   const asideRef = useRef<HTMLElement>(null);
   const { peek, open, keep, close, dismiss } = useWorkspacePeek(hoveredWorkspaceId);
   const peeked = workspaces.find((workspace) => workspace.id === peek?.id);
+  useHotkey(
+    "Enter",
+    () => {
+      if (!peeked) return;
+      dismiss();
+      onOpenWorkspace?.(peeked.id);
+    },
+    { enabled: Boolean(peeked) },
+  );
   const openPeek = (id: string, button: HTMLElement) => {
     const asideTop = asideRef.current?.getBoundingClientRect().top ?? 0;
     open(id, button.getBoundingClientRect().top - asideTop);
@@ -153,6 +163,7 @@ export function SidebarRail({
               size="md"
               color={workspace.color}
               image={workspace.image}
+              icon={workspace.icon}
               className={
                 !activeWorkspaceId || workspace.id === activeWorkspaceId ? undefined : "opacity-50"
               }

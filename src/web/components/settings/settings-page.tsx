@@ -35,6 +35,8 @@ import { SettingsSection } from "@/components/settings/settings-section";
 import * as OPTIONS from "@/components/settings/settings-values";
 import { ShortcutRow } from "@/components/settings/shortcut-row";
 import { WorkspaceCard, type SettingsWorkspace } from "@/components/settings/workspace-card";
+import { ImportRepoButton } from "@/components/settings/import-repo-button";
+import type { WorkspaceLookChange } from "@/components/sidebar/workspace-header";
 import { DEFAULT_SHORTCUTS, shortcutConflict, type ShortcutId } from "@/lib/app-shortcuts";
 import { hotkeyCaps } from "@/lib/shortcut";
 import { MIN_CLAUDE_VERSION, type ClaudeCompat } from "@/lib/claude-version";
@@ -73,6 +75,7 @@ export interface SettingsData {
   accounts: readonly ClaudeAccount[];
   workspaces: readonly SettingsWorkspace[];
   claudeCode: { version: string; path: string; compat: ClaudeCompat; upgrading: boolean } | null;
+  claudePathChangeable: boolean;
   models: readonly SelectOption<string>[];
   model: string;
   licenses: readonly PackageLicense[];
@@ -99,6 +102,12 @@ export interface SettingsActions {
   onSignInAgain: (accountId: string) => void;
   onOpenProject: (projectId: string) => void;
   onAddProject: (workspaceId: string) => void;
+  onImportFromGitHub: (workspaceId: string) => void;
+  onAddWorkspace: () => void;
+  onRenameWorkspace: (workspaceId: string, name: string) => void;
+  onWorkspaceLookChange: (workspaceId: string, look: WorkspaceLookChange) => void;
+  onRemoveWorkspace: (workspaceId: string) => void;
+  onChangeClaudePath: () => void;
   onPlaySound: (sound: string) => void;
   onMicrophone: (microphone: string) => void;
   onLanguage: (language: string) => void;
@@ -120,6 +129,7 @@ const PARTS: { id: Section["part"]; label: string }[] = [
 const LISTED_SHORTCUTS: readonly ShortcutId[] = [
   "new-task",
   "palette",
+  "overview",
   "next",
   "previous",
   "tasks",
@@ -185,6 +195,7 @@ function Field({
   placeholder,
   width = 200,
   readOnly = false,
+  mono = false,
   onCommit,
 }: {
   label: string;
@@ -192,6 +203,7 @@ function Field({
   placeholder?: string;
   width?: number;
   readOnly?: boolean;
+  mono?: boolean;
   onCommit?: (value: string) => void;
 }) {
   return (
@@ -203,7 +215,7 @@ function Field({
         readOnly={readOnly}
         title={readOnly ? value : undefined}
         aria-label={label}
-        mono
+        mono={mono}
         size="md"
         className="h-[30px] rounded-control text-xs"
         onBlur={(event) => {
@@ -566,16 +578,25 @@ export function SettingsPage({
               data.claudeCode
                 ? `v${data.claudeCode.version}${COMPAT_NOTE[data.claudeCode.compat]}`
                 : "Not found on this Mac",
-              data.claudeCode && (
+              (data.claudeCode || data.claudePathChangeable) && (
                 <>
-                  <Field label="Claude Code path" value={data.claudeCode.path} readOnly />
-                  <Button
-                    size="sm"
-                    disabled={data.claudeCode.upgrading}
-                    onClick={actions.onUpgradeClaude}
-                  >
-                    {data.claudeCode.upgrading ? "Updating…" : "Update"}
-                  </Button>
+                  {data.claudeCode && (
+                    <Field label="Claude Code path" value={data.claudeCode.path} readOnly />
+                  )}
+                  {data.claudePathChangeable && (
+                    <Button size="sm" onClick={actions.onChangeClaudePath}>
+                      Change
+                    </Button>
+                  )}
+                  {data.claudeCode && (
+                    <Button
+                      size="sm"
+                      disabled={data.claudeCode.upgrading}
+                      onClick={actions.onUpgradeClaude}
+                    >
+                      {data.claudeCode.upgrading ? "Updating…" : "Update"}
+                    </Button>
+                  )}
                 </>
               ),
             ),
@@ -586,6 +607,7 @@ export function SettingsPage({
                 label="Extra arguments"
                 value={values.extraArgs}
                 placeholder="--verbose"
+                mono
                 onCommit={set("extraArgs")}
               />,
             ),
@@ -603,6 +625,19 @@ export function SettingsPage({
         {
           key: "workspaces",
           card: false,
+          label: "Workspaces",
+          trailing: (
+            <>
+              <ImportRepoButton
+                workspaces={data.workspaces}
+                onImport={actions.onImportFromGitHub}
+              />
+              <Button variant="quiet" size="sm" onClick={actions.onAddWorkspace}>
+                <Plus width={12} height={12} strokeWidth={2.25} />
+                Add workspace
+              </Button>
+            </>
+          ),
           blocks: data.workspaces.map((workspace) =>
             custom(
               workspace.id,
@@ -614,6 +649,10 @@ export function SettingsPage({
                 workspace={workspace}
                 onOpenProject={actions.onOpenProject}
                 onAddProject={() => actions.onAddProject(workspace.id)}
+                onImport={() => actions.onImportFromGitHub(workspace.id)}
+                onRename={(name) => actions.onRenameWorkspace(workspace.id, name)}
+                onLookChange={(look) => actions.onWorkspaceLookChange(workspace.id, look)}
+                onRemove={() => actions.onRemoveWorkspace(workspace.id)}
               />,
             ),
           ),
@@ -630,7 +669,7 @@ export function SettingsPage({
           row(
             "Shell",
             "For new terminals. Login shell uses your account’s default.",
-            select("shell", shellOptions, { width: "w-[160px]", mono: true }),
+            select("shell", shellOptions, { width: "w-[160px]" }),
           ),
           row(
             "Font size",

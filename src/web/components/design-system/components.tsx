@@ -41,6 +41,20 @@ import { Menu, MenuItem, MenuLabel, MenuSeparator } from "@/components/primitive
 import { ModalCard, StatusIcon } from "@/components/primitives/modal-card";
 import { SettingRow, SettingsCard } from "@/components/primitives/setting-row";
 import { Section, Specimen } from "@/components/design-system/specimen";
+import { WorkspaceBadgePicker } from "@/components/sidebar/workspace-badge-picker";
+import type { WorkspaceBadge } from "@/lib/workspace-icons";
+
+function BadgePickerDemo() {
+  const [badge, setBadge] = useState<WorkspaceBadge>({ image: null, icon: "rocket" });
+  return (
+    <div className="flex w-[300px] items-start gap-3">
+      <Monogram size="lg" image={badge.image ?? undefined} icon={badge.icon}>
+        M
+      </Monogram>
+      <WorkspaceBadgePicker hasImage={Boolean(badge.image)} icon={badge.icon} onChange={setBadge} />
+    </div>
+  );
+}
 
 const DIFFSTAT = (
   <span className="font-mono text-3xs">
@@ -288,6 +302,13 @@ export function Identity() {
         <Monogram size="md" color="#6b21a8">
           P
         </Monogram>
+        <Monogram icon="rocket">R</Monogram>
+        <Monogram size="md" color="#0f766e" icon="leaf">
+          L
+        </Monogram>
+      </Specimen>
+      <Specimen name="WorkspaceBadgePicker · initial, icon or image">
+        <BadgePickerDemo />
       </Specimen>
     </Section>
   );

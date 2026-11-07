@@ -3,11 +3,18 @@ import { Search } from "lucide-react";
 import { Monogram } from "@/components/atoms/entity-chip";
 import { Menu, MenuItem, MenuLabel } from "@/components/primitives/menu";
 import { VirtualMenu } from "@/components/primitives/virtual-menu";
+import type { WorkspaceIconName } from "@/lib/workspace-icons";
 
 export interface NewTaskProject {
   id: string;
   name: string;
-  workspace: { id: string; name: string; color: string; image?: string };
+  workspace: {
+    id: string;
+    name: string;
+    color: string;
+    image?: string;
+    icon?: WorkspaceIconName;
+  };
   branches: string[];
   branchPrefix?: string;
 }
@@ -38,7 +45,12 @@ export function ProjectPicker({
                 onSelect={() => onChange(project.id)}
               >
                 <span className="flex min-w-0 items-center gap-2">
-                  <Monogram size="sm" color={workspace.color} image={workspace.image}>
+                  <Monogram
+                    size="sm"
+                    color={workspace.color}
+                    image={workspace.image}
+                    icon={workspace.icon}
+                  >
                     {workspace.name[0]}
                   </Monogram>
                   <span title={project.name} className="truncate">

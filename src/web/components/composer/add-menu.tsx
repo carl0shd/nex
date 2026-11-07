@@ -6,7 +6,9 @@ import {
   Grid2x2X,
   Paperclip,
   PowerOff,
+  Plus,
   Search,
+  Settings,
   SquareSlash,
   Trash2,
 } from "lucide-react";
@@ -165,6 +167,8 @@ export function ConnectorsMenu({
   onToggle,
   onRetry,
   onRemove,
+  onAddServer,
+  onManage,
 }: {
   groups: readonly ConnectorGroup[];
   query: string;
@@ -172,6 +176,8 @@ export function ConnectorsMenu({
   onToggle: (id: string, enabled: boolean) => void;
   onRetry: (id: string) => void;
   onRemove?: (id: string) => void;
+  onAddServer?: () => void;
+  onManage?: () => void;
 }) {
   const [expanded, setExpanded] = useState<string[]>([]);
   const matches = groups
@@ -192,6 +198,22 @@ export function ConnectorsMenu({
       width={330}
       origin="bottom left"
       maxHeight={340}
+      footer={
+        (onAddServer || onManage) && (
+          <>
+            {onAddServer && (
+              <MenuItem icon={Plus} onSelect={onAddServer}>
+                Add a server
+              </MenuItem>
+            )}
+            {onManage && (
+              <MenuItem icon={Settings} meta="Settings" onSelect={onManage}>
+                Manage connectors
+              </MenuItem>
+            )}
+          </>
+        )
+      }
       header={
         <label className="mb-1 flex h-[34px] shrink-0 items-center gap-2 border-b border-line px-2.5 text-xs text-ink-4">
           <Search width={12} height={12} strokeWidth={2} />

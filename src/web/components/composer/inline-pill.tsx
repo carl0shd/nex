@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
-import { FileIcon, Folder, Globe } from "lucide-react";
+import { FileIcon, Folder, Globe, TextIcon } from "lucide-react";
 import figmaLogo from "@/assets/images/services/figma.webp";
 import githubLogo from "@/assets/images/services/github.webp";
 import jiraLogo from "@/assets/images/services/jira.webp";
@@ -33,7 +33,7 @@ export function FilePill({ path }: { path: string }) {
       <span className="flex text-ink-3">
         <Icon width={11} height={11} strokeWidth={2} />
       </span>
-      <span className="font-mono text-2xs">
+      <span className="text-xs">
         {entry.folder ? (
           path
         ) : (
@@ -97,7 +97,20 @@ export function LinkPillView({ node }: NodeViewProps) {
 export function CommandPill({ name }: { name: string }) {
   return (
     <InlinePill className="pl-[7px]">
-      <span className="font-mono text-2xs text-accent-ink">/{name}</span>
+      <span className="text-xs text-accent-ink">/{name}</span>
+    </InlinePill>
+  );
+}
+
+export function PastedPill({ lines }: { lines: number }) {
+  return (
+    <InlinePill>
+      <span className="flex text-ink-3">
+        <TextIcon width={11} height={11} strokeWidth={2} />
+      </span>
+      <span className="text-xs">
+        Pasted text <span className="text-ink-4">· {lines} lines</span>
+      </span>
     </InlinePill>
   );
 }

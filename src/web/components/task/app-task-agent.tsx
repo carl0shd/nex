@@ -5,7 +5,9 @@ import { modeFromCli } from "@native/agents/cli-modes";
 import type { McpServer } from "@native/agents/mcp-servers";
 import type { PermissionRequest } from "@native/agents/permissions";
 import { useHotkey } from "@tanstack/react-hotkeys";
+import { AddServerDialog } from "@/components/composer/add-server-dialog";
 import { Composer, type ComposerHandle } from "@/components/composer/composer";
+import { Overlay } from "@/components/primitives/overlay";
 import type { Effort } from "@/components/composer/effort";
 import type { PermissionMode } from "@/components/composer/permission-menu";
 import type { ChangedFile } from "@/components/changes/diff-file";
@@ -17,6 +19,7 @@ import { MarkdownText } from "@/components/task/markdown-text";
 import { PermissionCard } from "@/components/task/permission-card";
 import { QuestionCard, type Question } from "@/components/task/question-card";
 import { TaskEmptyState } from "@/components/task/task-empty-state";
+import type { ImageNames } from "@/components/task/user-message";
 import { useAgentContext } from "@/hooks/use-agent-context";
 import { clearAgentExit, useAgentLive } from "@/hooks/use-agent-live";
 import { useFileDrop } from "@/hooks/use-file-drop";
@@ -25,12 +28,16 @@ import { useOnline } from "@/hooks/use-online";
 import { useTranscript } from "@/hooks/use-transcript";
 import { mergeEntries, turnTokens } from "@/lib/agent-live";
 import { connectorGroups } from "@/lib/connectors";
+import { notifyCompact } from "@/lib/notify";
 import { agentMessage, messageText } from "@/lib/agent-message";
 import type { SlashCommand, WorktreeFile } from "@/lib/composer-pickers";
 import { permissionPrompt, planTitle } from "@/lib/tool-display";
 import { useAgentModels } from "@/hooks/use-agent-models";
+import { useAlternativeAccount } from "@/hooks/use-alternative-account";
+import { remindAtReset } from "@/lib/limit-reminders";
 import { slashSettings } from "@/lib/slash-settings";
-import { buildConversation } from "@/lib/transcript";
+import { buildConversation, recentFiles } from "@/lib/transcript";
+import { withoutImageMarkers } from "@/lib/user-message";
 import { useCloseTaskStore } from "@/stores/close-task.store";
 import { usePermissionStore } from "@/stores/permission.store";
 import { useWorkspaceStore } from "@/stores/workspace.store";
@@ -133,6 +140,7 @@ export function AppTaskAgent({
   const [worktreeFiles, setWorktreeFiles] = useState<string[]>([]);
   const [commands, setCommands] = useState<SlashCommand[]>([]);
   const [servers, setServers] = useState<McpServer[]>([]);
+  const [addingServer, setAddingServer] = useState(false);
   const loadServers = () => void window.api.mcpStatus(sessionId).then(setServers);
   const [busyServers, setBusyServers] = useState<ReadonlySet<string>>(new Set());
   const updateServer = (name: string, change: () => Promise<McpServer[]>) => {
@@ -178,10 +186,6 @@ export function AppTaskAgent({
   useEffect(() => {
     if (focused) void window.api.agentWarm(sessionId);
   }, [focused, sessionId]);
-  const files = useMemo<WorktreeFile[]>(() => {
-    const status = new Map(changedFiles.map((file) => [file.path, file.status]));
-    return worktreeFiles.map((path) => ({ path, status: status.get(path) }));
-  }, [worktreeFiles, changedFiles]);
   const [sent, setSent] = useState<
     { id: string; text: string; known: ReadonlySet<string>; at: number }[]
   >([]);
@@ -206,7 +210,11 @@ export function AppTaskAgent({
       if (insert) composerRef.current?.insert(insert);
     },
   }));
-  const [viewer, setViewer] = useState<{ images: readonly string[]; index: number } | null>(null);
+  const [viewer, setViewer] = useState<{
+    images: readonly string[];
+    names: ImageNames;
+    index: number;
+  } | null>(null);
   const { dragging, dropHandlers } = useFileDrop((dropped) => composerRef.current?.attach(dropped));
   const runningSince = useWorkspaceStore((s) => s.runningSince[sessionId]);
   const setAgentRunning = useWorkspaceStore((s) => s.setAgentRunning);
@@ -215,6 +223,21 @@ export function AppTaskAgent({
   const thinkingSeconds = runningSince ? Math.max(0, Math.round((now - runningSince) / 1000)) : 0;
   const entries = useMemo(() => mergeEntries(transcript, live.entries), [transcript, live.entries]);
   const items = useMemo(() => buildConversation(entries), [entries]);
+  const recent = useMemo(() => recentFiles(items, cwd), [items, cwd]);
+  const files = useMemo<WorktreeFile[]>(() => {
+    const status = new Map(changedFiles.map((file) => [file.path, file.status]));
+    const known = new Set(worktreeFiles);
+    const firstRecent = recent.filter((path) => known.has(path));
+    const rest = worktreeFiles.filter((path) => !firstRecent.includes(path));
+    return [
+      ...firstRecent.map((path) => ({ path, status: status.get(path), recent: true })),
+      ...rest.map((path) => ({ path, status: status.get(path) })),
+    ];
+  }, [worktreeFiles, changedFiles, recent]);
+  const task = useWorkspaceStore((s) => s.sessions.find((item) => item.id === sessionId));
+  const openTask = useWorkspaceStore((s) => s.openTask);
+  const limited = items.some((item) => item.kind === "limit");
+  const alternative = useAlternativeAccount(task?.accountId ?? null, limited);
   const contextUsage = useAgentContext(
     sessionId,
     focused,
@@ -240,7 +263,7 @@ export function AppTaskAgent({
   const answers = picked && picked.requestId === request?.id ? picked.answers : [];
   const userItems = items.filter((item) => item.kind === "user");
   const promptHistory = userItems
-    .map((item) => item.text)
+    .map((item) => withoutImageMarkers(item.text))
     .filter((text, index, all) => text !== all[index - 1]);
   const arrived = (message: (typeof sent)[number]) =>
     userItems.some((item) => item.text === message.text && !message.known.has(item.id));
@@ -291,15 +314,20 @@ export function AppTaskAgent({
     setAgentRunning(sessionId, false);
   };
   const busyCompacting = Boolean(live.compacting);
+  const permission = request && !questions && plan === null ? request : null;
   useHotkey(
     "Escape",
     (event) => {
       const target = event.target instanceof Element ? event.target : null;
       if (target?.closest(OWN_ESCAPE) || document.querySelector(OPEN_OVERLAY)) return;
+      if (permission) {
+        void answer(permission.id, { behavior: "deny" });
+        return;
+      }
       interrupt();
     },
     {
-      enabled: focused && (working || busyCompacting),
+      enabled: focused && (working || busyCompacting || Boolean(permission)),
       conflictBehavior: "allow",
       preventDefault: false,
       stopPropagation: false,
@@ -383,9 +411,22 @@ export function AppTaskAgent({
       className="relative flex min-h-0 flex-1 flex-col rounded-b-[inherit]"
     >
       {dragging && <DropOverlay images={dragging.images} files={dragging.files} />}
+      {addingServer && (
+        <Overlay fullWindow onClose={() => setAddingServer(false)}>
+          <AddServerDialog
+            onCancel={() => setAddingServer(false)}
+            onAdd={async (server) => {
+              setServers(await window.api.mcpAdd(sessionId, server));
+              setAddingServer(false);
+              notifyCompact({ tone: "green", title: `${server.name} added` });
+            }}
+          />
+        </Overlay>
+      )}
       {viewer && (
         <ImageViewer
           images={viewer.images}
+          names={viewer.names}
           index={viewer.index}
           onIndexChange={(index) => setViewer({ ...viewer, index })}
           onClose={() => setViewer(null)}
@@ -421,7 +462,7 @@ export function AppTaskAgent({
           }}
           onQueuedCancel={(id) => setQueued((current) => current.filter((item) => item.id !== id))}
           actions={{
-            onOpenImages: (images, index) => setViewer({ images, index }),
+            onOpenImages: (images, index, names) => setViewer({ images, names, index }),
             onRetryOnline: () => setOnlineCheck((count) => count + 1),
             onResume: () => {
               resume();
@@ -440,6 +481,21 @@ export function AppTaskAgent({
               clearAgentExit(sessionId);
               void window.api.agentWarm(sessionId);
             },
+            continueOn: alternative
+              ? {
+                  account: alternative.label,
+                  run: () =>
+                    void window.api
+                      .switchAgentAccount(sessionId, alternative.id)
+                      .then(() => window.api.agentSend(sessionId, "Continue where you left off.")),
+                }
+              : undefined,
+            onNotifyAtReset: (at) =>
+              remindAtReset(
+                { id: sessionId, title: task ? task.title || task.name : "Your task" },
+                at,
+                () => openTask(sessionId),
+              ),
           }}
           searchable={focused}
           footer={footer}
@@ -475,6 +531,10 @@ export function AppTaskAgent({
           onConnectorRemove={(name) =>
             updateServer(name, () => window.api.mcpRemove(sessionId, name))
           }
+          onAddServer={() => setAddingServer(true)}
+          onManageConnectors={() =>
+            void window.api.openExternalUrl("https://claude.ai/settings/connectors")
+          }
           typeToFocus={focused && !questions}
           history={promptHistory}
           onPickFiles={async () =>
@@ -497,7 +557,9 @@ export function AppTaskAgent({
                       ? "Reply to restart Claude…"
                       : endedAt !== null
                         ? "Reply to resume…"
-                        : "Reply to Claude…"
+                        : items.length === 0
+                          ? "Describe the task, @ a file, / for commands"
+                          : "Reply to Claude…"
           }
           state={(working || busyCompacting) && !request ? "working" : "idle"}
           files={files}

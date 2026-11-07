@@ -15,6 +15,7 @@ import { InlineRename } from "@/components/atoms/inline-rename";
 import { StatusPill } from "@/components/atoms/status-pill";
 import { AnchoredPopover } from "@/components/primitives/anchored-popover";
 import { Menu, MenuItem, MenuSeparator } from "@/components/primitives/menu";
+import type { WorkspaceIconName } from "@/lib/workspace-icons";
 
 export type TaskStatus = "working" | "waiting" | "idle";
 
@@ -49,7 +50,7 @@ export function TaskHeader({
   title: string;
   project: string;
   branch: string;
-  workspace: { name: string; color: string; image?: string };
+  workspace: { name: string; color: string; image?: string; icon?: WorkspaceIconName };
   status: TaskStatus;
   actions?: TaskActions;
 }) {
@@ -62,7 +63,7 @@ export function TaskHeader({
 
   return (
     <header className="flex h-[60px] shrink-0 items-center gap-2.5 border-b border-line-soft pr-2 pl-4">
-      <Monogram size="md" color={workspace.color} image={workspace.image}>
+      <Monogram size="md" color={workspace.color} image={workspace.image} icon={workspace.icon}>
         {workspace.name[0]}
       </Monogram>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -85,7 +86,7 @@ export function TaskHeader({
           <span className="shrink-0">{project}</span>
           <span className="text-ink-6">/</span>
           <GitBranch width={11} height={11} strokeWidth={2.25} className="shrink-0" />
-          <span title={branch} className="truncate font-mono">
+          <span title={branch} className="truncate">
             {branch}
           </span>
         </span>

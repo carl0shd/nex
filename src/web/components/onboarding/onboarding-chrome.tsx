@@ -1,9 +1,11 @@
 import { Fragment } from "react";
 import { Check } from "lucide-react";
+import { Button } from "@/components/atoms/button";
 import { useOnboardingSteps } from "@/components/onboarding/onboarding-steps";
 import { cn } from "@/lib/utils";
 
 const DRAG = { WebkitAppRegion: "drag" } as React.CSSProperties;
+const NO_DRAG = { WebkitAppRegion: "no-drag" } as React.CSSProperties;
 
 function StepMark({ index, current }: { index: number; current: number }) {
   const done = index < current;
@@ -22,7 +24,7 @@ function StepMark({ index, current }: { index: number; current: number }) {
   );
 }
 
-export function OnboardingChrome({ step }: { step: number }) {
+export function OnboardingChrome({ step, onSkip }: { step: number; onSkip?: () => void }) {
   const steps = useOnboardingSteps();
   return (
     <header className="relative z-10 flex h-12 shrink-0 items-center" style={DRAG}>
@@ -58,6 +60,11 @@ export function OnboardingChrome({ step }: { step: number }) {
             );
           })}
         </ol>
+      )}
+      {step > 0 && onSkip && (
+        <Button variant="quiet" size="sm" onClick={onSkip} className="mr-3 ml-auto" style={NO_DRAG}>
+          Skip setup
+        </Button>
       )}
     </header>
   );

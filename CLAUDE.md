@@ -155,7 +155,7 @@ our paths, and comments that broke the [Comments](#comments) rules were removed.
   `status-pill`, `value-pill` (badges), `chip` (quick commands, `CountChip`), `tabs` (task views),
   `segmented-control` (text or icons), `switch`, `select-button`, `text-field`, `selection-mark`
   (clickable when it gets `onClick`), `option-card`,
-  `agent-tile` (`ClaudeTile`), `agent-logo` (Claude, Codex, Gemini or shell), `entity-chip` (`Monogram` workspace badge), `meter`, `orbit`,
+  `agent-tile` (`ClaudeTile`), `agent-logo` (Claude or shell), `entity-chip` (`Monogram` workspace badge), `meter`, `orbit`,
   `shimmer`, `stream-text` (block caret), `spinner` (`Spinner`, `SpinnerArc` icon), `color-swatches`, `dither-progress`, `dither-field` (the effort slider's dot field), `dither-stars` (a canvas starfield in the dither palette — three parallax layers drifting left, stars that twinkle, pulse or bob, sparkles and meteors; pauses off screen; math in `lib/dither.ts`), `checkbox` (square), `search-field` (search input with an optional key hint), `hover-swap` (`HoverSwap`: a row's detail cross-fades into its hover action), `expand` (`Expand`: a detail opens and closes by height and fade; its content mounts on first open), `inline-code`, `nex-logo` (`NexLogo`, the isotype on its own — never inside a tile — and `NexWordmark`), `logo-tile` (connector and MCP
   logos). `segmented-control` also has a `bar` variant (icon-only, full width) and `switch` /
   `selection-mark` take `size="sm"`.
@@ -170,7 +170,7 @@ our paths, and comments that broke the [Comments](#comments) rules were removed.
   `select-menu` (`SelectMenu`: a `SelectButton` that opens a checked `Menu`).
 - app composites: `layout/` (`TitlebarView` with `SearchButton` and `UsagePill`, which opens the `usagePanel` slot), `sidebar/`
   (`Sidebar`, `SidebarRail`, `TaskRow`, `ProjectGroup`, `WorkspaceHeader`, `SidebarLink`,
-  `NewWorkspaceRow` — the inline name field with its color and badge popover — and `AddProjectRow`; task rows show a starting orbit or a red globe, `environments` is a footer slot, the workspace list scrolls, and hovering a workspace in the rail opens `WorkspacePeek`; `layout/sidebar-frame.tsx` animates the width, swaps rail and sidebar and toggles on ⌘S), `task/`
+  `NewWorkspaceRow` — the inline name field with its color and badge popover — and `AddProjectRow`; task rows show a starting orbit or a red globe, workspace badges are an initial, an icon (`lib/workspace-icons.ts`) or an image, picked with `WorkspaceBadgePicker`; `environments` is a footer slot, the workspace list scrolls, and hovering a workspace in the rail opens `WorkspacePeek`; `layout/sidebar-frame.tsx` animates the width, swaps rail and sidebar and toggles on ⌘S), `task/`
   (`TaskCard`, `TaskHeader`, `TaskTabBar`, `Conversation` blocks `UserBubble` · `AgentText` · `ToolRow`
   · `InlineDiff` · `ToolOutput` · `WorkingLine`, `PermissionCard`, `QuestionCard`, `EnvButton`, `TaskEmptyState`;
   `blocks` — every tool call is a `BlockRow` with an optional `BlockDetail` body (`DiffLines`,
@@ -226,9 +226,11 @@ our paths, and comments that broke the [Comments](#comments) rules were removed.
   ready, unsupported, failed), `FirstTaskStep` — over `OnboardingChrome` and the `OnboardingStep`
   layout (⌘↵ runs the primary action); `AddAccountDialog` covers every sign-in stage; `CheckList`
   and `OnboardingPanel` are shared; environment progress and sign-in come in from props), `projects/`
-  (`AddProjectDialog`: `RepoDropZone` + `FoundRepos`, then `PickedRepo` and one `SetupSection` per
+  (`AddProjectDialog`: `RepoDropZone` + `FoundRepos` (repos from `native/git/discover.ts`) + `AppCloneRepo` / `CloneRepoPanel` (GitHub through `gh`, or a git URL), then `PickedRepo` and one `SetupSection` per
   line — `BranchEditor`, `WorktreeSetupEditor`, `EnvironmentEditor`, `QuickCommandsEditor`; each
-  line's sentence comes from `lib/project-summary.ts`), `environment/` (`EnvTaskButton` = the tab bar
+  line's sentence comes from `lib/project-summary.ts`; the base branch, pull and worktree setup are saved on the
+  project and `native/git/start-work.ts` applies them: start from `origin/<base>`, copy files, run install and
+  script in a "Setup" shell), `environment/` (`EnvTaskButton` = the tab bar
   `EnvButton` (running, starting, paused, down, waiting) + `EnvMenu`; `EnvBanner` under the tab bar
   for starting, paused, a service down or waiting for memory; `EnvStartStatus` inside
   `TaskEmptyState`; `EnvironmentsMeter` in the sidebar footer opens `MachinePopover`;
@@ -260,6 +262,9 @@ only exception is inline `style` for dynamic colors passed as props (e.g. worksp
 - **Themes:** the active theme is the `dark` class on `<html>`, set by `applyTheme` in `lib/theme.ts`.
 - **No gradients or colored backgrounds.** No aurora/blob washes, glows, or gradient-filled buttons and
   tiles — surfaces are flat tokens, depth comes from surface steps, rings and shadows only.
+- **Monospace is for code only:** code blocks, inline code, the terminal, diffs, tool output, shell commands
+  and CLI arguments. Paths, branches, file names, tab names, chips, versions, times and other metadata use
+  the regular font (`tabular-nums` for numbers that change).
 - **Never use uppercase text** anywhere in the app — no `uppercase`, no all-caps copy, no wide tracking
   on labels. Section labels are sentence case ("Workspaces", not "WORKSPACES").
 
@@ -325,6 +330,11 @@ Each task runs Claude Code headless, one process per task, in `native/agents/age
 - **Expired account tokens** are renewed by Nex with the refresh token Claude Code stored, through Claude
   Code's own OAuth client (`usage/credentials.ts` `refreshCredentials`), and written back to the same
   keychain item; "Sign in again" only logs in from scratch when that refresh fails.
+- **Background commands** Claude starts are tracked in main from its task events
+  (`agents/background-commands.ts`) and listed read-only under "Started by Claude" in the quick commands menu.
+- **Sent messages** are parsed back into pills and pasted-text cards by `lib/user-message.ts`; attached
+  images carry their file name as an `[Image N: name]` line that the chat strips from the bubble.
+- **MCP servers** are added with `claude mcp add` through `mcpAdd` (`agents/mcp-servers.ts` builds the args).
 - Never drive the agent through a pty or by simulating keys.
 
 ### Diff viewer

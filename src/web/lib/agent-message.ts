@@ -1,4 +1,5 @@
 import type { Attachment } from "@/components/composer/attachments";
+import { imageMarker, pastedBlock } from "@/lib/user-message";
 
 type ContentBlock =
   | { type: "text"; text: string }
@@ -55,17 +56,29 @@ async function prepareImage(file: File): Promise<{ mediaType: string; data: stri
   return { mediaType: blob.type, data: await readBase64(blob) };
 }
 
+type ImageAttachment = Extract<Attachment, { kind: "image" }>;
+
+const sentImages = (attachments: readonly Attachment[]) =>
+  attachments.filter(
+    (attachment): attachment is ImageAttachment =>
+      attachment.kind === "image" && Boolean(attachment.file),
+  );
+
 export function messageText(text: string, attachments: readonly Attachment[]): string {
   const parts = [text.trim()];
   for (const attachment of attachments) {
     if (attachment.kind === "text" && attachment.content) {
-      parts.push(`\`\`\`\n${attachment.content}\n\`\`\``);
+      parts.push(pastedBlock(attachment.content));
     }
     if (attachment.kind === "file") {
       const path = attachment.path ?? (attachment.file && window.api.pathForFile(attachment.file));
       if (path) parts.push(`@${path}`);
     }
   }
+  const markers = sentImages(attachments)
+    .map((image, index) => imageMarker(index + 1, image.name))
+    .filter(Boolean);
+  if (markers.length) parts.push(markers.join("\n"));
   return parts.filter(Boolean).join("\n\n");
 }
 
@@ -74,10 +87,7 @@ export async function agentMessage(
   attachments: readonly Attachment[],
 ): Promise<string | ContentBlock[]> {
   const body = messageText(text, attachments);
-  const images = attachments.filter(
-    (attachment): attachment is Extract<Attachment, { kind: "image" }> =>
-      attachment.kind === "image" && Boolean(attachment.file),
-  );
+  const images = sentImages(attachments);
   if (images.length === 0) return body;
   const blocks: ContentBlock[] = await Promise.all(
     images.map(async (image) => {

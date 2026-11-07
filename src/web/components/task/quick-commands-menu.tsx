@@ -1,39 +1,92 @@
 import { useState } from "react";
 import { CornerDownLeft, Play, Search, Settings, Square, Terminal } from "lucide-react";
+import { AgentLogo } from "@/components/atoms/agent-logo";
 import { IconButton } from "@/components/atoms/icon-button";
 import { StatusDot } from "@/components/atoms/status-dot";
 import GlideMenu from "@/components/primitives/glide-menu";
 import { MenuLabel, MenuSeparator } from "@/components/primitives/menu";
+import { useNow } from "@/hooks/use-now";
 import { searchItems } from "@/lib/command-search";
+import { uptime } from "@/lib/uptime";
 import { cn } from "@/lib/utils";
 
 export interface QuickCommandEntry {
   name: string;
   command: string;
   running: boolean;
-  uptime?: string;
+  port?: number | null;
+  startedAt?: number;
+}
+
+export interface ClaudeCommandEntry {
+  id: string;
+  command: string;
+  description: string;
+  startedAt: number;
+}
+
+const UPTIME_TICK_MS = 30_000;
+
+function Uptime({ since, now, className }: { since: number; now: number; className?: string }) {
+  return (
+    <span className={cn("shrink-0 text-2xs text-ink-4 tabular-nums", className)}>
+      {uptime(since, now)}
+    </span>
+  );
+}
+
+function ClaudeCommandRow({ command, now }: { command: ClaudeCommandEntry; now: number }) {
+  return (
+    <div title={command.command} className="flex h-8 items-center gap-2.5 rounded-control px-2.5">
+      <AgentLogo agent="claude" size={16} />
+      {command.description ? (
+        <>
+          <span className="truncate text-sm text-ink">{command.description}</span>
+          <span className="min-w-0 flex-1 truncate font-mono text-2xs text-ink-4">
+            {command.command}
+          </span>
+        </>
+      ) : (
+        <span className="min-w-0 flex-1 truncate font-mono text-xs text-ink">
+          {command.command}
+        </span>
+      )}
+      <Uptime since={command.startedAt} now={now} />
+    </div>
+  );
 }
 
 export function QuickCommandsMenu({
   commands,
+  claudeCommands = [],
   onRun,
   onOpenTerminal,
   onStop,
   onEdit,
 }: {
   commands: readonly QuickCommandEntry[];
+  claudeCommands?: readonly ClaudeCommandEntry[];
   onRun: (name: string) => void;
   onOpenTerminal: (name: string) => void;
   onStop: (name: string) => void;
   onEdit?: () => void;
 }) {
   const [query, setQuery] = useState("");
+  const now = useNow(UPTIME_TICK_MS);
   const found = searchItems(
     commands.map((command) => ({ ...command, label: command.name, keywords: [command.command] })),
     query,
   );
   const running = found.filter((command) => command.running);
   const idle = found.filter((command) => !command.running);
+  const byClaude = searchItems(
+    claudeCommands.map((command) => ({
+      ...command,
+      label: command.description || command.command,
+      keywords: [command.command],
+    })),
+    query,
+  );
 
   return (
     <div className="enter-pop flex w-[300px] flex-col rounded-menu bg-elevated p-1.5 shadow-overlay">
@@ -59,13 +112,21 @@ export function QuickCommandsMenu({
             className="relative flex h-8 items-center gap-2.5 rounded-control pr-1 pl-2.5"
           >
             <StatusDot tone="green" />
-            <span className="truncate font-mono text-xs text-ink">{command.name}</span>
-            {command.uptime && (
-              <span className="ml-auto shrink-0 text-2xs text-ink-4 tabular-nums">
-                {command.uptime}
-              </span>
+            <span title={command.name} className="truncate text-sm text-ink">
+              {command.name}
+            </span>
+            {command.port != null && (
+              <span className="shrink-0 text-2xs text-ink-3 tabular-nums">:{command.port}</span>
             )}
-            <span className={cn("flex shrink-0 items-center", !command.uptime && "ml-auto")}>
+            {command.startedAt !== undefined && (
+              <Uptime since={command.startedAt} now={now} className="ml-auto" />
+            )}
+            <span
+              className={cn(
+                "flex shrink-0 items-center",
+                command.startedAt === undefined && "ml-auto",
+              )}
+            >
               <IconButton
                 size="sm"
                 aria-label="Open terminal"
@@ -85,6 +146,10 @@ export function QuickCommandsMenu({
             </span>
           </div>
         ))}
+        {byClaude.length > 0 && <MenuLabel>Started by Claude</MenuLabel>}
+        {byClaude.map((command) => (
+          <ClaudeCommandRow key={command.id} command={command} now={now} />
+        ))}
         {idle.length > 0 && <MenuLabel>Commands</MenuLabel>}
         {idle.map((command) => (
           <button
@@ -95,7 +160,7 @@ export function QuickCommandsMenu({
             className="interactive press-wide group/command relative flex h-8 w-full cursor-pointer items-center gap-2.5 rounded-control px-2.5 text-left select-none"
           >
             <Play width={11} height={11} strokeWidth={2} className="shrink-0 text-ink-4" />
-            <span className="truncate font-mono text-xs text-ink">{command.name}</span>
+            <span className="truncate text-sm text-ink">{command.name}</span>
             <span className="ml-auto truncate font-mono text-2xs text-ink-4">
               {command.command}
             </span>
@@ -107,7 +172,7 @@ export function QuickCommandsMenu({
             />
           </button>
         ))}
-        {found.length === 0 && (
+        {found.length === 0 && byClaude.length === 0 && (
           <div className="flex h-8 items-center px-2.5 text-xs text-ink-4">No commands match</div>
         )}
       </GlideMenu>

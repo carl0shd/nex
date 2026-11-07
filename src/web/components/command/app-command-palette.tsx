@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FolderOpen, FolderPlus, PanelLeft, Plus, SunMoon } from "lucide-react";
+import { Code, FolderOpen, FolderPlus, PanelLeft, Plus, SunMoon } from "lucide-react";
 import {
   CommandPalette,
   type CommandGroup,
@@ -8,21 +8,30 @@ import {
 } from "@/components/command/command-palette";
 import { useAppHotkey } from "@/hooks/use-app-hotkey";
 import { shortcutLabel } from "@/lib/app-shortcuts";
+import { notifyCompact } from "@/lib/notify";
 import { useAddProjectStore } from "@/stores/add-project.store";
 import { useCommandPaletteStore } from "@/stores/command-palette.store";
 import { useNewTaskStore } from "@/stores/new-task.store";
 import { usePermissionStore } from "@/stores/permission.store";
+import { usePreferencesStore } from "@/stores/preferences.store";
 import { useSettingsStore } from "@/stores/settings.store";
 import { useWorkspaceStore } from "@/stores/workspace.store";
 
 const FILE_RESULTS = 8;
+const PROJECT_RESULTS = 6;
 const AGENT_STATUS: Record<string, CommandTaskStatus> = {
   running: "working",
   waiting: "waiting",
   idle: "idle",
 };
 
-type ActionId = "new-task" | "new-project" | "finder" | "theme" | "sidebar";
+type ActionId = "new-task" | "new-project" | "ide" | "finder" | "theme" | "sidebar";
+
+function openInEditor(app: string, path: string) {
+  void window.api.openWith(app, path).then((opened) => {
+    if (!opened) notifyCompact({ tone: "red", title: `Couldn’t open ${app}` });
+  });
+}
 
 function useWorktreeFiles(path: string | null, enabled: boolean): string[] {
   const [files, setFiles] = useState<{ path: string; list: string[] } | null>(null);
@@ -60,6 +69,7 @@ export function AppCommandPalette() {
   const resolvedTheme = useSettingsStore((s) => s.resolvedTheme);
   const setTheme = useSettingsStore((s) => s.setTheme);
   const toggleSidebar = useSettingsStore((s) => s.toggleSidebar);
+  const ide = usePreferencesStore((s) => s.prefs.ide);
   useAppHotkey("palette", toggle);
 
   const activeTask = sessions.find((session) => session.id === activeTaskId) ?? null;
@@ -90,7 +100,16 @@ export function AppCommandPalette() {
       ? [{ kind: "action" as const, id: "new-project", label: "New project", icon: FolderPlus }]
       : []),
     ...(activeTask
-      ? [{ kind: "action" as const, id: "finder", label: "Open task in Finder", icon: FolderOpen }]
+      ? [
+          {
+            kind: "action" as const,
+            id: "ide",
+            label: `Open task in ${ide}`,
+            icon: Code,
+            keywords: ["IDE", "editor"],
+          },
+          { kind: "action" as const, id: "finder", label: "Open task in Finder", icon: FolderOpen },
+        ]
       : []),
     { kind: "action", id: "theme", label: "Toggle light / dark", icon: SunMoon },
     {
@@ -101,6 +120,9 @@ export function AppCommandPalette() {
       kbd: shortcutLabel("sidebar"),
     },
   ];
+
+  const workspaceName = (workspaceId: string) =>
+    workspaces.find((workspace) => workspace.id === workspaceId)?.name ?? "";
 
   const groups: CommandGroup[] = [
     {
@@ -116,6 +138,19 @@ export function AppCommandPalette() {
           status: statusOf(session.id),
           keywords: [session.branch, projectOf(session.projectId)?.name ?? ""],
         })),
+    },
+    {
+      id: "projects",
+      label: "Projects",
+      onlyWhenSearching: true,
+      limit: PROJECT_RESULTS,
+      items: projects.map((project) => ({
+        kind: "project" as const,
+        id: project.id,
+        label: project.name,
+        workspace: workspaceName(project.workspaceId),
+        keywords: [workspaceName(project.workspaceId)],
+      })),
     },
     ...(activeTask
       ? [
@@ -134,6 +169,7 @@ export function AppCommandPalette() {
   const runAction = (id: ActionId) => {
     if (id === "new-task") showNewTask(activeTask?.projectId);
     if (id === "new-project" && workspaceForProject) showAddProject(workspaceForProject);
+    if (id === "ide" && activeTask) openInEditor(ide, activeTask.worktreePath);
     if (id === "finder" && activeTask) void window.api.openInFinder(activeTask.worktreePath);
     if (id === "theme") setTheme(resolvedTheme === "dark" ? "light" : "dark");
     if (id === "sidebar") toggleSidebar();
@@ -146,6 +182,7 @@ export function AppCommandPalette() {
       onSelect={({ item }) => {
         hide();
         if (item.kind === "task") openTask(item.id);
+        if (item.kind === "project") showNewTask(item.id);
         if (item.kind === "file" && activeTask) openTask(activeTask.id, `@${item.label} `);
         if (item.kind === "action") runAction(item.id as ActionId);
       }}

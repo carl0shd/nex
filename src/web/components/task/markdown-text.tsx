@@ -2,8 +2,10 @@ import { Fragment, useMemo, type ReactNode } from "react";
 import { marked, type Token, type Tokens } from "marked";
 import { InlineCode } from "@/components/atoms/inline-code";
 import { codeTokens } from "@/lib/code-tokens";
+import { calloutLabel, fenceInfo } from "@/lib/markdown-blocks";
 import {
   CodeBlock,
+  MdCallout,
   MdDel,
   MdDivider,
   MdEm,
@@ -84,6 +86,30 @@ function listItem(item: Tokens.ListItem): ReactNode {
   );
 }
 
+function callout(quote: Tokens.Blockquote): ReactNode {
+  const [first, ...others] = quote.tokens;
+  if (first?.type !== "paragraph") return null;
+  const [label, next, ...rest] = (first as Tokens.Paragraph).tokens;
+  if (label?.type !== "strong") return null;
+  const nextText =
+    next?.type === "text" && !(next as Tokens.Text).tokens ? (next as Tokens.Text) : null;
+  const found = calloutLabel(plain((label as Tokens.Strong).text), nextText?.text ?? "");
+  if (!found) return null;
+  const lead = nextText
+    ? [{ ...nextText, text: found.rest }, ...rest]
+    : [next, ...rest].filter(Boolean);
+  return (
+    <MdCallout
+      title={found.title}
+      blocks={others.map((child, index) => (
+        <Fragment key={index}>{block(child)}</Fragment>
+      ))}
+    >
+      {inline(lead)}
+    </MdCallout>
+  );
+}
+
 function block(token: Token): ReactNode {
   switch (token.type) {
     case "paragraph":
@@ -98,12 +124,9 @@ function block(token: Token): ReactNode {
     }
     case "code": {
       const code = token as Tokens.Code;
+      const { language, file } = fenceInfo(code.lang);
       return (
-        <CodeBlock
-          file=""
-          language={code.lang || "text"}
-          lines={codeTokens(plain(code.text), code.lang ?? "")}
-        />
+        <CodeBlock file={file} language={language} lines={codeTokens(plain(code.text), language)} />
       );
     }
     case "table": {
@@ -117,14 +140,18 @@ function block(token: Token): ReactNode {
     }
     case "hr":
       return <MdDivider />;
-    case "blockquote":
+    case "blockquote": {
+      const quote = token as Tokens.Blockquote;
       return (
-        <MdQuote>
-          {(token as Tokens.Blockquote).tokens.map((child, index) => (
-            <Fragment key={index}>{block(child)}</Fragment>
-          ))}
-        </MdQuote>
+        callout(quote) ?? (
+          <MdQuote>
+            {quote.tokens.map((child, index) => (
+              <Fragment key={index}>{block(child)}</Fragment>
+            ))}
+          </MdQuote>
+        )
       );
+    }
     case "space":
       return null;
     default:

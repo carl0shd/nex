@@ -18,7 +18,7 @@ export function DiffStat({
   className?: string;
 }) {
   return (
-    <span className={cn("font-mono text-3xs whitespace-nowrap", className)}>
+    <span className={cn("text-2xs tabular-nums whitespace-nowrap", className)}>
       {(zeros || added > 0) && <span className="text-green">+{added}</span>}
       {(zeros || removed > 0) && <span className="text-red"> −{removed}</span>}
     </span>

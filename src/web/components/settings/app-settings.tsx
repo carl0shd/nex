@@ -17,16 +17,20 @@ import { relativeTime } from "@/lib/relative-time";
 import { activeLimit } from "@/lib/usage";
 import { workspaceImageUrl } from "@/lib/workspace-image";
 import { useAddProjectStore } from "@/stores/add-project.store";
+import { useNewWorkspaceStore } from "@/stores/new-workspace.store";
+import { useRemoveWorkspaceStore } from "@/stores/remove-workspace.store";
 import { useDictationStore } from "@/stores/dictation.store";
 import { usePreferencesStore } from "@/stores/preferences.store";
 import { useSettingsStore } from "@/stores/settings.store";
 import { useWorkspaceStore } from "@/stores/workspace.store";
+import { workspaceIcon } from "@/lib/workspace-icons";
 
 interface Machine {
   version: string;
   dataDir: string;
   openAtLogin: boolean;
   claudeCode: { version: string; path: string; agentId: string } | null;
+  claudeAgentId: string | null;
   ides: string[];
   terminals: string[];
   shells: string[];
@@ -37,6 +41,7 @@ const NO_MACHINE: Machine = {
   dataDir: "",
   openAtLogin: false,
   claudeCode: null,
+  claudeAgentId: null,
   ides: [],
   terminals: [],
   shells: [],
@@ -73,18 +78,35 @@ async function loadMachine(): Promise<Machine> {
   ]);
   const claude = agents.find((agent) => agent.slug === "claude-code" && agent.installed);
   const saved = (await window.api.getAgents()).find((agent) => agent.slug === "claude-code");
+  const savedVersion = saved && (await window.api.getAgentVersion(saved.id));
   return {
     version: info.version,
     dataDir: info.dataDir,
     openAtLogin,
     claudeCode:
-      claude?.command && saved
-        ? { version: claude.version ?? "0.0.0", path: claude.command, agentId: saved.id }
-        : null,
+      saved && savedVersion
+        ? { version: savedVersion, path: saved.command, agentId: saved.id }
+        : claude?.command && saved
+          ? { version: claude.version ?? "0.0.0", path: claude.command, agentId: saved.id }
+          : null,
+    claudeAgentId: saved?.id ?? null,
     ides,
     terminals,
     shells,
   };
+}
+
+const fileName = (path: string) => path.slice(path.lastIndexOf("/") + 1);
+
+async function pickClaudeBinary(agentId: string): Promise<boolean> {
+  const change = await window.api.pickAgentCommand(agentId).catch(() => null);
+  if (!change) return false;
+  if (!change.version) {
+    notifyCompact({ tone: "red", title: `${fileName(change.command)} isn’t Claude Code` });
+    return false;
+  }
+  notifyCompact({ tone: "green", title: `Using Claude Code v${change.version}` });
+  return true;
 }
 
 export function AppSettings() {
@@ -99,6 +121,11 @@ export function AppSettings() {
   const sessions = useWorkspaceStore((s) => s.sessions);
   const editProject = useAddProjectStore((s) => s.edit);
   const showAddProject = useAddProjectStore((s) => s.show);
+  const showCloneProject = useAddProjectStore((s) => s.showClone);
+  const showNewWorkspace = useNewWorkspaceStore((s) => s.show);
+  const showRemoveWorkspace = useRemoveWorkspaceStore((s) => s.show);
+  const renameWorkspace = useWorkspaceStore((s) => s.renameWorkspace);
+  const setWorkspaceLook = useWorkspaceStore((s) => s.setWorkspaceLook);
   const microphones = useDictationStore((s) => s.microphones);
   const languages = useDictationStore((s) => s.languages);
   const dictationPrefs = useDictationStore((s) => s.prefs);
@@ -114,6 +141,9 @@ export function AppSettings() {
   const [now, setNow] = useState(() => Date.now());
   const [upgrading, setUpgrading] = useState(false);
   const models = useAgentModels();
+  const changeClaudePath = async (agentId: string) => {
+    if (await pickClaudeBinary(agentId)) setMachine(await loadMachine());
+  };
 
   const reloadAccounts = useCallback(() => {
     void window.api.getAgentAccounts().then(setSaved);
@@ -151,6 +181,7 @@ export function AppSettings() {
     name: workspace.name,
     color: workspace.color,
     image: workspaceImageUrl(workspace.customImage),
+    icon: workspaceIcon(workspace.icon),
     projects: projects
       .filter((project) => project.workspaceId === workspace.id)
       .map((project) => ({
@@ -166,6 +197,7 @@ export function AppSettings() {
     ...machine,
     models: models.map((option) => ({ value: option.id, label: option.name })),
     model: resolveModel(models, prefs.model)?.id ?? prefs.model,
+    claudePathChangeable: Boolean(machine.claudeAgentId),
     claudeCode: machine.claudeCode && {
       version: machine.claudeCode.version,
       path: machine.claudeCode.path,
@@ -233,6 +265,18 @@ export function AppSettings() {
           },
           onOpenProject: editProject,
           onAddProject: showAddProject,
+          onImportFromGitHub: (workspaceId) => showCloneProject(workspaceId, "github"),
+          onAddWorkspace: () => {
+            if (sidebarCollapsed) toggleSidebar();
+            showNewWorkspace();
+          },
+          onRenameWorkspace: (workspaceId, name) => void renameWorkspace(workspaceId, name),
+          onWorkspaceLookChange: (workspaceId, look) => void setWorkspaceLook(workspaceId, look),
+          onRemoveWorkspace: showRemoveWorkspace,
+          onChangeClaudePath: () => {
+            const agentId = machine.claudeAgentId;
+            if (agentId) void changeClaudePath(agentId);
+          },
           onPlaySound: (sound) => void window.api.playSound(sound),
           onMicrophone: setMicrophone,
           onLanguage: setLanguage,

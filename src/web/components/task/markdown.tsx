@@ -67,15 +67,26 @@ export function MdList({ items, ordered = false }: { items: ReactNode[]; ordered
   );
 }
 
-export function MdCallout({ title, children }: { title: string; children: ReactNode }) {
+export function MdCallout({
+  title,
+  children,
+  blocks,
+}: {
+  title: string;
+  children: ReactNode;
+  blocks?: ReactNode;
+}) {
   return (
     <div className="flex gap-3 rounded-field bg-orange-tint/60 px-3 py-2.5">
       <span className="flex pt-0.5 text-orange">
         <TriangleAlert width={14} height={14} strokeWidth={2} />
       </span>
-      <span className="text-sm text-ink-2">
-        <MdStrong>{title}</MdStrong> {children}
-      </span>
+      <div className="flex min-w-0 flex-col gap-2.5 text-sm text-ink-2">
+        <span>
+          <MdStrong>{title}</MdStrong> {children}
+        </span>
+        {blocks}
+      </div>
     </div>
   );
 }

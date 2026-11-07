@@ -27,12 +27,21 @@ export interface UpdateWorkspaceInput {
   collapsed?: boolean;
 }
 
+export interface ProjectSetup {
+  install: { on: boolean; command: string };
+  copy: { on: boolean; files: string[] };
+  script: { on: boolean; path: string };
+}
+
 export interface Project {
   id: string;
   workspaceId: string;
   name: string;
   path: string;
   branchPrefix: string;
+  baseBranch: string;
+  pullBase: boolean;
+  setup: ProjectSetup | null;
   quickCommands: QuickCommand[];
   sortOrder: number;
   createdAt: string;
@@ -48,6 +57,9 @@ export interface CreateProjectInput {
   name: string;
   path: string;
   branchPrefix?: string;
+  baseBranch?: string;
+  pullBase?: boolean;
+  setup?: ProjectSetup | null;
   quickCommands?: QuickCommand[];
 }
 
@@ -55,6 +67,9 @@ export interface UpdateProjectInput {
   name?: string;
   path?: string;
   branchPrefix?: string;
+  baseBranch?: string;
+  pullBase?: boolean;
+  setup?: ProjectSetup | null;
   quickCommands?: QuickCommand[];
   sortOrder?: number;
 }
@@ -164,6 +179,7 @@ export interface CreateSessionInput {
 
 export interface UpdateSessionInput {
   title?: string;
+  accountId?: string;
   status?: SessionStatus;
   opens?: number;
   lastOpened?: string;

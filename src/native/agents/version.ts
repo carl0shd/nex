@@ -28,3 +28,21 @@ export function upgradeAgent(agentId: string): Promise<string | null> {
     );
   });
 }
+
+export interface AgentCommandChange {
+  command: string;
+  version: string | null;
+}
+
+export function agentCommand(agentId: string): string | null {
+  return agentRepo.getById(agentId)?.command ?? null;
+}
+
+export async function setAgentCommand(
+  agentId: string,
+  command: string,
+): Promise<AgentCommandChange> {
+  const version = agentRepo.getById(agentId) ? await binaryVersion(command) : null;
+  if (version) agentRepo.update(agentId, { command });
+  return { command, version };
+}

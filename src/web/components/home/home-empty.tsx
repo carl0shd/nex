@@ -7,7 +7,6 @@ import { shortcutLabel } from "@/lib/app-shortcuts";
 const SHORTCUTS = [
   { keys: shortcutLabel("palette"), label: "Jump to a project or file" },
   { keys: shortcutLabel("workspace"), label: "Add workspace" },
-  { keys: shortcutLabel("settings"), label: "Settings" },
 ];
 
 const stagger = (index: number) => ({ animationDelay: `${index * 50}ms` }) as CSSProperties;

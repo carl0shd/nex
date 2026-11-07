@@ -1,19 +1,17 @@
-import { useRef } from "react";
 import { ChevronDown, LayoutGrid, SquarePen } from "lucide-react";
 import { ColorSwatches } from "@/components/atoms/color-swatches";
 import { Monogram } from "@/components/atoms/entity-chip";
-import { SegmentedControl } from "@/components/atoms/segmented-control";
 import { TextField } from "@/components/atoms/text-field";
 import { OnboardingStep } from "@/components/onboarding/onboarding-step";
+import { WorkspaceBadgePicker } from "@/components/sidebar/workspace-badge-picker";
 import { cn } from "@/lib/utils";
-import { readBadgeImage } from "@/lib/workspace-image";
-
-type BadgeKind = "initial" | "image";
+import type { WorkspaceIconName } from "@/lib/workspace-icons";
 
 export interface WorkspaceDraft {
   name: string;
   color: string;
   image: string | null;
+  icon?: WorkspaceIconName | null;
 }
 
 function Skeleton({ className }: { className?: string }) {
@@ -42,7 +40,11 @@ function WorkspacePreview({ workspace }: { workspace: WorkspaceDraft }) {
           Overview
         </span>
         <span className="mt-4 flex h-8 items-center gap-2 px-2">
-          <Monogram color={workspace.color} image={workspace.image ?? undefined}>
+          <Monogram
+            color={workspace.color}
+            image={workspace.image ?? undefined}
+            icon={workspace.icon}
+          >
             {name[0]?.toUpperCase()}
           </Monogram>
           <span className="truncate text-sm font-semibold text-ink">{name}</span>
@@ -89,7 +91,6 @@ export function WorkspaceStep({
   onContinue?: () => void;
   saving?: boolean;
 }) {
-  const fileRef = useRef<HTMLInputElement>(null);
   return (
     <OnboardingStep
       step={2}
@@ -118,25 +119,10 @@ export function WorkspaceStep({
       </div>
       <div className="flex flex-col gap-2">
         <span className="text-xs font-medium text-ink-3">Badge</span>
-        <SegmentedControl<BadgeKind>
-          options={["initial", "image"]}
-          labels={{ initial: "Initial", image: "Image" }}
-          value={workspace.image ? "image" : "initial"}
-          onChange={(kind) =>
-            kind === "image" ? fileRef.current?.click() : onChange({ ...workspace, image: null })
-          }
-          className="self-start"
-        />
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          hidden
-          onChange={async (event) => {
-            const file = event.target.files?.[0];
-            event.target.value = "";
-            if (file) onChange({ ...workspace, image: await readBadgeImage(file) });
-          }}
+        <WorkspaceBadgePicker
+          hasImage={Boolean(workspace.image)}
+          icon={workspace.icon}
+          onChange={(badge) => onChange({ ...workspace, ...badge })}
         />
       </div>
     </OnboardingStep>

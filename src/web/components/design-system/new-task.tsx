@@ -31,8 +31,6 @@ const AGENTS: AgentOption[] = [
       { id: "personal", name: "Personal", plan: "Pro", color: PERSONAL.color, usedPercent: 12 },
     ],
   },
-  { id: "codex", name: "Codex", detail: "Not installed", installed: false },
-  { id: "gemini", name: "Gemini CLI", detail: "Not installed", installed: false },
   { id: "shell", name: "Shell only", detail: "A plain terminal, no agent", installed: true },
 ];
 

@@ -9,6 +9,7 @@ import type { TerminalStatus, TerminalType } from "@native/db/types";
 import type { SessionTrackerHandle } from "@native/agents/resume";
 import type { AgentStatusMarkers } from "@native/agents/status-markers";
 import { createStatusDetector, type StatusDetectorHandle } from "@native/pty/status-detector";
+import { createPortDetector, type PortDetectorHandle } from "@native/pty/port-detector";
 import { whichBinary } from "@native/which";
 import { getNexDir } from "@native/paths";
 import { preferredShell } from "@native/main/preferences";
@@ -28,6 +29,14 @@ interface ManagedTerminal {
   diskFlushTimer: NodeJS.Timeout | null;
   sessionTracker: SessionTrackerHandle | null;
   statusDetector: StatusDetectorHandle | null;
+  portDetector: PortDetectorHandle | null;
+  startedAt: number;
+  port: number | null;
+}
+
+export interface TerminalRuntime {
+  startedAt: number;
+  port: number | null;
 }
 
 const MAX_BUFFER = 1_000_000;
@@ -161,6 +170,22 @@ function flushPending(term: ManagedTerminal): void {
   send(IPC.PTY_DATA, { id: term.id, data });
 }
 
+function runtimeOf(term: ManagedTerminal): TerminalRuntime {
+  return { startedAt: term.startedAt, port: term.port };
+}
+
+function sendRuntime(id: string, runtime: TerminalRuntime | null): void {
+  send(IPC.TERMINAL_RUNTIME, { id, runtime });
+}
+
+export function getTerminalRuntimes(): Record<string, TerminalRuntime> {
+  return Object.fromEntries(
+    [...terminals.values()]
+      .filter((term) => !term.exited)
+      .map((term) => [term.id, runtimeOf(term)]),
+  );
+}
+
 function setStatus(term: ManagedTerminal, status: TerminalStatus): void {
   if (term.status === status) return;
   term.status = status;
@@ -232,8 +257,19 @@ export function spawnTerminal(opts: SpawnOptions): void {
     diskFlushTimer: null,
     sessionTracker: null,
     statusDetector: null,
+    portDetector: null,
+    startedAt: Date.now(),
+    port: null,
   };
   terminals.set(opts.id, term);
+  sendRuntime(term.id, runtimeOf(term));
+
+  if (opts.type === "shell") {
+    term.portDetector = createPortDetector((port) => {
+      term.port = port;
+      sendRuntime(term.id, runtimeOf(term));
+    });
+  }
 
   if (opts.statusMarkers) {
     term.statusDetector = createStatusDetector(opts.statusMarkers, (status) =>
@@ -251,6 +287,7 @@ export function spawnTerminal(opts: SpawnOptions): void {
       term.flushHandle = setImmediate(() => flushPending(term));
     }
     term.statusDetector?.push(data);
+    term.portDetector?.push(data);
     scheduleDiskFlush(term);
   });
 
@@ -259,7 +296,10 @@ export function spawnTerminal(opts: SpawnOptions): void {
     if (term.pendingData) flushPending(term);
     term.statusDetector?.stop();
     term.statusDetector = null;
+    term.portDetector = null;
+    term.port = null;
     setStatus(term, "idle");
+    if (terminals.get(opts.id) === term) sendRuntime(opts.id, null);
     send(IPC.PTY_EXIT, { id: opts.id, exitCode, signal });
   });
 
@@ -315,6 +355,7 @@ export function killTerminal(id: string): void {
       // already dead
     }
     terminals.delete(id);
+    sendRuntime(id, null);
   }
   unlinkBufferFile(id);
 }
