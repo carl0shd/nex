@@ -84,9 +84,8 @@ export function createMainWindow(): BrowserWindow {
     return { action: "deny" };
   });
 
-  const csp = is.dev
-    ? "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; worker-src 'self' blob:"
-    : "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:";
+  const csp =
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; worker-src 'self' blob:";
 
   mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
     callback({

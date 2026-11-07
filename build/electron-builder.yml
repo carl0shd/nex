@@ -3,12 +3,24 @@ productName: Nex
 directories:
   buildResources: build
 files:
+  - '**/*'
   - '!**/.vscode/*'
   - '!src/*'
   - '!electron.vite.config.{js,ts,mjs,cjs}'
   - '!{vite.config.ts,lint-rules/*,.changeset/*,.github/*,CHANGELOG.md,README.md,AGENTS.md,CLAUDE.md}'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+  - '!{.claude,.githooks,scripts,docs}/**'
+  - '!skills-lock.json'
+  - '!helpers/speech/{swift,scripts}/**'
+  # Vite bundles every other package into out/; main only requires these at runtime.
+  - '!node_modules/**'
+  - node_modules/@electron-toolkit/utils/**
+  - node_modules/node-pty/**
+  - '!node_modules/node-pty/{src,deps,scripts,third_party,prebuilds/win32-*}/**'
+  - node_modules/better-sqlite3/**
+  - '!node_modules/better-sqlite3/{src,deps,build}/**'
+  - '!node_modules/better-sqlite3/prebuilds/{linux*,win32*}.node'
 asarUnpack:
   - build/**
   - node_modules/node-pty/**
@@ -18,10 +30,10 @@ afterSign: scripts/resign.js
 mac:
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
-    - NSMicrophoneUsageDescription: Nex uses the microphone to dictate messages to the agent.
-    - NSSpeechRecognitionUsageDescription: Nex uses speech recognition to transcribe dictated messages.
-    - NSDocumentsFolderUsageDescription: Nex opens the projects and worktrees you keep in your Documents folder.
-    - NSDownloadsFolderUsageDescription: Nex opens the projects and worktrees you keep in your Downloads folder.
+    NSMicrophoneUsageDescription: Nex uses the microphone to dictate messages to the agent.
+    NSSpeechRecognitionUsageDescription: Nex uses speech recognition to transcribe dictated messages.
+    NSDocumentsFolderUsageDescription: Nex opens the projects and worktrees you keep in your Documents folder.
+    NSDownloadsFolderUsageDescription: Nex opens the projects and worktrees you keep in your Downloads folder.
   notarize: false
 dmg:
   artifactName: ${name} ${version}.${ext}
