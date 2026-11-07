@@ -121,7 +121,12 @@ export function NewTaskDialog({
   const pills: Record<Picker, FieldPillContent> = {
     project: {
       icon: current && (
-        <Monogram size="sm" color={current.workspace.color} image={current.workspace.image}>
+        <Monogram
+          size="sm"
+          color={current.workspace.color}
+          image={current.workspace.image}
+          icon={current.workspace.icon}
+        >
           {current.workspace.name[0]}
         </Monogram>
       ),
@@ -187,11 +192,11 @@ export function NewTaskDialog({
           <span className="text-sm font-semibold text-ink">New task</span>
           <Kbd>{shortcutLabel("new-task")}</Kbd>
           <span className="ml-auto flex min-w-0 items-center gap-1">
-            <span title={branch} className="truncate font-mono text-2xs text-ink-3">
+            <span title={branch} className="truncate text-2xs text-ink-3">
               {branch}
             </span>
             <span className="shrink-0">from</span>
-            <span title={base} className="max-w-[160px] truncate font-mono text-2xs text-ink-3">
+            <span title={base} className="max-w-[160px] truncate text-2xs text-ink-3">
               {base}
             </span>
           </span>

@@ -297,7 +297,7 @@ export function PullRequestCard({
             {title} <span className="font-normal text-ink-4">#{number}</span>
           </span>
           <span className="truncate text-2xs text-ink-4">
-            <span className="font-mono">{branch}</span> → {base}
+            <span>{branch}</span> → {base}
             {files !== undefined && ` · ${files} files `}
             {diff && <DiffCount {...diff} />}
           </span>

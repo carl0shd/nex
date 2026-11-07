@@ -17,8 +17,7 @@ export function TaskEmptyState({
         What should Claude do?
       </span>
       <span className="rise-in text-xs text-ink-3 [animation-delay:100ms]">
-        Working in <span className="font-mono text-2xs text-ink-2">{branch}</span> · branched from{" "}
-        {base}
+        Working in <span className="text-ink-2">{branch}</span> · branched from {base}
       </span>
       {children}
     </div>

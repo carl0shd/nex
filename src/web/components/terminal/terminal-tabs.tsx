@@ -38,7 +38,7 @@ function TerminalTab({
   return (
     <span
       className={cn(
-        "group/tab interactive flex h-[26px] shrink-0 items-center rounded-full font-mono text-2xs",
+        "group/tab interactive flex h-[26px] shrink-0 items-center rounded-full text-xs",
         selected ? "bg-elevated text-ink shadow-tab" : "text-ink-3 hover:bg-hover hover:text-ink-2",
       )}
     >
@@ -91,7 +91,7 @@ function MoreTabs({
       aria-expanded={open}
       onClick={onClick}
       className={cn(
-        "interactive press flex h-[26px] shrink-0 cursor-pointer items-center rounded-full px-2.5 font-mono text-2xs tabular-nums select-none",
+        "interactive press flex h-[26px] shrink-0 cursor-pointer items-center rounded-full px-2.5 text-xs tabular-nums select-none",
         open ? "bg-hover text-ink" : "text-ink-3 hover:bg-hover hover:text-ink-2",
       )}
     >

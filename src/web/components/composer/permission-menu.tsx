@@ -202,8 +202,7 @@ export function PermissionMenu({
       </div>
       <div className="mt-1 flex items-center gap-2 border-t border-line px-2.5 pt-2 pb-1 text-2xs text-ink-4">
         <span className="flex items-center gap-[5px]">
-          <Kbd>⌘ ←</Kbd>
-          <Kbd>⌘ →</Kbd>
+          <Kbd>⇧⇥</Kbd>
           cycle
         </span>
         <span className="flex items-center gap-[5px]">

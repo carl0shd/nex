@@ -35,10 +35,42 @@ import { useFileDrop } from "@/hooks/use-file-drop";
 import type { SlashCommand, WorktreeFile } from "@/lib/composer-pickers";
 import { formatFileSize } from "@/lib/file-size";
 import { PERMISSION_MODES, stepPermissionMode } from "@/lib/permission-modes";
+import { hotkeyLabel } from "@/lib/shortcut";
 import { useTypeToFocus } from "@/hooks/use-type-to-focus";
 import { cn } from "@/lib/utils";
 
 type ComposerMenu = "mode" | "model" | "add" | "dictation";
+
+const LONG_MESSAGE_CHARS = 280;
+const LONG_MESSAGE_LINES = 4;
+const NEW_LINE_KEYS = hotkeyLabel("Shift+Enter");
+
+interface LengthHint {
+  chars: number;
+  long: boolean;
+  shown: boolean;
+}
+
+function nextLengthHint(previous: LengthHint, text: string): LengthHint {
+  const long = text.length > LONG_MESSAGE_CHARS || text.split("\n").length > LONG_MESSAGE_LINES;
+  if (long) return { chars: text.length, long, shown: true };
+  return previous.long ? { ...previous, long: false } : previous;
+}
+
+function MessageLength({ hint, onHidden }: { hint: LengthHint; onHidden: () => void }) {
+  return (
+    <span
+      aria-hidden={!hint.long}
+      onTransitionEnd={() => !hint.long && onHidden()}
+      className={cn(
+        "pointer-events-none ml-auto min-w-0 truncate pr-1 pl-2 text-2xs text-ink-4 tabular-nums transition-opacity duration-200 ease-out",
+        hint.long ? "enter-fade" : "opacity-0",
+      )}
+    >
+      {hint.chars.toLocaleString()} chars · {NEW_LINE_KEYS} new line
+    </span>
+  );
+}
 
 function toAttachment(file: File): Attachment {
   const id = crypto.randomUUID();
@@ -143,6 +175,8 @@ export function Composer({
   onConnectorRetry,
   onConnectorRemove,
   onConnectorsOpen,
+  onAddServer,
+  onManageConnectors,
   onPickFiles,
   typeToFocus = false,
   history = [],
@@ -163,6 +197,8 @@ export function Composer({
   onConnectorRetry?: (id: string) => void;
   onConnectorRemove?: (id: string) => void;
   onConnectorsOpen?: () => void;
+  onAddServer?: () => void;
+  onManageConnectors?: () => void;
   onPickFiles?: () => Promise<PickedPath[]>;
   placeholder: string;
   defaultMode?: PermissionMode;
@@ -238,6 +274,11 @@ export function Composer({
     change({ effort: next });
   };
   const [menu, setMenu] = useState<ComposerMenu | null>(null);
+  const [lengthHint, setLengthHint] = useState<LengthHint>({
+    chars: 0,
+    long: false,
+    shown: false,
+  });
   const [connectorsOpen, setConnectorsOpen] = useState(false);
   const [connectorQuery, setConnectorQuery] = useState("");
   const [localGroups, setGroups] = useState(connectors);
@@ -312,6 +353,10 @@ export function Composer({
       ? PERMISSION_MODES.filter((option) => option !== "auto")
       : PERMISSION_MODES;
   const modeMenuOpen = menu === "mode";
+  useHotkey("Shift+Tab", () => setMode(stepPermissionMode(mode, 1, modes)), {
+    target: rootRef,
+    ignoreInputs: false,
+  });
   useHotkey("Mod+ArrowRight", () => setMode(stepPermissionMode(mode, 1, modes)), {
     target: rootRef,
     enabled: modeMenuOpen,
@@ -389,6 +434,7 @@ export function Composer({
           onHistory={browseHistory}
           ghostText={dictationPending}
           onTextChange={(text) => {
+            setLengthHint((previous) => nextLengthHint(previous, text));
             const at = historyRef.current;
             if (at !== null && text !== history[at]) setHistoryAt(null);
           }}
@@ -471,6 +517,20 @@ export function Composer({
                   : updateConnector(id, { failed: false, enabled: true })
               }
               onRemove={onConnectorRemove}
+              onAddServer={
+                onAddServer &&
+                (() => {
+                  closeMenu();
+                  onAddServer();
+                })
+              }
+              onManage={
+                onManageConnectors &&
+                (() => {
+                  closeMenu();
+                  onManageConnectors();
+                })
+              }
             />
           </AddMenu>
         </AnchoredPopover>
@@ -483,7 +543,13 @@ export function Composer({
             }}
           />
         )}
-        <span className="ml-auto flex items-center gap-1">
+        {lengthHint.shown && (
+          <MessageLength
+            hint={lengthHint}
+            onHidden={() => setLengthHint((previous) => ({ ...previous, shown: false }))}
+          />
+        )}
+        <span className={cn("flex items-center gap-1", !lengthHint.shown && "ml-auto")}>
           {(contextUsage || context !== undefined) && (
             <ContextRing
               percent={contextUsage?.percent ?? context ?? 0}

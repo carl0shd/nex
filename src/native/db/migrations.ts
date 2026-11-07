@@ -177,6 +177,9 @@ const migrations: string[] = [
   `ALTER TABLE agent_accounts ADD COLUMN email TEXT;
   ALTER TABLE agent_accounts ADD COLUMN color TEXT;`,
   `UPDATE sessions SET width = 600 WHERE width = 630;`,
+  `ALTER TABLE projects ADD COLUMN base_branch TEXT NOT NULL DEFAULT '';
+  ALTER TABLE projects ADD COLUMN pull_base INTEGER NOT NULL DEFAULT 1;
+  ALTER TABLE projects ADD COLUMN setup TEXT;`,
 ];
 
 export function runMigrations(db: Database.Database): void {

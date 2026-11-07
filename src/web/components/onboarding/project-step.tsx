@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Check, Folder, GitBranch } from "lucide-react";
 import { Button } from "@/components/atoms/button";
 import { StatusDot, type DotTone } from "@/components/atoms/status-dot";
@@ -76,7 +77,7 @@ function WorktreeTree({ project }: { project: ProjectDraft }) {
           <span className="text-base font-medium text-ink">
             {project.name} <span className="text-ink-4">· {project.branch}</span>
           </span>
-          <span className="font-mono text-2xs text-ink-4">{project.path} · untouched</span>
+          <span className="text-2xs text-ink-4">{project.path} · untouched</span>
         </span>
       </div>
       <div className="ml-[18px] flex flex-col gap-2.5 border-l border-line-strong pl-7">
@@ -115,12 +116,14 @@ export function ProjectStep({
   onChooseFolder,
   onDropFolder,
   onClone,
+  cloning,
   onBack,
   onSkip,
   onAdd,
   reading = false,
   saving = false,
 }: {
+  cloning?: ReactNode;
   project: ProjectDraft | null;
   onChange: (project: ProjectDraft) => void;
   onChooseFolder?: () => void;
@@ -146,7 +149,9 @@ export function ProjectStep({
       }}
       aside={<WorktreeTree project={project ?? PLACEHOLDER} />}
     >
-      {project ? (
+      {cloning ? (
+        cloning
+      ) : project ? (
         <PickedProject
           project={project}
           onChange={onChange}
@@ -193,7 +198,7 @@ function PickedProject({
           </span>
           <span className="flex min-w-0 flex-1 flex-col">
             <span className="text-base font-medium text-ink">{project.name}</span>
-            <span className="truncate font-mono text-2xs text-ink-4">
+            <span className="truncate text-2xs text-ink-4">
               {project.path} · {project.branch} · {project.clean ? "clean" : "uncommitted changes"}
             </span>
           </span>
@@ -223,7 +228,7 @@ function PickedProject({
         hint={
           <>
             A task called “{EXAMPLE_TASK}” runs on{" "}
-            <span className="font-mono text-ink-3">{taskBranchName(EXAMPLE_TASK, prefix)}</span>
+            <span className="text-ink-3">{taskBranchName(EXAMPLE_TASK, prefix)}</span>
           </>
         }
       />

@@ -32,11 +32,13 @@ function StepButton({
 
 export function ImageViewer({
   images,
+  names = [],
   index,
   onIndexChange,
   onClose,
 }: {
   images: readonly string[];
+  names?: readonly (string | undefined)[];
   index: number;
   onIndexChange: (index: number) => void;
   onClose: () => void;
@@ -70,8 +72,10 @@ export function ImageViewer({
       className="enter-pop absolute inset-0 z-30 flex flex-col rounded-b-[inherit] bg-backdrop/95"
     >
       <div className="flex h-11 shrink-0 items-center gap-2 pr-2.5 pl-4">
-        <span className="text-xs text-ink">Image {index + 1}</span>
-        <span className="text-xs text-ink-3 tabular-nums">
+        <span title={names[index]} className="min-w-0 truncate text-xs text-ink">
+          {names[index] ?? `Image ${index + 1}`}
+        </span>
+        <span className="shrink-0 text-xs text-ink-3 tabular-nums">
           {many && `${index + 1} of ${images.length}`}
           {many && size && " · "}
           {size && `${size.width}×${size.height}`}

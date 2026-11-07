@@ -39,7 +39,7 @@ export function AppOnboarding({ onDone }: { onDone: () => void }) {
           fadeOut={screen !== "welcome"}
           className="fixed"
         />
-        <OnboardingChrome step={index} />
+        <OnboardingChrome step={index} onSkip={onDone} />
         {screen === "welcome" && <WelcomeScreen logoRef={logoRef} onStart={next} />}
         {screen === "agent" && <AppAgentStep onBack={back} onContinue={next} />}
         {screen === "workspace" && (

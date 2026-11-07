@@ -294,3 +294,21 @@ export function buildConversation(entries: readonly unknown[]): ConversationItem
       !(item.kind === "command" && item.name === "/compact" && COMPACTED.test(item.output ?? "")),
   );
 }
+
+const FILE_TOOLS = new Set(["Read", "Edit", "Write", "MultiEdit", "NotebookEdit"]);
+const RECENT_FILES = 8;
+
+export function recentFiles(items: readonly ConversationItem[], cwd: string): string[] {
+  const calls = items.flatMap((item) =>
+    item.kind === "tool" ? [item.call] : item.kind === "reads" ? item.calls : [],
+  );
+  const recent: string[] = [];
+  for (const call of calls.toReversed()) {
+    if (!FILE_TOOLS.has(call.name) || call.result?.isError) continue;
+    const path = String(call.input.file_path ?? call.input.notebook_path ?? "");
+    const relative = cwd && path.startsWith(`${cwd}/`) ? path.slice(cwd.length + 1) : "";
+    if (relative && !recent.includes(relative)) recent.push(relative);
+    if (recent.length === RECENT_FILES) break;
+  }
+  return recent;
+}

@@ -187,6 +187,10 @@ export function update(id: string, input: UpdateSessionInput): Session {
     fields.push("width = ?");
     values.push(input.width);
   }
+  if (input.accountId !== undefined) {
+    fields.push("account_id = ?");
+    values.push(input.accountId);
+  }
 
   if (fields.length === 0) {
     const row = getDb().prepare("SELECT * FROM sessions WHERE id = ?").get(id) as SessionRow;

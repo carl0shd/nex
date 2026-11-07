@@ -25,7 +25,7 @@ export function LicenseSheet({ item, onClose }: { item: PackageLicense; onClose:
     >
       <div className="flex h-14 items-center gap-2 border-b border-line pr-3 pl-5">
         <span className="text-base font-semibold text-ink">{item.name}</span>
-        <span className="font-mono text-2xs text-ink-4">{item.version}</span>
+        <span className="text-2xs tabular-nums text-ink-4">{item.version}</span>
         <ValuePill>{item.license}</ValuePill>
         <span className="ml-auto" />
         <Button
@@ -114,7 +114,7 @@ export function LicensesView({
                 className="interactive relative flex h-[45px] w-full cursor-pointer items-center gap-2.5 px-4 text-left select-none"
               >
                 <span className="text-sm font-medium text-ink">{item.name}</span>
-                <span className="font-mono text-2xs text-ink-4">{item.version}</span>
+                <span className="text-2xs tabular-nums text-ink-4">{item.version}</span>
                 <span className="ml-auto text-xs text-ink-3">{item.license}</span>
                 <ChevronRight width={12} height={12} strokeWidth={2} className="text-ink-4" />
               </button>

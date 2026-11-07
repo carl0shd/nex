@@ -1,26 +1,37 @@
 import { useState } from "react";
 import { Chip, CountChip } from "@/components/atoms/chip";
 import { AnchoredPopover } from "@/components/primitives/anchored-popover";
-import { QuickCommandsMenu, type QuickCommandEntry } from "@/components/task/quick-commands-menu";
+import {
+  QuickCommandsMenu,
+  type ClaudeCommandEntry,
+  type QuickCommandEntry,
+} from "@/components/task/quick-commands-menu";
 
 const SHOWN = 2;
 
 export function QuickCommandChips({
   commands,
+  claudeCommands = [],
   onRun,
   onOpenTerminal,
   onStop,
   onEdit,
 }: {
   commands: readonly QuickCommandEntry[];
+  claudeCommands?: readonly ClaudeCommandEntry[];
   onRun: (name: string) => void;
   onOpenTerminal: (name: string) => void;
   onStop: (name: string) => void;
   onEdit?: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const shown = commands.slice(0, SHOWN);
-  const rest = commands.slice(SHOWN);
+  const ordered = [
+    ...commands.filter((command) => command.running),
+    ...commands.filter((command) => !command.running),
+  ];
+  const shown = ordered.slice(0, SHOWN);
+  const rest = ordered.slice(SHOWN);
+  const hidden = rest.length + claudeCommands.length;
   const close = (action: (name: string) => void) => (name: string) => {
     setOpen(false);
     action(name);
@@ -28,11 +39,16 @@ export function QuickCommandChips({
   return (
     <>
       {shown.map((command) => (
-        <Chip key={command.name} running={command.running} onClick={() => onRun(command.name)}>
+        <Chip
+          key={command.name}
+          running={command.running}
+          meta={command.running && command.port ? `:${command.port}` : undefined}
+          onClick={() => onRun(command.name)}
+        >
           {command.name}
         </Chip>
       ))}
-      {rest.length > 0 && (
+      {hidden > 0 && (
         <AnchoredPopover
           open={open}
           onOpenChange={setOpen}
@@ -41,8 +57,8 @@ export function QuickCommandChips({
           strategy="fixed"
           trigger={
             <CountChip
-              count={rest.length}
-              running={rest.some((command) => command.running)}
+              count={hidden}
+              running={claudeCommands.length > 0 || rest.some((command) => command.running)}
               open={open}
               onClick={() => setOpen((value) => !value)}
             />
@@ -50,6 +66,7 @@ export function QuickCommandChips({
         >
           <QuickCommandsMenu
             commands={commands}
+            claudeCommands={claudeCommands}
             onRun={close(onRun)}
             onOpenTerminal={close(onOpenTerminal)}
             onStop={onStop}

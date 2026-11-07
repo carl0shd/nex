@@ -1,3 +1,5 @@
+import type { WorkspaceIconName } from "@/lib/workspace-icons";
+
 export type SidebarTaskStatus = "running" | "waiting" | "idle";
 
 export type SidebarTask = {
@@ -15,6 +17,7 @@ export type SidebarWorkspace = {
   name: string;
   color: string;
   image?: string;
+  icon?: WorkspaceIconName;
   projects: SidebarProject[];
   expanded: boolean;
 };

@@ -135,7 +135,7 @@ function FileRow({
       <span className={cn("flex", tone)}>
         <Icon width={12} height={12} strokeWidth={2} />
       </span>
-      <span className="truncate font-mono text-xs">
+      <span className="truncate text-sm">
         <span className="text-ink">
           <Highlight text={entry.name} query={query} />
         </span>
@@ -159,8 +159,8 @@ function FolderHeader({ folder }: { folder: string }) {
   return (
     <div className="flex h-[30px] items-center gap-1.5 px-2.5 text-2xs text-ink-4">
       <ChevronLeft width={11} height={11} strokeWidth={2} />
-      <span className="font-mono">{trimmed.slice(0, slash + 1)}</span>
-      <span className="font-mono text-ink">{trimmed.slice(slash + 1)}/</span>
+      <span>{trimmed.slice(0, slash + 1)}</span>
+      <span className="text-ink">{trimmed.slice(slash + 1)}/</span>
       <span className="ml-auto flex items-center gap-1">
         <Kbd>⌘↵</Kbd> insert folder
       </span>
@@ -269,7 +269,7 @@ function CommandRow({
   return (
     <PickerRow selected={selected} onSelect={onSelect} onHover={onHover} tall>
       <span className="flex min-w-0 flex-col gap-px">
-        <span className="font-mono text-xs text-ink">
+        <span className="text-sm text-ink">
           /<Highlight text={command.name} query={query} />
           {command.args && <span className="text-ink-4"> {command.args}</span>}
         </span>

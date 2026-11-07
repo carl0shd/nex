@@ -1,4 +1,5 @@
 import { useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useDismiss } from "@/hooks/use-dismiss";
 import { cn } from "@/lib/utils";
 
@@ -44,15 +45,25 @@ export function AnchoredPopover({
   className?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  useDismiss(ref, open, () => onOpenChange(false));
+  const layerRef = useRef<HTMLDivElement>(null);
+  useDismiss(ref, open, () => onOpenChange(false), layerRef);
   return (
     <div ref={ref} className={cn("relative flex", className)}>
       {trigger}
       {open &&
         (strategy === "fixed" ? (
-          <div ref={(node) => placeFixed(node, ref.current, align, side)} className="fixed z-50">
-            {children}
-          </div>
+          createPortal(
+            <div
+              ref={(node) => {
+                layerRef.current = node;
+                placeFixed(node, ref.current, align, side);
+              }}
+              className="fixed z-50"
+            >
+              {children}
+            </div>,
+            document.body,
+          )
         ) : (
           <div
             className={cn(

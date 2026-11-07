@@ -31,6 +31,7 @@ const api = {
   setDockBadge: (count: number) => ipcRenderer.invoke(IPC.APP_SET_BADGE, count),
   listShells: () => ipcRenderer.invoke(IPC.APP_LIST_SHELLS),
   installedApps: (names: string[]) => ipcRenderer.invoke(IPC.APP_INSTALLED, names),
+  findLocalRepos: (exclude: string[]) => ipcRenderer.invoke(IPC.REPOS_FIND, exclude),
   openWith: (appName: string, path: string) => ipcRenderer.invoke(IPC.APP_OPEN_WITH, appName, path),
   setZoomFactor: (factor: number) => webFrame.setZoomFactor(factor),
 
@@ -82,6 +83,7 @@ const api = {
   detectAgents: () => ipcRenderer.invoke("agents:detect"),
   getAgentVersion: (agentId: string) => ipcRenderer.invoke("agents:version", agentId),
   upgradeAgent: (agentId: string) => ipcRenderer.invoke(IPC.AGENT_UPGRADE, agentId),
+  pickAgentCommand: (agentId: string) => ipcRenderer.invoke(IPC.AGENT_PICK_COMMAND, agentId),
   inspectRepo: (path: string) => ipcRenderer.invoke("repo:inspect", path),
   pathForFile: (file: File) => webUtils.getPathForFile(file),
   openInFinder: (path: string) => ipcRenderer.invoke("finder:open", path),
@@ -148,6 +150,8 @@ const api = {
   },
   agentSend: (sessionId: string, content: unknown) =>
     ipcRenderer.invoke(IPC.AGENT_SEND, sessionId, content),
+  switchAgentAccount: (sessionId: string, accountId: string) =>
+    ipcRenderer.invoke(IPC.AGENT_SWITCH_ACCOUNT, sessionId, accountId),
   agentWarm: (sessionId: string) => ipcRenderer.invoke(IPC.AGENT_WARM, sessionId),
   mcpStatus: (sessionId: string) => ipcRenderer.invoke(IPC.AGENT_MCP_STATUS, sessionId),
   mcpToggle: (sessionId: string, name: string, enabled: boolean) =>
@@ -160,6 +164,8 @@ const api = {
   lastAgentContext: (sessionId: string) => ipcRenderer.invoke(IPC.AGENT_CONTEXT_LAST, sessionId),
   mcpRemove: (sessionId: string, name: string) =>
     ipcRenderer.invoke(IPC.AGENT_MCP_REMOVE, sessionId, name),
+  mcpAdd: (sessionId: string, input: unknown) =>
+    ipcRenderer.invoke(IPC.AGENT_MCP_ADD, sessionId, input),
   pickFiles: () => ipcRenderer.invoke(IPC.DIALOG_PICK_FILES),
   agentCommands: (sessionId: string) => ipcRenderer.invoke(IPC.AGENT_COMMANDS_GET, sessionId),
   agentModels: () => ipcRenderer.invoke(IPC.AGENT_MODELS_GET),
@@ -177,6 +183,13 @@ const api = {
   countUncommitted: (worktreePath: string) => ipcRenderer.invoke(IPC.GIT_UNCOMMITTED, worktreePath),
   agentInterrupt: (sessionId: string) => ipcRenderer.invoke(IPC.AGENT_INTERRUPT, sessionId),
   agentStates: () => ipcRenderer.invoke(IPC.AGENT_STATES),
+  getBackgroundCommands: () => ipcRenderer.invoke(IPC.AGENT_BACKGROUND_ALL),
+  onBackgroundCommands: (callback: (info: unknown) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, payload: unknown): void =>
+      callback(payload);
+    ipcRenderer.on(IPC.AGENT_BACKGROUND, handler);
+    return () => ipcRenderer.removeListener(IPC.AGENT_BACKGROUND, handler);
+  },
   getAgentSettings: (sessionId: string) => ipcRenderer.invoke(IPC.AGENT_SETTINGS_GET, sessionId),
   configureAgent: (sessionId: string, settings: unknown) =>
     ipcRenderer.invoke(IPC.AGENT_CONFIGURE, sessionId, settings),
@@ -251,6 +264,13 @@ const api = {
     ipcRenderer.send(IPC.PTY_RESIZE, terminalId, cols, rows),
   ptyKill: (terminalId: string) => ipcRenderer.invoke(IPC.PTY_KILL, terminalId),
   ptyGetSnapshot: (terminalId: string) => ipcRenderer.invoke(IPC.PTY_GET_SNAPSHOT, terminalId),
+  getTerminalRuntimes: () => ipcRenderer.invoke(IPC.TERMINAL_RUNTIMES),
+  onTerminalRuntime: (callback: (info: unknown) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, payload: unknown): void =>
+      callback(payload);
+    ipcRenderer.on(IPC.TERMINAL_RUNTIME, handler);
+    return () => ipcRenderer.removeListener(IPC.TERMINAL_RUNTIME, handler);
+  },
 
   onPtyData: (terminalId: string, callback: (data: string) => void) => {
     const handler = (

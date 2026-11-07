@@ -4,11 +4,13 @@ import { Kbd, KeyText } from "@/components/atoms/kbd";
 import { WorkspaceLook } from "@/components/sidebar/workspace-look";
 import { useDismiss } from "@/hooks/use-dismiss";
 import { cn } from "@/lib/utils";
+import type { WorkspaceIconName } from "@/lib/workspace-icons";
 
 export interface NewWorkspace {
   name: string;
   color: string;
   image: string | null;
+  icon: WorkspaceIconName | null;
 }
 
 const DEFAULT_COLOR = "#2f6fd6";
@@ -24,6 +26,7 @@ export function NewWorkspaceRow({
   const [name, setName] = useState("");
   const [color, setColor] = useState(DEFAULT_COLOR);
   const [image, setImage] = useState<string | null>(null);
+  const [icon, setIcon] = useState<WorkspaceIconName | null>(null);
   const [lookOpen, setLookOpen] = useState(true);
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -37,7 +40,7 @@ export function NewWorkspaceRow({
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.key === "Enter" && name.trim()) {
       event.preventDefault();
-      onCreate({ name: name.trim(), color, image });
+      onCreate({ name: name.trim(), color, image, icon });
     } else if (event.key === "Escape") {
       event.preventDefault();
       onCancel();
@@ -57,7 +60,7 @@ export function NewWorkspaceRow({
           }}
           className="interactive press flex cursor-pointer select-none"
         >
-          <Monogram color={color} image={image ?? undefined}>
+          <Monogram color={color} image={image ?? undefined} icon={icon}>
             {name.trim()[0]?.toUpperCase() ?? "W"}
           </Monogram>
         </button>
@@ -76,9 +79,11 @@ export function NewWorkspaceRow({
         <WorkspaceLook
           color={color}
           hasImage={Boolean(image)}
+          icon={icon}
           onColorChange={setColor}
-          onImageChange={(next) => {
-            setImage(next);
+          onBadgeChange={(badge) => {
+            setImage(badge.image);
+            setIcon(badge.icon);
             inputRef.current?.focus();
           }}
           className={cn("absolute left-0 z-20", lookAbove ? "bottom-full mb-2" : "top-full mt-2")}

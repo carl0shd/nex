@@ -8,10 +8,12 @@ import { Menu, MenuItem, MenuSeparator } from "@/components/primitives/menu";
 import type { SidebarWorkspace } from "@/components/sidebar/types";
 import { WorkspaceLook } from "@/components/sidebar/workspace-look";
 import { cn } from "@/lib/utils";
+import type { WorkspaceIconName } from "@/lib/workspace-icons";
 
 export interface WorkspaceLookChange {
   color?: string;
   image?: string | null;
+  icon?: WorkspaceIconName | null;
 }
 
 export function WorkspaceHeader({
@@ -54,7 +56,7 @@ export function WorkspaceHeader({
         >
           {renaming ? (
             <span className="flex min-w-0 flex-1 items-center gap-2 pl-2">
-              <Monogram color={workspace.color} image={workspace.image}>
+              <Monogram color={workspace.color} image={workspace.image} icon={workspace.icon}>
                 {workspace.name[0]}
               </Monogram>
               <InlineRename
@@ -72,7 +74,7 @@ export function WorkspaceHeader({
               onClick={onToggle}
               className="interactive press-wide flex h-8 min-w-0 flex-1 cursor-pointer items-center gap-2 pl-2 select-none"
             >
-              <Monogram color={workspace.color} image={workspace.image}>
+              <Monogram color={workspace.color} image={workspace.image} icon={workspace.icon}>
                 {workspace.name[0]}
               </Monogram>
               <span title={workspace.name} className="truncate text-sm font-semibold text-ink">
@@ -155,8 +157,9 @@ export function WorkspaceHeader({
       <WorkspaceLook
         color={workspace.color}
         hasImage={Boolean(workspace.image)}
+        icon={workspace.icon}
         onColorChange={(color) => onLookChange?.({ color })}
-        onImageChange={(image) => onLookChange?.({ image })}
+        onBadgeChange={(badge) => onLookChange?.(badge)}
       />
     </AnchoredPopover>
   );

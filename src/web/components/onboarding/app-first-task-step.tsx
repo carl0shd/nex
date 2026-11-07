@@ -5,10 +5,17 @@ import {
   type FirstTaskDraft,
   type FirstTaskProgress,
 } from "@/components/onboarding/first-task-step";
+import type { Effort } from "@/components/composer/effort";
+import { resolveModel } from "@/components/composer/models";
+import type { PermissionMode } from "@/components/composer/permission-menu";
+import { useAgentModels } from "@/hooks/use-agent-models";
+import { accountLabel } from "@/lib/accounts";
 import { notifyCompact } from "@/lib/notify";
+import { PERMISSION_LABEL } from "@/lib/permission-modes";
 import { taskSlug, uniqueSlug } from "@/lib/task-branch";
 import { workspaceImageUrl } from "@/lib/workspace-image";
 import { useOnboardingStore } from "@/stores/onboarding.store";
+import { usePreferencesStore } from "@/stores/preferences.store";
 import { useSettingsStore } from "@/stores/settings.store";
 import { useWorkspaceStore } from "@/stores/workspace.store";
 
@@ -17,12 +24,10 @@ const STARTED_PAUSE_MS = 900;
 
 interface Setup {
   agent: Agent;
+  accounts: AgentAccount[];
   account: AgentAccount | null;
   branches: string[];
 }
-
-const accountLabel = (account: AgentAccount) =>
-  account.email ? account.name : (account.name.split("@")[0] ?? account.name);
 
 async function loadSetup(projectPath: string): Promise<Setup | null> {
   const [agents, accounts, isRepo] = await Promise.all([
@@ -35,6 +40,7 @@ async function loadSetup(projectPath: string): Promise<Setup | null> {
   const own = accounts.filter((account) => account.agentId === agent.id);
   return {
     agent,
+    accounts: own,
     account: own.find((account) => account.isDefault) ?? own[0] ?? null,
     branches: isRepo ? await window.api.listBranches(projectPath) : [],
   };
@@ -59,6 +65,12 @@ export function AppFirstTaskStep({
   const [setup, setSetup] = useState<Setup | null>(null);
   const [draft, setDraft] = useState<FirstTaskDraft>({ title: "", message: "" });
   const [progress, setProgress] = useState<FirstTaskProgress>("idle");
+  const prefs = usePreferencesStore((s) => s.prefs);
+  const models = useAgentModels();
+  const [accountId, setAccountId] = useState<string | null>(null);
+  const [model, setModel] = useState(prefs.model);
+  const [effort, setEffort] = useState<Effort>(prefs.effort as Effort);
+  const [mode, setMode] = useState<PermissionMode>(prefs.permissions as PermissionMode);
 
   const projectPath = project?.path;
   useEffect(() => {
@@ -73,6 +85,8 @@ export function AppFirstTaskStep({
   if (!project || !workspace || !setup) return null;
 
   const prefix = project.branchPrefix.replace(/\/+$/, "");
+  const account = setup.accounts.find((item) => item.id === accountId) ?? setup.account;
+  const modelId = resolveModel(models, model)?.id ?? model;
 
   const start = async () => {
     const taken = new Set(
@@ -87,8 +101,9 @@ export function AppFirstTaskStep({
         name: uniqueSlug(taskSlug(draft.title), taken),
         title: draft.title.trim(),
         agentId: setup.agent.id,
-        accountId: setup.account?.id,
+        accountId: account?.id,
         prompt: draft.message.trim() || draft.title.trim(),
+        agentSettings: { model: modelId, effort, mode },
       });
       setProgress("started");
       markFirstTaskStarted(true);
@@ -115,9 +130,21 @@ export function AppFirstTaskStep({
           color: workspace.color,
           image: workspaceImageUrl(workspace.customImage),
         },
-        account: setup.account ? accountLabel(setup.account) : "Claude Code",
-        mode: "Ask first",
+        account: account ? accountLabel(account) : "Claude Code",
+        mode: PERMISSION_LABEL[mode],
         branchPrefix: prefix,
+      }}
+      settings={{
+        accounts: setup.accounts.map((item) => ({ id: item.id, label: accountLabel(item) })),
+        account: account?.id ?? "",
+        onAccount: setAccountId,
+        models,
+        model: modelId,
+        onModel: setModel,
+        effort,
+        onEffort: setEffort,
+        mode,
+        onMode: setMode,
       }}
       onBack={onBack}
       onSkip={onDone}

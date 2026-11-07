@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { WorkspaceStep, type WorkspaceDraft } from "@/components/onboarding/workspace-step";
 import { notifyCompact } from "@/lib/notify";
+import { workspaceIcon } from "@/lib/workspace-icons";
 import { useWorkspaceStore } from "@/stores/workspace.store";
 
 const DEFAULT_COLOR = "#33843F";
@@ -22,6 +23,7 @@ export function AppWorkspaceStep({
     name: existing?.name ?? "",
     color: existing?.color ?? DEFAULT_COLOR,
     image: null,
+    icon: workspaceIcon(existing?.icon) ?? null,
   }));
   const [saving, setSaving] = useState(false);
 
@@ -34,6 +36,9 @@ export function AppWorkspaceStep({
         await setWorkspaceLook(existing.id, {
           color: draft.color,
           ...(draft.image && { image: draft.image }),
+          ...((draft.icon ?? null) !== (workspaceIcon(existing.icon) ?? null) && {
+            icon: draft.icon ?? null,
+          }),
         });
         onContinue(existing.id);
       } else {

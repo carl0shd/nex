@@ -16,12 +16,15 @@ import { stripCardMaxWidth } from "@/lib/agent-strip";
 import { prefillTerminal } from "@/lib/terminal-prefill";
 import { useAddProjectStore } from "@/stores/add-project.store";
 import { useWorktreeChanges } from "@/hooks/use-worktree-changes";
+import { useBackgroundCommands } from "@/hooks/use-background-commands";
+import { useTerminalRuntimes } from "@/hooks/use-terminal-runtimes";
 import { workspaceImageUrl } from "@/lib/workspace-image";
 import { notifyCompact } from "@/lib/notify";
 import { useCloseTaskStore } from "@/stores/close-task.store";
 import { usePreferencesStore } from "@/stores/preferences.store";
 import { usePermissionStore } from "@/stores/permission.store";
 import { useWorkspaceStore } from "@/stores/workspace.store";
+import { workspaceIcon } from "@/lib/workspace-icons";
 
 const MIN_CARD_WIDTH = 600;
 
@@ -111,6 +114,8 @@ export function AppTaskCard({ sessionId }: { sessionId: string }) {
   }, [viewRequest]);
   const focusReplyOnEmptyClick = useEmptyClick(() => agentRef.current?.focusReply());
   const files = useWorktreeChanges(session?.worktreePath ?? "", session?.baseBranch ?? "");
+  const runtimes = useTerminalRuntimes();
+  const claudeCommands = useBackgroundCommands(sessionId);
 
   if (!session || !project || !workspace) return null;
 
@@ -143,6 +148,7 @@ export function AppTaskCard({ sessionId }: { sessionId: string }) {
             name: workspace.name,
             color: workspace.color,
             image: workspaceImageUrl(workspace.customImage),
+            icon: workspaceIcon(workspace.icon),
           }}
           status={status}
           actions={{
@@ -173,12 +179,16 @@ export function AppTaskCard({ sessionId }: { sessionId: string }) {
             <QuickCommandChips
               commands={project.quickCommands.map((command) => {
                 const shell = shells.find((item) => item.name === command.name);
+                const runtime = shell && runtimes[shell.id];
                 return {
                   name: command.name,
                   command: command.command,
                   running: Boolean(shell),
+                  port: runtime?.port,
+                  startedAt: runtime?.startedAt,
                 };
               })}
+              claudeCommands={claudeCommands}
               onOpenTerminal={(name) => {
                 const shell = shells.find((item) => item.name === name);
                 if (!shell) return;

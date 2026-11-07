@@ -4,6 +4,7 @@ export function useDismiss(
   ref: RefObject<HTMLElement | null>,
   open: boolean,
   onDismiss: () => void,
+  layer?: RefObject<HTMLElement | null>,
 ) {
   const dismiss = useRef(onDismiss);
   useEffect(() => {
@@ -13,7 +14,9 @@ export function useDismiss(
   useEffect(() => {
     if (!open) return;
     const onPointerDown = (event: PointerEvent) => {
-      if (!ref.current?.contains(event.target as Node)) dismiss.current();
+      const target = event.target as Node;
+      if (ref.current?.contains(target) || layer?.current?.contains(target)) return;
+      dismiss.current();
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") dismiss.current();
@@ -24,5 +27,5 @@ export function useDismiss(
       document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [ref, open]);
+  }, [ref, layer, open]);
 }

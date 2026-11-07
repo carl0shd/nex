@@ -64,6 +64,7 @@ export function BlockRow({
   running = false,
   target,
   prose = false,
+  code = false,
   aside,
   tags,
   diff,
@@ -81,6 +82,7 @@ export function BlockRow({
   running?: boolean;
   target?: ReactNode;
   prose?: boolean;
+  code?: boolean;
   aside?: ReactNode;
   tags?: ReactNode;
   diff?: { added?: number; removed?: number };
@@ -113,7 +115,7 @@ export function BlockRow({
         <span
           className={cn(
             "truncate",
-            prose ? "text-sm" : "font-mono text-xs",
+            code && !prose ? "font-mono text-xs" : "text-sm",
             verbMuted ? "text-ink-4" : "text-ink-2",
           )}
         >

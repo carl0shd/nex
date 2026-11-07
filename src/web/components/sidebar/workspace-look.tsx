@@ -1,27 +1,26 @@
-import { useRef, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { ColorSwatches } from "@/components/atoms/color-swatches";
-import { SegmentedControl } from "@/components/atoms/segmented-control";
+import { WorkspaceBadgePicker } from "@/components/sidebar/workspace-badge-picker";
 import { cn } from "@/lib/utils";
-import { readBadgeImage } from "@/lib/workspace-image";
-
-type BadgeKind = "initial" | "image";
+import type { WorkspaceBadge, WorkspaceIconName } from "@/lib/workspace-icons";
 
 export function WorkspaceLook({
   color,
   hasImage,
+  icon,
   onColorChange,
-  onImageChange,
+  onBadgeChange,
   footer,
   className,
 }: {
   color: string;
   hasImage: boolean;
+  icon?: WorkspaceIconName | null;
   onColorChange: (color: string) => void;
-  onImageChange: (image: string | null) => void;
+  onBadgeChange: (badge: WorkspaceBadge) => void;
   footer?: ReactNode;
   className?: string;
 }) {
-  const fileRef = useRef<HTMLInputElement>(null);
   return (
     <div
       role="dialog"
@@ -34,25 +33,7 @@ export function WorkspaceLook({
       <span className="text-xs text-ink-3">Color</span>
       <ColorSwatches value={color} onChange={onColorChange} size="sm" />
       <span className="text-xs text-ink-3">Badge</span>
-      <SegmentedControl<BadgeKind>
-        options={["initial", "image"]}
-        labels={{ initial: "Initial", image: "Image" }}
-        value={hasImage ? "image" : "initial"}
-        onChange={(kind) => (kind === "image" ? fileRef.current?.click() : onImageChange(null))}
-        size="sm"
-        className="flex [&>[data-thumb-item]]:flex-1 [&>[data-thumb-item]]:justify-center"
-      />
-      <input
-        ref={fileRef}
-        type="file"
-        accept="image/*"
-        hidden
-        onChange={async (event) => {
-          const file = event.target.files?.[0];
-          event.target.value = "";
-          if (file) onImageChange(await readBadgeImage(file));
-        }}
-      />
+      <WorkspaceBadgePicker hasImage={hasImage} icon={icon} onChange={onBadgeChange} size="sm" />
       {footer && (
         <span className="flex gap-3 border-t border-line pt-2.5 text-2xs text-ink-4">{footer}</span>
       )}

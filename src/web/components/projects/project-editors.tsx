@@ -96,7 +96,7 @@ export function BranchEditor({
       </div>
       <Note>
         “Fix login redirect” becomes{" "}
-        <span className="font-mono text-ink-2">{taskBranchName("Fix login redirect", prefix)}</span>
+        <span className="text-ink-2">{taskBranchName("Fix login redirect", prefix)}</span>
       </Note>
       <Divider />
       <div className="flex items-center gap-3">

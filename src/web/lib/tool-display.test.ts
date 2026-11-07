@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { dedent, describeTool } from "@/lib/tool-display";
+import { dedent, describeTool, lineDiff } from "@/lib/tool-display";
 
 const bash = (input: Record<string, unknown>, data: Record<string, unknown>, isError = false) =>
   describeTool(
@@ -88,6 +88,81 @@ describe("describeTool", () => {
       term: "safeNext",
       matches: [{ location: "src/url.ts:12", line: "export function safeNext()" }],
     });
+  });
+});
+
+describe("hook blocked commits", () => {
+  it("shows the hook and its message instead of a failed command", () => {
+    const display = bash(
+      { command: 'git commit -m "Fix logout"' },
+      {
+        stdout: "",
+        stderr:
+          "✔ Preparing lint-staged...\n✖ eslint --fix:\n  src/a.ts  error  'x' is unused\nhusky - pre-commit script failed (code 1)",
+      },
+      true,
+    );
+    expect(display).toMatchObject({
+      icon: "commit",
+      tone: "red",
+      verb: "Hook blocked commit",
+      target: "pre-commit",
+      note: { text: "✖ eslint --fix:" },
+    });
+  });
+
+  it("keeps an ordinary failed commit as a failed command", () => {
+    const display = bash(
+      { command: "git commit -m x" },
+      { stdout: "nothing to commit, working tree clean" },
+      true,
+    );
+    expect(display.verb).toBe("Run");
+  });
+});
+
+describe("notebook edits", () => {
+  const notebook = JSON.stringify({
+    cells: [
+      { id: "a1", source: ["import pandas as pd\n"] },
+      { id: "b2", source: ["df = pd.read_csv('x.csv')\n", "df.head()"] },
+    ],
+  });
+  const edit = (input: Record<string, unknown>) =>
+    describeTool(
+      {
+        id: "1",
+        name: "NotebookEdit",
+        input: { notebook_path: "/repo/analysis.ipynb", ...input },
+        result: { text: "", isError: false, data: { original_file: notebook } },
+      },
+      "/repo",
+    );
+
+  it("shows the cell and how many lines changed", () => {
+    const display = edit({ cell_id: "b2", new_source: "df = pd.read_csv('y.csv')\ndf.head()" });
+    expect(display).toMatchObject({
+      verb: "Edit",
+      target: "analysis.ipynb",
+      tag: "cell 2",
+      diff: { added: 1, removed: 1 },
+    });
+  });
+
+  it("counts an inserted cell as added lines", () => {
+    const display = edit({ cell_id: "a1", edit_mode: "insert", new_source: "x = 1\ny = 2" });
+    expect(display).toMatchObject({ verb: "Add cell to", tag: "cell 2", diff: { added: 2 } });
+  });
+});
+
+describe("lineDiff", () => {
+  it("keeps shared lines and marks the rest", () => {
+    expect(lineDiff(["a", "b", "c"], ["a", "x", "c"]).map((row) => row.sign)).toEqual([
+      " ",
+      "+",
+      "-",
+      " ",
+    ]);
   });
 });
 

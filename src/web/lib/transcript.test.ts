@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 import { describeTool, patchRows, permissionPrompt } from "@/lib/tool-display";
-import { buildConversation } from "@/lib/transcript";
+import { buildConversation, recentFiles } from "@/lib/transcript";
 
 const user = (content: unknown, extra: object = {}) => ({
   type: "user",
@@ -181,5 +181,23 @@ describe("buildConversation extras", () => {
     ]);
     expect(items).toHaveLength(1);
     expect(items[0].kind).toBe("agents");
+  });
+});
+
+describe("recentFiles", () => {
+  it("lists the files this conversation read or edited, newest first", () => {
+    const items = buildConversation([
+      assistant([toolUse("r1", "Read", { file_path: "/repo/src/a.ts" })]),
+      user([toolResult("r1", "ok")]),
+      assistant([toolUse("r2", "Read", { file_path: "/repo/src/b.ts" })]),
+      user([toolResult("r2", "ok")]),
+      assistant([toolUse("e1", "Edit", { file_path: "/repo/src/a.ts" })]),
+      user([toolResult("e1", "ok")]),
+      assistant([toolUse("e2", "Edit", { file_path: "/repo/src/c.ts" })]),
+      user([toolResult("e2", "The user denied this.", true)]),
+      assistant([toolUse("o1", "Read", { file_path: "/elsewhere/d.ts" })]),
+      user([toolResult("o1", "ok")]),
+    ]);
+    expect(recentFiles(items, "/repo")).toEqual(["src/a.ts", "src/b.ts"]);
   });
 });

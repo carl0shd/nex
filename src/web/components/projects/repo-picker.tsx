@@ -102,7 +102,7 @@ export function FoundRepos({
             <FolderTile />
             <span className="flex min-w-0 flex-1 flex-col gap-px">
               <span className="text-sm font-medium text-ink">{repo.name}</span>
-              <span className="truncate font-mono text-2xs text-ink-4">{repo.path}</span>
+              <span className="truncate text-2xs text-ink-4">{repo.path}</span>
             </span>
             <HoverSwap
               rest={
@@ -131,7 +131,7 @@ export function PickedRepo({ repo, onChange }: { repo: FoundRepo; onChange?: () 
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="text-base font-semibold text-ink">{repo.name}</span>
-        <span className="truncate font-mono text-2xs text-ink-4">{repo.path}</span>
+        <span className="truncate text-2xs text-ink-4">{repo.path}</span>
       </span>
       {onChange && (
         <Button variant="quiet" size="sm" onClick={onChange}>

@@ -33,7 +33,7 @@ function UsageTaskRow({ task, onOpen }: { task: UsageTask; onOpen?: (id: string)
     >
       <StatusDot tone={STATUS_TONE[task.status]} />
       <span className="truncate text-xs text-ink">{task.title}</span>
-      <span className="shrink-0 font-mono text-3xs text-ink-4">{task.project}</span>
+      <span className="shrink-0 text-2xs text-ink-4">{task.project}</span>
       <span className="ml-auto shrink-0 text-xs text-ink-2 tabular-nums">{task.cost}</span>
     </button>
   );

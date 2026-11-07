@@ -1,3 +1,4 @@
+import type { LocalRepos } from "@native/git/discover";
 import type { AgentModel } from "@native/agents/agent-models";
 import type { ContextUsage } from "@native/agents/context-usage";
 import type {
@@ -32,7 +33,10 @@ import type { TranscriptChunk, TranscriptCursor } from "@native/agents/transcrip
 import type { PermissionAnswer, PermissionRequest } from "@native/agents/permissions";
 import type { AgentLiveEvent, AgentMessage, AgentRunState } from "@native/agents/agent-runner";
 import type { AgentCommand } from "@native/agents/agent-commands";
-import type { McpServer } from "@native/agents/mcp-servers";
+import type { BackgroundCommand } from "@native/agents/background-commands";
+import type { TerminalRuntime } from "@native/pty/manager";
+import type { McpAddInput, McpServer } from "@native/agents/mcp-servers";
+import type { AgentCommandChange } from "@native/agents/version";
 import type { AgentSettings } from "@native/agents/agent-settings";
 import type { GhInfo, GithubOwner, GithubRepo } from "@native/git/github";
 import type { UsageGranularity, UsageStats, UsageSummary } from "@native/usage/types";
@@ -44,6 +48,7 @@ interface NexAPI {
   setDockBadge: (count: number) => Promise<void>;
   listShells: () => Promise<string[]>;
   installedApps: (names: string[]) => Promise<string[]>;
+  findLocalRepos: (exclude: string[]) => Promise<LocalRepos>;
   openWith: (appName: string, path: string) => Promise<boolean>;
   setZoomFactor: (factor: number) => void;
   getAppInfo: () => Promise<{
@@ -94,6 +99,7 @@ interface NexAPI {
   detectAgents: () => Promise<AvailableAgent[]>;
   getAgentVersion: (agentId: string) => Promise<string | null>;
   upgradeAgent: (agentId: string) => Promise<string | null>;
+  pickAgentCommand: (agentId: string) => Promise<AgentCommandChange | null>;
   inspectRepo: (path: string) => Promise<RepoInspection>;
   pathForFile: (file: File) => string;
   openInFinder: (path: string) => Promise<boolean>;
@@ -126,12 +132,14 @@ interface NexAPI {
   discardWorktreeFile: (worktreePath: string, path: string, prevPath?: string) => Promise<void>;
   watchWorktree: (worktreePath: string, callback: () => void) => () => void;
   agentSend: (sessionId: string, content: AgentMessage) => Promise<void>;
+  switchAgentAccount: (sessionId: string, accountId: string) => Promise<void>;
   agentWarm: (sessionId: string) => Promise<void>;
   mcpStatus: (sessionId: string) => Promise<McpServer[]>;
   mcpToggle: (sessionId: string, name: string, enabled: boolean) => Promise<McpServer[]>;
   mcpReconnect: (sessionId: string, name: string) => Promise<McpServer[]>;
   mcpSignIn: (sessionId: string, name: string) => Promise<McpServer[]>;
   mcpRemove: (sessionId: string, name: string) => Promise<McpServer[]>;
+  mcpAdd: (sessionId: string, input: McpAddInput) => Promise<McpServer[]>;
   agentContext: (sessionId: string) => Promise<ContextUsage | null>;
   lastAgentContext: (sessionId: string) => Promise<ContextUsage | null>;
   pickFiles: () => Promise<string[]>;
@@ -142,6 +150,10 @@ interface NexAPI {
   countUncommitted: (worktreePath: string) => Promise<number>;
   agentInterrupt: (sessionId: string) => Promise<void>;
   agentStates: () => Promise<Record<string, AgentRunState>>;
+  getBackgroundCommands: () => Promise<Record<string, BackgroundCommand[]>>;
+  onBackgroundCommands: (
+    callback: (info: { sessionId: string; commands: BackgroundCommand[] }) => void,
+  ) => () => void;
   getAgentSettings: (sessionId: string) => Promise<AgentSettings>;
   configureAgent: (sessionId: string, settings: AgentSettings) => Promise<void>;
   onAgentState: (
@@ -180,6 +192,10 @@ interface NexAPI {
   ptyResize: (terminalId: string, cols: number, rows: number) => void;
   ptyKill: (terminalId: string) => Promise<void>;
   ptyGetSnapshot: (terminalId: string) => Promise<{ data: string; alive: boolean } | null>;
+  getTerminalRuntimes: () => Promise<Record<string, TerminalRuntime>>;
+  onTerminalRuntime: (
+    callback: (info: { id: string; runtime: TerminalRuntime | null }) => void,
+  ) => () => void;
 
   onPtyData: (terminalId: string, callback: (data: string) => void) => () => void;
   onPtyExit: (

@@ -1,5 +1,6 @@
 import { useHotkey } from "@tanstack/react-hotkeys";
-import { useEffect, useRef, useState } from "react";
+import type { CloneMode } from "@/components/projects/clone-repo-panel";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { GitBranch, Link, Package, Play, Sparkles } from "lucide-react";
 import { Button } from "@/components/atoms/button";
 import { Monogram } from "@/components/atoms/entity-chip";
@@ -26,6 +27,7 @@ import {
   type Phrase,
   type WorktreeSetup,
 } from "@/lib/project-summary";
+import type { WorkspaceIconName } from "@/lib/workspace-icons";
 
 export interface ProjectConfig {
   branches: readonly string[];
@@ -56,27 +58,28 @@ export function AddProjectDialog({
   detect,
   initialRepo = null,
   initialSection = null,
+  initialClone = null,
   onAdd,
   onCancel,
   onChooseFolder,
   onDropFolder,
-  onClone,
-  onPasteUrl,
+  clone,
   editing = false,
 }: {
   editing?: boolean;
-  workspace: { name: string; color: string; image?: string };
+  workspace: { name: string; color: string; image?: string; icon?: WorkspaceIconName };
   found: readonly FoundRepo[];
   detect: (repo: FoundRepo) => ProjectConfig | Promise<ProjectConfig>;
   initialRepo?: FoundRepo | null;
   initialSection?: Section | null;
+  initialClone?: CloneMode | null;
   onAdd: (project: NewProject) => void;
   onCancel: () => void;
   onChooseFolder?: () => Promise<FoundRepo | null>;
   onDropFolder?: (file: File) => Promise<FoundRepo | null>;
-  onClone?: () => void;
-  onPasteUrl?: () => void;
+  clone?: (mode: CloneMode, onCloned: (repo: FoundRepo) => void, onBack: () => void) => ReactNode;
 }) {
+  const [cloning, setCloning] = useState<CloneMode | null>(initialClone);
   const [repo, setRepo] = useState<FoundRepo | null>(initialRepo);
   const [config, setConfig] = useState<ProjectConfig | null>(() => {
     const detected = initialRepo ? detect(initialRepo) : null;
@@ -129,6 +132,7 @@ export function AddProjectDialog({
         <Monogram
           color={workspace.color}
           image={workspace.image}
+          icon={workspace.icon}
           className="size-[22px] rounded-[6px] text-3xs"
         >
           {workspace.name[0]}
@@ -142,12 +146,23 @@ export function AddProjectDialog({
         </h2>
       </div>
 
-      {!repo ? (
+      {!repo && cloning && clone ? (
+        <div className="px-[22px] pt-4">
+          {clone(
+            cloning,
+            (next) => {
+              setCloning(null);
+              void pick(next);
+            },
+            () => setCloning(null),
+          )}
+        </div>
+      ) : !repo ? (
         <>
           <div className="px-[22px] pt-4">
             <RepoDropZone
               onChooseFolder={onChooseFolder && (() => void chooseFolder())}
-              onClone={onClone}
+              onClone={clone && (() => setCloning("github"))}
               onDropFolder={onDropFolder && ((file) => void dropFolder(file))}
             />
           </div>
@@ -226,8 +241,8 @@ export function AddProjectDialog({
       )}
 
       <div className="flex items-center gap-2 px-[22px] pt-3.5 pb-5">
-        {!repo && onPasteUrl && (
-          <Button variant="quiet" size="sm" onClick={onPasteUrl}>
+        {!repo && !cloning && clone && (
+          <Button variant="quiet" size="sm" onClick={() => setCloning("url")}>
             <Link width={12} height={12} strokeWidth={2.25} />
             Paste a git URL
           </Button>

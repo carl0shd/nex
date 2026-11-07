@@ -120,7 +120,7 @@ export function OnboardingFlow({
 
   return (
     <div className={cn("relative flex h-full flex-col bg-page", className)}>
-      {step < READY && <OnboardingChrome step={step} />}
+      {step < READY && <OnboardingChrome step={step} onSkip={() => finish(null)} />}
       {step === 0 && <WelcomeScreen preview={welcomePreview} onStart={next} />}
       {step === 1 && (
         <AgentStep

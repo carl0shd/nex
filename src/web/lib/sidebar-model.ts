@@ -1,5 +1,6 @@
 import type { Project, Session, Terminal, TerminalStatus, Workspace } from "@native/db/types";
 import type { SidebarTaskStatus, SidebarWorkspace } from "@/components/sidebar/types";
+import { workspaceIcon } from "@/lib/workspace-icons";
 import { workspaceImageUrl } from "@/lib/workspace-image";
 
 const MINUTE = 60_000;
@@ -47,6 +48,7 @@ export function buildSidebar(source: SidebarSource, now: number): SidebarWorkspa
       name: workspace.name,
       color: workspace.color,
       image: workspaceImageUrl(workspace.customImage),
+      icon: workspaceIcon(workspace.icon),
       expanded: !workspace.collapsed,
       projects: source.projects
         .filter((project) => project.workspaceId === workspace.id)

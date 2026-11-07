@@ -1,15 +1,10 @@
-import { Hexagon, Sparkles, Terminal } from "lucide-react";
+import { Terminal } from "lucide-react";
 import { ClaudeTile } from "@/components/atoms/agent-tile";
 import { cn } from "@/lib/utils";
 
-export type AgentKind = "claude" | "codex" | "gemini" | "shell";
+export type AgentKind = "claude" | "shell";
 
 const TILE = {
-  codex: {
-    icon: Hexagon,
-    className: "bg-inverse text-ink shadow-[inset_0_0_0_1px_var(--line-strong)]",
-  },
-  gemini: { icon: Sparkles, className: "bg-blue-tint text-blue" },
   shell: { icon: Terminal, className: "bg-elevated text-ink-2" },
 } as const;
 

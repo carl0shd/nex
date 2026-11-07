@@ -1,6 +1,16 @@
-import { closeSync, mkdirSync, openSync, readSync, readdirSync, statSync, watch } from "fs";
+import {
+  closeSync,
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  openSync,
+  readSync,
+  readdirSync,
+  statSync,
+  watch,
+} from "fs";
 import { homedir } from "os";
-import { join } from "path";
+import { basename, join } from "path";
 import { StringDecoder } from "string_decoder";
 import * as agentAccountRepo from "@native/db/repositories/agent-account.repo";
 import * as sessionRepo from "@native/db/repositories/session.repo";
@@ -194,4 +204,15 @@ export function watchTranscript(terminalId: string, onChange: () => void): () =>
     if (timer) clearTimeout(timer);
     for (const watcher of watchers) watcher.close();
   };
+}
+
+export function carryTranscript(terminalId: string, toConfigDir: string): void {
+  const from = transcriptPath(terminalId);
+  const cwd = terminalRepo.getById(terminalId)?.cwd;
+  if (!from || !cwd) return;
+  const dir = join(toConfigDir, "projects", encodeCwd(cwd));
+  const to = join(dir, basename(from));
+  if (from === to || existsSync(to)) return;
+  mkdirSync(dir, { recursive: true });
+  copyFileSync(from, to);
 }
