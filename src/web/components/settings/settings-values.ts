@@ -27,3 +27,14 @@ export const SCROLLBACK = options(["1000", "5000", "10000", "50000"], {
   "50000": "50,000",
 });
 export const WARN_AT = options(["70", "80", "90"], { "70": "70%", "80": "80%", "90": "90%" });
+export const RUN_AT_MOST = ["1", "2", "3", "4", "5", "6"].map((value) => ({
+  value,
+  label: value === "1" ? "1 environment" : `${value} environments`,
+}));
+export const PAUSE_AFTER = options(["5", "15", "30", "60", "never"], {
+  "5": "5 min",
+  "15": "15 min",
+  "30": "30 min",
+  "60": "1 hour",
+  never: "Never",
+});

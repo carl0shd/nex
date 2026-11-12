@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useLocation } from "react-router";
 import type { AgentAccount } from "@native/db/types";
 import type { UsageSummary } from "@native/usage/types";
 import LICENSES from "@/assets/licenses.json";
@@ -10,8 +11,11 @@ import type { SettingsWorkspace } from "@/components/settings/workspace-card";
 import { accountLabel } from "@/lib/accounts";
 import { resolveModel } from "@/components/composer/models";
 import { useAgentModels } from "@/hooks/use-agent-models";
+import { useEnvironments } from "@/hooks/use-environments";
 import { upgradeClaude } from "@/hooks/use-claude-version-check";
 import { claudeCompat } from "@/lib/claude-version";
+import { settingsEnvironments } from "@/lib/environments";
+import { ipcErrorMessage } from "@/lib/ipc-error";
 import { notifyCompact } from "@/lib/notify";
 import { relativeTime } from "@/lib/relative-time";
 import { activeLimit } from "@/lib/usage";
@@ -20,6 +24,7 @@ import { useAddProjectStore } from "@/stores/add-project.store";
 import { useNewWorkspaceStore } from "@/stores/new-workspace.store";
 import { useRemoveWorkspaceStore } from "@/stores/remove-workspace.store";
 import { useDictationStore } from "@/stores/dictation.store";
+import { useEnvironmentsStore } from "@/stores/environments.store";
 import { usePreferencesStore } from "@/stores/preferences.store";
 import { useSettingsStore } from "@/stores/settings.store";
 import { useWorkspaceStore } from "@/stores/workspace.store";
@@ -141,6 +146,16 @@ export function AppSettings() {
   const [now, setNow] = useState(() => Date.now());
   const [upgrading, setUpgrading] = useState(false);
   const models = useAgentModels();
+  useEnvironments();
+  const envStatus = useEnvironmentsStore((s) => s.status);
+  const envSetup = useEnvironmentsStore((s) => s.setup);
+  const envAction = useEnvironmentsStore((s) => s.action);
+  const startEnvSetup = useEnvironmentsStore((s) => s.startSetup);
+  const restartEnvironments = useEnvironmentsStore((s) => s.restart);
+  const repairAddresses = useEnvironmentsStore((s) => s.repairAddresses);
+  const uninstallEnvironments = useEnvironmentsStore((s) => s.uninstall);
+  const location = useLocation();
+  const section = (location.state as { section?: string } | null)?.section;
   const changeClaudePath = async (agentId: string) => {
     if (await pickClaudeBinary(agentId)) setMachine(await loadMachine());
   };
@@ -221,13 +236,19 @@ export function AppSettings() {
     microphone: dictationPrefs.microphone,
     language: dictationPrefs.language,
     lastScan: summary ? relativeTime(new Date(summary.updatedAt).getTime(), now) : "never",
+    environments:
+      envStatus && settingsEnvironments(envStatus, envSetup, envAction, prefs.envMemory),
   };
+
+  const environmentFailed = (error: unknown) =>
+    notifyCompact({ tone: "red", title: ipcErrorMessage(error) });
 
   return (
     <>
       <SettingsPage
         values={prefs}
         data={data}
+        initialSection={section ? { id: section, request: location.key } : undefined}
         className="w-full"
         actions={{
           onPreference: setPref,
@@ -296,6 +317,29 @@ export function AppSettings() {
             });
           },
           onShowDataFolder: () => void window.api.openInFinder(machine.dataDir),
+          onSetUpEnvironments: () => {
+            const memory = data.environments?.memory;
+            if (memory && memory !== prefs.envMemory) setPref("envMemory", memory);
+            startEnvSetup();
+          },
+          onShowEnvironmentLog: () => void window.api.showEnvironmentLog(),
+          onRestartEnvironments: () =>
+            void restartEnvironments()
+              .then(() => notifyCompact({ tone: "green", title: "Apple container restarted" }))
+              .catch(environmentFailed),
+          onRepairAddresses: () =>
+            void repairAddresses()
+              .then(() => notifyCompact({ tone: "green", title: ".nex addresses repaired" }))
+              .catch(environmentFailed),
+          onEnvironmentMemory: (memory) => setPref("envMemory", memory),
+          onRemoveEnvironments: async () => {
+            try {
+              await uninstallEnvironments();
+              notifyCompact({ tone: "green", title: "Environments removed" });
+            } catch (error) {
+              environmentFailed(error);
+            }
+          },
         }}
       />
       {adding && <AppAddAccount onClose={() => setAdding(false)} onAdded={reloadAccounts} />}

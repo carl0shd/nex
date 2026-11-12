@@ -1,3 +1,5 @@
+import type { ProjectEnvironment } from "@native/db/types";
+import type { CleanBaseState, CleanBaseStep, EnvCheckState } from "@native/environments/types";
 import type { ProjectConfig } from "@/components/projects/add-project-dialog";
 import type { FoundRepo } from "@/components/projects/repo-picker";
 
@@ -29,20 +31,207 @@ export function detectWithEnvironment(repo: FoundRepo): ProjectConfig {
     ...base,
     setup: { ...base.setup, install: { ...base.setup.install, on: false } },
     commands: base.commands.map((command) => ({ ...command, on: command.name === "test" })),
-    environment: {
-      browser: [
-        { name: "web", port: 5173, command: "yarn dev", address: "studio-{task}.nex" },
-        { name: "api", port: 8000, command: "yarn dev:api", address: "api.studio-{task}.nex" },
-      ],
-      internal: [
-        { name: "postgres", port: 5432, note: "data cloned from the clean base" },
-        { name: "redis", port: 6379, note: "starts empty" },
-      ],
-      values: [{ key: "VITE_API_URL", value: "https://api.studio-{task}.nex" }],
-      cleanBase: {
-        detail: "Prepared 2h ago from main · 1.4 GB · new tasks start in ~3s",
-        steps: ["yarn install", "yarn db:migrate", "yarn db:seed"],
-      },
+    environment: SAMPLE_ENVIRONMENT,
+  };
+}
+
+export const SAMPLE_ENVIRONMENT: ProjectEnvironment = {
+  source: "detected",
+  detectedFrom: ["docker-compose.yml", "package.json", "yarn.lock"],
+  warnings: ["worker: Nex ignores privileged."],
+  prepare: [
+    {
+      service: "db",
+      command:
+        'psql -v ON_ERROR_STOP=1 -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-${POSTGRES_USER:-postgres}}" -f /nex-project/db/seed.sql',
     },
+    { service: "api", command: "python manage.py loaddata fixtures/demo.json" },
+  ],
+  taskPrepare: [{ service: "api", command: "python manage.py migrate" }],
+  services: [
+    {
+      name: "web",
+      kind: "app",
+      image: "node:22-alpine",
+      command: "corepack enable && yarn install --frozen-lockfile && yarn dev --host 0.0.0.0",
+      ports: [5173],
+      env: { HOST: "0.0.0.0", VITE_API_URL: "http://api:8000" },
+      dependsOn: ["api"],
+      ready: { port: 5173 },
+      memoryMb: 1024,
+    },
+    {
+      name: "api",
+      kind: "build",
+      image: "",
+      build: { context: "backend", dockerfile: "backend/compose/django/Dockerfile" },
+      command: "/start",
+      mounts: [{ source: "backend", target: "/app" }],
+      volumes: ["/app/.venv"],
+      ports: [8000],
+      env: { DATABASE_URL: "postgresql://postgres:postgres@db:5432/atlas" },
+      envFiles: [".envs/.django"],
+      dependsOn: ["db", "redis"],
+      ready: { port: 8000 },
+      memoryMb: 1024,
+    },
+    {
+      name: "db",
+      kind: "image",
+      image: "postgres:16-alpine",
+      ports: [],
+      env: { POSTGRES_PASSWORD: "postgres", POSTGRES_DB: "atlas" },
+      data: { path: "/var/lib/postgresql/data" },
+      dependsOn: [],
+      ready: { command: ["sh", "-c", "pg_isready -h 127.0.0.1 -p 5432"] },
+      seed: { file: "db/seed.sql" },
+      memoryMb: 512,
+    },
+    {
+      name: "redis",
+      kind: "image",
+      image: "redis:7-alpine",
+      ports: [],
+      env: {},
+      dependsOn: [],
+      ready: { command: ["redis-cli", "ping"] },
+      memoryMb: 256,
+    },
+    {
+      name: "worker",
+      kind: "build",
+      image: "",
+      build: { context: "backend", dockerfile: "backend/compose/django/Dockerfile" },
+      command: "/start-celeryworker",
+      mounts: [{ source: "backend", target: "/app" }],
+      volumes: ["/app/.venv"],
+      ports: [],
+      env: {},
+      dependsOn: ["db", "redis"],
+      memoryMb: 1024,
+    },
+  ],
+};
+
+const SAMPLE_PATH = "~/code/atlas";
+
+const TESTED_AT = Date.now() - 5 * 60_000;
+
+const checkOf = (
+  phase: EnvCheckState["phase"],
+  states: EnvCheckState["services"],
+  error?: string,
+): EnvCheckState => ({
+  projectPath: SAMPLE_PATH,
+  phase,
+  startedAt: TESTED_AT - 90_000,
+  ...(phase === "running" ? {} : { finishedAt: TESTED_AT }),
+  services: states,
+  error,
+});
+
+export const SAMPLE_CHECKS: Record<"building" | "running" | "done" | "failed", EnvCheckState> = {
+  building: checkOf("running", [
+    { name: "api", state: "building", detail: "python-build-stage 4/9 · RUN uv sync --frozen" },
+    { name: "worker", state: "building", detail: "python-build-stage 4/9 · RUN uv sync --frozen" },
+    { name: "db", state: "waiting" },
+    { name: "redis", state: "waiting" },
+    { name: "web", state: "waiting" },
+  ]),
+  running: checkOf("running", [
+    { name: "db", state: "ready", detail: "Ready in 2.1s" },
+    { name: "redis", state: "ready", detail: "Ready in 0.7s" },
+    { name: "api", state: "starting" },
+    { name: "web", state: "waiting" },
+    { name: "worker", state: "waiting", detail: "Built in 1 min 12s" },
+  ]),
+  done: checkOf(
+    "done",
+    ["db", "redis", "api", "web", "worker"].map((name) => ({
+      name,
+      state: "ready",
+      detail: "Ready",
+    })),
+  ),
+  failed: checkOf(
+    "failed",
+    [
+      { name: "db", state: "ready", detail: "Ready in 2.1s" },
+      { name: "redis", state: "ready", detail: "Ready in 0.7s" },
+      {
+        name: "api",
+        state: "failed",
+        detail: "api stopped: ModuleNotFoundError: No module named 'django'",
+      },
+      { name: "web", state: "skipped" },
+      { name: "worker", state: "skipped" },
+    ],
+    "api stopped: ModuleNotFoundError: No module named 'django'",
+  ),
+};
+
+export const SAMPLE_EMPTY_ENVIRONMENT: ProjectEnvironment = {
+  services: [],
+  source: "detected",
+  detectedFrom: [],
+  warnings: [],
+};
+
+const HOUR = 3_600_000;
+
+const baseSteps = (states: CleanBaseStep["state"][], details: (string | undefined)[] = []) =>
+  [
+    { label: "Start the services" },
+    { label: "python manage.py migrate", code: true },
+    { label: "psql -f /nex-project/db/seed.sql", code: true },
+    { label: "python manage.py loaddata fixtures/demo.json", code: true },
+    { label: "Stop the databases cleanly" },
+    { label: "Save the clean base" },
+  ].map((step, index) => ({
+    ...step,
+    state: states[index] ?? "pending",
+    ...(details[index] ? { detail: details[index] } : {}),
+  }));
+
+const baseOf = (overrides: Partial<CleanBaseState>): CleanBaseState => ({
+  projectId: "atlas",
+  projectPath: SAMPLE_PATH,
+  status: "none",
+  services: ["db"],
+  steps: baseSteps([]),
+  ...overrides,
+});
+
+export function sampleCleanBases(
+  now: number,
+): Record<"none" | "building" | "ready" | "stale" | "failed", CleanBaseState> {
+  const built = {
+    builtAt: now - 2 * HOUR,
+    branch: "main",
+    commit: "abc1234f9",
+    sizeBytes: 340e6,
+  };
+  return {
+    none: baseOf({}),
+    building: baseOf({
+      status: "building",
+      steps: baseSteps(
+        ["done", "running"],
+        ["3 ready in 41.2s", "api · Applying accounts.0042… OK"],
+      ),
+    }),
+    ready: baseOf({ status: "ready", ...built, steps: baseSteps(Array(6).fill("done")) }),
+    stale: baseOf({
+      status: "stale",
+      stale: "migrations",
+      ...built,
+      builtAt: now - 3 * 24 * HOUR,
+      steps: baseSteps(Array(6).fill("done")),
+    }),
+    failed: baseOf({
+      status: "failed",
+      error: 'django.db.utils.ProgrammingError: relation "accounts" already exists',
+      steps: baseSteps(["done", "failed"], ["3 ready in 41.2s"]),
+    }),
   };
 }

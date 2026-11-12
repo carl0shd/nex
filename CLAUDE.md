@@ -156,7 +156,7 @@ our paths, and comments that broke the [Comments](#comments) rules were removed.
   `segmented-control` (text or icons), `switch`, `select-button`, `text-field`, `selection-mark`
   (clickable when it gets `onClick`), `option-card`,
   `agent-tile` (`ClaudeTile`), `agent-logo` (Claude or shell), `entity-chip` (`Monogram` workspace badge), `meter`, `orbit`,
-  `shimmer`, `stream-text` (block caret), `spinner` (`Spinner`, `SpinnerArc` icon), `color-swatches`, `dither-progress`, `dither-field` (the effort slider's dot field), `dither-stars` (a canvas starfield in the dither palette — three parallax layers drifting left, stars that twinkle, pulse or bob, sparkles and meteors; pauses off screen; math in `lib/dither.ts`), `checkbox` (square), `search-field` (search input with an optional key hint), `hover-swap` (`HoverSwap`: a row's detail cross-fades into its hover action), `expand` (`Expand`: a detail opens and closes by height and fade; its content mounts on first open), `inline-code`, `nex-logo` (`NexLogo`, the isotype on its own — never inside a tile — and `NexWordmark`), `logo-tile` (connector and MCP
+  `shimmer`, `stream-text` (block caret), `spinner` (`Spinner`, `SpinnerArc` icon), `color-swatches`, `dither-progress`, `dither-field` (the effort slider's dot field), `dither-stars` (a canvas starfield in the dither palette — three parallax layers drifting left, stars that twinkle, pulse or bob, sparkles and meteors; pauses off screen; math in `lib/dither.ts`), `checkbox` (square), `search-field` (search input with an optional key hint), `hover-swap` (`HoverSwap`: a row's detail cross-fades into its hover action), `expand` (`Expand`: a detail opens and closes by height and fade; its content mounts on first open), `inline-code`, `service-chip` (`ServiceChip`: a status dot and a service name, pressed while its detail is open), `nex-logo` (`NexLogo`, the isotype on its own — never inside a tile — and `NexWordmark`), `logo-tile` (connector and MCP
   logos). `segmented-control` also has a `bar` variant (icon-only, full width) and `switch` /
   `selection-mark` take `size="sm"`.
 - primitives: `menu` (`Menu`, `MenuItem`, `MenuLabel`, `MenuSeparator` over `GlideMenu`),
@@ -167,7 +167,10 @@ our paths, and comments that broke the [Comments](#comments) rules were removed.
   `notifyCompact` from `lib/notify.tsx`, which render our cards through `toast.custom` and dismiss on
   any action; the stacked ghosts are styled in `globals.css`; `task/app-agent-toasts.tsx` fires needs you, done, stopped, pushed and pull request toasts for tasks you are not looking at, copy in `lib/agent-toasts.ts`; `hooks/use-limit-warnings.ts` warns at 80% and 95% of an account's limit, once per window), `setting-row`
   (`SettingsCard` with label and trailing actions, `SettingsGroupHeader`, `SettingRow`),
-  `select-menu` (`SelectMenu`: a `SelectButton` that opens a checked `Menu`).
+  `select-menu` (`SelectMenu`: a `SelectButton` that opens a checked `Menu`), `key-value-list`
+  (`KeyValueList`: editable `NAME = value` rows, used for environment variables), `command-rows`
+  (`CommandRows`: a target select and a command per row, used for prepare steps), `disclosure`
+  (`Disclosure`: a chevron row with a label and a one-line summary that opens its content with `Expand`).
 - app composites: `layout/` (`TitlebarView` with `SearchButton` and `UsagePill`, which opens the `usagePanel` slot), `sidebar/`
   (`Sidebar`, `SidebarRail`, `TaskRow`, `ProjectGroup`, `WorkspaceHeader`, `SidebarLink`,
   `NewWorkspaceRow` — the inline name field with its color and badge popover — and `AddProjectRow`; task rows show a starting orbit or a red globe, workspace badges are an initial, an icon (`lib/workspace-icons.ts`) or an image, picked with `WorkspaceBadgePicker`; `environments` is a footer slot, the workspace list scrolls, and hovering a workspace in the rail opens `WorkspacePeek`; `layout/sidebar-frame.tsx` animates the width, swaps rail and sidebar and toggles on ⌘S), `task/`
@@ -218,7 +221,7 @@ our paths, and comments that broke the [Comments](#comments) rules were removed.
   data so search (`lib/settings-search.ts`) filters rows and drops empty sections; only options that
   do something are listed; `SettingsIndex`
   follows the scroll with a sliding marker and jumps on click; `AccountList` + `RemoveAccountDialog`,
-  `WorkspaceCard`, `MachineCard`, `ShortcutRow` records a new shortcut (`lib/shortcut.ts`);
+  `WorkspaceCard`, `RuntimeCard` (Apple container, `.nex` addresses, Restart and Repair) + `RemoveEnvironmentsDialog`, `ShortcutRow` records a new shortcut (`lib/shortcut.ts`);
   `LicensesView` + `LicenseSheet` read `assets/licenses.json`; defaults and options in
   `settings-values.ts`; its dialogs use `Overlay fullWindow`, which portals to the body so the scrim covers the whole window and the dialog sits in its center),
   `onboarding/` (`OnboardingFlow` runs Welcome and the five steps — `AgentStep` (ready, signed out,
@@ -227,14 +230,20 @@ our paths, and comments that broke the [Comments](#comments) rules were removed.
   layout (⌘↵ runs the primary action); `AddAccountDialog` covers every sign-in stage; `CheckList`
   and `OnboardingPanel` are shared; environment progress and sign-in come in from props), `projects/`
   (`AddProjectDialog`: `RepoDropZone` + `FoundRepos` (repos from `native/git/discover.ts`) + `AppCloneRepo` / `CloneRepoPanel` (GitHub through `gh`, or a git URL), then `PickedRepo` and one `SetupSection` per
-  line — `BranchEditor`, `WorktreeSetupEditor`, `EnvironmentEditor`, `QuickCommandsEditor`; each
+  line — `BranchEditor`, `WorktreeSetupEditor`, `EnvironmentEditor` (`projects/environment-editor.tsx`:
+  one sentence and a test status line with "Test it", issues folded into one line, services as
+  `ServiceChip`s grouped "You open" / "Runs in the background" / "Data" (`serviceRole`; the Data
+  heading carries the clean base copy state and a "Seed and migrations" disclosure), a chip opens its
+  `ServiceDetail` (`projects/service-detail.tsx`: command and memory, the rest under Advanced) below
+  its group; Add service and Detect again at the bottom; helpers in `lib/project-environment.ts`), `QuickCommandsEditor`; the dialog never grows past the window: header
+  and actions stay put and the body scrolls (`quiet-scroll`), for adding, editing and onboarding; each
   line's sentence comes from `lib/project-summary.ts`; the base branch, pull and worktree setup are saved on the
   project and `native/git/start-work.ts` applies them: start from `origin/<base>`, copy files, run install and
   script in a "Setup" shell), `environment/` (`EnvTaskButton` = the tab bar
   `EnvButton` (running, starting, paused, down, waiting) + `EnvMenu`; `EnvBanner` under the tab bar
   for starting, paused, a service down or waiting for memory; `EnvStartStatus` inside
-  `TaskEmptyState`; `EnvironmentsMeter` in the sidebar footer opens `MachinePopover`;
-  `CleanBaseFailedDialog`, `AddressStatus`; closing a task is `task/close-task-dialog.tsx`). They take plain
+  `TaskEmptyState`; `EnvironmentsMeter` in the sidebar footer opens `MachinePopover` (memory used by Nex containers against the memory budget);
+  `CleanBaseFailedDialog` (the editor's Data line and its labels come from `lib/clean-base.ts`), `AddressStatus`; closing a task is `task/close-task-dialog.tsx`). They take plain
   props; nothing is wired to the stores yet.
 
 The other beautiful-ui primitives are still in their original look and are not shown anywhere yet.
@@ -336,6 +345,111 @@ Each task runs Claude Code headless, one process per task, in `native/agents/age
   images carry their file name as an `[Image N: name]` line that the chat strips from the bubble.
 - **MCP servers** are added with `claude mcp add` through `mcpAdd` (`agents/mcp-servers.ts` builds the args).
 - Never drive the agent through a pty or by simulating keys.
+
+### Environments
+
+Tasks run their services on native Apple container (`native/environments/`): every service is its
+own container, so its own micro-VM with its own IP on `192.168.64.0/24`. No Linux machine, no Docker;
+images a project builds come from Apple container's own builder. Ports never collide because nothing
+is published to localhost.
+
+- **Setup** (`service.ts`, steps in `setup-steps.ts`): install Apple container (signed pkg from
+  GitHub), start it with `--enable-kernel-install`, register `.nex` addresses, then run a throwaway
+  container and open its address. Install and `.nex` share one password prompt; a failed step retries
+  from itself. Setup also removes what the old Linux-machine version left (`nex` machine, `nex-machine`
+  images, its builder and folders).
+- **Labels:** everything Nex creates carries `nex=1` (`labels.ts`), plus `nex.task=<id>` per task;
+  status, memory use (`container stats`) and uninstall only ever look at labelled containers and volumes.
+- **`.nex` addresses:** a dotted alias (`--network default,alias=<name>.nex`) resolves through
+  container's DNS (`127.0.0.1:2053`) without a `[dns] domain` in `config.toml`, and
+  `sudo container system dns create nex` writes `/etc/resolver/containerization.nex` so macOS asks it.
+- **Service discovery** (verified on 1.7.1): every service of a task gets the alias
+  `<service>.<task>.nex` and every container of that task runs with `--dns-search <task>.nex`, so the
+  names a project already uses (`db`, `redis` in `DATABASE_URL`) resolve inside the task, each task to
+  its own containers. A container can carry several aliases; the first app service with a port also
+  gets `<task>.nex`, the task's main address. There is no `--add-host`. Isolation is by name only:
+  every container shares `192.168.64.0/24`.
+- **Definition** (`EnvServiceDef` / `ProjectEnvironment` in `db/types.ts`, stored as JSON in
+  `projects.environment`): per service `kind` (`image` = a ready image, `build` = an image built from
+  the project's Dockerfile, `app` = the project's code on a runtime image, for repos without compose),
+  `image`, `build` (`context`, `dockerfile` — both repo paths — `target`, `args`), `entrypoint`,
+  `command`, `workdir`, `mounts` (project paths bind-mounted from the worktree), `volumes` (paths that
+  get a task volume filled from the image), `ports` (only the ones shown as addresses; every port
+  is reachable inside the task and from the Mac), `env`, `envFiles` (read from the worktree at run
+  time, so secrets never land in Nex's database), `data` (the directory the clean base keeps), `dependsOn`,
+  `ready` (a probe command or a port), `seed`, `memoryMb`. `source` turns `edited` on the first change.
+  A project created without one gets it detected in main.
+- **Detection** (`detect.ts`, never runs project code): the first of `compose.yaml`,
+  `docker-compose.yml` and their `.local` / `.dev` variants (`detect-compose.ts`, faithful to compose:
+  `.env` interpolation, YAML anchors and merge keys, `build` → a `build` service, `env_file`,
+  `environment`, `command` / `entrypoint` (string or list), `working_dir`, `healthcheck` → `ready`,
+  bind mounts inside the project → `mounts` (`:ro` kept, `:z` dropped), anonymous and named volumes →
+  `volumes`, the named volume of a known data store → `data`; `stdin_open`, `tty`, `container_name`,
+  `networks` and `restart` are ignored and proxies like traefik dropped; `depends_on` only orders,
+  since the check waits for each service to be ready);
+  otherwise the stack (`detect-stack.ts`: `package.json` dev script, lockfile, `.nvmrc`/`engines`,
+  framework ports, `--host 0.0.0.0` for vite-like servers, database URLs in `.env.example`, Procfile,
+  seeds). Anything Apple container can't do becomes a warning in the editor; the editor drops a
+  warning about a service that already has a validation error, so a problem never shows twice.
+- **Translation** (`translate.ts` `toContainerRuns`, pure): `volume create` and `run` args in
+  `dependsOn` order (a cycle throws): `nex-<task>-<service>`, labels `nex`, `nex.task`, `nex.project`,
+  `nex.service`, at least 256 MB. App services mount the worktree at `/workspace`, run their command
+  through `--entrypoint sh -c` (not `-l`: a login shell resets the image's `PATH`) and, on node or bun,
+  get a `node_modules` volume so the container's install never touches the checkout; installs are
+  `--frozen-lockfile` / `npm ci` so lockfiles aren't rewritten. `build` and `image` services mount only
+  their `mounts`, and pass `command` as words after the image's entrypoint, like compose (`entrypoint`
+  → `--entrypoint` plus the rest as arguments). Data directories are named volumes; postgres gets
+  `PGDATA=<data>/pgdata` and mysql `--datadir`, because volumes have `lost+found` at the root.
+- **Volumes start empty** (verified on 1.7.1): neither a named volume nor `-v /path` gets the image's
+  files at that path, unlike Docker, so a `- /app/.venv` under `./triton:/app` would hide the deps the
+  build installed. Each `volumes` path gets `nex-<task>-<service>-<n>`, filled before the service starts by
+  a throwaway `run --rm --user 0:0` of the same image that `cp -a`s the directory in and deletes
+  `lost+found`. Never use `-v /path`: Apple creates an unlabelled volume that survives `--rm`. A mount
+  point under a bind mount is created in the worktree, as Docker does.
+- **Builds** (`build.ts`): `container build --progress plain` from the project's main checkout, tagged
+  `nex-<project>-<service>:<hash>` and reused by every task. The hash covers the project path, the build
+  section, the Dockerfile and what it copies in that is a plain file (entrypoint scripts) or a known
+  manifest or lockfile in a copied folder — not the code, which dev setups bind-mount. Services with the
+  same build section (anchors) share one build; after a new build the previous tag of that service
+  (`nex.build` label) is removed. The first build starts Apple's `buildkit` builder VM (defaults: 2 GB).
+- **Check** (`check.ts`): runs the plan once against the project's main checkout as task
+  `check-<project>` with `nex.check=1`, streams building (with the current `#N [stage x/y]` step) /
+  pulling / starting / ready / failed per service (`ENV_CHECK_PROGRESS`) and always removes the
+  containers and volumes afterwards; built and pulled images stay.
+- **Memory:** `envMemory` is the budget every environment shares (the queue enforces it later);
+  changing it restarts nothing. Each container needs at least 200 MiB.
+- **Clean base** (`clean-base.ts`, pure parts in `clean-base-plan.ts`): one stopped copy of every `data`
+  service per project, the volumes `nex-base-<projectKey>-<service>` (`nex.base` + `nex.project`, no
+  `nex.task`). Building runs the plan once against the main checkout as task `base-<project>` through the
+  same machinery as the check (`env-run.ts`), with readiness strict for ports too, then `taskPrepare` and
+  `prepare` steps, then stops the apps and the data stores in reverse dependency order (postgres with
+  `SIGINT`, a 180 s grace), deletes the run and keeps the volumes. The record (built at, branch, commit,
+  size, migrations fingerprint, status) is the `cleanBases` setting keyed by project key.
+- **Prepare steps** (`prepare`, `taskPrepare` on the environment) run with `container exec` through the
+  image's entrypoint and working directory (the cookiecutter entrypoints export `DATABASE_URL`).
+  `prepare` runs once into the base; `taskPrepare` runs in the base first, then in every task. During
+  the base build every non-app service mounts the checkout read-only at `/nex-project` (SQL seeds).
+  Detection (`detect-prepare.ts`): migrations for Django, Rails, Prisma, Alembic, Knex and Sequelize as
+  `taskPrepare` unless the start command or the script it runs (a Dockerfile `COPY` to that path, a
+  package script) already migrates; Prisma seeds, `seed.file` SQL loaded with `psql`/`mysql`, and
+  `Makefile` targets named `*seed*` that `run`/`exec` one of the services, as `prepare`.
+- **Staleness:** the fingerprint hashes the paths and contents of `migrations/`, `db/migrate/` and
+  `alembic/versions/` files (plus seeds) from `git ls-files -co`, nested repos and submodules included,
+  capped at 5000 files. A different fingerprint is "out of date", so is a change to the data services
+  or the steps. Checked when the editor opens and when Nex starts; a build Nex quit during is cleaned up.
+- **Clone** (`cloneBaseForTask`, used by tasks next): refuses unless the base is ready, creates
+  `nex-<task>-<service>-data` with the task's labels and replaces its `volume.img` with
+  `cp -c` of the base's (~60 ms a volume, near zero disk; verified isolated); `toContainerRuns` takes
+  them as `dataVolumes` and mounts them without creating. A build waits for clones in flight. Never
+  `container commit` (it fails on Postgres with "could not read block"); the source must be stopped cleanly.
+- **Hot reload** (not built yet) comes from Nex forwarding file changes from the worktree into the containers.
+- Every container boots its own kernel with 8k inotify watches, too few for dev-server file watchers, so
+  service runs pass `--kernel-arg sysctl.fs.inotify.max_user_watches=524288` (and `max_user_instances`).
+- Apple container 1.7.1 never creates `content/blobs/sha256` after a fresh install, so the first pull
+  fails: `ensureContentStore()` runs before any pull or build.
+- **Uninstall** stops the system before running Apple's uninstall script (running containers and the
+  builder are left orphaned otherwise) and batches `dns delete` and the script in one admin prompt; the
+  runtime goes only when Nex installed it.
 
 ### Diff viewer
 

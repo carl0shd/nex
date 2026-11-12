@@ -1,6 +1,14 @@
 import { contextBridge, ipcRenderer, webFrame, webUtils } from "electron";
 import { IPC } from "@native/ipc/channels";
 import type { TerminalStatus } from "@native/db/types";
+import type {
+  CleanBaseInput,
+  CleanBaseState,
+  EnvCheckInput,
+  EnvCheckState,
+  EnvSetupState,
+} from "@native/environments/types";
+import type { ProjectEnvironment } from "@native/db/types";
 
 type SpeechEvent = {
   type: "state" | "partial" | "final" | "error" | "end" | "devicesChanged";
@@ -326,6 +334,45 @@ const api = {
         speechSubscribers.delete(callback);
       };
     },
+  },
+
+  getEnvironmentStatus: () => ipcRenderer.invoke(IPC.ENV_STATUS),
+  setupEnvironments: () => ipcRenderer.invoke(IPC.ENV_SETUP),
+  restartEnvironments: () => ipcRenderer.invoke(IPC.ENV_RESTART),
+  repairEnvironmentAddresses: () => ipcRenderer.invoke(IPC.ENV_REPAIR_ADDRESSES),
+  uninstallEnvironments: () => ipcRenderer.invoke(IPC.ENV_UNINSTALL),
+  showEnvironmentLog: () => ipcRenderer.invoke(IPC.ENV_SHOW_LOG),
+  onEnvironmentSetup: (callback: (state: EnvSetupState) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, state: EnvSetupState): void =>
+      callback(state);
+    ipcRenderer.on(IPC.ENV_SETUP_PROGRESS, handler);
+    return () => ipcRenderer.removeListener(IPC.ENV_SETUP_PROGRESS, handler);
+  },
+  detectEnvironment: (path: string) => ipcRenderer.invoke(IPC.ENV_DETECT, path),
+  detectProjectEnvironment: (projectId: string) =>
+    ipcRenderer.invoke(IPC.ENV_DETECT_PROJECT, projectId),
+  getProjectEnvironment: (projectId: string) => ipcRenderer.invoke(IPC.ENV_PROJECT_GET, projectId),
+  saveProjectEnvironment: (projectId: string, environment: ProjectEnvironment) =>
+    ipcRenderer.invoke(IPC.ENV_PROJECT_SAVE, projectId, environment),
+  checkEnvironment: (input: EnvCheckInput) => ipcRenderer.invoke(IPC.ENV_CHECK, input),
+  stopEnvironmentCheck: (projectPath: string) =>
+    ipcRenderer.invoke(IPC.ENV_CHECK_STOP, projectPath),
+  getEnvironmentCheck: (projectPath: string) =>
+    ipcRenderer.invoke(IPC.ENV_CHECK_STATE, projectPath),
+  onEnvironmentCheck: (callback: (state: EnvCheckState) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, state: EnvCheckState): void =>
+      callback(state);
+    ipcRenderer.on(IPC.ENV_CHECK_PROGRESS, handler);
+    return () => ipcRenderer.removeListener(IPC.ENV_CHECK_PROGRESS, handler);
+  },
+  getCleanBase: (projectId: string) => ipcRenderer.invoke(IPC.ENV_BASE_GET, projectId),
+  buildCleanBase: (input: CleanBaseInput) => ipcRenderer.invoke(IPC.ENV_BASE_BUILD, input),
+  stopCleanBase: (projectId: string) => ipcRenderer.invoke(IPC.ENV_BASE_STOP, projectId),
+  onCleanBase: (callback: (state: CleanBaseState) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, state: CleanBaseState): void =>
+      callback(state);
+    ipcRenderer.on(IPC.ENV_BASE_PROGRESS, handler);
+    return () => ipcRenderer.removeListener(IPC.ENV_BASE_PROGRESS, handler);
   },
 
   usage: {

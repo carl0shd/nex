@@ -152,6 +152,26 @@ export const IPC = {
   USAGE_WATCH_START: "usage:watch-start",
   USAGE_WATCH_STOP: "usage:watch-stop",
   USAGE_CHANGED: "usage:changed",
+
+  ENV_STATUS: "environments:status",
+  ENV_SETUP: "environments:setup",
+  ENV_SETUP_PROGRESS: "environments:setup-progress",
+  ENV_RESTART: "environments:restart",
+  ENV_REPAIR_ADDRESSES: "environments:repair-addresses",
+  ENV_UNINSTALL: "environments:uninstall",
+  ENV_SHOW_LOG: "environments:show-log",
+  ENV_DETECT: "environments:detect",
+  ENV_DETECT_PROJECT: "environments:detect-project",
+  ENV_PROJECT_GET: "environments:project-get",
+  ENV_PROJECT_SAVE: "environments:project-save",
+  ENV_CHECK: "environments:check",
+  ENV_CHECK_STATE: "environments:check-state",
+  ENV_CHECK_STOP: "environments:check-stop",
+  ENV_CHECK_PROGRESS: "environments:check-progress",
+  ENV_BASE_GET: "environments:base-get",
+  ENV_BASE_BUILD: "environments:base-build",
+  ENV_BASE_STOP: "environments:base-stop",
+  ENV_BASE_PROGRESS: "environments:base-progress",
 } as const;
 
 export type IPCChannel = (typeof IPC)[keyof typeof IPC];

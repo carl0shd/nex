@@ -180,6 +180,7 @@ const migrations: string[] = [
   `ALTER TABLE projects ADD COLUMN base_branch TEXT NOT NULL DEFAULT '';
   ALTER TABLE projects ADD COLUMN pull_base INTEGER NOT NULL DEFAULT 1;
   ALTER TABLE projects ADD COLUMN setup TEXT;`,
+  `ALTER TABLE projects ADD COLUMN environment TEXT;`,
 ];
 
 export function runMigrations(db: Database.Database): void {

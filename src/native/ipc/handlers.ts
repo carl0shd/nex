@@ -12,6 +12,31 @@ import {
 } from "fs";
 import { dirname, extname, join } from "path";
 import { IPC } from "./channels";
+import {
+  environmentLogPath,
+  getEnvironmentStatus,
+  onSetupProgress,
+  removeProjectEnvironments,
+  repairAddresses,
+  restartEnvironments,
+  setupEnvironments,
+  uninstallEnvironments,
+} from "@native/environments/service";
+import {
+  checkProjectEnvironment,
+  stopProjectCheck,
+  environmentCheck,
+  onCheckProgress,
+} from "@native/environments/check";
+import { detectEnvironment } from "@native/environments/detect";
+import {
+  buildCleanBase,
+  forgetCleanBase,
+  getCleanBase,
+  onCleanBaseProgress,
+  refreshCleanBases,
+  stopCleanBase,
+} from "@native/environments/clean-base";
 import * as workspaceRepo from "@native/db/repositories/workspace.repo";
 import * as projectRepo from "@native/db/repositories/project.repo";
 import * as settings from "@native/db/repositories/settings.repo";
@@ -112,7 +137,8 @@ import {
   stopSpeech,
   cancelSpeech,
 } from "@native/speech/manager";
-import type { Terminal } from "@native/db/types";
+import type { CreateProjectInput, ProjectEnvironment, Terminal } from "@native/db/types";
+import type { CleanBaseInput, EnvCheckInput } from "@native/environments/types";
 import type { AgentResumeAdapter, SessionTrackerHandle } from "@native/agents/resume";
 
 interface AgentSpawnPlan {
@@ -256,9 +282,20 @@ export function registerIPCHandlers(): void {
   ipcMain.handle(IPC.PROJECT_GET_BY_WORKSPACE, (_, workspaceId) =>
     projectRepo.getByWorkspace(workspaceId),
   );
-  ipcMain.handle(IPC.PROJECT_CREATE, (_, input) => projectRepo.create(input));
+  ipcMain.handle(IPC.PROJECT_CREATE, async (_, input: CreateProjectInput) =>
+    projectRepo.create({
+      ...input,
+      environment: input.environment ?? (await detectEnvironment(input.path)),
+    }),
+  );
   ipcMain.handle(IPC.PROJECT_UPDATE, (_, id, input) => projectRepo.update(id, input));
-  ipcMain.handle(IPC.PROJECT_DELETE, (_, id) => projectRepo.remove(id));
+  ipcMain.handle(IPC.PROJECT_DELETE, (_, id) => {
+    const project = projectRepo.getById(id);
+    projectRepo.remove(id);
+    if (!project) return;
+    forgetCleanBase(project.path);
+    void removeProjectEnvironments(project.path);
+  });
 
   ipcMain.handle(IPC.SETTINGS_GET, (_, key, fallback) => settings.get(key, fallback));
   ipcMain.handle(IPC.SETTINGS_SET, (_, key, value) => settings.set(key, value));
@@ -648,4 +685,40 @@ export function registerIPCHandlers(): void {
   });
 
   ipcMain.handle(IPC.USAGE_WATCH_STOP, (event) => stopUsageWatcherFor(event.sender.id));
+
+  ipcMain.handle(IPC.ENV_STATUS, () => getEnvironmentStatus());
+  ipcMain.handle(IPC.ENV_SETUP, () => setupEnvironments());
+  ipcMain.handle(IPC.ENV_RESTART, () => restartEnvironments());
+  ipcMain.handle(IPC.ENV_REPAIR_ADDRESSES, () => repairAddresses());
+  ipcMain.handle(IPC.ENV_UNINSTALL, () => uninstallEnvironments());
+  ipcMain.handle(IPC.ENV_SHOW_LOG, async () => !(await shell.openPath(environmentLogPath())));
+  ipcMain.handle(IPC.ENV_DETECT, (_, path: string) => detectEnvironment(path));
+  ipcMain.handle(IPC.ENV_DETECT_PROJECT, async (_, projectId: string) => {
+    const project = projectRepo.getById(projectId);
+    return project ? detectEnvironment(project.path) : null;
+  });
+  ipcMain.handle(
+    IPC.ENV_PROJECT_GET,
+    (_, projectId: string) => projectRepo.getById(projectId)?.environment ?? null,
+  );
+  ipcMain.handle(IPC.ENV_PROJECT_SAVE, (_, projectId: string, environment: ProjectEnvironment) =>
+    projectRepo.update(projectId, { environment }),
+  );
+  ipcMain.handle(IPC.ENV_CHECK, (_, input: EnvCheckInput) => checkProjectEnvironment(input));
+  ipcMain.handle(IPC.ENV_CHECK_STATE, (_, projectPath: string) => environmentCheck(projectPath));
+  ipcMain.handle(IPC.ENV_CHECK_STOP, (_, projectPath: string) => stopProjectCheck(projectPath));
+  ipcMain.handle(IPC.ENV_BASE_GET, (_, projectId: string) => getCleanBase(projectId));
+  ipcMain.handle(IPC.ENV_BASE_BUILD, (_, input: CleanBaseInput) =>
+    buildCleanBase(input.projectId, input.environment),
+  );
+  ipcMain.handle(IPC.ENV_BASE_STOP, (_, projectId: string) => stopCleanBase(projectId));
+  const broadcast = (channel: string, payload: unknown) => {
+    for (const window of BrowserWindow.getAllWindows()) {
+      if (!window.isDestroyed()) window.webContents.send(channel, payload);
+    }
+  };
+  onSetupProgress((state) => broadcast(IPC.ENV_SETUP_PROGRESS, state));
+  onCheckProgress((state) => broadcast(IPC.ENV_CHECK_PROGRESS, state));
+  onCleanBaseProgress((state) => broadcast(IPC.ENV_BASE_PROGRESS, state));
+  void refreshCleanBases().catch(() => {});
 }

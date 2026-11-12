@@ -3,6 +3,8 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "re
 import { Monitor, Moon, Play, Plus, Sun } from "lucide-react";
 import type { Preferences } from "@native/db/types";
 import { ClaudeTile } from "@/components/atoms/agent-tile";
+import { SetupProgress, type SetupProgressPhase } from "@/components/environment/setup-progress";
+import type { CheckItem } from "@/components/onboarding/check-list";
 import { Button } from "@/components/atoms/button";
 import { DitherStars } from "@/components/atoms/dither-stars";
 import { IconButton } from "@/components/atoms/icon-button";
@@ -30,6 +32,8 @@ import {
   LicensesView,
   type PackageLicense,
 } from "@/components/settings/licenses-view";
+import { RemoveEnvironmentsDialog } from "@/components/settings/remove-environments-dialog";
+import { RuntimeCard, type RuntimeStatus } from "@/components/settings/runtime-card";
 import { SettingsIndex, type SettingsIndexGroup } from "@/components/settings/settings-index";
 import { SettingsSection } from "@/components/settings/settings-section";
 import * as OPTIONS from "@/components/settings/settings-values";
@@ -66,6 +70,27 @@ interface Section {
   groups: Group[];
 }
 
+export interface SettingsEnvironmentSetup {
+  items: readonly CheckItem[];
+  current: number;
+  phase: SetupProgressPhase;
+  leftLabel?: string;
+  took?: string;
+  error?: string;
+}
+
+export interface SettingsEnvironments {
+  unsupported: { title: string; description: string } | null;
+  enabled: boolean;
+  runtime: RuntimeStatus;
+  containers: number;
+  memory: string;
+  memoryOptions: readonly SelectOption<string>[];
+  setup: SettingsEnvironmentSetup | null;
+  removesRuntime: boolean;
+  removing: boolean;
+}
+
 export interface SettingsData {
   version: string;
   dataDir: string;
@@ -87,6 +112,7 @@ export interface SettingsData {
   microphone: string;
   language: string;
   lastScan: string;
+  environments: SettingsEnvironments | null;
 }
 
 export interface SettingsActions {
@@ -114,6 +140,12 @@ export interface SettingsActions {
   onRescan: () => void;
   onUpgradeClaude: () => void;
   onShowDataFolder: () => void;
+  onSetUpEnvironments: () => void;
+  onShowEnvironmentLog: () => void;
+  onRestartEnvironments: () => void;
+  onRepairAddresses: () => void;
+  onEnvironmentMemory: (memory: string) => void;
+  onRemoveEnvironments: () => Promise<void>;
 }
 
 type SelectKey = {
@@ -230,18 +262,157 @@ function Field({
   );
 }
 
+const FOLLOW_SECTION_MS = 4000;
+const SETTLE_QUIET_MS = 120;
+const SETTLE_MAX_MS = 700;
+const STOP_FOLLOWING = ["wheel", "pointerdown", "keydown"] as const;
+
+function scrollToSection(root: HTMLElement | null, id: string, behavior: ScrollBehavior) {
+  const section = root?.querySelector<HTMLElement>(`[data-settings-section="${id}"]`);
+  if (!root || !section) return false;
+  root.scrollTo({ top: section.offsetTop - 24, behavior });
+  return true;
+}
+
+function environmentGroups(
+  env: SettingsEnvironments,
+  values: Preferences,
+  actions: SettingsActions,
+  select: (key: SelectKey, options: readonly SelectOption<string>[]) => ReactNode,
+  onUninstall: () => void,
+): Group[] {
+  if (env.unsupported) {
+    return [
+      card("env-unsupported", [row(env.unsupported.title, env.unsupported.description, null)]),
+    ];
+  }
+  const memory = row(
+    "Memory for environments",
+    "Shared by every task. New environments wait when it is full.",
+    <SelectMenu
+      value={env.memory}
+      options={env.memoryOptions}
+      onChange={actions.onEnvironmentMemory}
+      className="w-[90px] min-w-0"
+    />,
+  );
+  if (!env.enabled) {
+    const { setup } = env;
+    return [
+      ...(setup
+        ? [
+            {
+              key: "env-progress",
+              card: false,
+              blocks: [
+                custom(
+                  "env-progress",
+                  ["Set up environments", ...setup.items.map((item) => item.label)],
+                  <SetupProgress
+                    items={setup.items}
+                    current={setup.current}
+                    phase={setup.phase}
+                    leftLabel={setup.leftLabel}
+                    took={setup.took}
+                  />,
+                ),
+              ],
+            },
+          ]
+        : []),
+      card("env-setup", [
+        memory,
+        row(
+          setup?.phase === "failed" ? "Setup stopped" : "Set up environments",
+          setup?.error ?? "Installs Apple container and registers .nex addresses on this Mac.",
+          <>
+            {setup && (
+              <Button variant="quiet" size="sm" onClick={actions.onShowEnvironmentLog}>
+                Show log
+              </Button>
+            )}
+            <Button
+              size="sm"
+              disabled={setup?.phase === "running"}
+              onClick={actions.onSetUpEnvironments}
+            >
+              {setup?.phase === "running"
+                ? "Setting up…"
+                : setup?.phase === "failed"
+                  ? "Try again"
+                  : "Set up"}
+            </Button>
+          </>,
+        ),
+      ]),
+    ];
+  }
+  return [
+    {
+      key: "env-runtime",
+      card: false,
+      blocks: [
+        custom(
+          "runtime",
+          ["Apple container", "Restart", "Repair", ".nex addresses", env.runtime.version ?? ""],
+          <RuntimeCard
+            runtime={env.runtime}
+            onRestart={actions.onRestartEnvironments}
+            onRepair={actions.onRepairAddresses}
+          />,
+        ),
+      ],
+    },
+    card(
+      "env-behaviour",
+      [
+        memory,
+        row(
+          "Run at most",
+          "New tasks wait for room once this many are running.",
+          select("envRunAtMost", OPTIONS.RUN_AT_MOST),
+        ),
+        row(
+          "Pause idle environments after",
+          "Frees memory. They resume when you open the task.",
+          select("envPauseAfter", OPTIONS.PAUSE_AFTER),
+        ),
+        switchRow(
+          "Start when a task is created",
+          "Otherwise it starts the first time you open the task.",
+          values.envStartOnCreate,
+          (checked) => actions.onPreference("envStartOnCreate", checked),
+        ),
+      ],
+      "Behaviour",
+    ),
+    card("env-remove", [
+      row(
+        "Remove environments",
+        "Deletes every environment and clean base Nex created. Projects are not touched.",
+        <Button variant="destructive" size="sm" onClick={onUninstall}>
+          Uninstall…
+        </Button>,
+      ),
+    ]),
+  ];
+}
+
 export function SettingsPage({
   values,
   data,
   actions,
+  initialSection,
   className,
 }: {
   values: Preferences;
   data: SettingsData;
   actions: SettingsActions;
+  initialSection?: { id: string; request: string };
   className?: string;
 }) {
   const [removing, setRemoving] = useState<ClaudeAccount | null>(null);
+  const [uninstalling, setUninstalling] = useState(false);
   const [view, setView] = useState<"settings" | "licenses">("settings");
   const [license, setLicense] = useState<PackageLicense | null>(null);
   const [query, setQuery] = useState("");
@@ -659,6 +830,19 @@ export function SettingsPage({
         },
       ],
     },
+    ...(data.environments
+      ? [
+          {
+            id: "environments",
+            title: "Environments",
+            description: "Each task can run its own services and data.",
+            part: "work" as const,
+            groups: environmentGroups(data.environments, values, actions, select, () =>
+              setUninstalling(true),
+            ),
+          },
+        ]
+      : []),
     {
       id: "terminal",
       title: "Terminal",
@@ -882,16 +1066,51 @@ export function SettingsPage({
   });
 
   const jumpTo = (id: string) => {
-    const root = scrollRef.current;
-    const section = root?.querySelector<HTMLElement>(`[data-settings-section="${id}"]`);
-    if (!root || !section) return;
-    setActive(id);
-    root.scrollTo({ top: section.offsetTop - 24, behavior: "smooth" });
+    if (scrollToSection(scrollRef.current, id, "smooth")) setActive(id);
   };
+  const sectionId = initialSection?.id;
+  const sectionRequest = initialSection?.request;
+  const [settling, setSettling] = useState(Boolean(sectionId));
+  useEffect(() => {
+    const root = scrollRef.current;
+    const content = root?.firstElementChild;
+    if (!root || !content || !sectionId) return;
+    setSettling(true);
+    let settled: ReturnType<typeof setTimeout> | undefined;
+    const reveal = () => setSettling(false);
+    const cap = setTimeout(reveal, SETTLE_MAX_MS);
+    const jump = () => {
+      if (!scrollToSection(root, sectionId, "instant")) return;
+      setActive(sectionId);
+      clearTimeout(settled);
+      settled = setTimeout(reveal, SETTLE_QUIET_MS);
+    };
+    jump();
+    // Accounts, usage and workspaces load after the jump and push the section down, so follow it
+    // until the person scrolls or clicks.
+    const follow = new ResizeObserver(jump);
+    follow.observe(content);
+    const stop = () => follow.disconnect();
+    const timer = setTimeout(stop, FOLLOW_SECTION_MS);
+    for (const event of STOP_FOLLOWING) root.addEventListener(event, stop, { once: true });
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(cap);
+      clearTimeout(settled);
+      stop();
+      for (const event of STOP_FOLLOWING) root.removeEventListener(event, stop);
+    };
+  }, [sectionId, sectionRequest]);
 
   return (
     <div className={cn("relative h-full", className)}>
-      <div ref={scrollRef} className="relative h-full overflow-y-auto">
+      <div
+        ref={scrollRef}
+        className={cn(
+          "relative h-full overflow-y-auto transition-opacity duration-150 ease-out [scrollbar-gutter:stable]",
+          settling && "opacity-0",
+        )}
+      >
         {view === "licenses" ? (
           <div className="flex justify-center px-[60px] py-14">
             <LicensesView
@@ -956,6 +1175,19 @@ export function SettingsPage({
       {license && (
         <Overlay fullWindow onClose={() => setLicense(null)}>
           <LicenseSheet item={license} onClose={() => setLicense(null)} />
+        </Overlay>
+      )}
+      {uninstalling && data.environments && (
+        <Overlay fullWindow onClose={() => setUninstalling(false)}>
+          <RemoveEnvironmentsDialog
+            containers={data.environments.containers}
+            removesRuntime={data.environments.removesRuntime}
+            removing={data.environments.removing}
+            onCancel={() => setUninstalling(false)}
+            onRemove={() =>
+              void actions.onRemoveEnvironments().finally(() => setUninstalling(false))
+            }
+          />
         </Overlay>
       )}
       {removing && (

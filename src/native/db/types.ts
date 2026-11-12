@@ -33,6 +33,55 @@ export interface ProjectSetup {
   script: { on: boolean; path: string };
 }
 
+export type EnvServiceKind = "image" | "app" | "build";
+
+export interface EnvBuild {
+  context: string;
+  dockerfile: string;
+  target?: string;
+  args?: Record<string, string>;
+}
+
+export interface EnvMount {
+  source: string;
+  target: string;
+  readOnly?: boolean;
+}
+
+export interface EnvServiceDef {
+  name: string;
+  kind: EnvServiceKind;
+  image: string;
+  build?: EnvBuild;
+  entrypoint?: string;
+  command?: string;
+  workdir?: string;
+  mounts?: EnvMount[];
+  volumes?: string[];
+  ports: number[];
+  env: Record<string, string>;
+  envFiles?: string[];
+  data?: { path: string };
+  dependsOn: string[];
+  ready?: { command?: string[]; port?: number };
+  seed?: { file: string };
+  memoryMb: number;
+}
+
+export interface EnvPrepareStep {
+  service: string;
+  command: string;
+}
+
+export interface ProjectEnvironment {
+  services: EnvServiceDef[];
+  prepare?: EnvPrepareStep[];
+  taskPrepare?: EnvPrepareStep[];
+  source: "detected" | "edited";
+  detectedFrom: string[];
+  warnings: string[];
+}
+
 export interface Project {
   id: string;
   workspaceId: string;
@@ -42,6 +91,7 @@ export interface Project {
   baseBranch: string;
   pullBase: boolean;
   setup: ProjectSetup | null;
+  environment: ProjectEnvironment | null;
   quickCommands: QuickCommand[];
   sortOrder: number;
   createdAt: string;
@@ -60,6 +110,7 @@ export interface CreateProjectInput {
   baseBranch?: string;
   pullBase?: boolean;
   setup?: ProjectSetup | null;
+  environment?: ProjectEnvironment | null;
   quickCommands?: QuickCommand[];
 }
 
@@ -70,6 +121,7 @@ export interface UpdateProjectInput {
   baseBranch?: string;
   pullBase?: boolean;
   setup?: ProjectSetup | null;
+  environment?: ProjectEnvironment | null;
   quickCommands?: QuickCommand[];
   sortOrder?: number;
 }
@@ -279,4 +331,8 @@ export interface Preferences {
   showUsage: boolean;
   warnAt: string;
   dailyAlert: string;
+  envMemory: string;
+  envRunAtMost: string;
+  envPauseAfter: string;
+  envStartOnCreate: boolean;
 }

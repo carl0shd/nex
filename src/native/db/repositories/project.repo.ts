@@ -3,6 +3,7 @@ import { getDb } from "@native/db/database";
 import type {
   Project,
   CreateProjectInput,
+  ProjectEnvironment,
   ProjectSetup,
   UpdateProjectInput,
 } from "@native/db/types";
@@ -16,6 +17,7 @@ interface ProjectRow {
   base_branch: string;
   pull_base: number;
   setup: string | null;
+  environment: string | null;
   quick_commands: string;
   sort_order: number;
   created_at: string;
@@ -31,6 +33,7 @@ function toProject(row: ProjectRow): Project {
     baseBranch: row.base_branch,
     pullBase: row.pull_base === 1,
     setup: row.setup ? (JSON.parse(row.setup) as ProjectSetup) : null,
+    environment: row.environment ? (JSON.parse(row.environment) as ProjectEnvironment) : null,
     quickCommands: JSON.parse(row.quick_commands),
     sortOrder: row.sort_order,
     createdAt: row.created_at,
@@ -65,7 +68,7 @@ export function create(input: CreateProjectInput): Project {
     .get(input.workspaceId) as { next: number };
   const row = db
     .prepare(
-      "INSERT INTO projects (id, workspace_id, name, path, branch_prefix, base_branch, pull_base, setup, quick_commands, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *",
+      "INSERT INTO projects (id, workspace_id, name, path, branch_prefix, base_branch, pull_base, setup, environment, quick_commands, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *",
     )
     .get(
       randomUUID(),
@@ -76,6 +79,7 @@ export function create(input: CreateProjectInput): Project {
       input.baseBranch ?? "",
       input.pullBase === false ? 0 : 1,
       input.setup ? JSON.stringify(input.setup) : null,
+      input.environment ? JSON.stringify(input.environment) : null,
       JSON.stringify(input.quickCommands ?? []),
       maxOrder.next,
     ) as ProjectRow;
@@ -109,6 +113,10 @@ export function update(id: string, input: UpdateProjectInput): Project {
   if (input.setup !== undefined) {
     fields.push("setup = ?");
     values.push(input.setup ? JSON.stringify(input.setup) : null);
+  }
+  if (input.environment !== undefined) {
+    fields.push("environment = ?");
+    values.push(input.environment ? JSON.stringify(input.environment) : null);
   }
   if (input.quickCommands !== undefined) {
     fields.push("quick_commands = ?");

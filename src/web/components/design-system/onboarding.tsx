@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/atoms/button";
 import { SegmentedControl } from "@/components/atoms/segmented-control";
+import { SAMPLE_ENVIRONMENT } from "@/components/design-system/project-samples";
 import { WORKSPACES } from "@/components/design-system/sidebar-samples";
 import { Section, Specimen } from "@/components/design-system/specimen";
 import { WaitingCardSample, WorkingCardSample } from "@/components/design-system/task-card-samples";
@@ -8,9 +9,11 @@ import { AddAgentSlot } from "@/components/home/add-agent-slot";
 import { AddAccountDialog, type AddAccountStage } from "@/components/onboarding/add-account-dialog";
 import { AgentStep, type ClaudeInstall } from "@/components/onboarding/agent-step";
 import { FirstRunCard } from "@/components/onboarding/first-run-card";
+import type { CheckItem } from "@/components/onboarding/check-list";
 import type { EnvSetup } from "@/components/onboarding/environments-step";
 import { OnboardingFlow, type OnboardingData } from "@/components/onboarding/onboarding-flow";
 import { Sidebar } from "@/components/sidebar/sidebar";
+import { foundServices } from "@/lib/project-environment";
 import type { SidebarWorkspace } from "@/components/sidebar/types";
 
 type ClaudeScenario = "ready" | "signed-out" | "missing";
@@ -52,56 +55,110 @@ const DATA: Omit<OnboardingData, "install"> = {
       { name: "build", on: false },
     ],
   },
-  services: [
-    { name: "web", detail: "yarn dev · :5173", address: "monoku-task.nex" },
-    { name: "api", detail: "yarn api · :8000", address: "api.monoku-task.nex" },
-    { name: "postgres", detail: "16 · seeds from db/seed.sql" },
-    { name: "redis", detail: "7" },
-  ],
+  services: foundServices(SAMPLE_ENVIRONMENT),
+  serviceSources: SAMPLE_ENVIRONMENT.detectedFrom,
   envTasks: [
     { branch: "feat/fix-login-redirect", address: "monoku-fix-login.nex", startedIn: "2.1s" },
     { branch: "feat/usage-panel", address: "monoku-usage-panel.nex", startedIn: "1.8s" },
     { branch: "feat/accounts-table", address: "monoku-accounts-table.nex", startedIn: "2.4s" },
   ],
+  envRuntime: "Container runtime made by Apple · about 160 MB",
   model: "Opus 5.5",
   mode: "Ask first",
 };
 
 const STEP_MS = 1100;
 const FAIL_AT = 2;
-const SETUP_STEPS = 5;
 
-function initialSetup(scenario: EnvScenario): EnvSetup {
-  return { phase: scenario === "old-macos" ? "unsupported" : "offer", current: 0, macos: "15.6" };
+const SIM_STEPS = [
+  {
+    pending: "Install Apple container",
+    done: "Apple container 1.7.1 installed",
+    runningDetail: "Downloading · 64 of 158 MB",
+  },
+  {
+    pending: "Start Apple container",
+    done: "Apple container running",
+    runningDetail: "Installs the Linux kernel the first time.",
+  },
+  {
+    pending: "Register .nex addresses",
+    done: ".nex addresses registered",
+    runningDetail: "Confirm with your password in the macOS dialog.",
+  },
+  {
+    pending: "Check that a task can run",
+    done: "A test container ran and answered",
+    runningDetail: "Starts a test container and opens its .nex address.",
+    doneDetail: "nexcheck-mh2k.check.nex · started in 0.6s",
+  },
+];
+
+interface Simulation {
+  phase: EnvSetup["phase"];
+  current: number;
+  leftLabel?: string;
+  took?: string;
+}
+
+function simulatedSteps({ phase, current }: Simulation): CheckItem[] {
+  return SIM_STEPS.map((step, index) => {
+    if (index < current || phase === "ready")
+      return { label: step.done, detail: step.doneDetail, state: "done" };
+    if (index === current && phase === "failed")
+      return { label: step.pending, detail: "The password dialog was closed.", state: "failed" };
+    if (index === current && phase === "running")
+      return { label: step.pending, detail: step.runningDetail, state: "running" };
+    return { label: step.pending, state: "pending" };
+  });
+}
+
+function toSetup(simulation: Simulation): EnvSetup {
+  return {
+    ...simulation,
+    steps: simulatedSteps(simulation),
+    failure: {
+      title: "Couldn’t register .nex addresses",
+      description: "The password dialog was closed.",
+    },
+    unsupported: {
+      title: "Environments need macOS 26",
+      description: "This Mac runs macOS 15.6. Apple container only works on macOS 26 and later.",
+    },
+  };
 }
 
 function useEnvSimulation(scenario: EnvScenario) {
-  const [setup, setSetup] = useState<EnvSetup>(() => initialSetup(scenario));
+  const [simulation, setSimulation] = useState<Simulation>(() => ({
+    phase: scenario === "old-macos" ? "unsupported" : "offer",
+    current: 0,
+  }));
 
   useEffect(() => {
-    if (setup.phase !== "running") return;
+    if (simulation.phase !== "running") return;
     const timer = setTimeout(() => {
-      const current = setup.current + 1;
-      if (scenario === "password" && setup.current === FAIL_AT) {
-        setSetup({ ...setup, phase: "failed" });
-      } else if (current >= SETUP_STEPS) {
-        setSetup({ ...setup, phase: "ready", current, took: "1 min 48s" });
+      const current = simulation.current + 1;
+      if (scenario === "password" && simulation.current === FAIL_AT) {
+        setSimulation({ ...simulation, phase: "failed" });
+      } else if (current >= SIM_STEPS.length) {
+        setSimulation({ ...simulation, phase: "ready", current, took: "38s" });
       } else {
-        setSetup({
-          ...setup,
+        setSimulation({
+          ...simulation,
           current,
-          leftLabel: `About ${Math.ceil((SETUP_STEPS - current) / 2)} min left`,
+          leftLabel: "Less than a minute left",
         });
       }
     }, STEP_MS);
     return () => clearTimeout(timer);
-  }, [setup, scenario]);
+  }, [simulation, scenario]);
 
   return {
-    setup,
+    setup: toSetup(simulation),
     start: () =>
-      setSetup({ ...setup, phase: "running", current: 0, leftLabel: "About 2 min left" }),
-    retry: () => setSetup({ ...setup, phase: "running", leftLabel: "About 1 min left" }),
+      setSimulation({ ...simulation, phase: "running", current: 0, leftLabel: "About 1 min left" }),
+    retry: () =>
+      setSimulation({ ...simulation, phase: "running", leftLabel: "Less than a minute left" }),
   };
 }
 

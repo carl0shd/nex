@@ -36,6 +36,11 @@ import { StreamText } from "@/components/atoms/stream-text";
 import { Switch } from "@/components/atoms/switch";
 import { Tabs } from "@/components/atoms/tabs";
 import { TextField } from "@/components/atoms/text-field";
+import { ServiceChip } from "@/components/atoms/service-chip";
+import { CommandRows, type CommandRow } from "@/components/primitives/command-rows";
+import { Disclosure } from "@/components/primitives/disclosure";
+import { StatusCard } from "@/components/primitives/status-card";
+import { KeyValueList } from "@/components/primitives/key-value-list";
 import { ValuePill } from "@/components/atoms/value-pill";
 import { Menu, MenuItem, MenuLabel, MenuSeparator } from "@/components/primitives/menu";
 import { ModalCard, StatusIcon } from "@/components/primitives/modal-card";
@@ -176,6 +181,15 @@ export function Inputs() {
   const [off, setOff] = useState(false);
   const [mark, setMark] = useState<"a" | "b">("a");
   const [plan, setPlan] = useState<"claude" | "console">("claude");
+  const [picked, setPicked] = useState<string | null>("django");
+  const [vars, setVars] = useState<Record<string, string>>({
+    DATABASE_URL: "postgres://postgres:postgres@db:5432/app",
+    NODE_ENV: "development",
+  });
+  const [steps, setSteps] = useState<CommandRow[]>([
+    { target: "api", command: "python manage.py migrate" },
+    { target: "db", command: "psql -f /nex-project/db/seed.sql" },
+  ]);
   return (
     <Section id="inputs" title="Inputs">
       <div className="grid grid-cols-2 gap-4">
@@ -202,6 +216,86 @@ export function Inputs() {
             <SelectionMark selected={mark === "a"} onClick={() => setMark("a")} label="First" />
             <SelectionMark selected={mark === "b"} onClick={() => setMark("b")} label="Second" />
           </div>
+        </Specimen>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <Specimen
+          name="ServiceChip · not tested, building, starting, ready, failed, open"
+          className="flex-wrap gap-1.5"
+        >
+          {(
+            [
+              ["mailpit", "idle"],
+              ["celery-worker", "blue"],
+              ["hocuspocus", "orange"],
+              ["django", "green"],
+              ["oberon-web", "red"],
+              ["a-service-with-a-very-long-name-that-truncates", "green"],
+            ] as const
+          ).map(([name, tone]) => (
+            <ServiceChip
+              key={name}
+              name={name}
+              tone={tone}
+              selected={picked === name}
+              onClick={() => setPicked(picked === name ? null : name)}
+            />
+          ))}
+        </Specimen>
+        <Specimen
+          name="Disclosure · a summary of what is inside"
+          className="flex-col items-stretch"
+        >
+          <Disclosure label="Advanced" summary="image, ports, variables, starts after postgres">
+            <p className="m-0 py-1 text-xs text-ink-3">The rarely needed fields live here.</p>
+          </Disclosure>
+          <Disclosure label="2 things to check" leading={<StatusDot tone="orange" />}>
+            <p className="m-0 py-1 text-xs text-ink-3">worker: Nex ignores privileged.</p>
+          </Disclosure>
+        </Specimen>
+        <Specimen
+          name="StatusCard · a state, a hint and one action"
+          className="flex-col items-stretch"
+        >
+          <StatusCard
+            tone="idle"
+            title="Not tested yet"
+            hint="Run it once to see every service start"
+            action={
+              <Button variant="primary" size="xs">
+                Test it
+              </Button>
+            }
+          />
+          <StatusCard tone="blue" busy title="Testing…" hint="6 of 9 ready" />
+          <StatusCard
+            tone="green"
+            title="Copy of main · 4e2aaaa"
+            hint="38m ago · 127 MB · every task starts here"
+            action={
+              <Button variant="quiet" size="xs">
+                Rebuild
+              </Button>
+            }
+          />
+          <StatusCard tone="red" title="The copy failed" hint="postgres didn’t stop cleanly" />
+        </Specimen>
+        <Specimen name="KeyValueList · environment variables" className="flex-col items-stretch">
+          <KeyValueList
+            value={vars}
+            onChange={setVars}
+            keyLabel="Variable"
+            addLabel="Add variable"
+          />
+        </Specimen>
+        <Specimen name="CommandRows · prepare steps" className="flex-col items-stretch">
+          <CommandRows
+            value={steps}
+            targets={["api", "web", "db"].map((name) => ({ value: name, label: name }))}
+            onChange={setSteps}
+            placeholder="npm run db:seed"
+            addLabel="Add step"
+          />
         </Specimen>
       </div>
       <Specimen name="OptionCard" className="max-w-[440px] flex-col items-stretch gap-2">
@@ -373,8 +467,8 @@ export function Settings() {
           control={<Switch checked={notify} onChange={setNotify} />}
         />
         <SettingRow
-          label="Machine memory"
-          description="Shared by every task that runs in an environment"
+          label="Memory for environments"
+          description="Shared by every task"
           control={<SelectButton value="8 GB" className="min-w-[90px]" />}
         />
         <SettingRow

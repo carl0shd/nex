@@ -1,21 +1,24 @@
 import { useRef, useState } from "react";
 import { DitherBackdrop } from "@/components/atoms/dither-backdrop";
 import { AppAgentStep } from "@/components/onboarding/app-agent-step";
+import { AppEnvironmentsStep } from "@/components/onboarding/app-environments-step";
 import { AppFirstTaskStep } from "@/components/onboarding/app-first-task-step";
 import { AppProjectStep } from "@/components/onboarding/app-project-step";
 import { AppWorkspaceStep } from "@/components/onboarding/app-workspace-step";
 import { OnboardingChrome } from "@/components/onboarding/onboarding-chrome";
-import {
-  OnboardingStepsContext,
-  type OnboardingStepName,
-} from "@/components/onboarding/onboarding-steps";
+import { ONBOARDING_STEPS, OnboardingStepsContext } from "@/components/onboarding/onboarding-steps";
 import { WelcomeScreen } from "@/components/onboarding/welcome-screen";
 
-const STEPS: readonly OnboardingStepName[] = ["Agent", "Workspace", "Project", "First task"];
+type Screen = "welcome" | "agent" | "workspace" | "project" | "environments" | "first-task";
 
-type Screen = "welcome" | "agent" | "workspace" | "project" | "first-task";
-
-const SCREENS: readonly Screen[] = ["welcome", "agent", "workspace", "project", "first-task"];
+const SCREENS: readonly Screen[] = [
+  "welcome",
+  "agent",
+  "workspace",
+  "project",
+  "environments",
+  "first-task",
+];
 
 export function AppOnboarding({ onDone }: { onDone: () => void }) {
   const [index, setIndex] = useState(0);
@@ -31,7 +34,7 @@ export function AppOnboarding({ onDone }: { onDone: () => void }) {
   };
 
   return (
-    <OnboardingStepsContext.Provider value={STEPS}>
+    <OnboardingStepsContext.Provider value={ONBOARDING_STEPS}>
       <div className="relative flex h-screen flex-col bg-page">
         <DitherBackdrop
           key={welcomeVisit}
@@ -57,11 +60,18 @@ export function AppOnboarding({ onDone }: { onDone: () => void }) {
             workspaceId={workspaceId}
             projectId={projectId}
             onBack={back}
-            onSkip={onDone}
+            onSkip={next}
             onContinue={(id) => {
               setProjectId(id);
               next();
             }}
+          />
+        )}
+        {screen === "environments" && (
+          <AppEnvironmentsStep
+            projectId={projectId}
+            onBack={back}
+            onContinue={projectId ? next : onDone}
           />
         )}
         {screen === "first-task" && projectId && (

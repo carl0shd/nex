@@ -11,6 +11,7 @@ export default defineConfig({
       },
     },
     build: {
+      externalizeDeps: { exclude: ["yaml"] },
       watch: {
         include: [
           "src/native/main/**",
@@ -21,6 +22,7 @@ export default defineConfig({
           "src/native/git/**",
           "src/native/agents/**",
           "src/native/protocol/**",
+          "src/native/environments/**",
         ],
       },
       rollupOptions: {

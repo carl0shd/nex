@@ -6,6 +6,7 @@ import type {
   CreateWorkspaceInput,
   UpdateWorkspaceInput,
   Project,
+  ProjectEnvironment,
   CreateProjectInput,
   UpdateProjectInput,
   Agent,
@@ -39,6 +40,14 @@ import type { McpAddInput, McpServer } from "@native/agents/mcp-servers";
 import type { AgentCommandChange } from "@native/agents/version";
 import type { AgentSettings } from "@native/agents/agent-settings";
 import type { GhInfo, GithubOwner, GithubRepo } from "@native/git/github";
+import type {
+  CleanBaseInput,
+  CleanBaseState,
+  EnvCheckInput,
+  EnvCheckState,
+  EnvironmentStatus,
+  EnvSetupState,
+} from "@native/environments/types";
 import type { UsageGranularity, UsageStats, UsageSummary } from "@native/usage/types";
 
 interface NexAPI {
@@ -244,6 +253,26 @@ interface NexAPI {
       }) => void,
     ) => () => void;
   };
+
+  getEnvironmentStatus: () => Promise<EnvironmentStatus>;
+  setupEnvironments: () => Promise<EnvSetupState>;
+  restartEnvironments: () => Promise<void>;
+  repairEnvironmentAddresses: () => Promise<void>;
+  uninstallEnvironments: () => Promise<void>;
+  showEnvironmentLog: () => Promise<boolean>;
+  onEnvironmentSetup: (callback: (state: EnvSetupState) => void) => () => void;
+  detectEnvironment: (path: string) => Promise<ProjectEnvironment>;
+  detectProjectEnvironment: (projectId: string) => Promise<ProjectEnvironment | null>;
+  getProjectEnvironment: (projectId: string) => Promise<ProjectEnvironment | null>;
+  saveProjectEnvironment: (projectId: string, environment: ProjectEnvironment) => Promise<Project>;
+  checkEnvironment: (input: EnvCheckInput) => Promise<EnvCheckState>;
+  stopEnvironmentCheck: (projectPath: string) => Promise<void>;
+  getEnvironmentCheck: (projectPath: string) => Promise<EnvCheckState | null>;
+  onEnvironmentCheck: (callback: (state: EnvCheckState) => void) => () => void;
+  getCleanBase: (projectId: string) => Promise<CleanBaseState | null>;
+  buildCleanBase: (input: CleanBaseInput) => Promise<CleanBaseState>;
+  stopCleanBase: (projectId: string) => Promise<void>;
+  onCleanBase: (callback: (state: CleanBaseState) => void) => () => void;
 
   usage: {
     getSummary: () => Promise<UsageSummary>;

@@ -10,7 +10,7 @@ const SETUP = {
 describe("listPhrase", () => {
   it("joins with commas and a final and", () => {
     expect(phraseText(listPhrase(["dev", "test", "lint"]))).toBe("dev, test and lint");
-    expect(listPhrase(["dev"])).toEqual([{ text: "dev", code: true }]);
+    expect(listPhrase(["dev"])).toEqual([{ text: "dev", name: true }]);
   });
 });
 

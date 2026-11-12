@@ -9,11 +9,14 @@ export function PhraseText({ phrase }: { phrase: Phrase }) {
   return (
     <>
       {phrase.map((part, index) =>
-        part.code ? (
+        part.code || part.name ? (
           <span
             key={index}
             title={part.text}
-            className="inline-block max-w-[200px] truncate align-bottom font-mono text-xs text-ink"
+            className={cn(
+              "inline-block max-w-[200px] truncate align-bottom text-ink",
+              part.code && "font-mono text-xs",
+            )}
           >
             {part.text}
           </span>
@@ -45,7 +48,12 @@ export function SetupSection({
         open && "bg-hover/60 shadow-[inset_0_0_0_1px_var(--line-strong)]",
       )}
     >
-      <div className="flex min-h-10 items-center gap-3 px-3">
+      <div
+        className={cn(
+          "flex min-h-10 items-center gap-3 px-3.5 transition-[padding] duration-200 ease-out",
+          open && "py-2.5",
+        )}
+      >
         <span
           className={cn(
             "flex size-[26px] shrink-0 items-center justify-center rounded-control",
@@ -67,7 +75,9 @@ export function SetupSection({
           </Button>
         )}
       </div>
-      {open && <div className="rise-in flex flex-col gap-3 pr-3 pb-3 pl-[50px]">{children}</div>}
+      {open && (
+        <div className="rise-in flex flex-col gap-3 pt-0.5 pr-3.5 pb-3.5 pl-[52px]">{children}</div>
+      )}
     </div>
   );
 }
