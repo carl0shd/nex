@@ -31,6 +31,10 @@ export const DEFAULT_PREFERENCES: Preferences = {
   showUsage: true,
   warnAt: "80",
   dailyAlert: "",
+  envMemory: "8",
+  envRunAtMost: "3",
+  envPauseAfter: "15",
+  envStartOnCreate: true,
 };
 
 export const ZOOM: Record<InterfaceSize, number> = { compact: 0.9, default: 1, large: 1.1 };

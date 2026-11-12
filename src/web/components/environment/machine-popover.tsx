@@ -21,10 +21,10 @@ export interface MachineEnvironment {
   suggested?: boolean;
 }
 
-export interface MachineUsage {
+export interface EnvironmentsUsage {
   usedGb: number;
   totalGb: number;
-  machineGb: number;
+  containers: number;
   idle: number;
   environments: readonly MachineEnvironment[];
 }
@@ -33,8 +33,11 @@ const NEARLY_FULL = 0.85;
 
 const gb = (value: number) => `${value.toFixed(1)} GB`;
 
-function MemoryBar({ usage, width }: { usage: MachineUsage; width?: number }) {
-  const ratio = usage.usedGb / usage.totalGb;
+const usedRatio = (usage: EnvironmentsUsage) =>
+  usage.totalGb > 0 ? usage.usedGb / usage.totalGb : 0;
+
+function MemoryBar({ usage, width }: { usage: EnvironmentsUsage; width?: number }) {
+  const ratio = usedRatio(usage);
   return (
     <span className="block h-1 overflow-hidden rounded-full bg-hover-2" style={{ width }}>
       <span
@@ -107,24 +110,25 @@ export function MachinePopover({
   onPauseIdle,
   onSettings,
 }: {
-  usage: MachineUsage;
+  usage: EnvironmentsUsage;
   onPause?: (id: string) => void;
   onPauseIdle?: () => void;
   onSettings?: () => void;
 }) {
   const running = usage.environments.filter((environment) => environment.state !== "paused");
   const paused = usage.environments.filter((environment) => environment.state === "paused");
-  const nearlyFull = usage.usedGb / usage.totalGb >= NEARLY_FULL;
+  const nearlyFull = usedRatio(usage) >= NEARLY_FULL;
+  const empty = usage.environments.length === 0;
   return (
     <div
       role="dialog"
-      aria-label="Linux machine"
+      aria-label="Environments"
       className="enter-pop flex w-[310px] flex-col rounded-menu bg-elevated p-1.5 shadow-overlay"
       style={{ transformOrigin: "bottom left" }}
     >
       <div className="flex flex-col gap-2 px-2.5 pt-2 pb-2.5">
         <div className="flex items-center text-sm font-semibold text-ink">
-          Linux machine
+          Environments
           <span
             className={cn(
               "ml-auto text-xs font-normal tabular-nums",
@@ -135,35 +139,45 @@ export function MachinePopover({
           </span>
         </div>
         <MemoryBar usage={usage} />
-        <span className="text-2xs text-ink-4">
-          {gb(usage.machineGb)} of it is the machine itself
-        </span>
+        {usage.containers > 0 && (
+          <span className="text-2xs text-ink-4 tabular-nums">
+            {usage.containers} {usage.containers === 1 ? "container" : "containers"} running
+          </span>
+        )}
         {nearlyFull && (
           <span className="rounded-control bg-orange-tint px-2.5 py-2 text-xs leading-[17px] text-orange">
             Almost full. A new environment waits until one pauses.
           </span>
         )}
       </div>
-      <GlideMenu className="flex flex-col">
-        <span className="px-2.5 pt-1 pb-1 text-3xs text-ink-4">Running · {running.length}</span>
-        {running.map((environment) => (
-          <EnvironmentRow
-            key={environment.id}
-            environment={environment}
-            onPause={() => onPause?.(environment.id)}
-          />
-        ))}
-        {paused.length > 0 && (
-          <span className="px-2.5 pt-2 pb-1 text-3xs text-ink-4">Paused · {paused.length}</span>
-        )}
-        {paused.map((environment) => (
-          <EnvironmentRow key={environment.id} environment={environment} />
-        ))}
-      </GlideMenu>
+      {empty ? (
+        <span className="px-2.5 pt-1 pb-2 text-xs text-ink-3">
+          No environments yet. Tasks start theirs here.
+        </span>
+      ) : (
+        <GlideMenu className="flex flex-col">
+          <span className="px-2.5 pt-1 pb-1 text-3xs text-ink-4">Running · {running.length}</span>
+          {running.map((environment) => (
+            <EnvironmentRow
+              key={environment.id}
+              environment={environment}
+              onPause={() => onPause?.(environment.id)}
+            />
+          ))}
+          {paused.length > 0 && (
+            <span className="px-2.5 pt-2 pb-1 text-3xs text-ink-4">Paused · {paused.length}</span>
+          )}
+          {paused.map((environment) => (
+            <EnvironmentRow key={environment.id} environment={environment} />
+          ))}
+        </GlideMenu>
+      )}
       <MenuSeparator />
-      <MenuItem icon={Pause} meta={`${usage.idle} idle`} onSelect={onPauseIdle}>
-        Pause idle environments
-      </MenuItem>
+      {!empty && (
+        <MenuItem icon={Pause} meta={`${usage.idle} idle`} onSelect={onPauseIdle}>
+          Pause idle environments
+        </MenuItem>
+      )}
       <MenuItem icon={Settings} onSelect={onSettings}>
         Environment settings
       </MenuItem>
@@ -175,13 +189,15 @@ export function EnvironmentsMeter({
   usage,
   defaultOpen = false,
   onPause,
+  onSettings,
 }: {
-  usage: MachineUsage;
+  usage: EnvironmentsUsage;
   defaultOpen?: boolean;
   onPause?: (id: string) => void;
+  onSettings?: () => void;
 }) {
   const [open, setOpen] = useState(defaultOpen);
-  const nearlyFull = usage.usedGb / usage.totalGb >= NEARLY_FULL;
+  const nearlyFull = usedRatio(usage) >= NEARLY_FULL;
   return (
     <AnchoredPopover
       open={open}
@@ -219,6 +235,13 @@ export function EnvironmentsMeter({
           onPause?.(id);
           setOpen(false);
         }}
+        onSettings={
+          onSettings &&
+          (() => {
+            onSettings();
+            setOpen(false);
+          })
+        }
       />
     </AnchoredPopover>
   );

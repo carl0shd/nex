@@ -1,9 +1,9 @@
-export type Phrase = readonly { text: string; code?: boolean }[];
+export type Phrase = readonly { text: string; code?: boolean; name?: boolean }[];
 
 export function listPhrase(items: readonly string[]): Phrase {
   return items.flatMap((item, index) => {
     const separator = index === 0 ? [] : [{ text: index === items.length - 1 ? " and " : ", " }];
-    return [...separator, { text: item, code: true }];
+    return [...separator, { text: item, name: true }];
   });
 }
 

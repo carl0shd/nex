@@ -24,7 +24,9 @@ export interface OnboardingData {
   git: string;
   project: ProjectDraft;
   services: readonly EnvService[];
+  serviceSources?: readonly string[];
   envTasks: readonly EnvTask[];
+  envRuntime: string;
   model: string;
   mode: string;
 }
@@ -146,14 +148,15 @@ export function OnboardingFlow({
         <EnvironmentsStep
           project={project.name}
           services={data.services}
+          sources={data.serviceSources}
           tasks={data.envTasks}
           memory={memory}
+          runtimeDetail={data.envRuntime}
           onMemoryChange={setMemory}
           setup={envSetup}
           onBack={back}
           onSetUp={onEnvSetUp}
           onRetry={onEnvRetry}
-          onSkip={next}
           onContinue={next}
         />
       )}

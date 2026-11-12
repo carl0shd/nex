@@ -4,23 +4,30 @@ import { Composer } from "@/components/composer/composer";
 import { WORKSPACES } from "@/components/design-system/sidebar-samples";
 import { Section, Specimen } from "@/components/design-system/specimen";
 import { AddressStatus } from "@/components/environment/address-status";
+import { sampleCleanBases } from "@/components/design-system/project-samples";
 import { CleanBaseFailedDialog } from "@/components/environment/clean-base-failed-dialog";
 import { EnvBanner, type EnvBannerState } from "@/components/environment/env-banner";
 import { EnvTaskButton, type TaskService } from "@/components/environment/env-menu";
 import { EnvStartStatus, type EnvStartState } from "@/components/environment/env-start-status";
-import { EnvironmentsMeter, type MachineUsage } from "@/components/environment/machine-popover";
+import {
+  EnvironmentsMeter,
+  type EnvironmentsUsage,
+} from "@/components/environment/machine-popover";
 import { SettingsCard } from "@/components/primitives/setting-row";
 import { Toast } from "@/components/primitives/toast";
 import { Sidebar } from "@/components/sidebar/sidebar";
 import type { SidebarWorkspace } from "@/components/sidebar/types";
 import { CloseTaskDialog } from "@/components/task/close-task-dialog";
 import type { EnvState } from "@/components/task/env-button";
+import { failureSteps } from "@/lib/clean-base";
 import { TaskCard } from "@/components/task/task-card";
 import { TaskEmptyState } from "@/components/task/task-empty-state";
 import { TaskHeader, type TaskStatus } from "@/components/task/task-header";
 import { TaskTabBar, type TaskView } from "@/components/task/task-tab-bar";
 
 const MONOKU = { name: "Monoku", color: "#33843F" };
+
+const CLEAN_BASES = sampleCleanBases(Date.now());
 
 const SERVICES: TaskService[] = [
   { name: "web", detail: "", url: "https://monoku-fix-login.nex", state: "up" },
@@ -125,10 +132,10 @@ const ENV_WORKSPACES: SidebarWorkspace[] = WORKSPACES.slice(0, 1).map((workspace
   })),
 }));
 
-const USAGE: MachineUsage = {
+const USAGE: EnvironmentsUsage = {
   usedGb: 5.1,
   totalGb: 8,
-  machineGb: 1.2,
+  containers: 9,
   idle: 1,
   environments: [
     {
@@ -166,7 +173,7 @@ const USAGE: MachineUsage = {
   ],
 };
 
-const FULL: MachineUsage = {
+const FULL: EnvironmentsUsage = {
   ...USAGE,
   usedGb: 7.4,
   environments: [
@@ -206,7 +213,7 @@ const FULL: MachineUsage = {
   ],
 };
 
-function OverviewFrame({ usage, open }: { usage: MachineUsage; open: boolean }) {
+function OverviewFrame({ usage, open }: { usage: EnvironmentsUsage; open: boolean }) {
   return (
     <div className="flex h-[720px] w-[600px] overflow-visible rounded-card bg-page shadow-card">
       <Sidebar
@@ -323,14 +330,9 @@ export function Environments() {
           </div>
           <CleanBaseFailedDialog
             failure={{
-              project: "nex",
-              error: 'error: relation "accounts" already exists',
-              steps: [
-                { label: "Copied the project into the machine", state: "done" },
-                { label: "Installed dependencies", detail: "yarn install · 41s", state: "done" },
-                { label: "Running migrations", detail: "yarn db:migrate", state: "failed" },
-                { label: "Saving the snapshot", state: "pending" },
-              ],
+              project: "atlas",
+              error: CLEAN_BASES.failed.error ?? "",
+              steps: failureSteps(CLEAN_BASES.failed),
             }}
           />
           <CloseTaskDialog

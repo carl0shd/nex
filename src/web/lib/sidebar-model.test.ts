@@ -26,6 +26,7 @@ const project = (overrides: Partial<Project>): Project => ({
   baseBranch: "",
   pullBase: true,
   setup: null,
+  environment: null,
   quickCommands: [],
   sortOrder: 0,
   createdAt: "",

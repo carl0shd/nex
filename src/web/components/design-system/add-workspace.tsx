@@ -1,16 +1,29 @@
 import { useState } from "react";
-import { detect, detectWithEnvironment, FOUND } from "@/components/design-system/project-samples";
+import {
+  detect,
+  detectWithEnvironment,
+  FOUND,
+  SAMPLE_CHECKS,
+  SAMPLE_EMPTY_ENVIRONMENT,
+  SAMPLE_ENVIRONMENT,
+  sampleCleanBases,
+} from "@/components/design-system/project-samples";
 import { WORKSPACES } from "@/components/design-system/sidebar-samples";
 import { Section, Specimen } from "@/components/design-system/specimen";
 import { HomeEmpty } from "@/components/home/home-empty";
 import { Overlay } from "@/components/primitives/overlay";
 import { AddProjectDialog, type NewProject } from "@/components/projects/add-project-dialog";
+import { EnvironmentEditor } from "@/components/projects/environment-editor";
+import { ServiceDetail } from "@/components/projects/service-detail";
 import { RemoveProjectDialog } from "@/components/projects/remove-project-dialog";
 import { NewWorkspaceRow, type NewWorkspace } from "@/components/sidebar/new-workspace-row";
 import { RemoveWorkspaceDialog } from "@/components/sidebar/remove-workspace-dialog";
 import { Sidebar } from "@/components/sidebar/sidebar";
 import type { SidebarWorkspace } from "@/components/sidebar/types";
 import { notifyCompact } from "@/lib/notify";
+import { serviceCheck } from "@/lib/project-environment";
+import type { ProjectEnvironment } from "@native/db/types";
+import type { CleanBaseState, EnvCheckState } from "@native/environments/types";
 
 const STARTING: SidebarWorkspace[] = WORKSPACES.map((workspace) => ({
   ...workspace,
@@ -96,6 +109,74 @@ function AddWorkspaceDemo() {
 
 const STUDIO = { name: "Studio", color: "#2f6fd6" };
 
+const CLEAN_BASES = sampleCleanBases(Date.now());
+
+function EnvironmentEditorDemo({
+  initial = SAMPLE_ENVIRONMENT,
+  check = null,
+  initialOpen = null,
+  cleanBase = null,
+}: {
+  initial?: ProjectEnvironment;
+  check?: EnvCheckState | null;
+  initialOpen?: number | null;
+  cleanBase?: CleanBaseState | null;
+}) {
+  const [value, setValue] = useState(initial);
+  const [detecting, setDetecting] = useState(false);
+  return (
+    <div className="flex w-[508px] flex-col gap-3 rounded-sheet bg-surface-raised p-5 shadow-modal">
+      <EnvironmentEditor
+        value={value}
+        onChange={setValue}
+        check={check}
+        canCheck
+        onCheck={() => notifyCompact({ tone: "green", title: "Testing atlas" })}
+        onStopCheck={() => notifyCompact({ tone: "orange", title: "Stopped" })}
+        detecting={detecting}
+        onDetectAgain={() => {
+          setDetecting(true);
+          setTimeout(() => {
+            setValue(initial);
+            setDetecting(false);
+          }, 900);
+        }}
+        initialOpen={initialOpen}
+        cleanBase={cleanBase}
+        onBuildCleanBase={() => notifyCompact({ tone: "green", title: "Building a copy" })}
+        onStopCleanBase={() => notifyCompact({ tone: "orange", title: "Stopped" })}
+        onShowCleanBaseFailure={() => notifyCompact({ tone: "red", title: "Copy failed" })}
+      />
+    </div>
+  );
+}
+
+function ServiceDetailDemo() {
+  const [value, setValue] = useState(SAMPLE_ENVIRONMENT);
+  const service = value.services[1];
+  if (!service) return null;
+  return (
+    <div className="flex w-[508px] flex-col rounded-sheet bg-surface-raised p-5 shadow-modal">
+      <ServiceDetail
+        env={value}
+        service={service}
+        check={serviceCheck(SAMPLE_CHECKS.done, service.name)}
+        opensInBrowser
+        defaultAdvanced
+        onChange={(patch) =>
+          setValue({
+            ...value,
+            services: value.services.map((item) =>
+              item === service ? { ...item, ...patch } : item,
+            ),
+          })
+        }
+        onRemove={() => notifyCompact({ tone: "orange", title: `Removed ${service.name}` })}
+      />
+    </div>
+  );
+}
+
 export function AddWorkspace() {
   return (
     <Section
@@ -160,6 +241,42 @@ export function AddWorkspace() {
         </Specimen>
         <Specimen name="RemoveProjectDialog · from the project's … menu" bare>
           <RemoveProjectDialog project={{ name: "atlas", workspace: "Studio", tasks: 2 }} />
+        </Specimen>
+        <Specimen name="EnvironmentEditor · not tested yet, with a warning" bare>
+          <EnvironmentEditorDemo />
+        </Specimen>
+        <Specimen name="EnvironmentEditor · building from the project’s Dockerfile" bare>
+          <EnvironmentEditorDemo check={SAMPLE_CHECKS.building} />
+        </Specimen>
+        <Specimen name="EnvironmentEditor · testing" bare>
+          <EnvironmentEditorDemo check={SAMPLE_CHECKS.running} />
+        </Specimen>
+        <Specimen name="EnvironmentEditor · ready" bare>
+          <EnvironmentEditorDemo check={SAMPLE_CHECKS.done} cleanBase={CLEAN_BASES.ready} />
+        </Specimen>
+        <Specimen name="EnvironmentEditor · a service failed, its detail open" bare>
+          <EnvironmentEditorDemo check={SAMPLE_CHECKS.failed} initialOpen={1} />
+        </Specimen>
+        <Specimen name="ServiceDetail · Advanced open" bare>
+          <ServiceDetailDemo />
+        </Specimen>
+        <Specimen name="Data · starts empty" bare>
+          <EnvironmentEditorDemo cleanBase={CLEAN_BASES.none} />
+        </Specimen>
+        <Specimen name="Data · copying" bare>
+          <EnvironmentEditorDemo cleanBase={CLEAN_BASES.building} />
+        </Specimen>
+        <Specimen name="Data · copied from main" bare>
+          <EnvironmentEditorDemo cleanBase={CLEAN_BASES.ready} />
+        </Specimen>
+        <Specimen name="Data · copy out of date" bare>
+          <EnvironmentEditorDemo cleanBase={CLEAN_BASES.stale} />
+        </Specimen>
+        <Specimen name="Data · copy failed" bare>
+          <EnvironmentEditorDemo cleanBase={CLEAN_BASES.failed} />
+        </Specimen>
+        <Specimen name="EnvironmentEditor · nothing found" bare>
+          <EnvironmentEditorDemo initial={SAMPLE_EMPTY_ENVIRONMENT} />
         </Specimen>
         <Specimen name="With environments · each task runs its own services" bare>
           <AddProjectDialog

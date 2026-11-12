@@ -60,6 +60,7 @@ function AppShell(): React.JSX.Element {
     return (
       <>
         <AppOnboarding onDone={onboarding.done} />
+        <AppAddProject fullWindow />
         <Toaster />
       </>
     );

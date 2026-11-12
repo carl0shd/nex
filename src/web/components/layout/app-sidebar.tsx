@@ -1,17 +1,22 @@
 import { useLocation, useNavigate } from "react-router";
 import { useMemo } from "react";
+import { EnvironmentsMeter } from "@/components/environment/machine-popover";
 import { SidebarFrame } from "@/components/layout/sidebar-frame";
 import { NewWorkspaceRow, type NewWorkspace } from "@/components/sidebar/new-workspace-row";
+import { useEnvironments } from "@/hooks/use-environments";
 import { useNow } from "@/hooks/use-now";
 import { useAppHotkey } from "@/hooks/use-app-hotkey";
 import { notifyCompact } from "@/lib/notify";
 import { repoAt } from "@/lib/repo-at";
+import { environmentsUsage, memoryBudget } from "@/lib/environments";
 import { buildSidebar } from "@/lib/sidebar-model";
 import { useAddProjectStore } from "@/stores/add-project.store";
+import { useEnvironmentsStore } from "@/stores/environments.store";
 import { useRemoveProjectStore } from "@/stores/remove-project.store";
 import { useRemoveWorkspaceStore } from "@/stores/remove-workspace.store";
 import { useNewTaskStore } from "@/stores/new-task.store";
 import { useNewWorkspaceStore } from "@/stores/new-workspace.store";
+import { usePreferencesStore } from "@/stores/preferences.store";
 import { useWorkspaceStore } from "@/stores/workspace.store";
 
 const AGE_REFRESH_MS = 60_000;
@@ -45,6 +50,9 @@ export function AppSidebar() {
   };
   useAppHotkey("overview", openOverview);
   const now = useNow(AGE_REFRESH_MS);
+  useEnvironments();
+  const envStatus = useEnvironmentsStore((s) => s.status);
+  const envMemory = usePreferencesStore((s) => s.prefs.envMemory);
 
   const workspaces = useMemo(
     () => buildSidebar({ workspaces: rawWorkspaces, projects, sessions, terminals }, now),
@@ -79,6 +87,14 @@ export function AppSidebar() {
       onSelectTask={openTask}
       onOverview={openOverview}
       creating={creating && <NewWorkspaceRow onCreate={create} onCancel={hideNewWorkspace} />}
+      environments={
+        envStatus?.enabled && (
+          <EnvironmentsMeter
+            usage={environmentsUsage(envStatus, memoryBudget(envStatus, envMemory))}
+            onSettings={() => navigate("/settings", { state: { section: "environments" } })}
+          />
+        )
+      }
       onAddWorkspace={showNewWorkspace}
       onNewTask={() => showNewTask()}
       onNewTaskInProject={showNewTask}

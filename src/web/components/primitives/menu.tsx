@@ -74,6 +74,7 @@ export function MenuItem({
   icon: Icon,
   children,
   meta,
+  description,
   checked = false,
   danger = false,
   active = false,
@@ -82,6 +83,7 @@ export function MenuItem({
   icon?: MenuIcon;
   children: ReactNode;
   meta?: ReactNode;
+  description?: ReactNode;
   checked?: boolean;
   danger?: boolean;
   active?: boolean;
@@ -94,17 +96,25 @@ export function MenuItem({
       data-menu-row
       onClick={onSelect}
       className={cn(
-        "interactive press-wide relative flex h-8 w-full cursor-pointer items-center gap-2.5 rounded-control px-2.5 text-left text-sm select-none",
+        "interactive press-wide relative flex w-full cursor-pointer gap-2.5 rounded-control px-2.5 text-left text-sm select-none",
+        description ? "items-start py-2" : "h-8 items-center",
         danger ? "text-red" : "text-ink",
         active && "bg-hover",
       )}
     >
       {Icon && (
-        <span className="flex text-ink-3">
+        <span className={cn("flex text-ink-3", description && "pt-0.5")}>
           <Icon width={14} height={14} strokeWidth={2} />
         </span>
       )}
-      <span className="flex-1 truncate">{children}</span>
+      {description ? (
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="truncate">{children}</span>
+          <span className="text-xs leading-4 text-ink-4">{description}</span>
+        </span>
+      ) : (
+        <span className="flex-1 truncate">{children}</span>
+      )}
       {meta && <span className="flex items-center gap-1.5 text-2xs text-ink-4">{meta}</span>}
       {checked && <Check width={13} height={13} strokeWidth={2.5} className="text-accent-ink" />}
     </button>

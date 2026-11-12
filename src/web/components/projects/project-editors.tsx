@@ -1,12 +1,10 @@
 import { useState, type ReactNode } from "react";
-import { Database, Ellipsis, Globe, Play, Plus, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Button } from "@/components/atoms/button";
 import { Checkbox } from "@/components/atoms/checkbox";
 import { IconButton } from "@/components/atoms/icon-button";
-import { StatusDot } from "@/components/atoms/status-dot";
 import { Switch } from "@/components/atoms/switch";
 import { TextField } from "@/components/atoms/text-field";
-import { CheckList } from "@/components/onboarding/check-list";
 import { SelectMenu } from "@/components/primitives/select-menu";
 import { taskBranchName } from "@/lib/task-branch";
 import type { WorktreeSetup } from "@/lib/project-summary";
@@ -24,27 +22,7 @@ export interface QuickCommand {
   on: boolean;
 }
 
-export interface BrowserService {
-  name: string;
-  port: number;
-  command: string;
-  address: string;
-}
-
-export interface InternalService {
-  name: string;
-  port: number;
-  note: string;
-}
-
-export interface ProjectEnvironment {
-  browser: readonly BrowserService[];
-  internal: readonly InternalService[];
-  values: readonly { key: string; value: string }[];
-  cleanBase: { detail: string; steps: readonly string[] };
-}
-
-function Field({ className, ...props }: React.ComponentProps<typeof TextField>) {
+export function Field({ className, ...props }: React.ComponentProps<typeof TextField>) {
   return (
     <TextField
       mono
@@ -55,11 +33,22 @@ function Field({ className, ...props }: React.ComponentProps<typeof TextField>) 
   );
 }
 
-function Divider() {
+const ROW = "grid min-h-[30px] grid-cols-[180px_minmax(0,1fr)] items-center gap-2.5";
+
+function FormRow({ label, children }: { label: ReactNode; children: ReactNode }) {
+  return (
+    <div className={ROW}>
+      <span className="flex min-w-0 items-center gap-2.5 text-sm text-ink">{label}</span>
+      <div className="min-w-0">{children}</div>
+    </div>
+  );
+}
+
+export function Divider() {
   return <span className="h-px bg-line" />;
 }
 
-function Note({ children }: { children: ReactNode }) {
+export function Note({ children }: { children: ReactNode }) {
   return <p className="m-0 text-2xs leading-[16px] text-ink-4">{children}</p>;
 }
 
@@ -75,40 +64,43 @@ export function BranchEditor({
   const prefix = value.prefix.replace(/\/+$/, "") || "feat";
   return (
     <>
-      <div className="grid grid-cols-2 gap-2.5">
-        <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-ink-3">Base branch</span>
-          <SelectMenu
-            value={value.base}
-            options={branches.map((branch, index) => ({
-              value: branch,
-              label: index === 0 ? `${branch} · default` : branch,
-            }))}
-            onChange={(base) => onChange({ ...value, base })}
-            className="w-full min-w-0"
-          />
-        </label>
+      <FormRow label="Base branch">
+        <SelectMenu
+          value={value.base}
+          options={branches.map((branch, index) => ({
+            value: branch,
+            label: index === 0 ? `${branch} · default` : branch,
+          }))}
+          onChange={(base) => onChange({ ...value, base })}
+          className="w-full min-w-0"
+        />
+      </FormRow>
+      <FormRow label="Prefix">
         <Field
-          label="Prefix"
+          mono={false}
+          aria-label="Prefix"
           value={value.prefix}
           onChange={(event) => onChange({ ...value, prefix: event.target.value })}
         />
+      </FormRow>
+      <div className={ROW}>
+        <span />
+        <Note>
+          “Fix login redirect” becomes{" "}
+          <span className="text-ink-2">{taskBranchName("Fix login redirect", prefix)}</span>
+        </Note>
       </div>
-      <Note>
-        “Fix login redirect” becomes{" "}
-        <span className="text-ink-2">{taskBranchName("Fix login redirect", prefix)}</span>
-      </Note>
       <Divider />
       <div className="flex items-center gap-3">
         <span className="flex min-w-0 flex-1 flex-col">
-          <span className="flex min-w-0 text-sm font-medium text-ink">
+          <span className="flex min-w-0 text-sm text-ink">
             <span className="shrink-0">Pull&nbsp;</span>
             <span title={value.base} className="truncate">
               {value.base}
             </span>
             <span className="shrink-0">&nbsp;before each new task</span>
           </span>
-          <span className="text-xs text-ink-3">So agents never start from a stale base.</span>
+          <span className="text-2xs text-ink-4">So agents never start from a stale base.</span>
         </span>
         <Switch size="sm" checked={value.pull} onChange={(pull) => onChange({ ...value, pull })} />
       </div>
@@ -116,10 +108,12 @@ export function BranchEditor({
   );
 }
 
-function FileChip({ name, onRemove }: { name: string; onRemove: () => void }) {
+export function FileChip({ name, onRemove }: { name: string; onRemove: () => void }) {
   return (
-    <span className="flex h-6 items-center gap-1 rounded-chip pr-0.5 pl-2 font-mono text-2xs text-ink shadow-[inset_0_0_0_1px_var(--line-strong)]">
-      {name}
+    <span className="flex h-6 max-w-[220px] items-center gap-1 rounded-chip pr-0.5 pl-2 text-2xs text-ink shadow-[inset_0_0_0_1px_var(--line-strong)]">
+      <span title={name} className="truncate">
+        {name}
+      </span>
       <IconButton aria-label={`Remove ${name}`} size="sm" onClick={onRemove} className="size-5">
         <X width={10} height={10} strokeWidth={2.5} />
       </IconButton>
@@ -139,13 +133,16 @@ function SetupLine({
   children: ReactNode;
 }) {
   return (
-    <div className="grid grid-cols-[180px_minmax(0,1fr)] items-center gap-2.5">
-      <span className="flex items-center gap-2.5 text-sm text-ink">
-        <Checkbox checked={checked} onChange={onCheck} label={label} />
-        {label}
-      </span>
+    <FormRow
+      label={
+        <>
+          <Checkbox checked={checked} onChange={onCheck} label={label} />
+          {label}
+        </>
+      }
+    >
       {children}
-    </div>
+    </FormRow>
   );
 }
 
@@ -174,6 +171,7 @@ export function WorktreeSetupEditor({
       >
         <Field
           aria-label="Install command"
+          placeholder="pnpm install"
           value={value.install.command}
           disabled={!value.install.on}
           onChange={(event) =>
@@ -206,7 +204,7 @@ export function WorktreeSetupEditor({
             onChange={(event) => setAdding(event.target.value)}
             onKeyDown={(event) => event.key === "Enter" && addFile()}
             onBlur={addFile}
-            className="h-6 w-24 rounded-chip bg-transparent px-2 font-mono text-2xs text-ink outline-none select-text placeholder:font-sans placeholder:text-ink-3 focus:shadow-[inset_0_0_0_1px_var(--line-focus)]"
+            className="h-[30px] w-28 rounded-control bg-transparent px-3 text-xs text-ink outline-none select-text placeholder:text-ink-3 focus:shadow-[inset_0_0_0_1px_var(--line-focus)]"
           />
         </span>
       </SetupLine>
@@ -227,18 +225,26 @@ export function WorktreeSetupEditor({
       </SetupLine>
       <Divider />
       <Note>
-        Runs inside the new worktree before Claude starts. Detected from{" "}
-        {detectedFrom.map((file, index) => (
-          <span key={file}>
-            {index > 0 && (index === detectedFrom.length - 1 ? " and " : ", ")}
-            <span className="font-mono text-ink-3">{file}</span>
-          </span>
-        ))}
-        .
+        Runs inside the new worktree before the agent starts.
+        {detectedFrom.length > 0 && (
+          <>
+            {" "}
+            Detected from{" "}
+            {detectedFrom.map((file, index) => (
+              <span key={file}>
+                {index > 0 && (index === detectedFrom.length - 1 ? " and " : ", ")}
+                <span className="text-ink-3">{file}</span>
+              </span>
+            ))}
+            .
+          </>
+        )}
       </Note>
     </>
   );
 }
+
+const COMMAND_ROW = "grid grid-cols-[28px_128px_minmax(0,1fr)] items-center gap-2.5";
 
 export function QuickCommandsEditor({
   value,
@@ -259,7 +265,7 @@ export function QuickCommandsEditor({
     <>
       <div className="menu-scroll -mr-1.5 flex max-h-[272px] flex-col gap-1 overflow-y-auto pr-1.5">
         {value.map((item) => (
-          <div key={item.name} className="flex h-8 shrink-0 items-center gap-3">
+          <div key={item.name} className={cn(COMMAND_ROW, "h-8 shrink-0")}>
             <Switch
               size="sm"
               checked={item.on}
@@ -269,7 +275,7 @@ export function QuickCommandsEditor({
                 )
               }
             />
-            <span title={item.name} className="w-32 shrink-0 truncate font-mono text-xs text-ink">
+            <span title={item.name} className="truncate text-sm text-ink">
               {item.name}
             </span>
             <span title={item.command} className="min-w-0 truncate font-mono text-2xs text-ink-4">
@@ -279,16 +285,16 @@ export function QuickCommandsEditor({
         ))}
       </div>
       <Divider />
-      <div className="flex items-center gap-2">
-        <span className="w-[84px]">
-          <Field
-            aria-label="Name"
-            placeholder="name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-          />
-        </span>
-        <span className="flex-1">
+      <div className={cn(COMMAND_ROW, "grid-cols-[28px_128px_minmax(0,1fr)_auto]")}>
+        <span />
+        <Field
+          mono={false}
+          aria-label="Name"
+          placeholder="name"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+        />
+        <span className="min-w-0">
           <Field
             aria-label="Command"
             placeholder="command, e.g. docker compose up"
@@ -302,106 +308,6 @@ export function QuickCommandsEditor({
         </Button>
       </div>
       <Note>Shown as play buttons on every task card in this project.</Note>
-    </>
-  );
-}
-
-function TaskAddress({ address }: { address: string }) {
-  const [head, tail] = address.split("{task}");
-  return (
-    <span className="flex h-6 items-center rounded-full px-2.5 font-mono text-2xs text-ink-2 shadow-[inset_0_0_0_1px_var(--line-strong)]">
-      {head}
-      {tail !== undefined && <span className="text-green">{"{task}"}</span>}
-      {tail}
-    </span>
-  );
-}
-
-function GroupLabel({ label, source }: { label: string; source?: string }) {
-  return (
-    <div className="flex items-center pt-1 text-xs text-ink-3">
-      {label}
-      {source && <span className="ml-auto text-2xs text-ink-4">{source}</span>}
-    </div>
-  );
-}
-
-function ServiceMenu({ name }: { name: string }) {
-  return (
-    <IconButton aria-label={`${name} options`} size="sm" className="size-6">
-      <Ellipsis width={13} height={13} strokeWidth={2} />
-    </IconButton>
-  );
-}
-
-export function EnvironmentEditor({
-  value,
-  onPrepareAgain,
-}: {
-  value: ProjectEnvironment;
-  onPrepareAgain?: () => void;
-}) {
-  return (
-    <>
-      <GroupLabel label="In the browser" source="from package.json" />
-      {value.browser.map((service, index) => (
-        <div key={service.name} className="flex items-center gap-3">
-          {index === 0 ? (
-            <Globe width={13} height={13} strokeWidth={2} className="text-ink-4" />
-          ) : (
-            <Play width={13} height={13} strokeWidth={2} className="text-ink-4" />
-          )}
-          <span className="flex flex-1 flex-col">
-            <span className="font-mono text-xs text-ink">
-              {service.name} <span className="text-ink-4">:{service.port}</span>
-            </span>
-            <span className="font-mono text-3xs text-ink-4">{service.command}</span>
-          </span>
-          <TaskAddress address={service.address} />
-          <ServiceMenu name={service.name} />
-        </div>
-      ))}
-      <GroupLabel label="Inside the task only" source="from docker-compose.yml" />
-      {value.internal.map((service) => (
-        <div key={service.name} className="flex h-7 items-center gap-3">
-          <Database width={13} height={13} strokeWidth={2} className="text-ink-4" />
-          <span className="flex-1 font-mono text-xs text-ink">
-            {service.name} <span className="text-ink-4">:{service.port}</span>
-          </span>
-          <span className="text-2xs text-ink-4">{service.note}</span>
-          <ServiceMenu name={service.name} />
-        </div>
-      ))}
-      <Button variant="quiet" size="xs" className="self-start">
-        <Plus width={11} height={11} strokeWidth={2.25} />
-        Add service
-      </Button>
-      <GroupLabel label="Per-task values" source="override .env inside each task" />
-      {value.values.map((entry) => (
-        <div
-          key={entry.key}
-          className="grid grid-cols-[150px_auto_minmax(0,1fr)] items-center gap-2"
-        >
-          <Field aria-label="Variable" defaultValue={entry.key} />
-          <span className="text-xs text-ink-4">=</span>
-          <Field aria-label="Value" defaultValue={entry.value} />
-        </div>
-      ))}
-      <GroupLabel label="Clean base" />
-      <div className="flex items-start gap-3 rounded-field bg-inset px-3.5 py-3 shadow-[inset_0_0_0_1px_var(--line)]">
-        <StatusDot tone="green" className="mt-1.5" />
-        <span className="flex flex-1 flex-col gap-1">
-          <span className="text-sm font-medium text-ink">Ready</span>
-          <span className="text-2xs text-ink-3">{value.cleanBase.detail}</span>
-          <CheckList
-            items={value.cleanBase.steps.map((label) => ({ label, state: "done" as const }))}
-            className="mt-1 flex-row flex-wrap gap-x-4 [&_li]:py-0 [&_span]:text-2xs"
-          />
-        </span>
-        <Button size="xs" onClick={onPrepareAgain}>
-          Prepare again
-        </Button>
-      </div>
     </>
   );
 }

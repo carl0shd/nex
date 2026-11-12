@@ -13,6 +13,8 @@ import {
   type PackageLicense,
 } from "@/components/settings/licenses-view";
 import { Overlay } from "@/components/primitives/overlay";
+import { RemoveEnvironmentsDialog } from "@/components/settings/remove-environments-dialog";
+import { RuntimeCard, type RuntimeStatus } from "@/components/settings/runtime-card";
 import { SettingsPage, type SettingsData } from "@/components/settings/settings-page";
 import type { Preferences } from "@native/db/types";
 import { DEFAULT_PREFERENCES } from "@/lib/preferences";
@@ -66,6 +68,15 @@ const WORKSPACES: SettingsWorkspace[] = [
   },
 ];
 
+const RUNTIME: RuntimeStatus = {
+  state: "running",
+  version: "1.7.1",
+  addresses: "registered",
+  containers: 6,
+  usedGb: 0.6,
+  budgetGb: 8,
+};
+
 const SAMPLE_DATA: SettingsData = {
   version: "2.0.0",
   dataDir: "~/.nex",
@@ -95,6 +106,17 @@ const SAMPLE_DATA: SettingsData = {
   microphone: "1",
   language: "es-CO",
   lastScan: "2 min ago",
+  environments: {
+    unsupported: null,
+    enabled: true,
+    runtime: RUNTIME,
+    containers: 6,
+    memory: "8",
+    memoryOptions: ["4", "8", "12", "16"].map((value) => ({ value, label: `${value} GB` })),
+    setup: null,
+    removesRuntime: true,
+    removing: false,
+  },
 };
 
 function SettingsPageDemo() {
@@ -130,6 +152,13 @@ function SettingsPageDemo() {
         onRescan: noop,
         onUpgradeClaude: noop,
         onShowDataFolder: noop,
+        onSetUpEnvironments: noop,
+        onShowEnvironmentLog: noop,
+        onRestartEnvironments: noop,
+        onRepairAddresses: noop,
+        onEnvironmentMemory: (memory) =>
+          setValues((current) => ({ ...current, envMemory: memory })),
+        onRemoveEnvironments: async () => {},
       }}
     />
   );
@@ -179,6 +208,20 @@ export function SettingsPageSection() {
             onCancel={() => {}}
             onConfirm={() => {}}
           />
+        </div>
+      </Specimen>
+      <Specimen
+        name="Environments · Apple container running, .nex addresses off, stopped, restarting, and Uninstall…"
+        bare
+      >
+        <div className="flex flex-wrap items-start gap-10">
+          <div className="flex w-[620px] flex-col gap-3">
+            <RuntimeCard runtime={RUNTIME} />
+            <RuntimeCard runtime={{ ...RUNTIME, addresses: "missing" }} />
+            <RuntimeCard runtime={{ ...RUNTIME, state: "stopped", containers: 0, usedGb: 0 }} />
+            <RuntimeCard runtime={{ ...RUNTIME, state: "restarting", containers: 0, usedGb: 0 }} />
+          </div>
+          <RemoveEnvironmentsDialog containers={6} removesRuntime />
         </div>
       </Specimen>
       <Specimen name="LicensesView · search, open a package" bare>
