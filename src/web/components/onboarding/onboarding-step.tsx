@@ -34,7 +34,7 @@ export function OnboardingStep({
   useHotkey("Mod+Enter", () => primary.onClick?.(), { enabled: !primary.disabled });
 
   return (
-    <main className="grid min-h-0 flex-1 grid-cols-[480px_minmax(0,600px)] content-center justify-center gap-x-20 overflow-y-auto px-10 pb-12">
+    <main className="grid min-h-0 flex-1 grid-cols-[480px_minmax(0,600px)] justify-center gap-x-20 overflow-y-auto px-10 pt-8 pb-12 [align-content:safe_center]">
       <div key={step} className="rise-in flex flex-col gap-6">
         <header className="flex flex-col gap-2">
           <span className="text-xs font-medium text-ink-3">

@@ -124,10 +124,12 @@ export function TaskFieldRows({
   ...props
 }: PillProps & { action: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-2", className)}>
-      <TaskPlacePills {...props} />
-      <TaskAgentPills {...props} />
-      <span className="ml-auto shrink-0">{action}</span>
+    <div className={cn("flex min-w-0 items-end gap-2", className)}>
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-2">
+        <TaskPlacePills {...props} />
+        <TaskAgentPills {...props} />
+      </div>
+      <span className="shrink-0">{action}</span>
     </div>
   );
 }

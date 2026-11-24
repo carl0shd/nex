@@ -76,6 +76,7 @@ export function NewTaskDialog({
     fields.project,
     fields.agent.agent,
     fields.hasEnvironment,
+    fields.sessions.length > 0 && pills.session.label,
     ...TASK_PICKERS.map((picker) => pills[picker].label),
   ].join("|");
 
@@ -83,7 +84,7 @@ export function NewTaskDialog({
   useLayoutEffect(() => {
     const row = measureRef.current;
     if (!row) return;
-    const rounding = (TASK_PICKERS.length + 1) * LABEL_ROUNDING_PX;
+    const rounding = row.childElementCount * LABEL_ROUNDING_PX;
     setWidth(
       Math.min(
         Math.max(row.offsetWidth + rounding + ACTION_ROOM + DIALOG_PADDING_X, MIN_WIDTH),

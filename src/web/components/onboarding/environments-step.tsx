@@ -179,12 +179,21 @@ type PreviewState = "offer" | "running" | "ready";
 
 const EXAMPLE_TASKS = [62, 46, 54];
 const EXAMPLE_SERVICES = ["app", "database"];
+const PREVIEW_SERVICES = 4;
 
 const PREVIEW_LINE: Record<PreviewState, (memory: string) => string> = {
   offer: (memory) => `Up to ${memory} GB for environments`,
   running: () => "Setting up…",
   ready: () => "Ready",
 };
+
+function PreviewChip({ children }: { children: ReactNode }) {
+  return (
+    <span className="flex h-[22px] max-w-[120px] items-center gap-1.5 rounded-full px-2 text-2xs text-ink-2 shadow-[inset_0_0_0_1px_var(--line-strong)]">
+      {children}
+    </span>
+  );
+}
 
 function PreviewTask({
   name,
@@ -207,16 +216,18 @@ function PreviewTask({
         </span>
       </div>
       <div className="flex items-center gap-1.5">
-        {services.map((service) => (
-          <span
-            key={service}
-            className="flex h-[22px] items-center gap-1.5 rounded-full px-2 text-2xs text-ink-2 shadow-[inset_0_0_0_1px_var(--line-strong)]"
-          >
-            <StatusDot tone={tone} size={5} />
-            {service}
-          </span>
-        ))}
-        <span className="ml-auto flex shrink-0 items-center gap-1.5 text-2xs text-ink-4">
+        <span className="flex min-w-0 flex-1 flex-wrap gap-1.5">
+          {services.slice(0, PREVIEW_SERVICES).map((service) => (
+            <PreviewChip key={service}>
+              <StatusDot tone={tone} size={5} />
+              <span className="truncate">{service}</span>
+            </PreviewChip>
+          ))}
+          {services.length > PREVIEW_SERVICES && (
+            <PreviewChip>+{services.length - PREVIEW_SERVICES}</PreviewChip>
+          )}
+        </span>
+        <span className="flex shrink-0 items-center gap-1.5 text-2xs text-ink-4">
           <Database width={11} height={11} strokeWidth={2} />
           Own database
         </span>
