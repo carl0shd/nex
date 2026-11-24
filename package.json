@@ -16,7 +16,7 @@
     "licenses:generate": "node scripts/generate-licenses.js",
     "build": "pnpm licenses:generate && pnpm typecheck && electron-vite build",
     "postinstall": "git config core.hooksPath .githooks && electron-builder install-app-deps && node helpers/speech/scripts/postinstall.js",
-    "build:mac": "pnpm licenses:generate && electron-vite build && electron-builder --mac --config build/electron-builder.yml",
+    "build:mac": "pnpm licenses:generate && electron-vite build && electron-builder --mac --publish never --config build/electron-builder.yml",
     "pack:mac": "pnpm licenses:generate && electron-vite build && electron-builder --mac --dir --config build/electron-builder.yml",
     "fmt": "vp fmt",
     "check": "vp check",
