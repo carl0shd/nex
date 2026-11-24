@@ -54,6 +54,9 @@ export interface ResolverFiles {
 export const addressesRegistered = (files: ResolverFiles, port: number | null) =>
   resolverMatches(files.nex, port) && files.discovery && !files.legacy;
 
+export const discoveryCommands = (files: ResolverFiles, containerBinary: string): string[][] =>
+  files.discovery ? [] : [[containerBinary, "system", "dns", "create", DISCOVERY_DOMAIN]];
+
 export function registerCommands(
   staged: string,
   files: ResolverFiles,
@@ -61,7 +64,7 @@ export function registerCommands(
 ): string[][] {
   return [
     ...(files.legacy ? [[containerBinary, "system", "dns", "delete", NEX_DOMAIN]] : []),
-    ...(files.discovery ? [] : [[containerBinary, "system", "dns", "create", DISCOVERY_DOMAIN]]),
+    ...discoveryCommands(files, containerBinary),
     ["/bin/mkdir", "-p", RESOLVER_DIR],
     ["/usr/bin/install", "-m", "0644", staged, NEX_RESOLVER],
   ];

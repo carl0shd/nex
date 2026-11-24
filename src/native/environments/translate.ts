@@ -14,6 +14,7 @@ import {
   splitCommand,
   WORKSPACE_PATH,
 } from "./definition";
+import { envInstance } from "./instance";
 import { CHECK_LABEL, nexLabels, PROJECT_LABEL, SERVICE_LABEL, TASK_LABEL } from "./labels";
 
 // Each container boots its own kernel with only 8k inotify watches, which file watchers in dev
@@ -59,7 +60,8 @@ export interface ContainerPlan {
   runs: ContainerRun[];
 }
 
-export const containerName = (taskSlug: string, service: string) => `nex-${taskSlug}-${service}`;
+export const containerName = (taskSlug: string, service: string) =>
+  `${envInstance().prefix}-${taskSlug}-${service}`;
 
 export const dataVolumeName = (taskSlug: string, service: string) =>
   `${containerName(taskSlug, service)}-data`;

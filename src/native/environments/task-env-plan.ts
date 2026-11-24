@@ -257,6 +257,7 @@ export function downFrom(
 export interface AddressOptions {
   port: number;
   nex: boolean;
+  hostPorts?: boolean;
 }
 
 export const DEFAULT_ADDRESSES: AddressOptions = { port: ENTRY_PORT, nex: false };
@@ -298,7 +299,7 @@ export function initialServices(
     state,
     ports: service.ports,
     main: service.name === main,
-    localPort: forwardedPort(service),
+    localPort: addresses.hostPorts === false ? null : forwardedPort(service),
     ...serviceUrl(env, service, slug, addresses),
   }));
 }
@@ -343,6 +344,8 @@ export function agentEnvironmentNote(
     ...services.map((service) => agentServiceLine(slug, service)),
     "",
     `Run a command inside a service with \`${binary} exec <container> <command>\` and read its output with \`${binary} logs -n 100 <container>\`.`,
-    "Edits in the worktree reach the containers within a second. Use the addresses above from the Mac: localhost ports reach whichever task the user is viewing, not necessarily this one.",
+    services.some((service) => service.localPort !== null)
+      ? "Edits in the worktree reach the containers within a second. Use the addresses above from the Mac: localhost ports reach whichever task the user is viewing, not necessarily this one."
+      : "Edits in the worktree reach the containers within a second. Use the addresses above from the Mac.",
   ].join("\n");
 }
