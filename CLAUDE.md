@@ -91,6 +91,7 @@ src/
 
 ```bash
 pnpm dev              # Start dev server
+pnpm dev:demo         # Dev with a mock API and sample tasks (src/web/demo/), for screenshots
 pnpm build            # Typecheck + build
 pnpm build:mac        # Build + package for macOS (includes re-sign)
 pnpm check            # vp check: Oxfmt + Oxlint
@@ -217,7 +218,7 @@ our paths, and comments that broke the [Comments](#comments) rules were removed.
   model and mode; the branch name comes from the title via `lib/task-branch.ts`; `AgentPicker`,
   `ProjectPicker`, `BranchPicker`), `usage/` (`UsagePanel` opens from the titlebar's `UsagePill`:
   `AccountSwitch`, `SessionLimit` with the projected end of the window, `SpendTrend` sparkline and
-  the tasks that spent it; tones and the sparkline math live in `lib/usage.ts`), `command/` (`CommandPalette` — ⌘K over a
+  the tasks that spent it; tones and the sparkline math live in `lib/usage.ts`; the summary is shared through `usage-summary.store.ts`, and each task header shows its spend with `useTaskCost`, past conversations of the task included), `command/` (`CommandPalette` — ⌘K over a
   scrim with tasks, files and actions; ranking in `lib/command-search.ts`; ↑↓ moves one sliding
   highlight, ↵ opens, ⌘↵ opens in a split), `settings/` (`SettingsPage` — the `/settings` route (titlebar gear, ⌘,), controlled: `AppSettings` feeds it the
   real data and writes `preferences.store.ts` (`lib/preferences.ts` holds the defaults; main reads the
@@ -267,7 +268,7 @@ only exception is inline `style` for dynamic colors passed as props (e.g. worksp
 - The palette lives in `:root` (light) and `.dark` (the wireframe palette — the default). **A theme
   only overrides these variables**, and `@theme inline` turns them into utilities:
   surfaces `page` · `canvas` · `surface` · `surface-raised` · `elevated` · `inset`; fills `field` ·
-  `hover` · `hover-2` · `glass` · `page-glass` · `surface-glass`; ink `ink` … `ink-6`, `inverse`; lines `line-soft` · `line` ·
+  `hover` · `hover-2` · `glass` · `page-glass` · `surface-glass` · `card-glass` (task cards over the scene); ink `ink` … `ink-6`, `inverse`; lines `line-soft` · `line` ·
   `line-chip` · `line-strong` · `line-focus` · `ring-idle`; brand `accent` (logo green #33843F) ·
   `accent-hover` · `accent-ink` · `accent-tint` · `on-accent`; semantic `green` · `orange` · `red`
   (`red-solid` for filled) · `blue` · `violet`, each with a `-tint`; identity `claude` · `claude-tile`; overlay `scrim`.
