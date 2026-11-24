@@ -18,7 +18,7 @@ export function TaskCard({
     <section
       ref={ref}
       className={cn(
-        "relative flex h-[788px] w-[600px] flex-col overflow-hidden rounded-card bg-surface",
+        "relative flex h-[788px] w-[600px] flex-col overflow-hidden rounded-card bg-card-glass backdrop-blur-[28px] backdrop-saturate-[1.2]",
         state === "focused" && "shadow-task-focused",
         state === "waiting" && "shadow-task-waiting",
         state === "rest" && "shadow-task",
