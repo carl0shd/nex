@@ -15,6 +15,8 @@ import { PERMISSION_LABEL, PERMISSION_MODES } from "@/lib/permission-modes";
 import { taskBranchName } from "@/lib/task-branch";
 import { useClaudeSessions } from "@/hooks/use-claude-sessions";
 
+const NO_SESSIONS: readonly ClaudeSessionInfo[] = [];
+
 export interface NewTaskDraft {
   title: string;
   description: string;
@@ -69,7 +71,7 @@ export function useTaskFields({
   const [resume, setResume] = useState<ClaudeSessionInfo | null>(null);
 
   const current = projects.find((item) => item.id === project) ?? firstProject;
-  const sessions = useClaudeSessions(current?.id);
+  const sessions = useClaudeSessions(current?.id) ?? NO_SESSIONS;
   const currentAgent = agents.find((option) => option.id === agent.agent);
   const account = currentAgent?.accounts?.find((item) => item.id === agent.account);
   const agentName = currentAgent?.shortName ?? currentAgent?.name ?? "";

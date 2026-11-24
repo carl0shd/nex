@@ -1,22 +1,28 @@
 import { useEffect, useState } from "react";
 import type { ClaudeSessionInfo } from "@native/agents/claude-sessions";
 
-const NONE: readonly ClaudeSessionInfo[] = [];
+const found = new Map<string, ClaudeSessionInfo[]>();
 
-export function useClaudeSessions(projectId: string | undefined): readonly ClaudeSessionInfo[] {
-  const [found, setFound] = useState<{ projectId: string; sessions: ClaudeSessionInfo[] }>();
+export function useClaudeSessions(
+  projectId: string | undefined,
+): readonly ClaudeSessionInfo[] | undefined {
+  const [, setVersion] = useState(0);
   useEffect(() => {
     if (!projectId) return;
     let cancelled = false;
     void window.api
       .listClaudeSessions(projectId)
       .then((sessions) => {
-        if (!cancelled) setFound({ projectId, sessions });
+        found.set(projectId, sessions ?? []);
+        if (!cancelled) setVersion((version) => version + 1);
       })
-      .catch(() => {});
+      .catch(() => {
+        found.set(projectId, found.get(projectId) ?? []);
+        if (!cancelled) setVersion((version) => version + 1);
+      });
     return () => {
       cancelled = true;
     };
   }, [projectId]);
-  return found && found.projectId === projectId ? found.sessions : NONE;
+  return projectId ? found.get(projectId) : [];
 }
