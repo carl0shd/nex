@@ -51,11 +51,10 @@ src/
 │   ├── main.tsx               # React entry (react-scan in dev)
 │   ├── App.tsx                # Root component (ErrorBoundary + Titlebar + Router)
 │   ├── routes/
-│   │   ├── home.tsx           # Main view (empty — being rebuilt from the wireframes)
-│   │   └── design-system.tsx  # Living style guide (dev only)
+│   │   ├── home.tsx           # Overview and Tasks
+│   │   └── settings.tsx       # Settings page
 │   ├── components/
 │   │   ├── layout/            # App structure (app-shell, titlebar)
-│   │   ├── design-system/     # The gallery rendered by routes/design-system.tsx
 │   │   ├── atoms/             # beautiful-ui building blocks
 │   │   ├── primitives/        # beautiful-ui primitives
 │   │   └── error-boundary.tsx # React error boundary
@@ -257,9 +256,8 @@ our paths, and comments that broke the [Comments](#comments) rules were removed.
 
 The other beautiful-ui primitives are still in their original look and are not shown anywhere yet.
 
-**Living style guide:** `routes/design-system.tsx` (dev only — palette icon in the titlebar) shows
-only what matches the wireframes: colors, typography, radii, shadows and every restyled component
-(`components/design-system/`). Add a specimen when a component is restyled or added.
+**Component gallery:** the `design-system` branch keeps the dev-only gallery of every restyled
+component as it was; `main` no longer ships it.
 
 ### Theming
 
@@ -381,6 +379,10 @@ container; the Mac reaches every task through Nex's own proxy (`proxy.ts`), so t
   images, its builder and folders).
 - **Labels:** everything Nex creates carries `nex=1` (`labels.ts`), plus `nex.task=<id>` per task;
   status, memory use (`container stats`) and uninstall only ever look at labelled containers and volumes.
+- **Nex Dev** (`instance.ts`, selected in `main/index.ts` when unpackaged) shares Apple container with the
+  installed app, so it never touches its resources: label `nex=dev`, names `nexdev-…`, discovery
+  `<task>-dev.nexsvc`, entry port 1375+, and no Nex DNS, `/etc/resolver/nex`, port 80 or host ports — its
+  tasks answer on `.localhost` only. It still creates Apple's `nexsvc` domain when missing.
 - **Nex DNS** (`nex-dns.ts`, packets pure in `dns-packet.ts`, resolver file in `resolver-file.ts`): a
   UDP server in main on `127.0.0.1:53535` (or the next free one up to 53544, kept in the `nexDnsPort`
   setting). `/etc/resolver/nex` (`nameserver 127.0.0.1`, `port`, `search_order 1`) sends the Mac's
@@ -760,7 +762,6 @@ Components are organized by function, not dumped into one folder:
 - **`primitives/`** — self-contained interface primitives (from beautiful-ui)
 - **`layout/`** — app structure (app shell, titlebar)
 - **`sidebar/`**, **`home/`**, **`new-task/`**, **`usage/`**, **`command/`**, **`settings/`**, **`onboarding/`**, **`projects/`**, **`environment/`**, **`task/`**, **`task-view/`**, **`composer/`**, **`changes/`**, **`notes/`**, **`terminal/`**, **`browser/`**, **`session/`** — one folder per area of the app
-- **`design-system/`** — the dev-only gallery
 
 New feature folders (`sidebar/`, `task/`, `modals/`, …) are created when the first component that
 belongs there is written. A generic, reusable piece goes in `atoms/` or `primitives/`; something used

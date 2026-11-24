@@ -1,7 +1,6 @@
 import { useState, type ReactNode } from "react";
-import { Palette, PanelLeft, Rocket, Settings2 } from "lucide-react";
+import { PanelLeft, Settings2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router";
-import { useOnboardingStore } from "@/stores/onboarding.store";
 import { usePreferencesStore } from "@/stores/preferences.store";
 import { useSettingsStore } from "@/stores/settings.store";
 import { IconButton } from "@/components/atoms/icon-button";
@@ -33,7 +32,6 @@ export function TitlebarView({
   onToggleSidebar,
   onSearch,
   onSettings,
-  trailing,
 }: {
   collapsed?: boolean;
   usage?: Usage;
@@ -45,7 +43,6 @@ export function TitlebarView({
   onToggleSidebar?: () => void;
   onSearch?: () => void;
   onSettings?: () => void;
-  trailing?: ReactNode;
 }) {
   const [ownUsageOpen, setOwnUsageOpen] = useState(defaultUsageOpen);
   const usageOpen = controlledUsageOpen ?? ownUsageOpen;
@@ -92,7 +89,6 @@ export function TitlebarView({
             {usagePanel}
           </AnchoredPopover>
         )}
-        {trailing}
         <IconButton
           aria-label="Settings"
           pressed={settingsOpen}
@@ -109,11 +105,9 @@ export function TitlebarView({
 function Titlebar(): React.JSX.Element {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const onDesignSystem = pathname === "/design-system";
   const collapsed = useSettingsStore((s) => s.sidebarCollapsed);
   const toggleSidebar = useSettingsStore((s) => s.toggleSidebar);
   const showPalette = useCommandPaletteStore((s) => s.show);
-  const previewOnboarding = useOnboardingStore((s) => s.preview);
   const { summary, reload, refresh } = useUsageSummary();
   useLimitWarnings(summary, reload);
   const defaultAccount = summary?.accounts.find((account) => account.isDefault);
@@ -147,26 +141,6 @@ function Titlebar(): React.JSX.Element {
       usagePanel={
         summary && (
           <AppUsagePanel summary={summary} onRefresh={() => void refresh()} onChanged={reload} />
-        )
-      }
-      trailing={
-        import.meta.env.DEV && (
-          <>
-            <IconButton
-              aria-label="Preview first run"
-              title="Preview first run (⇧⌘O)"
-              onClick={previewOnboarding}
-            >
-              <Rocket width={14} height={14} strokeWidth={2} />
-            </IconButton>
-            <IconButton
-              aria-label="Design system"
-              pressed={onDesignSystem}
-              onClick={() => navigate(onDesignSystem ? "/" : "/design-system")}
-            >
-              <Palette width={14} height={14} strokeWidth={2} />
-            </IconButton>
-          </>
         )
       }
     />

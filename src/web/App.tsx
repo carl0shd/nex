@@ -5,7 +5,6 @@ import ErrorBoundary from "@/components/error-boundary";
 import AppShell from "@/components/layout/app-shell";
 import Settings from "@/routes/settings";
 import Home from "@/routes/home";
-import DesignSystem from "@/routes/design-system";
 import { useSystemTheme } from "@/hooks/use-system-theme";
 import { usePermissionStore } from "@/stores/permission.store";
 import { useApplyPreferences } from "@/hooks/use-apply-preferences";
@@ -17,7 +16,6 @@ const routes: RouteObject[] = [
   { index: true, element: <Home /> },
   { path: "settings", element: <Settings /> },
 ];
-if (import.meta.env.DEV) routes.push({ path: "design-system", element: <DesignSystem /> });
 
 const router = createMemoryRouter([{ path: "/", element: <AppShell />, children: routes }]);
 

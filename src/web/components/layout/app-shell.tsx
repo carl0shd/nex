@@ -1,6 +1,5 @@
 import { AppCommandPalette } from "@/components/command/app-command-palette";
 import { AppAgentToasts } from "@/components/task/app-agent-toasts";
-import { useHotkey } from "@tanstack/react-hotkeys";
 import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { AppBackdropContext } from "@/components/layout/app-backdrop";
@@ -15,7 +14,6 @@ import { AppRemoveWorkspace } from "@/components/layout/app-remove-workspace";
 import { AppCloseTask } from "@/components/task/app-close-task";
 import { Toaster } from "@/components/primitives/toaster";
 import { useClaudeVersionCheck } from "@/hooks/use-claude-version-check";
-import { useOnboardingStore } from "@/stores/onboarding.store";
 import { useSettingsStore } from "@/stores/settings.store";
 import { useWorkspaceStore } from "@/stores/workspace.store";
 
@@ -25,18 +23,13 @@ function useOnboarding() {
   const finishOnboarding = useSettingsStore((s) => s.finishOnboarding);
   const workspacesLoaded = useWorkspaceStore((s) => s.loaded);
   const hasWorkspaces = useWorkspaceStore((s) => s.workspaces.length > 0);
-  const previewing = useOnboardingStore((s) => s.previewing);
-  const preview = useOnboardingStore((s) => s.preview);
-  const closePreview = useOnboardingStore((s) => s.close);
-  useHotkey("Mod+Shift+O", preview, { enabled: import.meta.env.DEV });
   const firstRun = settingsLoaded && workspacesLoaded && !onboarded && !hasWorkspaces;
   const [started, setStarted] = useState(false);
   if (firstRun && !started) setStarted(true);
   return {
-    showing: previewing || started,
+    showing: started,
     done: () => {
       setStarted(false);
-      closePreview();
       finishOnboarding();
     },
   };
@@ -73,7 +66,7 @@ function AppShell(): React.JSX.Element {
       <AppBackdropContext value={backdrop}>
         <Titlebar />
         <div className="relative flex min-h-0 flex-1 overflow-clip">
-          {pathname !== "/design-system" && <AppSidebar />}
+          <AppSidebar />
           <Outlet />
         </div>
       </AppBackdropContext>
