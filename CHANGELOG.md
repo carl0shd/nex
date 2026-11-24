@@ -1,5 +1,13 @@
 # nex
 
+## 1.0.1
+
+### Patch Changes
+
+- 5aa7e26: Task cards in the Tasks view now let the home background show through, like the sidebar.
+- d020a8d: We fixed long-running steps in a task showing their time only in seconds.
+- d426dd5: Each task now shows what it has cost so far, next to its project and branch.
+
 ## 1.0.0
 
 ### Major Changes
