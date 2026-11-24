@@ -58,9 +58,17 @@ const DATA: Omit<OnboardingData, "install"> = {
   services: foundServices(SAMPLE_ENVIRONMENT),
   serviceSources: SAMPLE_ENVIRONMENT.detectedFrom,
   envTasks: [
-    { branch: "feat/fix-login-redirect", address: "monoku-fix-login.nex", startedIn: "2.1s" },
-    { branch: "feat/usage-panel", address: "monoku-usage-panel.nex", startedIn: "1.8s" },
-    { branch: "feat/accounts-table", address: "monoku-accounts-table.nex", startedIn: "2.4s" },
+    {
+      branch: "feat/fix-login-redirect",
+      address: "fix-login.nex",
+      startedIn: "2.1s",
+    },
+    { branch: "feat/usage-panel", address: "usage-panel.nex", startedIn: "1.8s" },
+    {
+      branch: "feat/accounts-table",
+      address: "accounts-table.nex",
+      startedIn: "2.4s",
+    },
   ],
   envRuntime: "Container runtime made by Apple · about 160 MB",
   model: "Opus 5.5",

@@ -1,5 +1,5 @@
 import { execFile } from "child_process";
-import { readFileSync, appendFileSync, mkdirSync, rmSync, statSync } from "fs";
+import { existsSync, readFileSync, appendFileSync, mkdirSync, rmSync, statSync } from "fs";
 import { join } from "path";
 
 function git(cwd: string, args: string[]): Promise<string> {
@@ -135,6 +135,114 @@ export async function createWorktree(
   base: string,
 ): Promise<void> {
   await git(repo, ["worktree", "add", "-b", branch, path, base, "--quiet"]);
+}
+
+export interface Submodule {
+  name: string;
+  path: string;
+  url?: string;
+}
+
+export function parseSubmodules(listed: string): Submodule[] {
+  const byName = new Map<string, Partial<Submodule>>();
+  for (const line of listed.split("\n")) {
+    const match = /^submodule\.(.+)\.(path|url) (.+)$/.exec(line.trim());
+    if (!match) continue;
+    const [, name = "", key, value] = match;
+    byName.set(name, { ...byName.get(name), name, [key === "url" ? "url" : "path"]: value });
+  }
+  return [...byName.values()].filter((entry): entry is Submodule => Boolean(entry.path));
+}
+
+export const sameRemote = (url: string) =>
+  url
+    .trim()
+    .replace(/\/+$/, "")
+    .replace(/\.git$/, "");
+
+async function listSubmodules(dir: string): Promise<Submodule[]> {
+  if (!existsSync(join(dir, ".gitmodules"))) return [];
+  const listed = await gitSilent(dir, [
+    "config",
+    "-f",
+    ".gitmodules",
+    "--get-regexp",
+    "^submodule\\..*\\.(path|url)$",
+  ]);
+  return parseSubmodules(listed);
+}
+
+interface LocalCopies {
+  byPath: Map<string, string>;
+  byRemote: Map<string, string>;
+}
+
+async function findLocalCopies(repo: string, rel = "", found?: LocalCopies): Promise<LocalCopies> {
+  const copies = found ?? { byPath: new Map(), byRemote: new Map() };
+  for (const submodule of await listSubmodules(join(repo, rel))) {
+    const path = join(rel, submodule.path);
+    if (!existsSync(join(repo, path, ".git"))) continue;
+    copies.byPath.set(path, join(repo, path));
+    if (submodule.url && !copies.byRemote.has(sameRemote(submodule.url))) {
+      copies.byRemote.set(sameRemote(submodule.url), join(repo, path));
+    }
+    await findLocalCopies(repo, path, copies);
+  }
+  return copies;
+}
+
+async function cloneFromLocalCopy(dir: string, submodule: Submodule, local: string) {
+  await git(dir, ["submodule", "init", "--", submodule.path]);
+  try {
+    await git(dir, [
+      "-c",
+      "protocol.file.allow=always",
+      "-c",
+      `submodule.${submodule.name}.url=${local}`,
+      "submodule",
+      "update",
+      "--",
+      submodule.path,
+    ]);
+  } finally {
+    const cloned = join(dir, submodule.path);
+    if (submodule.url && existsSync(join(cloned, ".git"))) {
+      await gitSilent(cloned, ["remote", "set-url", "origin", submodule.url]);
+    }
+  }
+}
+
+async function checkOutSubmodules(
+  worktree: string,
+  rel: string,
+  copies: LocalCopies,
+  failed: string[],
+): Promise<void> {
+  const dir = join(worktree, rel);
+  for (const submodule of await listSubmodules(dir)) {
+    const path = join(rel, submodule.path);
+    const local = copies.byPath.get(path) ?? copies.byRemote.get(sameRemote(submodule.url ?? ""));
+    try {
+      const fromLocal = local
+        ? await cloneFromLocalCopy(dir, submodule, local).then(
+            () => true,
+            () => false,
+          )
+        : false;
+      if (!fromLocal) await git(dir, ["submodule", "update", "--init", "--", submodule.path]);
+      await checkOutSubmodules(worktree, path, copies, failed);
+    } catch {
+      failed.push(path);
+    }
+  }
+}
+
+// `git worktree add` leaves submodules empty. Cloning each from a local copy of the same remote
+// (nested ones too) skips GitHub; origin then points back at the real remote for fetch and push.
+export async function initSubmodules(repo: string, worktree: string): Promise<void> {
+  const failed: string[] = [];
+  await checkOutSubmodules(worktree, "", await findLocalCopies(repo), failed);
+  if (failed.length > 0) throw new Error(`Couldn't check out ${failed.join(", ")}`);
 }
 
 export async function removeWorktree(repo: string, path: string): Promise<void> {

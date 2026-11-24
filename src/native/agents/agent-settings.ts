@@ -30,6 +30,8 @@ export const cliModel = (model: string) =>
   LEGACY_MODEL.test(model) ? (model.split("-")[0] ?? model) : model;
 export const cliEffort = (effort: string) => CLI_EFFORT[effort] ?? "high";
 
+export const ultracodeOn = (settings: AgentSettings) => settings.effort === "ultracode";
+
 export function cliFlags(settings: AgentSettings, supportsEffort = true): string[] {
   return [
     "--model",
@@ -37,6 +39,7 @@ export function cliFlags(settings: AgentSettings, supportsEffort = true): string
     ...(supportsEffort ? ["--effort", cliEffort(settings.effort)] : []),
     "--permission-mode",
     cliMode(settings.mode),
+    ...(ultracodeOn(settings) ? ["--settings", JSON.stringify({ ultracode: true })] : []),
   ];
 }
 

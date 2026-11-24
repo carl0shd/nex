@@ -33,6 +33,15 @@ describe("setupPhrase", () => {
       script: SETUP.script,
     };
     expect(phraseText(setupPhrase(none))).toBe("Worktrees start as a clean checkout");
+    expect(phraseText(setupPhrase(none, true))).toBe(
+      "Each worktree copies the env files its services read",
+    );
+  });
+
+  it("adds the env files an environment reads", () => {
+    expect(phraseText(setupPhrase(SETUP, true))).toBe(
+      "Each worktree runs yarn install and copies .env plus the env files its services read",
+    );
   });
 });
 

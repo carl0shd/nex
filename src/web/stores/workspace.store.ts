@@ -15,6 +15,8 @@ import { badgeFields, storedWorkspaceIcon, type WorkspaceIconName } from "@/lib/
 
 type TerminalState = Pick<Terminal, "id" | "sessionId" | "type" | "status" | "name" | "isPrimary">;
 
+export type HomeView = "overview" | "tasks";
+
 interface WorkspaceStore {
   workspaces: Workspace[];
   projects: Project[];
@@ -22,6 +24,7 @@ interface WorkspaceStore {
   terminals: TerminalState[];
   runningSince: Record<string, number>;
   activeTaskId: string | null;
+  homeView: HomeView;
   replyFocus: { sessionId: string; request: number; insert?: string } | null;
   viewRequest: { sessionId: string; request: number; view: TaskView } | null;
   openTaskView: (id: string, view: TaskView) => void;
@@ -37,8 +40,10 @@ interface WorkspaceStore {
   addShell: (sessionId: string) => Promise<string>;
   closeTerminal: (id: string) => Promise<void>;
   runQuickCommand: (sessionId: string, command: QuickCommand) => Promise<string>;
+  openEnvironmentLogs: (sessionId: string, service?: string) => Promise<string | null>;
   renameTask: (id: string, title: string) => Promise<void>;
   setTaskWidth: (id: string, width: number) => void;
+  turnEnvironmentOn: (id: string) => void;
   closeTask: (id: string) => Promise<void>;
   setAgentRunning: (sessionId: string, running: boolean) => void;
   createProject: (input: CreateProjectInput) => Promise<Project>;
@@ -55,6 +60,7 @@ interface WorkspaceStore {
   selectTask: (id: string) => void;
   openTask: (id: string, insert?: string) => void;
   showOverview: () => void;
+  showTasks: () => void;
 }
 
 let unsubscribeStatus: (() => void) | null = null;
@@ -98,6 +104,7 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => {
     terminals: [],
     runningSince: {},
     activeTaskId: null,
+    homeView: "overview",
     replyFocus: null,
     viewRequest: null,
     loaded: false,
@@ -201,6 +208,7 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => {
         sessions: [...state.sessions, session],
         terminals: [...state.terminals, ...terminals],
         activeTaskId: session.id,
+        homeView: "tasks",
       }));
       return session;
     },
@@ -238,11 +246,28 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => {
       set((state) => ({ terminals: [...state.terminals, terminal] }));
       return terminal.id;
     },
+    openEnvironmentLogs: async (sessionId, service) => {
+      const terminal = await window.api.openTaskEnvironmentLogs(sessionId, service);
+      if (!terminal) return null;
+      set((state) =>
+        state.terminals.some((item) => item.id === terminal.id)
+          ? state
+          : { terminals: [...state.terminals, terminal] },
+      );
+      return terminal.id;
+    },
     setTaskWidth: (id, width) => {
       set((state) => ({
         sessions: state.sessions.map((item) => (item.id === id ? { ...item, width } : item)),
       }));
       void window.api.updateSession(id, { width });
+    },
+    turnEnvironmentOn: (id) => {
+      set((state) => ({
+        sessions: state.sessions.map((item) =>
+          item.id === id ? { ...item, envOff: false } : item,
+        ),
+      }));
     },
     renameTask: async (id, title) => {
       const session = await window.api.updateSession(id, { title });
@@ -272,17 +297,20 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => {
       if (workspace) setCollapsed(id, !workspace.collapsed);
     },
     expandWorkspace: (id) => setCollapsed(id, false),
-    selectTask: (id) => set({ activeTaskId: id }),
+    selectTask: (id) => set({ activeTaskId: id, homeView: "tasks" }),
     openTask: (id, insert) =>
       set((state) => ({
         activeTaskId: id,
+        homeView: "tasks",
         replyFocus: { sessionId: id, request: (state.replyFocus?.request ?? 0) + 1, insert },
       })),
     openTaskView: (id, view) =>
       set((state) => ({
         activeTaskId: id,
+        homeView: "tasks",
         viewRequest: { sessionId: id, request: (state.viewRequest?.request ?? 0) + 1, view },
       })),
-    showOverview: () => set({ activeTaskId: null }),
+    showOverview: () => set({ activeTaskId: null, homeView: "overview" }),
+    showTasks: () => set({ homeView: "tasks" }),
   };
 });

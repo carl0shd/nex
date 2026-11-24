@@ -1,3 +1,8 @@
+export const DITHER_COLUMN_START_PX = 12;
+export const DITHER_COLUMN_STEP_PX = 21;
+
+export const ditherColumnAtX = (x: number) => (x - DITHER_COLUMN_START_PX) / DITHER_COLUMN_STEP_PX;
+
 export const DITHER_OFFSETS = [
   [0, 0],
   [6, 6],

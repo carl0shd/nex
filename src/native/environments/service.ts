@@ -14,14 +14,12 @@ import {
   removeNexResources,
   removeProjectResources,
 } from "./containers";
-import { CLEAN_BASES_KEY } from "./clean-base-plan";
 import { NEX_DOMAIN } from "./labels";
 import { friendlyError, memoryChoices } from "./parse";
 import {
+  containerBinary,
   detectRuntime,
   detectSupport,
-  domainCommand,
-  domainRegistered,
   downloadRuntime,
   installRuntime,
   runAsAdmin,
@@ -45,6 +43,8 @@ import {
   stepDetail,
 } from "./setup-steps";
 import type { EnvironmentStatus, EnvSetupState, EnvStepId } from "./types";
+import { refreshNexAddresses, registerAddressCommands, unregisterAddressCommands } from "./nex-dns";
+import { blockedPorts } from "./proxy";
 
 const STATE_KEY = "environments";
 const PROGRESS_EVERY_MS = 250;
@@ -62,6 +62,8 @@ export const environmentLogPath = () => join(envDir(), "setup.log");
 
 const readState = (): StoredState =>
   settings.get<StoredState>(STATE_KEY, { enabled: false, installedRuntime: false });
+
+export const environmentsEnabled = () => readState().enabled;
 
 const writeState = (patch: Partial<StoredState>) =>
   settings.set(STATE_KEY, { ...readState(), ...patch });
@@ -107,10 +109,14 @@ export function onSetupProgress(listener: (state: EnvSetupState) => void): () =>
 
 const latest = () => setup as EnvSetupState;
 
+const addressCommands = () =>
+  registerAddressCommands(join(envDir(), "resolver"), containerBinary());
+
 async function registerAddresses(onPrompt: () => void): Promise<void> {
+  const commands = await addressCommands();
   onPrompt();
-  await runAsAdmin([domainCommand("create")], log);
-  if (!(await domainRegistered())) throw new Error(".nex addresses didn’t register.");
+  await runAsAdmin(commands, log);
+  if (!refreshNexAddresses()) throw new Error(".nex addresses didn’t register.");
 }
 
 type StepRunner = (index: number) => Promise<{ label: string; detail?: string }>;
@@ -134,9 +140,9 @@ const STEP_RUNNERS: Record<EnvStepId, StepRunner> = {
     );
     await verifyPackage(pkg, log);
     publish(stepDetail(latest(), index, PASSWORD_DETAIL));
-    const registerDomain = !(await domainRegistered());
+    const register = refreshNexAddresses() ? [] : await addressCommands().catch(() => []);
     try {
-      await installRuntime(pkg, { registerDomain }, log);
+      await installRuntime(pkg, register, log);
     } catch (error) {
       if (!(await detectRuntime()).compatible) throw error;
       log("Apple container installed but .nex addresses didn’t register; the next step retries");
@@ -156,7 +162,7 @@ const STEP_RUNNERS: Record<EnvStepId, StepRunner> = {
     return { label: "Apple container running" };
   },
   addresses: async (index) => {
-    if (await domainRegistered()) {
+    if (refreshNexAddresses()) {
       return { label: ".nex addresses registered", detail: "Already on this Mac" };
     }
     await registerAddresses(() => publish(stepDetail(latest(), index, PASSWORD_DETAIL)));
@@ -220,10 +226,8 @@ export async function getEnvironmentStatus(): Promise<EnvironmentStatus> {
   const runtime = host.reason ? null : await detectRuntime();
   const ready = Boolean(runtime?.compatible);
   const up = ready && (await systemRunning());
-  const [registered, usage] = await Promise.all([
-    ready ? domainRegistered() : false,
-    up ? nexUsage() : NO_USAGE,
-  ]);
+  const registered = refreshNexAddresses();
+  const usage = up ? await nexUsage() : NO_USAGE;
   return {
     supported: host.reason === null,
     reasonUnsupported: host.reason,
@@ -240,6 +244,7 @@ export async function getEnvironmentStatus(): Promise<EnvironmentStatus> {
       running: up,
     },
     dns: { domain: NEX_DOMAIN, registered },
+    blockedPorts: blockedPorts(),
     usage,
     setup,
   };
@@ -264,7 +269,7 @@ export function restartEnvironments(): Promise<void> {
 export function repairAddresses(): Promise<void> {
   return exclusive(async () => {
     log("Repairing .nex addresses");
-    if (!(await domainRegistered())) await registerAddresses(() => {});
+    if (!refreshNexAddresses()) await registerAddresses(() => {});
   });
 }
 
@@ -280,7 +285,6 @@ export function uninstallEnvironments(): Promise<void> {
       await removeNexResources(log);
       await removeLegacySetup(log);
       if (stored.pulledCheckImage) await removeCheckImage(log);
-      if (await domainRegistered()) admin.push(domainCommand("delete"));
       if (stored.installedRuntime) {
         const keepData = await hasOtherContent();
         await stopSystem(log);
@@ -289,9 +293,10 @@ export function uninstallEnvironments(): Promise<void> {
         await stopSystem(log);
       }
     }
+    admin.unshift(...unregisterAddressCommands());
     await runAsAdmin(admin, log);
+    refreshNexAddresses();
     writeState({ enabled: false, installedRuntime: false, pulledCheckImage: false });
-    settings.remove(CLEAN_BASES_KEY);
     setup = null;
     removeDirs([...LEGACY_DIRS, "downloads"]);
   });

@@ -31,6 +31,8 @@ interface SessionRow {
   horizontal_layout: string | null;
   sort_order: number;
   width: number;
+  env_slug: string;
+  env_off: number;
 }
 
 function parseLayout(value: string | null): PanelLayout | null {
@@ -65,6 +67,8 @@ function toSession(row: SessionRow): Session {
     horizontalLayout: parseLayout(row.horizontal_layout),
     sortOrder: row.sort_order,
     width: row.width,
+    envSlug: row.env_slug ?? "",
+    envOff: row.env_off === 1,
   };
 }
 
@@ -117,8 +121,8 @@ export function create(input: CreateSessionInput): Session {
 
   const row = getDb()
     .prepare(
-      `INSERT INTO sessions (id, project_id, agent_id, account_id, name, title, branch, base_branch, worktree_path, notes_path, symlinks, sort_order, width)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`,
+      `INSERT INTO sessions (id, project_id, agent_id, account_id, name, title, branch, base_branch, worktree_path, notes_path, symlinks, sort_order, width, env_off)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`,
     )
     .get(
       randomUUID(),
@@ -134,6 +138,7 @@ export function create(input: CreateSessionInput): Session {
       JSON.stringify(input.symlinks ?? []),
       nextOrder,
       DEFAULT_SESSION_WIDTH,
+      input.envOff ? 1 : 0,
     ) as SessionRow;
   return toSession(row);
 }
@@ -202,6 +207,16 @@ export function update(id: string, input: UpdateSessionInput): Session {
     .prepare(`UPDATE sessions SET ${fields.join(", ")} WHERE id = ? RETURNING *`)
     .get(...values) as SessionRow;
   return toSession(row);
+}
+
+export function setEnvSlug(id: string, slug: string): void {
+  getDb().prepare("UPDATE sessions SET env_slug = ? WHERE id = ?").run(slug, id);
+}
+
+export function setEnvOff(id: string, off: boolean): void {
+  getDb()
+    .prepare("UPDATE sessions SET env_off = ? WHERE id = ?")
+    .run(off ? 1 : 0, id);
 }
 
 export function remove(id: string): void {

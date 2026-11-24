@@ -1,12 +1,11 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { Button } from "@/components/atoms/button";
 import { Chip, CountChip } from "@/components/atoms/chip";
 import { Composer } from "@/components/composer/composer";
 import { WORKSPACES } from "@/components/design-system/sidebar-samples";
 import { Section, Specimen } from "@/components/design-system/specimen";
 import { AddressStatus } from "@/components/environment/address-status";
-import { sampleCleanBases } from "@/components/design-system/project-samples";
-import { CleanBaseFailedDialog } from "@/components/environment/clean-base-failed-dialog";
-import { EnvBanner, type EnvBannerState } from "@/components/environment/env-banner";
+import { EnvBannerSlot, type EnvBannerState } from "@/components/environment/env-banner";
 import { EnvTaskButton, type TaskService } from "@/components/environment/env-menu";
 import { EnvStartStatus, type EnvStartState } from "@/components/environment/env-start-status";
 import {
@@ -19,7 +18,6 @@ import { Sidebar } from "@/components/sidebar/sidebar";
 import type { SidebarWorkspace } from "@/components/sidebar/types";
 import { CloseTaskDialog } from "@/components/task/close-task-dialog";
 import type { EnvState } from "@/components/task/env-button";
-import { failureSteps } from "@/lib/clean-base";
 import { TaskCard } from "@/components/task/task-card";
 import { TaskEmptyState } from "@/components/task/task-empty-state";
 import { TaskHeader, type TaskStatus } from "@/components/task/task-header";
@@ -27,14 +25,36 @@ import { TaskTabBar, type TaskView } from "@/components/task/task-tab-bar";
 
 const MONOKU = { name: "Monoku", color: "#33843F" };
 
-const CLEAN_BASES = sampleCleanBases(Date.now());
-
 const SERVICES: TaskService[] = [
-  { name: "web", detail: "", url: "https://monoku-fix-login.nex", state: "up" },
-  { name: "api", detail: "", url: "https://api.monoku-fix-login.nex", state: "up" },
-  { name: "postgres", detail: ":5432 · inside the task", state: "up" },
+  {
+    name: "web",
+    detail: "fix-login.nex",
+    url: "http://fix-login.nex",
+    addresses: [
+      { label: "fix-login.nex", url: "http://fix-login.nex" },
+      { label: "localhost:5173", url: "http://localhost:5173" },
+    ],
+    state: "up",
+  },
+  {
+    name: "api",
+    detail: "api.fix-login.nex",
+    url: "http://api.fix-login.nex",
+    addresses: [
+      { label: "api.fix-login.nex", url: "http://api.fix-login.nex" },
+      { label: "localhost:8000", url: "http://localhost:8000" },
+    ],
+    state: "up",
+  },
+  { name: "postgres", detail: "localhost:5432 · while you view this task", state: "up" },
   { name: "redis", detail: ":6379 · inside the task", state: "up" },
 ];
+
+const BLOCKED_SERVICES: TaskService[] = SERVICES.map((service) =>
+  service.name === "api" ? { ...service, warning: "Port 8000 is used by another app" } : service,
+);
+
+const MENU_ACTIONS = { onCopyLink: () => {}, onCopyService: () => {}, onOpenWindow: () => {} };
 
 function Skeleton() {
   return (
@@ -49,11 +69,13 @@ function EnvCard({
   env,
   status = "working",
   banner,
+  services = SERVICES,
   menuOpen = false,
 }: {
   env: EnvState;
   status?: TaskStatus;
   banner?: EnvBannerState;
+  services?: readonly TaskService[];
   menuOpen?: boolean;
 }) {
   const [view, setView] = useState<TaskView>("agent");
@@ -74,11 +96,12 @@ function EnvCard({
           <>
             <EnvTaskButton
               state={env}
-              label="monoku-fix-login.nex · 4 services"
-              services={SERVICES.map((service) => ({
+              label="fix-login.nex · 4 services"
+              services={services.map((service) => ({
                 ...service,
                 state: env === "paused" ? "paused" : service.state,
               }))}
+              actions={MENU_ACTIONS}
               defaultOpen={menuOpen}
             />
             <Chip>test</Chip>
@@ -86,7 +109,7 @@ function EnvCard({
           </>
         }
       />
-      {banner && <EnvBanner state={banner} />}
+      <EnvBannerSlot state={banner ?? null} />
       <Skeleton />
     </TaskCard>
   );
@@ -226,6 +249,77 @@ function OverviewFrame({ usage, open }: { usage: EnvironmentsUsage; open: boolea
   );
 }
 
+const SIM_STEPS = [
+  "postgres",
+  "redis",
+  "mailpit",
+  "triton-django",
+  "triton-hocuspocus",
+  "triton-celeryworker",
+  "oberon-web",
+  "triton-django data",
+];
+const SIM_TICK_MS = 700;
+const SIM_TICKS_PER_STEP = 3;
+const SIM_READY_TICKS = 8;
+const SIM_END = SIM_STEPS.length * SIM_TICKS_PER_STEP + SIM_READY_TICKS;
+
+function simulatedStart(tick: number): { banner?: EnvBannerState; empty: EnvStartState } {
+  const current = Math.floor(tick / SIM_TICKS_PER_STEP);
+  const elapsed = `${Math.round((tick * SIM_TICK_MS) / 1000)}s`;
+  if (current >= SIM_STEPS.length) {
+    return {
+      empty: {
+        kind: "ready",
+        addresses: [
+          { label: "fix-login.nex", url: "http://fix-login.nex" },
+          { label: "django.fix-login.nex", url: "http://django.fix-login.nex" },
+        ],
+        readyIn: elapsed,
+      },
+    };
+  }
+  const services = SIM_STEPS.map((name, index) => ({
+    name,
+    state:
+      index < current
+        ? ("done" as const)
+        : index === current
+          ? ("running" as const)
+          : ("pending" as const),
+  }));
+  const filling = SIM_STEPS[current]?.endsWith(" data") ?? false;
+  return {
+    banner: { kind: "starting", elapsed, services },
+    empty: { kind: filling ? "filling" : "starting", step: current, total: SIM_STEPS.length },
+  };
+}
+
+function StartupSimulation() {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setTick((value) => (value + 1) % SIM_END), SIM_TICK_MS);
+    return () => clearInterval(timer);
+  }, []);
+  const { banner, empty } = simulatedStart(tick);
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-3">
+        <Button size="sm" onClick={() => setTick(0)}>
+          Replay
+        </Button>
+        <span className="text-xs text-ink-4 tabular-nums">
+          {banner ? "Starting" : "Running"} · {Math.round((tick * SIM_TICK_MS) / 1000)}s
+        </span>
+      </div>
+      <div className="grid w-full grid-cols-2 items-start gap-x-10">
+        <EnvCard env={banner ? "starting" : "running"} banner={banner} />
+        <EmptyTask state={empty} />
+      </div>
+    </div>
+  );
+}
+
 export function Environments() {
   return (
     <Section
@@ -233,6 +327,9 @@ export function Environments() {
       title="Environments on tasks"
       description="Each task's environment shows up in the globe of its tab bar, a strip under it when something needs you, the empty task while it starts, and the sidebar's memory meter."
     >
+      <Specimen name="A full start, simulated · eight steps, then ready, then again" bare>
+        <StartupSimulation />
+      </Specimen>
       <Specimen name="Task card · press the globe for the environment menu" bare>
         <div className="grid w-full grid-cols-2 items-start gap-x-10 gap-y-8">
           <Labeled label="Running · the globe has a green dot">
@@ -248,10 +345,10 @@ export function Environments() {
                 kind: "starting",
                 elapsed: "6s",
                 services: [
-                  { name: "Clean base", state: "done" },
                   { name: "postgres", state: "done" },
                   { name: "api", state: "running" },
                   { name: "web", state: "pending" },
+                  { name: "api data", state: "pending" },
                 ],
               }}
             />
@@ -273,8 +370,46 @@ export function Environments() {
           <Labeled label="No memory to start · suggests pausing another task">
             <EnvCard
               env="waiting"
-              banner={{ kind: "waiting", used: "7.4 of 8 GB", suggestion: "usage-panel" }}
+              banner={{
+                kind: "waiting",
+                reason: "memory",
+                detail: "7.4 of 8 GB in use",
+                suggestion: "Usage panel charts",
+              }}
             />
+          </Labeled>
+          <Labeled label="No room · the most environments are already running">
+            <EnvCard
+              env="waiting"
+              banner={{
+                kind: "waiting",
+                reason: "room",
+                detail: "3 of 3 environments running",
+                suggestion: "Usage panel charts",
+              }}
+            />
+          </Labeled>
+          <Labeled label="Paused from its menu">
+            <EnvCard env="paused" status="idle" banner={{ kind: "paused" }} />
+          </Labeled>
+          <Labeled label="Didn’t start">
+            <EnvCard
+              env="down"
+              banner={{ kind: "failed", error: "api didn’t build: npm ci exited with code 1" }}
+            />
+          </Labeled>
+          <Labeled label="A port the project publishes is taken · Nex keeps trying">
+            <EnvCard
+              env="running"
+              banner={{
+                kind: "ports",
+                title: "Port 8000 is used by another app",
+                detail: "Nex takes it as soon as it’s free",
+              }}
+            />
+          </Labeled>
+          <Labeled label="Environment menu · a service whose port is taken">
+            <EnvCard env="running" services={BLOCKED_SERVICES} menuOpen />
           </Labeled>
         </div>
       </Specimen>
@@ -287,18 +422,24 @@ export function Environments() {
             <EmptyTask
               state={{
                 kind: "ready",
-                addresses: ["monoku-fix-login.nex", "api.monoku-fix-login.nex"],
+                addresses: [
+                  { label: "fix-login.nex", url: "http://fix-login.nex" },
+                  { label: "api.fix-login.nex", url: "http://api.fix-login.nex" },
+                ],
                 readyIn: "3.1s",
               }}
             />
           </Labeled>
           <Labeled label="No room · three environments already running">
-            <EmptyTask state={{ kind: "waiting", running: 3, max: 3, suggestion: "usage-panel" }} />
-          </Labeled>
-          <Labeled label="Old clean base · runs the new migrations from main first">
             <EmptyTask
-              state={{ kind: "migrating", step: 3, total: 4, migrations: 2, baseDate: "Oct 14" }}
+              state={{ kind: "waiting", running: 3, max: 3, suggestion: "Usage panel charts" }}
             />
+          </Labeled>
+          <Labeled label="Filling a new task’s databases · its own migrations and test data">
+            <EmptyTask state={{ kind: "filling", step: 4, total: 5 }} />
+          </Labeled>
+          <Labeled label="Created without its environment · the tab bar globe starts it too">
+            <EmptyTask state={{ kind: "off" }} />
           </Labeled>
         </div>
       </Specimen>
@@ -328,19 +469,12 @@ export function Environments() {
               <AddressStatus resolving={false} domain=".nex" />
             </SettingsCard>
           </div>
-          <CleanBaseFailedDialog
-            failure={{
-              project: "atlas",
-              error: CLEAN_BASES.failed.error ?? "",
-              steps: failureSteps(CLEAN_BASES.failed),
-            }}
-          />
           <CloseTaskDialog
             task={{
               title: "Fix login redirect param",
               branch: "feat/fix-login-redirect",
               uncommitted: 3,
-              environment: { size: "240 MB", address: "monoku-fix-login.nex" },
+              environment: { size: "240 MB", address: "fix-login.nex" },
             }}
           />
         </div>

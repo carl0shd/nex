@@ -19,6 +19,7 @@ import { MarkdownText } from "@/components/task/markdown-text";
 import { PermissionCard } from "@/components/task/permission-card";
 import { QuestionCard, type Question } from "@/components/task/question-card";
 import { TaskEmptyState } from "@/components/task/task-empty-state";
+import { AppEnvStartStatus } from "@/components/environment/app-task-environment";
 import type { ImageNames } from "@/components/task/user-message";
 import { useAgentContext } from "@/hooks/use-agent-context";
 import { clearAgentExit, useAgentLive } from "@/hooks/use-agent-live";
@@ -26,6 +27,8 @@ import { useFileDrop } from "@/hooks/use-file-drop";
 import { useNow } from "@/hooks/use-now";
 import { useOnline } from "@/hooks/use-online";
 import { useTranscript } from "@/hooks/use-transcript";
+import { useAgentTasks } from "@/hooks/use-agent-tasks";
+import { SubagentSheet } from "@/components/task/subagent-sheet";
 import { mergeEntries, turnTokens } from "@/lib/agent-live";
 import { connectorGroups } from "@/lib/connectors";
 import { notifyCompact } from "@/lib/notify";
@@ -134,6 +137,13 @@ export function AppTaskAgent({
   onViewChanges?: () => void;
 }) {
   const transcript = useTranscript(terminalId);
+  const agentTasks = useAgentTasks(sessionId);
+  const tasksByCall = useMemo(
+    () => Object.fromEntries(agentTasks.map((task) => [task.toolUseId, task])),
+    [agentTasks],
+  );
+  const [subagent, setSubagent] = useState<{ toolUseId: string; title: string } | null>(null);
+  const stopTask = (taskId: string) => void window.api.stopAgentTask(sessionId, taskId);
   const [settings, setSettings] = useState<AgentSettings | null>(
     () => knownSettings.get(sessionId) ?? null,
   );
@@ -433,7 +443,9 @@ export function AppTaskAgent({
         />
       )}
       {empty ? (
-        <TaskEmptyState branch={branch} base={base} />
+        <TaskEmptyState branch={branch} base={base}>
+          <AppEnvStartStatus sessionId={sessionId} />
+        </TaskEmptyState>
       ) : (
         <AgentConversation
           items={items}
@@ -445,6 +457,7 @@ export function AppTaskAgent({
           thinkingTokens={turnTokens(live)}
           liveBlocks={live.blocks}
           subagents={live.subagents}
+          tasks={tasksByCall}
           retry={live.retry}
           compacting={live.compacting}
           interrupting={interruptPending}
@@ -490,6 +503,8 @@ export function AppTaskAgent({
                       .then(() => window.api.agentSend(sessionId, "Continue where you left off.")),
                 }
               : undefined,
+            onStopTask: stopTask,
+            onOpenSubagent: (toolUseId, title) => setSubagent({ toolUseId, title }),
             onNotifyAtReset: (at) =>
               remindAtReset(
                 { id: sessionId, title: task ? task.title || task.name : "Your task" },
@@ -499,6 +514,22 @@ export function AppTaskAgent({
           }}
           searchable={focused}
           footer={footer}
+        />
+      )}
+      {subagent && (
+        <SubagentSheet
+          terminalId={terminalId}
+          toolUseId={subagent.toolUseId}
+          title={subagent.title}
+          task={tasksByCall[subagent.toolUseId]}
+          cwd={cwd}
+          branch={branch}
+          base={base}
+          onStop={() => {
+            const task = tasksByCall[subagent.toolUseId];
+            if (task) stopTask(task.id);
+          }}
+          onClose={() => setSubagent(null)}
         />
       )}
       {settings && (

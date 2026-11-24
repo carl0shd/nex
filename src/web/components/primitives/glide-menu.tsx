@@ -26,7 +26,7 @@ export default function GlideMenu({
     const container = ref.current;
     if (!(target instanceof Element) || !container) return;
     const row = target.closest(rowSelector);
-    if (!(row instanceof HTMLElement) || !container.contains(row)) return;
+    if (!(row instanceof HTMLElement) || row.closest("[data-glide-menu]") !== container) return;
     const containerRect = container.getBoundingClientRect();
     const rowRect = row.getBoundingClientRect();
     const top = rowRect.top - containerRect.top;
@@ -49,6 +49,7 @@ export default function GlideMenu({
     <div
       ref={ref}
       role={role}
+      data-glide-menu
       onMouseOver={(event) => moveTo(event.target)}
       onMouseLeave={() => setVisible(false)}
       onFocusCapture={(event) => moveTo(event.target)}

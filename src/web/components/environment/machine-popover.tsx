@@ -29,7 +29,7 @@ export interface EnvironmentsUsage {
   environments: readonly MachineEnvironment[];
 }
 
-const NEARLY_FULL = 0.85;
+export const NEARLY_FULL = 0.85;
 
 const gb = (value: number) => `${value.toFixed(1)} GB`;
 
@@ -189,11 +189,13 @@ export function EnvironmentsMeter({
   usage,
   defaultOpen = false,
   onPause,
+  onPauseIdle,
   onSettings,
 }: {
   usage: EnvironmentsUsage;
   defaultOpen?: boolean;
   onPause?: (id: string) => void;
+  onPauseIdle?: () => void;
   onSettings?: () => void;
 }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -235,6 +237,13 @@ export function EnvironmentsMeter({
           onPause?.(id);
           setOpen(false);
         }}
+        onPauseIdle={
+          onPauseIdle &&
+          (() => {
+            onPauseIdle();
+            setOpen(false);
+          })
+        }
         onSettings={
           onSettings &&
           (() => {

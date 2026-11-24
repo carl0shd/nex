@@ -46,6 +46,7 @@ export interface EnvironmentStatus {
     domain: string;
     registered: boolean;
   };
+  blockedPorts: BlockedPort[];
   usage: {
     containers: number;
     running: number;
@@ -85,56 +86,91 @@ export interface EnvCheckInput {
   environment: ProjectEnvironment;
 }
 
-export type CleanBaseStatus = "none" | "building" | "ready" | "stale" | "failed";
+export type TaskEnvStatus =
+  | "none"
+  | "queued"
+  | "starting"
+  | "running"
+  | "paused"
+  | "down"
+  | "failed";
 
-export type CleanBaseStale = "migrations" | "setup";
+export type TaskEnvServiceState = EnvCheckServiceState | "stopped" | "exited";
 
-export type CleanBaseStepState = "pending" | "running" | "done" | "failed" | "skipped";
-
-export interface CleanBaseStep {
-  label: string;
-  code?: boolean;
-  detail?: string;
-  state: CleanBaseStepState;
-}
-
-export interface CleanBaseVolume {
-  service: string;
+export interface TaskEnvService {
   name: string;
+  state: TaskEnvServiceState;
+  detail?: string;
+  address: string | null;
+  url: string | null;
+  localhostUrl: string | null;
+  localPort: number | null;
+  main: boolean;
+  ports: number[];
 }
 
-export interface CleanBaseRecord {
-  status: "building" | "ready" | "failed";
-  volumes: CleanBaseVolume[];
-  steps: CleanBaseStep[];
-  startedAt: number;
-  finishedAt?: number;
-  builtAt?: number;
-  branch?: string;
-  commit?: string;
-  sizeBytes?: number;
-  fingerprint?: string | null;
-  setupKey?: string;
-  error?: string;
+export type BlockedReason = "taken" | "denied";
+
+export interface BlockedPort {
+  port: number;
+  reason: BlockedReason;
+  service?: string;
 }
 
-export interface CleanBaseState {
+export type TaskEnvStepState = "pending" | "running" | "done" | "failed";
+
+export interface TaskEnvStep {
+  service: string;
+  command: string;
+  state: TaskEnvStepState;
+}
+
+export type TaskEnvPause = "idle" | "you" | "restart";
+
+export interface TaskEnvWaiting {
+  reason: "count" | "memory";
+  running: number;
+  max: number;
+  usedGb: number;
+  budgetGb: number;
+  suggestion?: { sessionId: string; title: string };
+}
+
+export interface TaskEnvDown {
+  service: string;
+  code: number | null;
+  line: string;
+}
+
+export interface TaskEnvState {
+  sessionId: string;
   projectId: string;
-  projectPath: string;
-  status: CleanBaseStatus;
-  stale?: CleanBaseStale;
-  services: string[];
-  steps: CleanBaseStep[];
+  slug: string;
+  status: TaskEnvStatus;
+  services: TaskEnvService[];
+  steps: TaskEnvStep[];
+  memoryMb: number;
+  usedGb: number;
+  lastActiveAt: number;
+  idle: boolean;
   startedAt?: number;
-  finishedAt?: number;
-  builtAt?: number;
-  branch?: string;
-  commit?: string;
-  sizeBytes?: number;
+  readyMs?: number;
+  pausedAt?: number;
+  pausedReason?: TaskEnvPause;
+  idleMinutes?: number;
+  down?: TaskEnvDown;
+  waiting?: TaskEnvWaiting;
+  blockedPorts?: BlockedPort[];
   error?: string;
 }
 
-export interface CleanBaseInput {
-  projectId: string;
-  environment: ProjectEnvironment;
+export interface StoredTaskEnv {
+  slug: string;
+  status: "running" | "paused" | "failed";
+  pausedAt?: number;
+  pausedReason?: TaskEnvPause;
+  idleMinutes?: number;
+  readyMs?: number;
+  error?: string;
+  seeded?: boolean;
 }

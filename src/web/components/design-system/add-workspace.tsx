@@ -6,11 +6,11 @@ import {
   SAMPLE_CHECKS,
   SAMPLE_EMPTY_ENVIRONMENT,
   SAMPLE_ENVIRONMENT,
-  sampleCleanBases,
 } from "@/components/design-system/project-samples";
 import { WORKSPACES } from "@/components/design-system/sidebar-samples";
 import { Section, Specimen } from "@/components/design-system/specimen";
-import { HomeEmpty } from "@/components/home/home-empty";
+import { HomeHero } from "@/components/home/home-hero";
+import { SampleHomePrompt } from "@/components/design-system/sample-home-prompt";
 import { Overlay } from "@/components/primitives/overlay";
 import { AddProjectDialog, type NewProject } from "@/components/projects/add-project-dialog";
 import { EnvironmentEditor } from "@/components/projects/environment-editor";
@@ -23,7 +23,7 @@ import type { SidebarWorkspace } from "@/components/sidebar/types";
 import { notifyCompact } from "@/lib/notify";
 import { serviceCheck } from "@/lib/project-environment";
 import type { ProjectEnvironment } from "@native/db/types";
-import type { CleanBaseState, EnvCheckState } from "@native/environments/types";
+import type { EnvCheckState } from "@native/environments/types";
 
 const STARTING: SidebarWorkspace[] = WORKSPACES.map((workspace) => ({
   ...workspace,
@@ -89,7 +89,7 @@ function AddWorkspaceDemo() {
         }
       />
       <div className="flex min-w-0 flex-1 flex-col items-center">
-        <HomeEmpty />
+        <HomeHero phase="night" greeting="Good evening" prompt={<SampleHomePrompt />} />
       </div>
       {adding && (
         <Overlay offset={90} onClose={() => setAdding(null)}>
@@ -109,18 +109,14 @@ function AddWorkspaceDemo() {
 
 const STUDIO = { name: "Studio", color: "#2f6fd6" };
 
-const CLEAN_BASES = sampleCleanBases(Date.now());
-
 function EnvironmentEditorDemo({
   initial = SAMPLE_ENVIRONMENT,
   check = null,
   initialOpen = null,
-  cleanBase = null,
 }: {
   initial?: ProjectEnvironment;
   check?: EnvCheckState | null;
   initialOpen?: number | null;
-  cleanBase?: CleanBaseState | null;
 }) {
   const [value, setValue] = useState(initial);
   const [detecting, setDetecting] = useState(false);
@@ -142,10 +138,6 @@ function EnvironmentEditorDemo({
           }, 900);
         }}
         initialOpen={initialOpen}
-        cleanBase={cleanBase}
-        onBuildCleanBase={() => notifyCompact({ tone: "green", title: "Building a copy" })}
-        onStopCleanBase={() => notifyCompact({ tone: "orange", title: "Stopped" })}
-        onShowCleanBaseFailure={() => notifyCompact({ tone: "red", title: "Copy failed" })}
       />
     </div>
   );
@@ -242,55 +234,48 @@ export function AddWorkspace() {
         <Specimen name="RemoveProjectDialog · from the project's … menu" bare>
           <RemoveProjectDialog project={{ name: "atlas", workspace: "Studio", tasks: 2 }} />
         </Specimen>
-        <Specimen name="EnvironmentEditor · not tested yet, with a warning" bare>
-          <EnvironmentEditorDemo />
-        </Specimen>
-        <Specimen name="EnvironmentEditor · building from the project’s Dockerfile" bare>
-          <EnvironmentEditorDemo check={SAMPLE_CHECKS.building} />
-        </Specimen>
-        <Specimen name="EnvironmentEditor · testing" bare>
-          <EnvironmentEditorDemo check={SAMPLE_CHECKS.running} />
-        </Specimen>
-        <Specimen name="EnvironmentEditor · ready" bare>
-          <EnvironmentEditorDemo check={SAMPLE_CHECKS.done} cleanBase={CLEAN_BASES.ready} />
-        </Specimen>
-        <Specimen name="EnvironmentEditor · a service failed, its detail open" bare>
-          <EnvironmentEditorDemo check={SAMPLE_CHECKS.failed} initialOpen={1} />
-        </Specimen>
-        <Specimen name="ServiceDetail · Advanced open" bare>
-          <ServiceDetailDemo />
-        </Specimen>
-        <Specimen name="Data · starts empty" bare>
-          <EnvironmentEditorDemo cleanBase={CLEAN_BASES.none} />
-        </Specimen>
-        <Specimen name="Data · copying" bare>
-          <EnvironmentEditorDemo cleanBase={CLEAN_BASES.building} />
-        </Specimen>
-        <Specimen name="Data · copied from main" bare>
-          <EnvironmentEditorDemo cleanBase={CLEAN_BASES.ready} />
-        </Specimen>
-        <Specimen name="Data · copy out of date" bare>
-          <EnvironmentEditorDemo cleanBase={CLEAN_BASES.stale} />
-        </Specimen>
-        <Specimen name="Data · copy failed" bare>
-          <EnvironmentEditorDemo cleanBase={CLEAN_BASES.failed} />
-        </Specimen>
-        <Specimen name="EnvironmentEditor · nothing found" bare>
-          <EnvironmentEditorDemo initial={SAMPLE_EMPTY_ENVIRONMENT} />
-        </Specimen>
-        <Specimen name="With environments · each task runs its own services" bare>
-          <AddProjectDialog
-            workspace={{ name: "Monoku", color: "#33843F" }}
-            found={FOUND}
-            detect={detectWithEnvironment}
-            initialRepo={{ ...FOUND[0], path: "~/code/atlas" }}
-            initialSection="environment"
-            onAdd={() => {}}
-            onCancel={() => {}}
-            clone={() => null}
-          />
-        </Specimen>
+        <EnvironmentEditorSpecimens />
       </div>
     </Section>
+  );
+}
+
+export function EnvironmentEditorSpecimens() {
+  return (
+    <>
+      <Specimen name="EnvironmentEditor · not tested yet, with a warning" bare>
+        <EnvironmentEditorDemo />
+      </Specimen>
+      <Specimen name="EnvironmentEditor · building from the project’s Dockerfile" bare>
+        <EnvironmentEditorDemo check={SAMPLE_CHECKS.building} />
+      </Specimen>
+      <Specimen name="EnvironmentEditor · testing" bare>
+        <EnvironmentEditorDemo check={SAMPLE_CHECKS.running} />
+      </Specimen>
+      <Specimen name="EnvironmentEditor · ready" bare>
+        <EnvironmentEditorDemo check={SAMPLE_CHECKS.done} />
+      </Specimen>
+      <Specimen name="EnvironmentEditor · a service failed, its detail open" bare>
+        <EnvironmentEditorDemo check={SAMPLE_CHECKS.failed} initialOpen={1} />
+      </Specimen>
+      <Specimen name="ServiceDetail · Advanced open" bare>
+        <ServiceDetailDemo />
+      </Specimen>
+      <Specimen name="EnvironmentEditor · nothing found" bare>
+        <EnvironmentEditorDemo initial={SAMPLE_EMPTY_ENVIRONMENT} />
+      </Specimen>
+      <Specimen name="With environments · each task runs its own services" bare>
+        <AddProjectDialog
+          workspace={{ name: "Monoku", color: "#33843F" }}
+          found={FOUND}
+          detect={detectWithEnvironment}
+          initialRepo={{ ...FOUND[0], path: "~/code/atlas" }}
+          initialSection="environment"
+          onAdd={() => {}}
+          onCancel={() => {}}
+          clone={() => null}
+        />
+      </Specimen>
+    </>
   );
 }

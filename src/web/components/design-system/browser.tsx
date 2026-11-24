@@ -14,7 +14,7 @@ import { SampleSite } from "@/components/design-system/sample-site";
 import { Section, Specimen } from "@/components/design-system/specimen";
 
 const TABS = [{ id: "login", title: "Sign in · hub" }];
-const URL = "https://monoku-fix-login.nex/login?next=/billing";
+const URL = "http://fix-login.nex/login?next=/billing";
 
 type PickedElement = { box: ElementBox; selector: string; name: string };
 

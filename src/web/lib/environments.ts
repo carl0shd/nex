@@ -4,10 +4,14 @@ import type {
   EnvSetupStep,
   EnvStepId,
 } from "@native/environments/types";
-import type { EnvironmentsUsage } from "@/components/environment/machine-popover";
+import type {
+  EnvironmentsUsage,
+  MachineEnvironment,
+} from "@/components/environment/machine-popover";
 import type { CheckItem } from "@/components/onboarding/check-list";
 import type { RuntimeStatus } from "@/components/settings/runtime-card";
 import type { SettingsEnvironments } from "@/components/settings/settings-page";
+import { blockedTitle } from "@/lib/task-environment";
 
 export type EnvPhase = "offer" | "running" | "ready" | "unsupported" | "failed";
 
@@ -89,13 +93,18 @@ export function shownMemory(choices: readonly number[], preferred: string): stri
 export const memoryBudget = (status: EnvironmentStatus, preferred: string) =>
   Number(shownMemory(status.memoryChoices, preferred));
 
-export function environmentsUsage(status: EnvironmentStatus, budgetGb: number): EnvironmentsUsage {
+export function environmentsUsage(
+  status: EnvironmentStatus,
+  budgetGb: number,
+  environments: readonly MachineEnvironment[] = [],
+  idle = 0,
+): EnvironmentsUsage {
   return {
     usedGb: status.usage.usedGb,
     totalGb: budgetGb,
     containers: status.usage.running,
-    idle: 0,
-    environments: [],
+    idle,
+    environments,
   };
 }
 
@@ -104,6 +113,7 @@ export function runtimeCard(
   action: EnvAction | null,
   budgetGb: number,
 ): RuntimeStatus {
+  const blocked = blockedTitle(status.blockedPorts);
   return {
     state: action === "restarting" ? "restarting" : status.runtime.running ? "running" : "stopped",
     version: status.runtime.version,
@@ -112,6 +122,7 @@ export function runtimeCard(
     containers: status.usage.running,
     usedGb: status.usage.usedGb,
     budgetGb,
+    ...(blocked ? { blocked } : {}),
   };
 }
 

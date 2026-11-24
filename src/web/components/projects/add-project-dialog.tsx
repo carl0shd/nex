@@ -6,7 +6,7 @@ import { Button } from "@/components/atoms/button";
 import { Monogram } from "@/components/atoms/entity-chip";
 import { Spinner } from "@/components/atoms/spinner";
 import type { ProjectEnvironment } from "@native/db/types";
-import type { CleanBaseState, EnvCheckState } from "@native/environments/types";
+import type { EnvCheckState } from "@native/environments/types";
 import { EnvironmentEditor } from "@/components/projects/environment-editor";
 import {
   BranchEditor,
@@ -72,10 +72,6 @@ export function AddProjectDialog({
   onCheckEnvironment,
   onStopEnvironmentCheck,
   onDetectEnvironment,
-  cleanBase = null,
-  onBuildCleanBase,
-  onStopCleanBase,
-  onShowCleanBaseFailure,
 }: {
   editing?: boolean;
   workspace: { name: string; color: string; image?: string; icon?: WorkspaceIconName };
@@ -94,10 +90,6 @@ export function AddProjectDialog({
   onCheckEnvironment?: (repo: FoundRepo, environment: ProjectEnvironment) => void;
   onStopEnvironmentCheck?: (repo: FoundRepo) => void;
   onDetectEnvironment?: (repo: FoundRepo) => Promise<ProjectEnvironment>;
-  cleanBase?: CleanBaseState | null;
-  onBuildCleanBase?: (environment: ProjectEnvironment) => void;
-  onStopCleanBase?: () => void;
-  onShowCleanBaseFailure?: () => void;
 }) {
   const [cloning, setCloning] = useState<CloneMode | null>(initialClone);
   const [repo, setRepo] = useState<FoundRepo | null>(initialRepo);
@@ -234,7 +226,7 @@ export function AddProjectDialog({
                 </SetupSection>
                 <SetupSection
                   icon={config.environment ? Sparkles : Package}
-                  phrase={setupPhrase(config.setup)}
+                  phrase={setupPhrase(config.setup, Boolean(config.environment?.services.length))}
                   open={open === "setup"}
                   onToggle={toggle("setup")}
                 >
@@ -262,13 +254,6 @@ export function AddProjectDialog({
                       }
                       onStopCheck={onStopEnvironmentCheck && (() => onStopEnvironmentCheck(repo))}
                       onDetectAgain={onDetectEnvironment && (() => void detectAgain())}
-                      cleanBase={cleanBase}
-                      onBuildCleanBase={
-                        onBuildCleanBase &&
-                        (() => config.environment && onBuildCleanBase(config.environment))
-                      }
-                      onStopCleanBase={onStopCleanBase}
-                      onShowCleanBaseFailure={onShowCleanBaseFailure}
                       detecting={detecting}
                     />
                   </SetupSection>

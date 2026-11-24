@@ -33,7 +33,7 @@ import { suggestedLanguages } from "@/lib/dictation-languages";
 import { useDictationStore } from "@/stores/dictation.store";
 import { useFileDrop } from "@/hooks/use-file-drop";
 import type { SlashCommand, WorktreeFile } from "@/lib/composer-pickers";
-import { formatFileSize } from "@/lib/file-size";
+import { fileAttachment, releaseAttachment } from "@/lib/attachments";
 import { PERMISSION_MODES, stepPermissionMode } from "@/lib/permission-modes";
 import { hotkeyLabel } from "@/lib/shortcut";
 import { useTypeToFocus } from "@/hooks/use-type-to-focus";
@@ -70,20 +70,6 @@ function MessageLength({ hint, onHidden }: { hint: LengthHint; onHidden: () => v
       {hint.chars.toLocaleString()} chars · {NEW_LINE_KEYS} new line
     </span>
   );
-}
-
-function toAttachment(file: File): Attachment {
-  const id = crypto.randomUUID();
-  if (file.type.startsWith("image/")) {
-    return { id, kind: "image", name: file.name, src: URL.createObjectURL(file), file };
-  }
-  return { id, kind: "file", name: file.name, size: formatFileSize(file.size), file };
-}
-
-function release(attachment: Attachment) {
-  if (attachment.kind === "image" && attachment.src?.startsWith("blob:")) {
-    URL.revokeObjectURL(attachment.src);
-  }
 }
 
 function SendButton({
@@ -335,7 +321,7 @@ export function Composer({
   };
   useHotkey("Mod+U", addFiles, { target: rootRef, enabled: Boolean(onPickFiles) });
   const attachFiles = (dropped: File[]) =>
-    setAttachments((previous) => [...previous, ...dropped.map(toAttachment)]);
+    setAttachments((previous) => [...previous, ...dropped.map(fileAttachment)]);
   const { dragging, dropHandlers } = useFileDrop(attachFiles);
   useImperativeHandle(ref, () => ({
     focus: () => editorRef.current?.focus(),
@@ -408,7 +394,7 @@ export function Composer({
         attachments={attachments}
         onRemove={(id) =>
           setAttachments((previous) => {
-            previous.filter((attachment) => attachment.id === id).forEach(release);
+            previous.filter((attachment) => attachment.id === id).forEach(releaseAttachment);
             return previous.filter((attachment) => attachment.id !== id);
           })
         }
@@ -452,7 +438,7 @@ export function Composer({
           }
           onSubmit={(text) => {
             onSubmit?.({ text, attachments });
-            attachments.forEach(release);
+            attachments.forEach(releaseAttachment);
             setAttachments([]);
           }}
         />

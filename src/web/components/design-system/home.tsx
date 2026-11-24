@@ -1,55 +1,63 @@
-import type { ReactNode } from "react";
-import { AgentStrip, StripSummary, type StripItem } from "@/components/home/agent-strip";
-import { HomeEmpty } from "@/components/home/home-empty";
+import { useState, type ReactNode } from "react";
+import { SegmentedControl } from "@/components/atoms/segmented-control";
+import { HomeBackdrop } from "@/components/home/home-backdrop";
+import { HomeHero } from "@/components/home/home-hero";
+import { SampleHomePrompt } from "@/components/design-system/sample-home-prompt";
+import { SceneHourSlider } from "@/components/home/scene-hour-slider";
+import { HomeStats } from "@/components/home/home-stats";
+import { TasksEmpty } from "@/components/home/tasks-empty";
+import { greeting, scenePhase } from "@/lib/dither-scene";
+import { statusCounts } from "@/lib/task-status";
 import { Sidebar } from "@/components/sidebar/sidebar";
 import { WORKSPACES } from "@/components/design-system/sidebar-samples";
 import { Section, Specimen } from "@/components/design-system/specimen";
 import {
-  IdleCardSample,
-  WaitingCardSample,
-  WorkingCardSample,
-} from "@/components/design-system/task-card-samples";
+  sampleStats,
+  sampleStatusItems,
+  STRIP_CASE_IDS,
+  STRIP_CASE_LABELS,
+  STRIP_CASES,
+  type StripCase,
+} from "@/components/design-system/home-samples";
+import { SampleStrip } from "@/components/design-system/home-preview";
 
-const ITEMS: StripItem[] = [
-  {
-    id: "onboarding-copy",
-    name: "Onboarding copy pass",
-    card: (
-      <IdleCardSample
-        title="Onboarding copy pass"
-        project="website"
-        branch="copy/onboarding"
-        ask="Tighten the onboarding copy, keep it under two lines per step."
-        answer="Done. Each step is one sentence now and the CTA labels match the sidebar."
-      />
-    ),
-  },
-  { id: "fix-login-redirect", name: "Fix login redirect param", card: <WorkingCardSample /> },
-  {
-    id: "migrate-db-schema",
-    name: "Rename users to accounts",
-    waiting: true,
-    card: <WaitingCardSample />,
-  },
-  {
-    id: "usage-panel",
-    name: "Usage panel charts",
-    card: <WorkingCardSample state="rest" />,
-  },
-  {
-    id: "landing-hero",
-    name: "New landing hero",
-    card: (
-      <IdleCardSample
-        title="New landing hero"
-        project="website"
-        branch="feat/landing-hero"
-        ask="Try a calmer hero: one line, the product shot, no gradient."
-        answer="Pushed two variants to the preview link. The second one keeps the CTA above the fold."
-      />
-    ),
-  },
-];
+const OVERVIEW_OPTIONS: readonly (StripCase | "none")[] = ["none", ...STRIP_CASE_IDS];
+const OVERVIEW_LABELS: Record<StripCase | "none", string> = {
+  none: "No tasks",
+  ...STRIP_CASE_LABELS,
+};
+
+function TasksOverScene() {
+  const [hour, setHour] = useState(22);
+  const [shown, setShown] = useState<StripCase | "none">("mixed");
+  return (
+    <div className="flex w-full flex-col gap-3">
+      <div className="flex items-center gap-3">
+        <SegmentedControl
+          options={OVERVIEW_OPTIONS}
+          labels={OVERVIEW_LABELS}
+          value={shown}
+          onChange={setShown}
+        />
+        <SceneHourSlider hour={hour} onChange={setHour} />
+      </div>
+      <Frame>
+        <Sidebar
+          workspaces={WORKSPACES}
+          tasksActive
+          overviewActive={false}
+          needsYou={
+            shown === "none" ? 0 : statusCounts(sampleStatusItems(STRIP_CASES[shown].items)).waiting
+          }
+        />
+        <div className="relative flex min-w-0 flex-1">
+          <HomeBackdrop phase={scenePhase(hour)} />
+          {shown === "none" ? <TasksEmpty /> : <SampleStrip shown={shown} />}
+        </div>
+      </Frame>
+    </div>
+  );
+}
 
 function Frame({ children }: { children: ReactNode }) {
   return (
@@ -59,27 +67,55 @@ function Frame({ children }: { children: ReactNode }) {
   );
 }
 
+function OverviewScene() {
+  const [hour, setHour] = useState(22);
+  const [shown, setShown] = useState<StripCase | "none">("mixed");
+  return (
+    <div className="flex w-full flex-col gap-3">
+      <SegmentedControl
+        options={OVERVIEW_OPTIONS}
+        labels={OVERVIEW_LABELS}
+        value={shown}
+        onChange={setShown}
+        className="self-start"
+      />
+      <div className="flex h-[760px] w-full overflow-hidden rounded-card bg-page shadow-card">
+        <HomeHero
+          key={shown}
+          phase={scenePhase(hour)}
+          greeting={greeting(hour)}
+          prompt={<SampleHomePrompt />}
+          stats={
+            <HomeStats
+              onTasks={() => {}}
+              onUsage={() => {}}
+              onEnvironments={() => {}}
+              stats={
+                shown === "none"
+                  ? { ...sampleStats("one"), tasks: { working: 0, waiting: 0, idle: 0 } }
+                  : sampleStats(shown)
+              }
+            />
+          }
+          footer={<SceneHourSlider hour={hour} onChange={setHour} />}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function Home() {
   return (
     <Section
       id="home"
       title="Home"
-      description="Every running agent side by side; the map at the bottom jumps between them. With no tasks, the empty state starts one."
+      description="The overview is a dithered sea that follows the time of day, the greeting, a box that starts a task and the day at a glance: tasks, spend, the usage limit and environments. Tasks shows every running agent side by side; the map at the bottom jumps between them."
     >
-      <Specimen name="Home · live strip" bare>
-        <Frame>
-          <Sidebar workspaces={WORKSPACES} needsYou={1} />
-          <AgentStrip
-            items={ITEMS}
-            initialId="fix-login-redirect"
-            summary={<StripSummary working={3} waiting={1} idle={2} />}
-          />
-        </Frame>
+      <Specimen name="Tasks · the strip over the scene · pick a case and an hour" bare>
+        <TasksOverScene />
       </Specimen>
-      <Specimen name="Home · nothing running" bare>
-        <div className="flex h-[620px] w-full overflow-hidden rounded-card bg-page shadow-card">
-          <HomeEmpty />
-        </div>
+      <Specimen name="Home · overview · stats under the box" bare>
+        <OverviewScene />
       </Specimen>
     </Section>
   );

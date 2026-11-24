@@ -2,9 +2,9 @@ import { Globe } from "lucide-react";
 import { Orbit } from "@/components/atoms/orbit";
 import { cn } from "@/lib/utils";
 
-export type EnvState = "running" | "starting" | "paused" | "down" | "waiting";
+export type EnvState = "running" | "starting" | "paused" | "down" | "waiting" | "off";
 
-const DOT: Record<Exclude<EnvState, "starting">, string> = {
+const DOT: Record<Exclude<EnvState, "starting" | "off">, string> = {
   running: "bg-green",
   paused: "bg-ink-5",
   down: "bg-red",
@@ -25,8 +25,8 @@ export function EnvButton({
   return (
     <button
       type="button"
-      aria-haspopup="menu"
-      aria-expanded={open}
+      aria-haspopup={state === "off" ? undefined : "menu"}
+      aria-expanded={state === "off" ? undefined : open}
       aria-label={label}
       title={label}
       onClick={onClick}
@@ -35,6 +35,7 @@ export function EnvButton({
         open
           ? "bg-hover-2 shadow-[inset_0_0_0_1px_var(--line-focus)]"
           : "shadow-[inset_0_0_0_1px_var(--line-chip)] hover:bg-hover",
+        state === "off" && "text-ink-4 hover:text-ink-2",
       )}
     >
       {state === "starting" ? (
@@ -42,12 +43,14 @@ export function EnvButton({
       ) : (
         <>
           <Globe width={14} height={14} strokeWidth={2} />
-          <span
-            className={cn(
-              "absolute top-px right-px size-[7px] rounded-full shadow-[0_0_0_2px_var(--surface)]",
-              DOT[state],
-            )}
-          />
+          {state !== "off" && (
+            <span
+              className={cn(
+                "absolute top-px right-px size-[7px] rounded-full shadow-[0_0_0_2px_var(--surface)]",
+                DOT[state],
+              )}
+            />
+          )}
         </>
       )}
     </button>

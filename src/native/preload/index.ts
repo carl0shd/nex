@@ -2,11 +2,10 @@ import { contextBridge, ipcRenderer, webFrame, webUtils } from "electron";
 import { IPC } from "@native/ipc/channels";
 import type { TerminalStatus } from "@native/db/types";
 import type {
-  CleanBaseInput,
-  CleanBaseState,
   EnvCheckInput,
   EnvCheckState,
   EnvSetupState,
+  TaskEnvState,
 } from "@native/environments/types";
 import type { ProjectEnvironment } from "@native/db/types";
 
@@ -192,6 +191,18 @@ const api = {
   agentInterrupt: (sessionId: string) => ipcRenderer.invoke(IPC.AGENT_INTERRUPT, sessionId),
   agentStates: () => ipcRenderer.invoke(IPC.AGENT_STATES),
   getBackgroundCommands: () => ipcRenderer.invoke(IPC.AGENT_BACKGROUND_ALL),
+  getAgentTasks: () => ipcRenderer.invoke(IPC.AGENT_TASKS_ALL),
+  listClaudeSessions: (projectId: string) => ipcRenderer.invoke(IPC.CLAUDE_SESSIONS, projectId),
+  onAgentTasks: (callback: (info: unknown) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, payload: unknown): void =>
+      callback(payload);
+    ipcRenderer.on(IPC.AGENT_TASKS, handler);
+    return () => ipcRenderer.removeListener(IPC.AGENT_TASKS, handler);
+  },
+  stopAgentTask: (sessionId: string, taskId: string) =>
+    ipcRenderer.invoke(IPC.AGENT_STOP_TASK, sessionId, taskId),
+  readSubagentTranscript: (terminalId: string, toolUseId: string) =>
+    ipcRenderer.invoke(IPC.SUBAGENT_TRANSCRIPT, terminalId, toolUseId),
   onBackgroundCommands: (callback: (info: unknown) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, payload: unknown): void =>
       callback(payload);
@@ -365,14 +376,22 @@ const api = {
     ipcRenderer.on(IPC.ENV_CHECK_PROGRESS, handler);
     return () => ipcRenderer.removeListener(IPC.ENV_CHECK_PROGRESS, handler);
   },
-  getCleanBase: (projectId: string) => ipcRenderer.invoke(IPC.ENV_BASE_GET, projectId),
-  buildCleanBase: (input: CleanBaseInput) => ipcRenderer.invoke(IPC.ENV_BASE_BUILD, input),
-  stopCleanBase: (projectId: string) => ipcRenderer.invoke(IPC.ENV_BASE_STOP, projectId),
-  onCleanBase: (callback: (state: CleanBaseState) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, state: CleanBaseState): void =>
+  getTaskEnvironments: () => ipcRenderer.invoke(IPC.ENV_TASK_GET_ALL),
+  startTaskEnvironment: (sessionId: string) => ipcRenderer.invoke(IPC.ENV_TASK_START, sessionId),
+  pauseTaskEnvironment: (sessionId: string) => ipcRenderer.invoke(IPC.ENV_TASK_PAUSE, sessionId),
+  restartTaskEnvironment: (sessionId: string, service?: string) =>
+    ipcRenderer.invoke(IPC.ENV_TASK_RESTART, sessionId, service),
+  viewTaskEnvironment: (sessionId: string | null) =>
+    ipcRenderer.invoke(IPC.ENV_TASK_VIEW, sessionId),
+  openTaskEnvironmentLogs: (sessionId: string, service?: string) =>
+    ipcRenderer.invoke(IPC.ENV_TASK_LOGS, sessionId, service),
+  getTaskEnvironmentSize: (sessionId: string) => ipcRenderer.invoke(IPC.ENV_TASK_SIZE, sessionId),
+  pauseIdleTaskEnvironments: () => ipcRenderer.invoke(IPC.ENV_TASK_PAUSE_IDLE),
+  onTaskEnvironment: (callback: (state: TaskEnvState) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, state: TaskEnvState): void =>
       callback(state);
-    ipcRenderer.on(IPC.ENV_BASE_PROGRESS, handler);
-    return () => ipcRenderer.removeListener(IPC.ENV_BASE_PROGRESS, handler);
+    ipcRenderer.on(IPC.ENV_TASK_PROGRESS, handler);
+    return () => ipcRenderer.removeListener(IPC.ENV_TASK_PROGRESS, handler);
   },
 
   usage: {

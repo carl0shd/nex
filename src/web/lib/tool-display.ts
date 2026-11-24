@@ -9,6 +9,7 @@ export type ToolIcon =
   | "find"
   | "web"
   | "agent"
+  | "workflow"
   | "skill"
   | "question"
   | "plug"
@@ -99,6 +100,9 @@ export function relativePath(path: string, cwd: string): string {
   if (cwd && path.startsWith(`${cwd}/`)) return path.slice(cwd.length + 1);
   return path.replace(HOME, "~");
 }
+
+const WORKFLOW_DESCRIPTION = /description:\s*['"`]([^'"`]+)['"`]/;
+const WORKFLOW_NAME = /name:\s*['"`]([^'"`]+)['"`]/;
 
 function firstLine(value: string, max = 72): string {
   const line = value.trim().split("\n")[0] ?? "";
@@ -657,6 +661,23 @@ function describeCall(call: ToolCall, cwd: string): ToolDisplay {
                 .join(" · ") || undefined,
         detail: summary ? { kind: "note", text: summary } : undefined,
         openByDefault: Boolean(summary),
+      };
+      break;
+    }
+    case "Workflow": {
+      const script = text(input.script);
+      display = {
+        ...base,
+        icon: "workflow",
+        verb: "Workflow",
+        runningVerb: "Starting workflow",
+        target: script.match(WORKFLOW_DESCRIPTION)?.[1] ?? script.match(WORKFLOW_NAME)?.[1] ?? "",
+        prose: true,
+        meta: result
+          ? call.backgroundStatus
+            ? `${call.backgroundStatus} in background`
+            : "in background"
+          : undefined,
       };
       break;
     }

@@ -18,6 +18,7 @@ import {
   Sparkles,
   Terminal,
   TriangleAlert,
+  Workflow,
   Wrench,
 } from "lucide-react";
 import { useHotkey } from "@tanstack/react-hotkeys";
@@ -28,6 +29,7 @@ import {
   PullRequestCard,
   SubagentCard,
   SystemDivider,
+  WorkflowCard,
   SystemRow,
   TodoPlan,
   TurnSummary,
@@ -68,6 +70,8 @@ import {
   type LiveBlock,
   type SubagentStep,
 } from "@/lib/agent-live";
+import type { AgentTask } from "@native/agents/agent-tasks";
+import { agentTaskMeta, workflowMeta, workflowPhases } from "@/lib/agent-task-display";
 import { describeTool, formatDuration, relativePath, type ToolIcon } from "@/lib/tool-display";
 import type { ConversationItem, ToolCall, TodoStatus } from "@/lib/transcript";
 import { exactTime, relativeTimeLong } from "@/lib/relative-time";
@@ -84,6 +88,7 @@ const ICONS: Record<ToolIcon, BlockIcon> = {
   find: Folder,
   web: Globe,
   agent: Cpu,
+  workflow: Workflow,
   skill: Sparkles,
   question: CircleHelp,
   plug: Plug,
@@ -122,7 +127,13 @@ export interface ConversationActions {
   onRestart?: () => void;
   continueOn?: { account: string; run: () => void };
   onNotifyAtReset?: (at: Date) => void;
+  onStopTask?: (taskId: string) => void;
+  onOpenSubagent?: (toolUseId: string, title: string) => void;
 }
+
+const AGENT_TOOLS = new Set(["Agent", "Task"]);
+const NO_TASKS: Record<string, AgentTask> = {};
+type TasksByCall = Record<string, AgentTask>;
 
 function stepRows(steps: readonly SubagentStep[], cwd: string) {
   return steps.slice(-SUBAGENT_STEPS).map((step) => {
@@ -139,11 +150,24 @@ function stepRows(steps: readonly SubagentStep[], cwd: string) {
 
 const MIN_SHOWN_SECONDS = 2;
 
+function activityRows(task: AgentTask) {
+  return [
+    {
+      icon: ICONS.agent,
+      verb: task.activity || "Starting",
+      target: task.lastTool,
+      running: true,
+      prose: true,
+    },
+  ];
+}
+
 function ToolBlock({
   call,
   cwd,
   live,
   steps,
+  task,
   branch,
   base,
   actions,
@@ -152,6 +176,7 @@ function ToolBlock({
   cwd: string;
   live: boolean;
   steps?: readonly SubagentStep[];
+  task?: AgentTask;
   branch: string;
   base: string;
   actions: ConversationActions;
@@ -159,10 +184,41 @@ function ToolBlock({
   const display = describeTool(call, cwd);
   const [open, setOpen] = useState<boolean | null>(null);
   const running = live && !call.result;
-  const now = useNow(running ? 1000 : 60_000);
+  const taskRunning = task?.status === "running";
+  const now = useNow(running || taskRunning ? 1000 : 60_000);
   const elapsed = call.startedAt ? Math.round((now - Date.parse(call.startedAt)) / 1000) : 0;
+  const isAgent = AGENT_TOOLS.has(call.name);
+  const openSubagent =
+    isAgent && actions.onOpenSubagent
+      ? () => actions.onOpenSubagent?.(call.id, display.target || display.verb)
+      : undefined;
+  const stopTask = task && taskRunning && actions.onStopTask;
 
   if (!call.result && ANSWERED_IN_CARD.has(call.name)) return null;
+  if (call.name === "Workflow" && task) {
+    return (
+      <WorkflowCard
+        name={task.name || display.verb}
+        description={task.description || display.target}
+        status={task.status}
+        meta={workflowMeta(task, now)}
+        phases={workflowPhases(task)}
+        onStop={stopTask ? () => stopTask(task.id) : undefined}
+      />
+    );
+  }
+  if (isAgent && task && taskRunning) {
+    return (
+      <SubagentCard
+        name={display.verb}
+        task={display.target}
+        meta={agentTaskMeta(task, now)}
+        steps={steps?.length ? stepRows(steps, cwd) : activityRows(task)}
+        onOpen={openSubagent}
+        onStop={stopTask ? () => stopTask(task.id) : undefined}
+      />
+    );
+  }
   if (running && steps?.length) {
     const seconds = elapsed;
     return (
@@ -176,6 +232,7 @@ function ToolBlock({
           .filter(Boolean)
           .join(" · ")}
         steps={stepRows(steps, cwd)}
+        onOpen={openSubagent}
       />
     );
   }
@@ -206,6 +263,8 @@ function ToolBlock({
   const detail = display.detail;
   const expandable = detail && detail.kind !== "note";
   const shown = open ?? display.openByDefault;
+  const opensSheet = !expandable && Boolean(call.result) && openSubagent;
+  const endedEarly = task && (task.status === "stopped" || task.status === "failed");
   const command = display.command;
   return (
     <div className="flex flex-col">
@@ -227,10 +286,10 @@ function ToolBlock({
           ) : undefined
         }
         diff={display.diff}
-        meta={display.meta}
-        metaTone={display.metaTone}
-        chevron={expandable ? (shown ? "down" : "right") : undefined}
-        onToggle={expandable ? () => setOpen(!shown) : undefined}
+        meta={endedEarly ? task.status : display.meta}
+        metaTone={endedEarly ? "red" : display.metaTone}
+        chevron={expandable ? (shown ? "down" : "right") : opensSheet ? "right" : undefined}
+        onToggle={expandable ? () => setOpen(!shown) : opensSheet || undefined}
       />
       {display.note && <BlockNote mono={display.note.mono}>{display.note.text}</BlockNote>}
       {detail?.kind === "note" && <BlockNote>{detail.text}</BlockNote>}
@@ -268,9 +327,29 @@ const isFinished = (call: ToolCall) =>
   Boolean(call.result) &&
   (call.result?.data?.status !== "async_launched" || Boolean(call.backgroundStatus));
 
-function AgentsBlock({ calls, cwd }: { calls: ToolCall[]; cwd: string }) {
+function lastStepText(steps: readonly SubagentStep[] | undefined, cwd: string): string {
+  const step = steps?.at(-1);
+  if (!step || step.done) return "";
+  const display = describeTool({ id: step.id, name: step.name, input: step.input }, cwd);
+  return [display.runningVerb, display.target].filter(Boolean).join(" ");
+}
+
+function AgentsBlock({
+  calls,
+  cwd,
+  subagents,
+  tasks,
+  actions,
+}: {
+  calls: ToolCall[];
+  cwd: string;
+  subagents: Record<string, SubagentStep[]>;
+  tasks: TasksByCall;
+  actions: ConversationActions;
+}) {
   const done = calls.filter(isFinished).length;
   const [open, setOpen] = useState<boolean | null>(null);
+  const now = useNow(calls.some((call) => tasks[call.id]?.status === "running") ? 1000 : 60_000);
   const shown = open ?? done < calls.length;
   return (
     <div className="flex flex-col">
@@ -287,11 +366,19 @@ function AgentsBlock({ calls, cwd }: { calls: ToolCall[]; cwd: string }) {
         <ParallelAgents
           agents={calls.map((call) => {
             const display = describeTool(call, cwd);
+            const task = tasks[call.id];
+            const running = task?.status === "running";
+            const stop = running && actions.onStopTask;
             return {
               name: display.verb,
               task: display.target,
-              meta: display.meta ?? "",
-              done: isFinished(call),
+              meta: (running ? agentTaskMeta(task, now) : display.meta) ?? "",
+              done: task ? !running : isFinished(call),
+              activity: running ? lastStepText(subagents[call.id], cwd) || task.activity : "",
+              onOpen: actions.onOpenSubagent
+                ? () => actions.onOpenSubagent?.(call.id, display.target || display.verb)
+                : undefined,
+              onStop: stop ? () => stop(task.id) : undefined,
             };
           })}
         />
@@ -436,6 +523,7 @@ function Item({
   cwd,
   live,
   subagents,
+  tasks,
   branch,
   base,
   actions,
@@ -444,6 +532,7 @@ function Item({
   cwd: string;
   live: boolean;
   subagents: Record<string, SubagentStep[]>;
+  tasks: TasksByCall;
   branch: string;
   base: string;
   actions: ConversationActions;
@@ -472,6 +561,7 @@ function Item({
           cwd={cwd}
           live={live}
           steps={subagents[item.call.id]}
+          task={tasks[item.call.id]}
           branch={branch}
           base={base}
           actions={actions}
@@ -480,7 +570,15 @@ function Item({
     case "reads":
       return <ReadsBlock calls={item.calls} cwd={cwd} />;
     case "agents":
-      return <AgentsBlock calls={item.calls} cwd={cwd} />;
+      return (
+        <AgentsBlock
+          calls={item.calls}
+          cwd={cwd}
+          subagents={subagents}
+          tasks={tasks}
+          actions={actions}
+        />
+      );
     case "todos":
       return (
         <TodoPlan
@@ -659,6 +757,7 @@ export function AgentConversation({
   thinkingTokens,
   liveBlocks,
   subagents = {},
+  tasks = NO_TASKS,
   retry = null,
   compacting = false,
   interrupting = false,
@@ -686,6 +785,7 @@ export function AgentConversation({
   thinkingTokens: number;
   liveBlocks: readonly LiveBlock[];
   subagents?: Record<string, SubagentStep[]>;
+  tasks?: TasksByCall;
   retry?: ApiRetry | null;
   compacting?: boolean;
   interrupting?: boolean;
@@ -835,6 +935,7 @@ export function AgentConversation({
                   cwd={cwd}
                   live={working && index > turnStart}
                   subagents={subagents}
+                  tasks={tasks}
                   branch={branch}
                   base={base}
                   actions={itemActions}

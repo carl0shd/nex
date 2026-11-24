@@ -13,7 +13,15 @@ describe("cliFlags", () => {
     ]);
   });
 
-  it("runs ultracode at the highest effort Claude Code has", () => {
-    expect(cliFlags({ model: "opus-5-5", effort: "ultracode", mode: "bypass" })).toContain("max");
+  it("runs ultracode at the highest effort with Claude Code's ultracode mode on", () => {
+    const flags = cliFlags({ model: "opus-5-5", effort: "ultracode", mode: "bypass" });
+    expect(flags).toContain("max");
+    expect(flags.slice(-2)).toEqual(["--settings", '{"ultracode":true}']);
+  });
+
+  it("leaves ultracode off below it", () => {
+    expect(cliFlags({ model: "opus-5-5", effort: "max", mode: "bypass" })).not.toContain(
+      "--settings",
+    );
   });
 });

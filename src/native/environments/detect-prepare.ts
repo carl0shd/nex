@@ -106,6 +106,14 @@ export async function startText(files: ProjectFiles, service: EnvServiceDef): Pr
   return parts.join("\n");
 }
 
+export async function migratesOnStart(
+  files: ProjectFiles,
+  service: EnvServiceDef,
+): Promise<boolean> {
+  const text = await startText(files, service);
+  return MIGRATORS.some((migrator) => migrator.migrates.test(text));
+}
+
 const hasMarker = async (files: ProjectFiles, root: string, markers: readonly string[]) => {
   for (const marker of markers) {
     if ((await files.read(repoPath(root, marker))) !== null) return repoPath(root, marker);

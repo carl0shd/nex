@@ -2,8 +2,10 @@ import { Check, ChevronDown } from "lucide-react";
 import { ComposerPill } from "@/components/composer/composer-pill";
 import { EFFORT_LABEL, EFFORT_TONE, type Effort } from "@/components/composer/effort";
 import { EffortSlider } from "@/components/composer/effort-slider";
-import { Menu, MenuSeparator } from "@/components/primitives/menu";
+import { Menu } from "@/components/primitives/menu";
 import { cn } from "@/lib/utils";
+
+const LIST_MAX_HEIGHT = 272;
 
 export interface ModelOption {
   id: string;
@@ -67,6 +69,7 @@ function ModelRow({
       role="menuitemradio"
       aria-checked={selected}
       data-menu-row
+      ref={selected ? (node) => node?.scrollIntoView({ block: "nearest" }) : undefined}
       onClick={onSelect}
       className={cn(
         "interactive press-wide relative flex w-full cursor-pointer items-center gap-2 rounded-control px-2.5 text-left select-none",
@@ -107,8 +110,15 @@ export function ModelMenu({
   onEffortChange: (effort: Effort) => void;
 }) {
   const current = models.find((option) => option.id === model);
+  const showsEffort = (current?.efforts?.length ?? 1) > 0;
   return (
-    <Menu width={300} origin="bottom left" className="rounded-panel bg-surface-raised">
+    <Menu
+      width={300}
+      origin="bottom left"
+      maxHeight={LIST_MAX_HEIGHT}
+      className="rounded-panel bg-surface-raised"
+      footer={showsEffort && <EffortSlider value={effort} onChange={onEffortChange} />}
+    >
       {models.map((option) => (
         <ModelRow
           key={option.id}
@@ -117,12 +127,6 @@ export function ModelMenu({
           onSelect={() => onModelChange(option.id)}
         />
       ))}
-      {(current?.efforts?.length ?? 1) > 0 && (
-        <>
-          <MenuSeparator />
-          <EffortSlider value={effort} onChange={onEffortChange} />
-        </>
-      )}
     </Menu>
   );
 }

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Overlay } from "@/components/primitives/overlay";
-import type { Project, ProjectEnvironment } from "@native/db/types";
-import { CleanBaseFailedDialog } from "@/components/environment/clean-base-failed-dialog";
+import type { Project } from "@native/db/types";
 import {
   AddProjectDialog,
   type NewProject,
@@ -9,7 +8,6 @@ import {
 } from "@/components/projects/add-project-dialog";
 import type { FoundRepo } from "@/components/projects/repo-picker";
 import { AppCloneRepo } from "@/components/projects/app-clone-repo";
-import { failureSteps } from "@/lib/clean-base";
 import { relativeTime } from "@/lib/relative-time";
 import { notifyCompact } from "@/lib/notify";
 import { projectConfig } from "@/lib/project-detect";
@@ -124,27 +122,6 @@ function useEnvironmentSupport() {
   };
 }
 
-function useCleanBase(project: Project | undefined) {
-  const base = useEnvironmentsStore((s) => (project ? s.bases[project.id] : undefined));
-  const loadBase = useEnvironmentsStore((s) => s.loadBase);
-  const buildBase = useEnvironmentsStore((s) => s.buildBase);
-  const stopBase = useEnvironmentsStore((s) => s.stopBase);
-  const updateProject = useWorkspaceStore((s) => s.updateProject);
-  const id = project?.id;
-  useEffect(() => {
-    if (id) loadBase(id);
-  }, [id, loadBase]);
-  if (!project) return null;
-  return {
-    state: base ?? null,
-    build: async (environment: ProjectEnvironment) => {
-      await updateProject(project.id, { environment });
-      buildBase(project.id, environment);
-    },
-    stop: () => stopBase(project.id),
-  };
-}
-
 export function AppAddProject({ fullWindow = false }: { fullWindow?: boolean }) {
   const projectId = useAddProjectStore((s) => s.projectId);
   const editing = useWorkspaceStore((s) => s.projects.find((item) => item.id === projectId));
@@ -162,10 +139,7 @@ export function AppAddProject({ fullWindow = false }: { fullWindow?: boolean }) 
   const updateProject = useWorkspaceStore((s) => s.updateProject);
   const editingReady = useInspected(editing?.path);
   const local = useLocalRepos(!editing && Boolean(workspace));
-  const cleanBase = useCleanBase(editing);
-  const [showFailure, setShowFailure] = useState(false);
   if (!workspace || (editing && !editingReady)) return null;
-  const failedBase = cleanBase?.state?.status === "failed" ? cleanBase.state : null;
   const shown = (config: ProjectConfig): ProjectConfig =>
     environments.supported ? config : { ...config, environment: undefined };
 
@@ -232,12 +206,6 @@ export function AppAddProject({ fullWindow = false }: { fullWindow?: boolean }) 
         }
         onStopEnvironmentCheck={(repo) => stopCheck(repo.path)}
         onDetectEnvironment={(repo) => window.api.detectEnvironment(repo.path)}
-        cleanBase={cleanBase?.state ?? null}
-        onBuildCleanBase={
-          cleanBase ? (environment) => void cleanBase.build(environment) : undefined
-        }
-        onStopCleanBase={cleanBase?.stop}
-        onShowCleanBaseFailure={() => setShowFailure(true)}
         initialRepo={
           editing ? { name: editing.name, path: editing.path, branch: "", active: "" } : droppedRepo
         }
@@ -253,24 +221,6 @@ export function AppAddProject({ fullWindow = false }: { fullWindow?: boolean }) 
         onAdd={(project) => void (editing ? save(project) : add(project))}
         onCancel={hide}
       />
-      {showFailure && failedBase && editing && cleanBase && (
-        <Overlay fullWindow onClose={() => setShowFailure(false)}>
-          <CleanBaseFailedDialog
-            failure={{
-              project: editing.name,
-              steps: failureSteps(failedBase),
-              error: failedBase.error ?? "The last build didn’t finish.",
-            }}
-            onClose={() => setShowFailure(false)}
-            onViewLog={() => void window.api.showEnvironmentLog()}
-            onEditSetup={() => setShowFailure(false)}
-            onRetry={() => {
-              setShowFailure(false);
-              if (editing.environment) void cleanBase.build(editing.environment);
-            }}
-          />
-        </Overlay>
-      )}
     </Overlay>
   );
 }

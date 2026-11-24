@@ -59,21 +59,32 @@ const CONTAINERS = JSON.stringify([
   },
   {
     id: "nex-check-1",
-    configuration: { id: "nex-check-1", labels: { nex: "1", "nex.check": "1" } },
+    configuration: {
+      id: "nex-check-1",
+      labels: { nex: "1", "nex.check": "1" },
+      dns: { nameservers: [], searchDomains: ["check.nexsvc"] },
+    },
     status: { state: "stopped", networks: [] },
   },
 ]);
 
 describe("parseContainers", () => {
-  it("reads id, state, labels and the first IPv4 address", () => {
+  it("reads id, state, labels, the first IPv4 address and the DNS search domains", () => {
     expect(parseContainers(CONTAINERS)).toEqual([
       {
         id: "buildkit",
         state: "running",
         labels: { "com.apple.container.resource.role": "builder" },
         ip: "192.168.64.2",
+        searchDomains: [],
       },
-      { id: "nex-check-1", state: "stopped", labels: { nex: "1", "nex.check": "1" }, ip: null },
+      {
+        id: "nex-check-1",
+        state: "stopped",
+        labels: { nex: "1", "nex.check": "1" },
+        ip: null,
+        searchDomains: ["check.nexsvc"],
+      },
     ]);
   });
 
@@ -204,6 +215,14 @@ describe("friendlyError", () => {
   it("keeps the last line without the Error prefix", () => {
     expect(friendlyError("building\nError: failed to fetch image\n")).toBe("failed to fetch image");
     expect(friendlyError("")).toBe("Something went wrong. The log has the details.");
+  });
+
+  it("names a missing mount path relative to the task", () => {
+    expect(
+      friendlyError(
+        "Error: path '/Users/me/app/.worktrees/fix-login/triton/hocuspocus/src' does not exist",
+      ),
+    ).toBe("triton/hocuspocus/src isn’t in this task’s files, so it can’t be mounted.");
   });
 
   it("reads the description out of a Cocoa error", () => {

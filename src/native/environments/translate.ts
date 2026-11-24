@@ -10,7 +10,7 @@ import {
   MIN_MEMORY_MB,
   orderServices,
   searchDomain,
-  serviceAliases,
+  discoveryAlias,
   splitCommand,
   WORKSPACE_PATH,
 } from "./definition";
@@ -32,8 +32,6 @@ export interface RunTarget {
   envFiles?: Readonly<Record<string, Readonly<Record<string, string>>>>;
   images?: Readonly<Record<string, string>>;
   check?: boolean;
-  labels?: Readonly<Record<string, string>>;
-  dataVolumes?: Readonly<Record<string, string>>;
   mountProject?: boolean;
 }
 
@@ -110,13 +108,12 @@ export function toContainerRuns(env: ProjectEnvironment, target: RunTarget): Con
       [PROJECT_LABEL]: projectKey,
       [SERVICE_LABEL]: service,
       ...(check ? { [CHECK_LABEL]: "1" } : {}),
-      ...target.labels,
     });
 
   const volumes: VolumePlan[] = [];
   const runs = orderServices(env.services).map((service): ContainerRun => {
     const name = containerName(taskSlug, service.name);
-    const aliases = serviceAliases(env, service, taskSlug);
+    const aliases = [discoveryAlias(service, taskSlug)];
     const app = service.kind === "app";
     const image = service.kind === "build" ? (images[service.name] ?? "") : service.image;
     if (!image) throw new EnvDefinitionError(`${service.name} isn’t built yet.`);
@@ -149,11 +146,7 @@ export function toContainerRuns(env: ProjectEnvironment, target: RunTarget): Con
       mounts.push("--volume", `${source}:${mount.target}${mount.readOnly ? ":ro" : ""}`);
     }
     if (target.mountProject && !app) mounts.push("--volume", `${worktreePath}:${PROJECT_MOUNT}:ro`);
-    const existingData = target.dataVolumes?.[service.name];
-    if (service.data && existingData)
-      mounts.push("--volume", `${existingData}:${service.data.path}`);
-    else if (service.data)
-      volume("data", service.data.path, dataVolumeName(taskSlug, service.name));
+    if (service.data) volume("data", service.data.path, dataVolumeName(taskSlug, service.name));
     if (node && workdir) volume("modules", posix.join(workdir, "node_modules"));
     const kept = app ? [] : (service.volumes ?? []);
     const seeded = kept.map((path, index) => volume("image", path, `${name}-${index + 1}`));

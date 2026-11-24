@@ -15,7 +15,9 @@ import {
   advancedSummary,
   memoryOptions,
   mountsNote,
-  parsePorts,
+  parsePortMappings,
+  portsPatch,
+  portsText,
   TASK_PLACEHOLDER,
   type ServiceCheck,
 } from "@/lib/project-environment";
@@ -50,24 +52,27 @@ function Labeled({ label, children }: { label: string; children: ReactNode }) {
 }
 
 function PortsField({
-  ports,
+  service,
   onChange,
 }: {
-  ports: readonly number[];
-  onChange: (ports: number[]) => void;
+  service: EnvServiceDef;
+  onChange: (patch: Partial<EnvServiceDef>) => void;
 }) {
-  const [text, setText] = useState(ports.join(", "));
-  if (parsePorts(text).join() !== ports.join()) setText(ports.join(", "));
+  const shown = portsText(service);
+  const [text, setText] = useState(shown);
+  const typed = portsText({ ...service, ...portsPatch(parsePortMappings(text)) });
+  if (typed !== shown) setText(shown);
   return (
     <Field
       mono={false}
       label="Ports"
       placeholder="None, inside the task only"
+      title="A port, or a localhost port and the container port, like 5173:80"
       value={text}
       inputMode="numeric"
       onChange={(event) => {
         setText(event.target.value);
-        onChange(parsePorts(event.target.value));
+        onChange(portsPatch(parsePortMappings(event.target.value)));
       }}
     />
   );
@@ -206,7 +211,7 @@ function Advanced({
             }
           />
           <ImageFields service={service} onChange={onChange} />
-          <PortsField ports={service.ports} onChange={(ports) => onChange({ ports })} />
+          <PortsField service={service} onChange={onChange} />
         </div>
         <Labeled label="Variables">
           <KeyValueList

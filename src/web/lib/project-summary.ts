@@ -13,12 +13,17 @@ export interface WorktreeSetup {
   script: { on: boolean; path: string };
 }
 
-export function setupPhrase(setup: WorktreeSetup): Phrase {
+const ENV_FILES = "the env files its services read";
+
+export function setupPhrase(setup: WorktreeSetup, copiesEnvFiles = false): Phrase {
   const parts: Phrase[] = [];
   if (setup.install.on && setup.install.command.trim())
     parts.push([{ text: "runs " }, { text: setup.install.command.trim(), code: true }]);
-  if (setup.copy.on && setup.copy.files.length)
-    parts.push([{ text: "copies " }, ...listPhrase(setup.copy.files)]);
+  const copied = setup.copy.on ? setup.copy.files : [];
+  if (copied.length && copiesEnvFiles)
+    parts.push([{ text: "copies " }, ...listPhrase(copied), { text: ` plus ${ENV_FILES}` }]);
+  else if (copied.length) parts.push([{ text: "copies " }, ...listPhrase(copied)]);
+  else if (copiesEnvFiles) parts.push([{ text: `copies ${ENV_FILES}` }]);
   if (setup.script.on && setup.script.path.trim())
     parts.push([{ text: "runs " }, { text: setup.script.path.trim(), code: true }]);
   if (parts.length === 0) return [{ text: "Worktrees start as a clean checkout" }];

@@ -1,13 +1,13 @@
 import { Fragment, useEffect, useState, type CSSProperties } from "react";
-import { DITHER_OFFSETS } from "@/lib/dither";
+import { DITHER_COLUMN_START_PX, DITHER_COLUMN_STEP_PX, DITHER_OFFSETS } from "@/lib/dither";
 import { cn } from "@/lib/utils";
 
 const tint = (token: string, percent: number) =>
   `color-mix(in srgb, var(--${token}) ${percent}%, transparent)`;
 
 const COLUMNS = DITHER_OFFSETS.length;
-const COLUMN_START_PX = 12;
-const COLUMN_STEP_PX = 21;
+const COLUMN_START_PX = DITHER_COLUMN_START_PX;
+const COLUMN_STEP_PX = DITHER_COLUMN_STEP_PX;
 const STEP_MS = 110;
 const STEPS_PER_CHANGE = 10;
 const BREATHE_MS = 4800;

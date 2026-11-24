@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys, type Hotkey } from "@tanstack/react-hotkeys";
 import { rangeHotkeys } from "@/lib/app-shortcuts";
 import { useShallow } from "zustand/react/shallow";
 import { ChangesView } from "@/components/changes/changes-view";
+import { AppEnvBanner, AppEnvButton } from "@/components/environment/app-task-environment";
 import { ResizeHandle } from "@/components/primitives/resize-handle";
 import { AppTaskAgent, type AgentHandle } from "@/components/task/app-task-agent";
 import { useEmptyClick } from "@/hooks/use-empty-click";
@@ -17,6 +18,7 @@ import { prefillTerminal } from "@/lib/terminal-prefill";
 import { useAddProjectStore } from "@/stores/add-project.store";
 import { useWorktreeChanges } from "@/hooks/use-worktree-changes";
 import { useBackgroundCommands } from "@/hooks/use-background-commands";
+import { useAgentTasks } from "@/hooks/use-agent-tasks";
 import { useTerminalRuntimes } from "@/hooks/use-terminal-runtimes";
 import { workspaceImageUrl } from "@/lib/workspace-image";
 import { notifyCompact } from "@/lib/notify";
@@ -68,6 +70,7 @@ export function AppTaskCard({ sessionId }: { sessionId: string }) {
     ),
   );
   const closeTerminal = useWorkspaceStore((s) => s.closeTerminal);
+  const openEnvironmentLogs = useWorkspaceStore((s) => s.openEnvironmentLogs);
   const editProject = useAddProjectStore((s) => s.edit);
   const showCloseTask = useCloseTaskStore((s) => s.show);
   const [chosenView, setView] = useState<TaskView>("agent");
@@ -115,9 +118,32 @@ export function AppTaskCard({ sessionId }: { sessionId: string }) {
   const focusReplyOnEmptyClick = useEmptyClick(() => agentRef.current?.focusReply());
   const files = useWorktreeChanges(session?.worktreePath ?? "", session?.baseBranch ?? "");
   const runtimes = useTerminalRuntimes();
-  const claudeCommands = useBackgroundCommands(sessionId);
+  const backgroundCommands = useBackgroundCommands(sessionId);
+  const agentTasks = useAgentTasks(sessionId);
+  const claudeCommands = useMemo(
+    () => [
+      ...backgroundCommands,
+      ...agentTasks
+        .filter((task) => task.background && task.status === "running")
+        .map((task) => ({
+          id: task.id,
+          command: "",
+          description: task.description || task.name,
+          startedAt: task.startedAt,
+          kind: task.kind,
+        })),
+    ],
+    [backgroundCommands, agentTasks],
+  );
 
   if (!session || !project || !workspace) return null;
+
+  const openLogs = (service?: string) =>
+    void openEnvironmentLogs(sessionId, service).then((id) => {
+      if (!id) return;
+      setShellFocus(id);
+      setView("shell");
+    });
 
   const status = asking ? "waiting" : STATUS[agent?.status ?? "idle"];
   const diff = files.reduce(
@@ -176,41 +202,46 @@ export function AppTaskCard({ sessionId }: { sessionId: string }) {
           agentWaiting={status === "waiting"}
           diff={diff}
           trailing={
-            <QuickCommandChips
-              commands={project.quickCommands.map((command) => {
-                const shell = shells.find((item) => item.name === command.name);
-                const runtime = shell && runtimes[shell.id];
-                return {
-                  name: command.name,
-                  command: command.command,
-                  running: Boolean(shell),
-                  port: runtime?.port,
-                  startedAt: runtime?.startedAt,
-                };
-              })}
-              claudeCommands={claudeCommands}
-              onOpenTerminal={(name) => {
-                const shell = shells.find((item) => item.name === name);
-                if (!shell) return;
-                setShellFocus(shell.id);
-                setView("shell");
-              }}
-              onStop={(name) => {
-                const shell = shells.find((item) => item.name === name);
-                if (shell) void closeTerminal(shell.id);
-              }}
-              onEdit={() => editProject(project.id)}
-              onRun={(name) => {
-                const command = project.quickCommands.find((item) => item.name === name);
-                if (!command) return;
-                void runQuickCommand(sessionId, command).then((id) => {
-                  setShellFocus(id);
+            <>
+              <AppEnvButton sessionId={sessionId} onLogs={openLogs} />
+              <QuickCommandChips
+                commands={project.quickCommands.map((command) => {
+                  const shell = shells.find((item) => item.name === command.name);
+                  const runtime = shell && runtimes[shell.id];
+                  return {
+                    name: command.name,
+                    command: command.command,
+                    running: Boolean(shell),
+                    port: runtime?.port,
+                    startedAt: runtime?.startedAt,
+                  };
+                })}
+                claudeCommands={claudeCommands}
+                onStopClaude={(id) => void window.api.stopAgentTask(sessionId, id)}
+                onOpenTerminal={(name) => {
+                  const shell = shells.find((item) => item.name === name);
+                  if (!shell) return;
+                  setShellFocus(shell.id);
                   setView("shell");
-                });
-              }}
-            />
+                }}
+                onStop={(name) => {
+                  const shell = shells.find((item) => item.name === name);
+                  if (shell) void closeTerminal(shell.id);
+                }}
+                onEdit={() => editProject(project.id)}
+                onRun={(name) => {
+                  const command = project.quickCommands.find((item) => item.name === name);
+                  if (!command) return;
+                  void runQuickCommand(sessionId, command).then((id) => {
+                    setShellFocus(id);
+                    setView("shell");
+                  });
+                }}
+              />
+            </>
           }
         />
+        <AppEnvBanner sessionId={sessionId} onLogs={openLogs} />
         {view === "agent" && agent && (
           <AppTaskAgent
             ref={agentRef}

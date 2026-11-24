@@ -30,13 +30,19 @@ import {
 } from "@native/environments/check";
 import { detectEnvironment } from "@native/environments/detect";
 import {
-  buildCleanBase,
-  forgetCleanBase,
-  getCleanBase,
-  onCleanBaseProgress,
-  refreshCleanBases,
-  stopCleanBase,
-} from "@native/environments/clean-base";
+  deleteTaskEnvironment,
+  forgetProjectEnvironments,
+  initTaskEnvironments,
+  onTaskEnvironment,
+  openTaskEnvironmentLogs,
+  pauseIdleTaskEnvironments,
+  pauseTaskEnvironment,
+  restartTaskEnvironment,
+  startTaskEnvironment,
+  taskEnvironmentSize,
+  taskEnvironments,
+  viewTaskEnvironment,
+} from "@native/environments/task-env";
 import * as workspaceRepo from "@native/db/repositories/workspace.repo";
 import * as projectRepo from "@native/db/repositories/project.repo";
 import * as settings from "@native/db/repositories/settings.repo";
@@ -62,7 +68,12 @@ import { getStatusMarkers } from "@native/agents/status-markers";
 import { detectAvailableAgents, installAgent } from "@native/agents/detect";
 import { createTerminalForSession } from "@native/agents/agent-terminal";
 import { cloneAgentAccount } from "@native/agents/clone-account";
-import { readTranscript, watchTranscript, type TranscriptCursor } from "@native/agents/transcript";
+import {
+  readSubagentTranscript,
+  readTranscript,
+  watchTranscript,
+  type TranscriptCursor,
+} from "@native/agents/transcript";
 import { readAgentSettings, type AgentSettings } from "@native/agents/agent-settings";
 import type { McpAddInput } from "@native/agents/mcp-servers";
 import {
@@ -82,8 +93,11 @@ import {
   interruptAgent,
   sendToAgent,
   stopAgent,
+  stopAgentTask,
   switchAgentAccount,
 } from "@native/agents/agent-runner";
+import { agentTasks } from "@native/agents/agent-task-tracker";
+import { listClaudeSessions } from "@native/agents/claude-sessions";
 import {
   answerPermission,
   pendingPermissions,
@@ -138,7 +152,7 @@ import {
   cancelSpeech,
 } from "@native/speech/manager";
 import type { CreateProjectInput, ProjectEnvironment, Terminal } from "@native/db/types";
-import type { CleanBaseInput, EnvCheckInput } from "@native/environments/types";
+import type { EnvCheckInput } from "@native/environments/types";
 import type { AgentResumeAdapter, SessionTrackerHandle } from "@native/agents/resume";
 
 interface AgentSpawnPlan {
@@ -293,7 +307,7 @@ export function registerIPCHandlers(): void {
     const project = projectRepo.getById(id);
     projectRepo.remove(id);
     if (!project) return;
-    forgetCleanBase(project.path);
+    forgetProjectEnvironments(project.id);
     void removeProjectEnvironments(project.path);
   });
 
@@ -321,6 +335,7 @@ export function registerIPCHandlers(): void {
   ipcMain.handle(IPC.SESSION_UPDATE, (_, id, input) => sessionRepo.update(id, input));
   ipcMain.handle(IPC.SESSION_DELETE, async (_, id: string, keepBranch = false) => {
     const session = sessionRepo.getById(id);
+    const removingEnvironment = deleteTaskEnvironment(id);
     stopAgent(id);
     for (const term of terminalRepo.getBySession(id)) {
       if (!keepBranch) deleteAgentSessionFile(term);
@@ -335,6 +350,7 @@ export function registerIPCHandlers(): void {
       }
     }
     sessionRepo.remove(id);
+    void removingEnvironment.catch(() => {});
   });
   ipcMain.handle(IPC.SESSION_REORDER, (_, orderedIds: string[]) => sessionRepo.reorder(orderedIds));
 
@@ -492,6 +508,11 @@ export function registerIPCHandlers(): void {
   ipcMain.handle(IPC.AGENT_INTERRUPT, (_, sessionId: string) => interruptAgent(sessionId));
   ipcMain.handle(IPC.AGENT_STATES, () => agentStates());
   ipcMain.handle(IPC.AGENT_BACKGROUND_ALL, () => backgroundCommands());
+  ipcMain.handle(IPC.AGENT_TASKS_ALL, () => agentTasks());
+  ipcMain.handle(IPC.CLAUDE_SESSIONS, (_, projectId: string) => listClaudeSessions(projectId));
+  ipcMain.handle(IPC.AGENT_STOP_TASK, (_, sessionId: string, taskId: string) =>
+    stopAgentTask(sessionId, taskId),
+  );
   ipcMain.handle(IPC.AGENT_WARM, (_, sessionId: string) => warmAgent(sessionId));
   ipcMain.handle(IPC.AGENT_MCP_STATUS, (_, sessionId: string) => mcpStatus(sessionId));
   ipcMain.handle(IPC.AGENT_MCP_TOGGLE, (_, sessionId: string, name: string, enabled: boolean) =>
@@ -532,6 +553,9 @@ export function registerIPCHandlers(): void {
   );
   ipcMain.handle(IPC.TRANSCRIPT_READ, (_, terminalId: string, cursor: TranscriptCursor | null) =>
     readTranscript(terminalId, cursor),
+  );
+  ipcMain.handle(IPC.SUBAGENT_TRANSCRIPT, (_, terminalId: string, toolUseId: string) =>
+    readSubagentTranscript(terminalId, toolUseId),
   );
   ipcMain.handle(IPC.TRANSCRIPT_WATCH_START, (event, terminalId: string) => {
     const key = `${event.sender.id}:${terminalId}`;
@@ -707,11 +731,20 @@ export function registerIPCHandlers(): void {
   ipcMain.handle(IPC.ENV_CHECK, (_, input: EnvCheckInput) => checkProjectEnvironment(input));
   ipcMain.handle(IPC.ENV_CHECK_STATE, (_, projectPath: string) => environmentCheck(projectPath));
   ipcMain.handle(IPC.ENV_CHECK_STOP, (_, projectPath: string) => stopProjectCheck(projectPath));
-  ipcMain.handle(IPC.ENV_BASE_GET, (_, projectId: string) => getCleanBase(projectId));
-  ipcMain.handle(IPC.ENV_BASE_BUILD, (_, input: CleanBaseInput) =>
-    buildCleanBase(input.projectId, input.environment),
+  ipcMain.handle(IPC.ENV_TASK_GET_ALL, () => taskEnvironments());
+  ipcMain.handle(IPC.ENV_TASK_START, (_, sessionId: string) => startTaskEnvironment(sessionId));
+  ipcMain.handle(IPC.ENV_TASK_PAUSE, (_, sessionId: string) => pauseTaskEnvironment(sessionId));
+  ipcMain.handle(IPC.ENV_TASK_RESTART, (_, sessionId: string, service?: string) =>
+    restartTaskEnvironment(sessionId, service),
   );
-  ipcMain.handle(IPC.ENV_BASE_STOP, (_, projectId: string) => stopCleanBase(projectId));
+  ipcMain.handle(IPC.ENV_TASK_VIEW, (_, sessionId: string | null) =>
+    viewTaskEnvironment(sessionId),
+  );
+  ipcMain.handle(IPC.ENV_TASK_LOGS, (_, sessionId: string, service?: string) =>
+    openTaskEnvironmentLogs(sessionId, service),
+  );
+  ipcMain.handle(IPC.ENV_TASK_SIZE, (_, sessionId: string) => taskEnvironmentSize(sessionId));
+  ipcMain.handle(IPC.ENV_TASK_PAUSE_IDLE, () => pauseIdleTaskEnvironments().then(() => {}));
   const broadcast = (channel: string, payload: unknown) => {
     for (const window of BrowserWindow.getAllWindows()) {
       if (!window.isDestroyed()) window.webContents.send(channel, payload);
@@ -719,6 +752,6 @@ export function registerIPCHandlers(): void {
   };
   onSetupProgress((state) => broadcast(IPC.ENV_SETUP_PROGRESS, state));
   onCheckProgress((state) => broadcast(IPC.ENV_CHECK_PROGRESS, state));
-  onCleanBaseProgress((state) => broadcast(IPC.ENV_BASE_PROGRESS, state));
-  void refreshCleanBases().catch(() => {});
+  onTaskEnvironment((state) => broadcast(IPC.ENV_TASK_PROGRESS, state));
+  void initTaskEnvironments().catch(() => {});
 }

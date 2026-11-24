@@ -1,5 +1,5 @@
 import { connect } from "net";
-import type { ProjectEnvironment } from "@native/db/types";
+import type { EnvServiceDef, ProjectEnvironment } from "@native/db/types";
 import {
   buildHashes,
   BUILD_LABEL,
@@ -10,10 +10,10 @@ import {
 } from "./build";
 import { run, runOk } from "./cli";
 import { builderArgs, imageExists, inspectContainer, removeOtherBuilds } from "./containers";
-import { slugName } from "./definition";
+import { slugName, splitCommand } from "./definition";
 import { parseEnvFile } from "./env-file";
 import { projectKey } from "./labels";
-import { friendlyError, parseLines } from "./parse";
+import { friendlyError, parseImageConfig, parseLines } from "./parse";
 import { projectFiles } from "./project-files";
 import { container } from "./runtime";
 import { log } from "./service";
@@ -95,18 +95,23 @@ async function probe(spec: ContainerRun, ip: string | null): Promise<boolean> {
   return true;
 }
 
-async function waitReady(
+export class StartAborted extends Error {}
+
+export async function waitReady(
   spec: ContainerRun,
   timeoutMs: number,
   strictPorts: boolean,
+  signal?: AbortSignal,
 ): Promise<string | undefined> {
   const started = Date.now();
   const strict = strictPorts || Boolean(spec.ready?.command);
   while (Date.now() - started < timeoutMs) {
+    if (signal?.aborted) throw new StartAborted(`${spec.service} was stopped.`);
     const info = await inspectContainer(spec.name);
     if (!info || info.state !== "running") throw new Error(await stoppedMessage(spec));
     const elapsed = Date.now() - started;
-    if ((strict || elapsed >= SETTLE_MS) && (await probe(spec, info.ip))) return undefined;
+    const settled = strict || Boolean(spec.ready?.port) || elapsed >= SETTLE_MS;
+    if (settled && (await probe(spec, info.ip))) return undefined;
     if (!strict && elapsed >= PORT_GRACE_MS)
       return `Running · not answering on :${spec.ready?.port} yet`;
     await wait(POLL_MS);
@@ -161,27 +166,33 @@ async function seedVolumes(spec: ContainerRun): Promise<void> {
 
 interface StartOptions {
   volumes: readonly VolumePlan[];
+  existingVolumes: ReadonlySet<string>;
   app: boolean;
   started: Deferred;
   report: ServiceReport;
   strictPorts: boolean;
+  signal: AbortSignal;
+  afterReady?: (spec: ContainerRun) => Promise<void>;
 }
 
 const NO_STRICT: ReadonlySet<string> = new Set();
 
 async function startService(spec: ContainerRun, options: StartOptions) {
-  const { report } = options;
+  const { report, signal } = options;
   const startedAt = Date.now();
   if (!(await imageExists(spec.image))) {
     report([spec.service], { state: "pulling", detail: spec.image });
     await runOk(container(), ["image", "pull", "--progress", "none", spec.image], {
       log,
+      signal,
       timeoutMs: PULL_TIMEOUT_MS,
     });
   }
+  if (signal.aborted) throw new StartAborted(`${spec.service} was stopped.`);
   report([spec.service], { state: "starting", detail: undefined });
-  for (const volume of options.volumes) await runOk(container(), volume.args, { log });
-  await seedVolumes(spec);
+  const created = options.volumes.filter((volume) => !options.existingVolumes.has(volume.name));
+  for (const volume of created) await runOk(container(), volume.args, { log });
+  if (created.some((volume) => volume.role === "image")) await seedVolumes(spec);
   await runOk(container(), spec.args, { log, timeoutMs: RUN_TIMEOUT_MS });
   report([spec.service], { detail: "Running, waiting until it answers" });
   options.started.resolve();
@@ -190,7 +201,8 @@ async function startService(spec: ContainerRun, options: StartOptions) {
       ? STRICT_APP_READY_MS
       : APP_READY_MS
     : IMAGE_READY_MS;
-  const note = await waitReady(spec, timeout, options.strictPorts);
+  const note = await waitReady(spec, timeout, options.strictPorts, signal);
+  await options.afterReady?.(spec);
   report([spec.service], {
     state: "ready",
     silent: Boolean(note),
@@ -201,13 +213,16 @@ async function startService(spec: ContainerRun, options: StartOptions) {
 export async function readEnvFiles(
   environment: ProjectEnvironment,
   worktreePath: string,
+  fallbackPath?: string,
 ): Promise<Record<string, Record<string, string>>> {
   const files = projectFiles(worktreePath);
+  const fallback =
+    fallbackPath && fallbackPath !== worktreePath ? projectFiles(fallbackPath) : null;
   const found: Record<string, Record<string, string>> = {};
   for (const service of environment.services) {
     for (const path of service.envFiles ?? []) {
       if (path in found) continue;
-      const text = await files.read(path);
+      const text = (await files.read(path)) ?? (await fallback?.read(path)) ?? null;
       if (text === null)
         throw new Error(`${service.name} reads ${path}, which isn’t in this checkout.`);
       found[path] = parseEnvFile(text);
@@ -220,15 +235,13 @@ export interface RunInput {
   environment: ProjectEnvironment;
   projectPath: string;
   projectName: string;
+  worktreePath?: string;
 }
 
-export type RunExtras = Pick<
-  RunTarget,
-  "taskSlug" | "check" | "labels" | "dataVolumes" | "mountProject"
->;
+export type RunExtras = Pick<RunTarget, "taskSlug" | "check" | "mountProject">;
 
 export async function planRun(
-  { environment, projectPath, projectName }: RunInput,
+  { environment, projectPath, projectName, worktreePath = projectPath }: RunInput,
   extras: RunExtras,
 ): Promise<{ builds: BuildPlan[]; plan: ContainerPlan }> {
   const builds = buildPlans(environment, {
@@ -238,9 +251,9 @@ export async function planRun(
   });
   const plan = toContainerRuns(environment, {
     ...extras,
-    worktreePath: projectPath,
+    worktreePath,
     projectKey: projectKey(projectPath),
-    envFiles: await readEnvFiles(environment, projectPath),
+    envFiles: await readEnvFiles(environment, worktreePath, projectPath),
     images: builtImages(builds),
   });
   return { builds, plan };
@@ -254,7 +267,13 @@ export interface ServicesRun {
   signal: AbortSignal;
   strictPorts?: ReadonlySet<string>;
   beforeStart?: () => Promise<void>;
+  existingVolumes?: ReadonlySet<string>;
+  buildLock?: <T>(task: () => Promise<T>) => Promise<T>;
+  afterReady?: (spec: ContainerRun) => Promise<void>;
 }
+
+const NO_VOLUMES: ReadonlySet<string> = new Set();
+const unlocked = <T>(task: () => Promise<T>) => task();
 
 export async function runServices({
   environment,
@@ -264,6 +283,9 @@ export async function runServices({
   signal,
   strictPorts = NO_STRICT,
   beforeStart,
+  existingVolumes = NO_VOLUMES,
+  buildLock = unlocked,
+  afterReady,
 }: ServicesRun): Promise<{ broken: string[] }> {
   const failed = new Set<string>();
   const broken: string[] = [];
@@ -274,10 +296,14 @@ export async function runServices({
     for (const name of names) failed.add(name);
     broken.push(...names);
   };
-  for (const build of builds) {
-    if (signal.aborted) break;
-    await buildImage(build, report, signal).catch((error: unknown) => {
-      if (!signal.aborted) fail(build.services, error);
+  if (builds.length > 0) {
+    await buildLock(async () => {
+      for (const build of builds) {
+        if (signal.aborted) break;
+        await buildImage(build, report, signal).catch((error: unknown) => {
+          if (!signal.aborted) fail(build.services, error);
+        });
+      }
     });
   }
   if (signal.aborted) return { broken };
@@ -297,9 +323,12 @@ export async function runServices({
     if (failed.has(spec.service) || signal.aborted) return;
     await startService(spec, {
       volumes: plan.volumes.filter((volume) => volume.service === spec.service),
+      existingVolumes,
+      afterReady,
       app: service?.kind !== "image",
       started: started.get(spec.service) as Deferred,
       report,
+      signal,
       strictPorts: strictPorts.has(spec.service),
     }).catch((error: unknown) => {
       if (!signal.aborted) fail([spec.service], error);
@@ -315,6 +344,16 @@ export async function runServices({
     ),
   );
   return { broken: [...new Set(broken)] };
+}
+
+export async function imageConfig(service: EnvServiceDef, image: string) {
+  if (service.kind === "app") return { entrypoint: [], workdir: null };
+  const result = await run(container(), ["image", "inspect", image]);
+  const config = parseImageConfig(result.code === 0 ? result.stdout : "");
+  return {
+    entrypoint: service.entrypoint ? splitCommand(service.entrypoint) : config.entrypoint,
+    workdir: service.workdir ?? config.workdir,
+  };
 }
 
 export const brokenSummary = (broken: readonly string[]) =>

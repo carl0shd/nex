@@ -64,4 +64,60 @@ describe("toAgentModels", () => {
   it("ignores anything that is not a list", () => {
     expect(toAgentModels(undefined)).toEqual([]);
   });
+
+  it("reads the name from displayName when the description is only a summary", () => {
+    const [model] = toAgentModels([
+      {
+        value: "opus",
+        displayName: "Opus 5.5",
+        description: "For complex work and everyday tasks",
+        supportsEffort: true,
+        supportedEffortLevels: ["low", "high"],
+      },
+    ]);
+    expect(model).toMatchObject({
+      name: "Opus 5.5",
+      summary: "For complex work and everyday tasks",
+    });
+  });
+
+  it("reads Claude Code's current list: default folded into its model, names from displayName", () => {
+    const raw = [
+      {
+        value: "default",
+        displayName: "Default (recommended)",
+        description: "Opus 5.5 · Best for everyday, complex tasks",
+        resolvedModel: "claude-opus-5-5",
+      },
+      {
+        value: "opus",
+        displayName: "Opus 5.5",
+        description: "For complex work and everyday tasks",
+        resolvedModel: "claude-opus-5-5",
+      },
+      {
+        value: "fable",
+        displayName: "Fable 5.2",
+        description: "For your toughest challenges",
+        resolvedModel: "claude-fable-5-2",
+      },
+      {
+        value: "claude-fable-5-1",
+        displayName: "Fable 5.1",
+        description: "Most capable for your hardest and longest-running tasks",
+        resolvedModel: "claude-fable-5-1",
+      },
+    ];
+    expect(
+      toAgentModels(raw).map(({ value, name, summary }) => ({ value, name, summary })),
+    ).toEqual([
+      { value: "opus", name: "Opus 5.5", summary: "For complex work and everyday tasks" },
+      { value: "fable", name: "Fable 5.2", summary: "For your toughest challenges" },
+      {
+        value: "claude-fable-5-1",
+        name: "Fable 5.1",
+        summary: "Most capable for your hardest and longest-running tasks",
+      },
+    ]);
+  });
 });

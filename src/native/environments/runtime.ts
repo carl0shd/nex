@@ -6,11 +6,9 @@ import { pipeline } from "stream/promises";
 import type { ReadableStream as WebReadableStream } from "stream/web";
 import { whichBinary } from "@native/which";
 import { run, runOk, type EnvLog } from "./cli";
-import { NEX_DOMAIN } from "./labels";
 import {
   adminAppleScript,
   compareVersions,
-  parseLines,
   parseSystemRunning,
   parseVersion,
   unsupportedReason,
@@ -70,6 +68,8 @@ export async function detectRuntime(): Promise<RuntimeInfo> {
   };
 }
 
+export const containerBinary = () => containerPath() ?? INSTALLED_BINARY;
+
 export function container(): string {
   const path = containerPath();
   if (!path) throw new Error("Apple container isn’t installed.");
@@ -98,21 +98,6 @@ export function ensureContentStore(): void {
   // Apple container 1.7.1 never creates its blob folder after a fresh install, so the first pull fails.
   mkdirSync(CONTENT_BLOBS, { recursive: true });
 }
-
-export async function domainRegistered(): Promise<boolean> {
-  const path = containerPath();
-  if (!path) return false;
-  const result = await run(path, ["system", "dns", "ls", "--quiet"]);
-  return result.code === 0 && parseLines(result.stdout).includes(NEX_DOMAIN);
-}
-
-export const domainCommand = (action: "create" | "delete", binary = container()) => [
-  binary,
-  "system",
-  "dns",
-  action,
-  NEX_DOMAIN,
-];
 
 export const uninstallScript = (deleteData: boolean) => [
   UNINSTALL_SCRIPT,
@@ -180,13 +165,12 @@ export async function verifyPackage(pkg: string, log: EnvLog): Promise<void> {
 
 export async function installRuntime(
   pkg: string,
-  { registerDomain }: { registerDomain: boolean },
+  alsoRun: readonly (readonly string[])[],
   log: EnvLog,
 ): Promise<void> {
   const install = ["/usr/sbin/installer", "-pkg", pkg, "-target", "/"];
-  const register = registerDomain ? [domainCommand("create", INSTALLED_BINARY)] : [];
   try {
-    await runAsAdmin([install, ...register], log);
+    await runAsAdmin([install, ...alsoRun], log);
   } finally {
     rmSync(pkg, { force: true });
   }

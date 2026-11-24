@@ -4,6 +4,7 @@ import {
   existsSync,
   mkdirSync,
   openSync,
+  readFileSync,
   readSync,
   readdirSync,
   statSync,
@@ -33,7 +34,7 @@ const KEPT_TYPES = new Set(["user", "assistant", "system"]);
 const MAX_TEXT = 6_000;
 const WATCH_DEBOUNCE_MS = 120;
 
-const encodeCwd = (cwd: string) => cwd.replace(/[^A-Za-z0-9]/g, "-");
+export const encodeCwd = (cwd: string) => cwd.replace(/[^A-Za-z0-9]/g, "-");
 
 function configRoots(terminalId: string): { cwd: string; roots: string[] } | null {
   const terminal = terminalRepo.getById(terminalId);
@@ -90,7 +91,9 @@ function sessionFile(dirs: string[], claudeSessionId: string): string | null {
 export function transcriptPath(terminalId: string): string | null {
   const dirs = projectDirs(terminalId);
   const claudeSessionId = terminalRepo.getById(terminalId)?.agentSessionId;
-  return (claudeSessionId && sessionFile(dirs, claudeSessionId)) || newestTranscript(dirs);
+  // Only terminals from before session ids were stored may adopt the folder's newest transcript.
+  if (claudeSessionId) return sessionFile(dirs, claudeSessionId);
+  return newestTranscript(dirs);
 }
 
 function pastEntries(terminalId: string, currentPath: string): unknown[] {
@@ -133,7 +136,11 @@ function slim(entry: Record<string, unknown>): Record<string, unknown> {
   return entry;
 }
 
-function readFrom(path: string, offset: number): { entries: unknown[]; offset: number } {
+function readFrom(
+  path: string,
+  offset: number,
+  { sidechain = false }: { sidechain?: boolean } = {},
+): { entries: unknown[]; offset: number } {
   let size: number;
   try {
     size = statSync(path).size;
@@ -159,12 +166,52 @@ function readFrom(path: string, offset: number): { entries: unknown[]; offset: n
     if (!line.trim()) continue;
     try {
       const entry = JSON.parse(line) as Record<string, unknown>;
-      if (KEPT_TYPES.has(entry.type as string) && !entry.isSidechain) entries.push(slim(entry));
+      if (KEPT_TYPES.has(entry.type as string) && Boolean(entry.isSidechain) === sidechain) {
+        entries.push(slim(entry));
+      }
     } catch {
       /* partial or corrupt line */
     }
   }
   return { entries, offset: offset + Buffer.byteLength(text.slice(0, lastBreak + 1)) };
+}
+
+interface SubagentMeta {
+  toolUseId?: unknown;
+}
+
+function subagentFile(dir: string, toolUseId: string): string | null {
+  let names: string[];
+  try {
+    names = readdirSync(dir);
+  } catch {
+    return null;
+  }
+  for (const name of names) {
+    if (!name.endsWith(".meta.json")) continue;
+    try {
+      const meta = JSON.parse(readFileSync(join(dir, name), "utf8")) as SubagentMeta;
+      if (meta.toolUseId === toolUseId) return join(dir, name.replace(/\.meta\.json$/, ".jsonl"));
+    } catch {
+      /* unreadable meta */
+    }
+  }
+  return null;
+}
+
+export function readSubagentTranscript(terminalId: string, toolUseId: string): unknown[] {
+  const terminal = terminalRepo.getById(terminalId);
+  if (!terminal) return [];
+  const claudeIds = [terminal.agentSessionId, ...pastClaudeSessions(terminal.sessionId)].filter(
+    (id): id is string => Boolean(id),
+  );
+  for (const dir of projectDirs(terminalId)) {
+    for (const claudeId of claudeIds) {
+      const path = subagentFile(join(dir, claudeId, "subagents"), toolUseId);
+      if (path) return readFrom(path, 0, { sidechain: true }).entries;
+    }
+  }
+  return [];
 }
 
 export function readTranscript(

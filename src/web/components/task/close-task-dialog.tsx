@@ -6,7 +6,7 @@ export interface CloseTaskSummary {
   title: string;
   branch: string;
   uncommitted: number;
-  environment?: { size: string; address: string };
+  environment?: { size?: string; address?: string };
 }
 
 export function CloseTaskDialog({
@@ -58,15 +58,21 @@ export function CloseTaskDialog({
             <ModalConsequence
               icon={Database}
               title="Environment data"
-              detail={`Its database copy and uploads · ${task.environment.size}`}
+              detail={
+                task.environment.size
+                  ? `Its database copy and uploads · ${task.environment.size}`
+                  : "Its database copy and uploads"
+              }
               outcome="Deleted"
             />
-            <ModalConsequence
-              icon={Globe}
-              title={task.environment.address}
-              detail="Stops answering"
-              outcome="Released"
-            />
+            {task.environment.address && (
+              <ModalConsequence
+                icon={Globe}
+                title={task.environment.address}
+                detail="Stops answering"
+                outcome="Released"
+              />
+            )}
           </>
         )}
       </div>

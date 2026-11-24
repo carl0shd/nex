@@ -11,6 +11,14 @@ export const MOTION = options(["system", "reduce"], {
   system: "Follow system",
   reduce: "Reduce",
 });
+export const HOME_SCENES = options(["time", "dawn", "day", "dusk", "night", "off"], {
+  time: "Time of day",
+  dawn: "Dawn",
+  day: "Day",
+  dusk: "Dusk",
+  night: "Night",
+  off: "Off",
+});
 export const SOUNDS = options(["None", "Glass", "Pop", "Tink", "Purr", "Ping"]);
 export const EFFORT_OPTIONS = EFFORTS.map((effort) => ({
   value: effort,

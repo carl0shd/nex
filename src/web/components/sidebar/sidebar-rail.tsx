@@ -1,6 +1,6 @@
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
-import { LayoutGrid, Plus, SquarePen } from "lucide-react";
+import { GalleryHorizontalEnd, LayoutGrid, Plus, SquarePen } from "lucide-react";
 import { Monogram } from "@/components/atoms/entity-chip";
 import GlideMenu from "@/components/primitives/glide-menu";
 import { cn } from "@/lib/utils";
@@ -85,9 +85,11 @@ export function SidebarRail({
   activeTaskId,
   needsYou = false,
   overviewActive = true,
+  tasksActive = false,
   onOpenWorkspace,
   onSelectTask,
   onOverview,
+  onTasks,
   onNewTask,
   onAddWorkspace,
   className,
@@ -97,10 +99,12 @@ export function SidebarRail({
   hoveredWorkspaceId?: string;
   needsYou?: boolean;
   overviewActive?: boolean;
+  tasksActive?: boolean;
   activeTaskId?: string;
   onOpenWorkspace?: (workspaceId: string) => void;
   onSelectTask?: (taskId: string) => void;
   onOverview?: () => void;
+  onTasks?: () => void;
   onNewTask?: () => void;
   onAddWorkspace?: () => void;
   className?: string;
@@ -126,7 +130,7 @@ export function SidebarRail({
     <aside
       ref={asideRef}
       aria-label="Navigation"
-      className={cn("relative flex w-[52px] shrink-0 flex-col bg-page pt-1.5", className)}
+      className={cn("relative flex w-[52px] shrink-0 flex-col pt-1.5", className)}
     >
       <GlideMenu
         className="flex flex-col items-center gap-0.5"
@@ -141,6 +145,9 @@ export function SidebarRail({
         </RailButton>
         <RailButton label="Overview" active={overviewActive} onClick={onOverview}>
           <RailGlyph icon={LayoutGrid} />
+        </RailButton>
+        <RailButton label="Tasks" active={tasksActive} onClick={onTasks}>
+          <RailGlyph icon={GalleryHorizontalEnd} />
           {needsYou && (
             <span className="absolute top-[7px] right-[7px] size-1.5 rounded-full bg-orange" />
           )}

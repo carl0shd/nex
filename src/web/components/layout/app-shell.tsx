@@ -3,6 +3,7 @@ import { AppAgentToasts } from "@/components/task/app-agent-toasts";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
+import { AppBackdropContext } from "@/components/layout/app-backdrop";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import Titlebar from "@/components/layout/titlebar";
 import { AppNewTask } from "@/components/new-task/app-new-task";
@@ -56,6 +57,7 @@ function AppShell(): React.JSX.Element {
     });
   }, [pathname, navigate]);
   const onboarding = useOnboarding();
+  const [backdrop, setBackdrop] = useState<HTMLDivElement | null>(null);
   if (onboarding.showing) {
     return (
       <>
@@ -67,11 +69,14 @@ function AppShell(): React.JSX.Element {
   }
   return (
     <div className="relative isolate flex h-screen flex-col overflow-clip bg-page">
-      <Titlebar />
-      <div className="relative flex min-h-0 flex-1 overflow-clip">
-        {pathname !== "/design-system" && <AppSidebar />}
-        <Outlet />
-      </div>
+      <div ref={setBackdrop} className="pointer-events-none absolute inset-0 -z-10" />
+      <AppBackdropContext value={backdrop}>
+        <Titlebar />
+        <div className="relative flex min-h-0 flex-1 overflow-clip">
+          {pathname !== "/design-system" && <AppSidebar />}
+          <Outlet />
+        </div>
+      </AppBackdropContext>
       <AppNewTask />
       <AppAddProject />
       <AppRemoveProject />

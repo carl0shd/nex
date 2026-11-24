@@ -389,7 +389,7 @@ function environmentGroups(
     card("env-remove", [
       row(
         "Remove environments",
-        "Deletes every environment and clean base Nex created. Projects are not touched.",
+        "Deletes every environment Nex created. Projects are not touched.",
         <Button variant="destructive" size="sm" onClick={onUninstall}>
           Uninstall…
         </Button>,
@@ -533,6 +533,11 @@ export function SettingsPage({
               value={values.interfaceSize}
               onChange={set("interfaceSize")}
             />,
+          ),
+          row(
+            "Home background",
+            "Follows the time of day, or stays on one.",
+            select("homeScene", OPTIONS.HOME_SCENES),
           ),
           switchRow(
             "Reduce transparency",

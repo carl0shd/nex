@@ -23,7 +23,10 @@ export interface ClaudeCommandEntry {
   command: string;
   description: string;
   startedAt: number;
+  kind?: "command" | "agent" | "workflow";
 }
+
+const KIND_LABEL = { agent: "Agent", workflow: "Workflow" } as const;
 
 const UPTIME_TICK_MS = 30_000;
 
@@ -35,11 +38,29 @@ function Uptime({ since, now, className }: { since: number; now: number; classNa
   );
 }
 
-function ClaudeCommandRow({ command, now }: { command: ClaudeCommandEntry; now: number }) {
+function ClaudeCommandRow({
+  command,
+  now,
+  onStop,
+}: {
+  command: ClaudeCommandEntry;
+  now: number;
+  onStop?: (id: string) => void;
+}) {
+  const kind = command.kind && command.kind !== "command" ? KIND_LABEL[command.kind] : null;
   return (
-    <div title={command.command} className="flex h-8 items-center gap-2.5 rounded-control px-2.5">
+    <div
+      title={command.command || command.description}
+      data-menu-row={onStop ? true : undefined}
+      className="relative flex h-8 items-center gap-2.5 rounded-control pr-1 pl-2.5"
+    >
       <AgentLogo agent="claude" size={16} />
-      {command.description ? (
+      {kind ? (
+        <>
+          <span className="truncate text-sm text-ink">{command.description}</span>
+          <span className="min-w-0 flex-1 truncate text-2xs text-ink-4">{kind}</span>
+        </>
+      ) : command.description ? (
         <>
           <span className="truncate text-sm text-ink">{command.description}</span>
           <span className="min-w-0 flex-1 truncate font-mono text-2xs text-ink-4">
@@ -51,7 +72,17 @@ function ClaudeCommandRow({ command, now }: { command: ClaudeCommandEntry; now: 
           {command.command}
         </span>
       )}
-      <Uptime since={command.startedAt} now={now} />
+      <Uptime since={command.startedAt} now={now} className={onStop ? undefined : "pr-1.5"} />
+      {onStop && (
+        <IconButton
+          size="sm"
+          aria-label="Stop"
+          onClick={() => onStop(command.id)}
+          className="size-6"
+        >
+          <Square width={10} height={10} strokeWidth={2.5} />
+        </IconButton>
+      )}
     </div>
   );
 }
@@ -62,6 +93,7 @@ export function QuickCommandsMenu({
   onRun,
   onOpenTerminal,
   onStop,
+  onStopClaude,
   onEdit,
 }: {
   commands: readonly QuickCommandEntry[];
@@ -69,6 +101,7 @@ export function QuickCommandsMenu({
   onRun: (name: string) => void;
   onOpenTerminal: (name: string) => void;
   onStop: (name: string) => void;
+  onStopClaude?: (id: string) => void;
   onEdit?: () => void;
 }) {
   const [query, setQuery] = useState("");
@@ -148,7 +181,7 @@ export function QuickCommandsMenu({
         ))}
         {byClaude.length > 0 && <MenuLabel>Started by Claude</MenuLabel>}
         {byClaude.map((command) => (
-          <ClaudeCommandRow key={command.id} command={command} now={now} />
+          <ClaudeCommandRow key={command.id} command={command} now={now} onStop={onStopClaude} />
         ))}
         {idle.length > 0 && <MenuLabel>Commands</MenuLabel>}
         {idle.map((command) => (
