@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Sidebar } from "@/components/sidebar/sidebar";
 import { SidebarRail } from "@/components/sidebar/sidebar-rail";
-import type { SidebarWorkspace } from "@/components/sidebar/types";
+import type { HiddenWorkspace, SidebarWorkspace } from "@/components/sidebar/types";
 import type { WorkspaceLookChange } from "@/components/sidebar/workspace-header";
 import { useAppHotkey } from "@/hooks/use-app-hotkey";
 import { SIDEBAR_WIDTH } from "@/lib/app-chrome";
@@ -10,6 +10,7 @@ import { useSettingsStore } from "@/stores/settings.store";
 
 export function SidebarFrame({
   workspaces,
+  hiddenWorkspaces,
   activeTaskId,
   overviewActive = !activeTaskId,
   tasksActive = false,
@@ -18,6 +19,8 @@ export function SidebarFrame({
   onToggleWorkspace,
   onExpandWorkspace,
   onSelectTask,
+  onMinimizeTask,
+  onCloseTask,
   onOverview,
   onTasks,
   onNewTask,
@@ -27,12 +30,15 @@ export function SidebarFrame({
   onEditProject,
   onRenameWorkspace,
   onWorkspaceLookChange,
+  onHideWorkspace,
+  onShowWorkspace,
   onRemoveWorkspace,
   onAddWorkspace,
   onAddProject,
   onDropProject,
 }: {
   workspaces: SidebarWorkspace[];
+  hiddenWorkspaces?: readonly HiddenWorkspace[];
   activeTaskId?: string;
   overviewActive?: boolean;
   tasksActive?: boolean;
@@ -41,6 +47,8 @@ export function SidebarFrame({
   onToggleWorkspace?: (id: string) => void;
   onExpandWorkspace?: (id: string) => void;
   onSelectTask?: (id: string) => void;
+  onMinimizeTask?: (id: string, minimized: boolean) => void;
+  onCloseTask?: (id: string) => void;
   onOverview?: () => void;
   onTasks?: () => void;
   onNewTask?: () => void;
@@ -50,6 +58,8 @@ export function SidebarFrame({
   onEditProject?: (projectId: string) => void;
   onRenameWorkspace?: (workspaceId: string, name: string) => void;
   onWorkspaceLookChange?: (workspaceId: string, look: WorkspaceLookChange) => void;
+  onHideWorkspace?: (workspaceId: string) => void;
+  onShowWorkspace?: (workspaceId: string) => void;
   onRemoveWorkspace?: (workspaceId: string) => void;
   onAddWorkspace?: () => void;
   onAddProject?: (workspaceId: string) => void;
@@ -107,6 +117,7 @@ export function SidebarFrame({
       ) : (
         <Sidebar
           workspaces={workspaces}
+          hiddenWorkspaces={hiddenWorkspaces}
           activeTaskId={activeTaskId}
           overviewActive={overviewActive}
           tasksActive={tasksActive}
@@ -115,6 +126,8 @@ export function SidebarFrame({
           environments={environments}
           onToggleWorkspace={onToggleWorkspace}
           onSelectTask={onSelectTask}
+          onMinimizeTask={onMinimizeTask}
+          onCloseTask={onCloseTask}
           onOverview={onOverview}
           onTasks={onTasks}
           onNewTask={onNewTask}
@@ -124,6 +137,8 @@ export function SidebarFrame({
           onEditProject={onEditProject}
           onRenameWorkspace={onRenameWorkspace}
           onWorkspaceLookChange={onWorkspaceLookChange}
+          onHideWorkspace={onHideWorkspace}
+          onShowWorkspace={onShowWorkspace}
           onRemoveWorkspace={onRemoveWorkspace}
           onAddWorkspace={onAddWorkspace}
           onAddProject={onAddProject}

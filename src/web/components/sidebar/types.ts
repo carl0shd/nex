@@ -8,6 +8,7 @@ export type SidebarTask = {
   status: SidebarTaskStatus;
   meta: string;
   env?: "starting" | "down";
+  minimized?: boolean;
 };
 
 export type SidebarProject = { id?: string; name: string; tasks: SidebarTask[] };
@@ -21,3 +22,5 @@ export type SidebarWorkspace = {
   projects: SidebarProject[];
   expanded: boolean;
 };
+
+export type HiddenWorkspace = Pick<SidebarWorkspace, "id" | "name" | "color" | "image" | "icon">;

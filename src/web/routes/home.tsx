@@ -17,7 +17,7 @@ import { rangeHotkeys } from "@/lib/app-shortcuts";
 import { greeting, homeScenePhase, scenePhase } from "@/lib/dither-scene";
 import { memoryBudget } from "@/lib/environments";
 import { usageStats, type HomeStatsData } from "@/lib/home-stats";
-import { buildSidebar } from "@/lib/sidebar-model";
+import { buildSidebar, stripSessions } from "@/lib/sidebar-model";
 import { statusCounts, taskStatusItems } from "@/lib/task-status";
 import { useEnvironmentsStore } from "@/stores/environments.store";
 import { useNewTaskStore } from "@/stores/new-task.store";
@@ -64,7 +64,7 @@ function Home(): React.JSX.Element {
   const now = new Date(nowMs);
   const heroRef = useRef<HTMLDivElement>(null);
   const hour = now.getHours() + now.getMinutes() / 60;
-  const open = sessions.filter((session) => session.status !== "done");
+  const open = stripSessions({ workspaces, projects, sessions });
   const statusItems = useMemo(
     () =>
       taskStatusItems(

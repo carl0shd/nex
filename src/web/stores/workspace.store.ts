@@ -44,6 +44,8 @@ interface WorkspaceStore {
   renameTask: (id: string, title: string) => Promise<void>;
   setTaskWidth: (id: string, width: number) => void;
   turnEnvironmentOn: (id: string) => void;
+  setTaskMinimized: (id: string, minimized: boolean) => void;
+  setWorkspaceHidden: (id: string, hidden: boolean) => void;
   closeTask: (id: string) => Promise<void>;
   setAgentRunning: (sessionId: string, running: boolean) => void;
   createProject: (input: CreateProjectInput) => Promise<Project>;
@@ -75,6 +77,15 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => {
       workspaces: state.workspaces.map((item) => (item.id === id ? { ...item, collapsed } : item)),
     }));
     void window.api.updateWorkspace(id, { collapsed });
+  };
+
+  const setMinimized = (id: string, minimized: boolean) => {
+    const session = get().sessions.find((item) => item.id === id);
+    if (!session || session.minimized === minimized) return;
+    set((state) => ({
+      sessions: state.sessions.map((item) => (item.id === id ? { ...item, minimized } : item)),
+    }));
+    void window.api.updateSession(id, { minimized });
   };
 
   const replaceWorkspace = (workspace: Workspace) =>
@@ -269,6 +280,31 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => {
         ),
       }));
     },
+    setTaskMinimized: (id, minimized) => {
+      setMinimized(id, minimized);
+      if (minimized && get().activeTaskId === id) set({ activeTaskId: null });
+    },
+    setWorkspaceHidden: (id, archived) => {
+      const projectIds = new Set(
+        get()
+          .projects.filter((project) => project.workspaceId === id)
+          .map((project) => project.id),
+      );
+      set((state) => {
+        const active = state.sessions.find((session) => session.id === state.activeTaskId);
+        return {
+          workspaces: state.workspaces.map((item) =>
+            item.id === id ? { ...item, archived } : item,
+          ),
+          activeTaskId:
+            archived && active && projectIds.has(active.projectId) ? null : state.activeTaskId,
+        };
+      });
+      void window.api.updateWorkspace(id, { archived });
+      if (!archived) return;
+      for (const session of get().sessions)
+        if (projectIds.has(session.projectId)) void window.api.pauseTaskEnvironment(session.id);
+    },
     renameTask: async (id, title) => {
       const session = await window.api.updateSession(id, { title });
       set((state) => ({
@@ -297,19 +333,26 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => {
       if (workspace) setCollapsed(id, !workspace.collapsed);
     },
     expandWorkspace: (id) => setCollapsed(id, false),
-    selectTask: (id) => set({ activeTaskId: id, homeView: "tasks" }),
-    openTask: (id, insert) =>
+    selectTask: (id) => {
+      setMinimized(id, false);
+      set({ activeTaskId: id, homeView: "tasks" });
+    },
+    openTask: (id, insert) => {
+      setMinimized(id, false);
       set((state) => ({
         activeTaskId: id,
         homeView: "tasks",
         replyFocus: { sessionId: id, request: (state.replyFocus?.request ?? 0) + 1, insert },
-      })),
-    openTaskView: (id, view) =>
+      }));
+    },
+    openTaskView: (id, view) => {
+      setMinimized(id, false);
       set((state) => ({
         activeTaskId: id,
         homeView: "tasks",
         viewRequest: { sessionId: id, request: (state.viewRequest?.request ?? 0) + 1, view },
-      })),
+      }));
+    },
     showOverview: () => set({ activeTaskId: null, homeView: "overview" }),
     showTasks: () => set({ homeView: "tasks" }),
   };

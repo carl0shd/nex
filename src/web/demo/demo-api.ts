@@ -70,6 +70,7 @@ const session = (
   width: 600,
   envSlug: branch,
   envOff: false,
+  minimized: false,
 });
 
 const sessions = [

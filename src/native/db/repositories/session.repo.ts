@@ -33,6 +33,7 @@ interface SessionRow {
   width: number;
   env_slug: string;
   env_off: number;
+  minimized: number;
 }
 
 function parseLayout(value: string | null): PanelLayout | null {
@@ -69,6 +70,7 @@ function toSession(row: SessionRow): Session {
     width: row.width,
     envSlug: row.env_slug ?? "",
     envOff: row.env_off === 1,
+    minimized: row.minimized === 1,
   };
 }
 
@@ -191,6 +193,10 @@ export function update(id: string, input: UpdateSessionInput): Session {
   if (input.width !== undefined) {
     fields.push("width = ?");
     values.push(input.width);
+  }
+  if (input.minimized !== undefined) {
+    fields.push("minimized = ?");
+    values.push(input.minimized ? 1 : 0);
   }
   if (input.accountId !== undefined) {
     fields.push("account_id = ?");

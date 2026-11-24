@@ -6,7 +6,7 @@ import LICENSES from "@/assets/licenses.json";
 import { AppAddAccount, type ReauthTarget } from "@/components/onboarding/app-add-account";
 import type { ClaudeAccount } from "@/components/settings/account-list";
 import { SettingsPage, type SettingsData } from "@/components/settings/settings-page";
-import { IDE_APPS, TERMINAL_APPS } from "@/components/settings/settings-values";
+import { loadInstalledApps, pickApp } from "@/hooks/use-open-with-apps";
 import type { SettingsWorkspace } from "@/components/settings/workspace-card";
 import { accountLabel } from "@/lib/accounts";
 import { resolveModel } from "@/components/composer/models";
@@ -73,12 +73,11 @@ function toAccounts(
 }
 
 async function loadMachine(): Promise<Machine> {
-  const [info, openAtLogin, agents, ides, terminals, shells] = await Promise.all([
+  const [info, openAtLogin, agents, { editors: ides, terminals }, shells] = await Promise.all([
     window.api.getAppInfo(),
     window.api.getOpenAtLogin(),
     window.api.detectAgents(),
-    window.api.installedApps(IDE_APPS),
-    window.api.installedApps(TERMINAL_APPS),
+    loadInstalledApps(),
     window.api.listShells(),
   ]);
   const claude = agents.find((agent) => agent.slug === "claude-code" && agent.installed);
@@ -122,6 +121,7 @@ export function AppSettings() {
   const sidebarCollapsed = useSettingsStore((s) => s.sidebarCollapsed);
   const toggleSidebar = useSettingsStore((s) => s.toggleSidebar);
   const workspaces = useWorkspaceStore((s) => s.workspaces);
+  const setWorkspaceHidden = useWorkspaceStore((s) => s.setWorkspaceHidden);
   const projects = useWorkspaceStore((s) => s.projects);
   const sessions = useWorkspaceStore((s) => s.sessions);
   const editProject = useAddProjectStore((s) => s.edit);
@@ -197,6 +197,7 @@ export function AppSettings() {
     color: workspace.color,
     image: workspaceImageUrl(workspace.customImage),
     icon: workspaceIcon(workspace.icon),
+    hidden: workspace.archived,
     projects: projects
       .filter((project) => project.workspaceId === workspace.id)
       .map((project) => ({
@@ -246,7 +247,11 @@ export function AppSettings() {
   return (
     <>
       <SettingsPage
-        values={prefs}
+        values={{
+          ...prefs,
+          ide: pickApp(prefs.ide, machine.ides) ?? prefs.ide,
+          terminalApp: pickApp(prefs.terminalApp, machine.terminals) ?? prefs.terminalApp,
+        }}
         data={data}
         initialSection={section ? { id: section, request: location.key } : undefined}
         className="w-full"
@@ -293,6 +298,7 @@ export function AppSettings() {
           },
           onRenameWorkspace: (workspaceId, name) => void renameWorkspace(workspaceId, name),
           onWorkspaceLookChange: (workspaceId, look) => void setWorkspaceLook(workspaceId, look),
+          onWorkspaceHiddenChange: setWorkspaceHidden,
           onRemoveWorkspace: showRemoveWorkspace,
           onChangeClaudePath: () => {
             const agentId = machine.claudeAgentId;

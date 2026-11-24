@@ -5,13 +5,15 @@ import GlideMenu from "@/components/primitives/glide-menu";
 import { ProjectGroup } from "@/components/sidebar/project-group";
 import { SidebarLink } from "@/components/sidebar/sidebar-link";
 import { WorkspaceHeader, type WorkspaceLookChange } from "@/components/sidebar/workspace-header";
-import type { SidebarWorkspace } from "@/components/sidebar/types";
+import type { HiddenWorkspace, SidebarWorkspace } from "@/components/sidebar/types";
+import { HiddenWorkspacesRow } from "@/components/sidebar/hidden-workspaces-row";
 import { AddProjectRow } from "@/components/sidebar/add-project-row";
 import { cn } from "@/lib/utils";
 import { shortcutLabel } from "@/lib/app-shortcuts";
 
 export function Sidebar({
   workspaces,
+  hiddenWorkspaces = [],
   activeTaskId,
   overviewActive = !activeTaskId,
   tasksActive = false,
@@ -23,6 +25,8 @@ export function Sidebar({
   onDropProject,
   onToggleWorkspace,
   onSelectTask,
+  onMinimizeTask,
+  onCloseTask,
   onOverview,
   onTasks,
   onNewTask,
@@ -32,10 +36,13 @@ export function Sidebar({
   onEditProject,
   onRenameWorkspace,
   onWorkspaceLookChange,
+  onHideWorkspace,
+  onShowWorkspace,
   onRemoveWorkspace,
   className,
 }: {
   workspaces: SidebarWorkspace[];
+  hiddenWorkspaces?: readonly HiddenWorkspace[];
   activeTaskId?: string;
   overviewActive?: boolean;
   tasksActive?: boolean;
@@ -47,6 +54,8 @@ export function Sidebar({
   onDropProject?: (workspaceId: string, file: File) => void;
   onToggleWorkspace?: (workspaceId: string) => void;
   onSelectTask?: (taskId: string) => void;
+  onMinimizeTask?: (taskId: string, minimized: boolean) => void;
+  onCloseTask?: (taskId: string) => void;
   onOverview?: () => void;
   onTasks?: () => void;
   onNewTask?: () => void;
@@ -56,6 +65,8 @@ export function Sidebar({
   onEditProject?: (projectId: string) => void;
   onRenameWorkspace?: (workspaceId: string, name: string) => void;
   onWorkspaceLookChange?: (workspaceId: string, look: WorkspaceLookChange) => void;
+  onHideWorkspace?: (workspaceId: string) => void;
+  onShowWorkspace?: (workspaceId: string) => void;
   onRemoveWorkspace?: (workspaceId: string) => void;
   className?: string;
 }) {
@@ -100,6 +111,7 @@ export function Sidebar({
               onLookChange={
                 onWorkspaceLookChange && ((look) => onWorkspaceLookChange(workspace.id, look))
               }
+              onHide={onHideWorkspace && (() => onHideWorkspace(workspace.id))}
               onRemove={onRemoveWorkspace && (() => onRemoveWorkspace(workspace.id))}
             />
             {workspace.expanded &&
@@ -109,6 +121,8 @@ export function Sidebar({
                   project={project}
                   activeTaskId={activeTaskId}
                   onSelectTask={onSelectTask}
+                  onMinimizeTask={onMinimizeTask}
+                  onCloseTask={onCloseTask}
                   onNewTask={() => onNewTaskInProject?.(project.id ?? project.name)}
                   onOpenInFinder={
                     onOpenProjectInFinder && project.id
@@ -133,6 +147,9 @@ export function Sidebar({
             )}
           </div>
         ))}
+        {onShowWorkspace && (
+          <HiddenWorkspacesRow workspaces={hiddenWorkspaces} onShow={onShowWorkspace} />
+        )}
       </div>
       {creating}
       <div className="mt-auto flex flex-col gap-1 border-t border-line pt-2.5 pb-3">

@@ -9,9 +9,10 @@ import { useAppHotkey } from "@/hooks/use-app-hotkey";
 import { notifyCompact } from "@/lib/notify";
 import { repoAt } from "@/lib/repo-at";
 import { environmentsUsage, memoryBudget } from "@/lib/environments";
-import { buildSidebar } from "@/lib/sidebar-model";
+import { buildSidebar, hiddenWorkspaces } from "@/lib/sidebar-model";
 import { idleCount, machineEnvironments } from "@/lib/task-environment";
 import { useAddProjectStore } from "@/stores/add-project.store";
+import { useCloseTaskStore } from "@/stores/close-task.store";
 import { useEnvironmentsStore } from "@/stores/environments.store";
 import { useRemoveProjectStore } from "@/stores/remove-project.store";
 import { useRemoveWorkspaceStore } from "@/stores/remove-workspace.store";
@@ -35,6 +36,9 @@ export function AppSidebar() {
   const showTasks = useWorkspaceStore((s) => s.showTasks);
   const homeView = useWorkspaceStore((s) => s.homeView);
   const createWorkspace = useWorkspaceStore((s) => s.createWorkspace);
+  const setTaskMinimized = useWorkspaceStore((s) => s.setTaskMinimized);
+  const setWorkspaceHidden = useWorkspaceStore((s) => s.setWorkspaceHidden);
+  const showCloseTask = useCloseTaskStore((s) => s.show);
   const showNewTask = useNewTaskStore((s) => s.show);
   const showAddProject = useAddProjectStore((s) => s.show);
   const showEditProject = useAddProjectStore((s) => s.edit);
@@ -70,6 +74,8 @@ export function AppSidebar() {
       buildSidebar({ workspaces: rawWorkspaces, projects, sessions, terminals, environments }, now),
     [rawWorkspaces, projects, sessions, terminals, environments, now],
   );
+
+  const hidden = useMemo(() => hiddenWorkspaces(rawWorkspaces), [rawWorkspaces]);
 
   const usage = useMemo(() => {
     if (!envStatus) return null;
@@ -108,12 +114,15 @@ export function AppSidebar() {
   return (
     <SidebarFrame
       workspaces={workspaces}
+      hiddenWorkspaces={hidden}
       activeTaskId={onHome ? (activeTaskId ?? undefined) : undefined}
       overviewActive={onHome && !activeTaskId && homeView === "overview"}
       tasksActive={onHome && !activeTaskId && homeView === "tasks"}
       onToggleWorkspace={toggleWorkspace}
       onExpandWorkspace={expandWorkspace}
       onSelectTask={openTask}
+      onMinimizeTask={setTaskMinimized}
+      onCloseTask={showCloseTask}
       onOverview={openOverview}
       onTasks={openTasks}
       creating={creating && <NewWorkspaceRow onCreate={create} onCancel={hideNewWorkspace} />}
@@ -134,6 +143,8 @@ export function AppSidebar() {
       onAddProject={showAddProject}
       onRemoveProject={showRemoveProject}
       onEditProject={showEditProject}
+      onHideWorkspace={(id) => setWorkspaceHidden(id, true)}
+      onShowWorkspace={(id) => setWorkspaceHidden(id, false)}
       onRemoveWorkspace={showRemoveWorkspace}
       onRenameWorkspace={(id, name) => void renameWorkspace(id, name)}
       onWorkspaceLookChange={(id, look) => void setWorkspaceLook(id, look)}

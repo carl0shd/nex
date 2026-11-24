@@ -1,6 +1,11 @@
 import type { Project, Session, Terminal, TerminalStatus, Workspace } from "@native/db/types";
 import type { TaskEnvState } from "@native/environments/types";
-import type { SidebarTask, SidebarTaskStatus, SidebarWorkspace } from "@/components/sidebar/types";
+import type {
+  HiddenWorkspace,
+  SidebarTask,
+  SidebarTaskStatus,
+  SidebarWorkspace,
+} from "@/components/sidebar/types";
 import { workspaceIcon } from "@/lib/workspace-icons";
 import { workspaceImageUrl } from "@/lib/workspace-image";
 
@@ -75,6 +80,7 @@ export function buildSidebar(source: SidebarSource, now: number): SidebarWorkspa
                 title: session.title || session.name,
                 status,
                 ...(env ? { env } : {}),
+                ...(session.minimized ? { minimized: true } : {}),
                 meta:
                   status === "waiting"
                     ? "needs you"
@@ -84,6 +90,38 @@ export function buildSidebar(source: SidebarSource, now: number): SidebarWorkspa
         })),
     }));
 }
+
+export const hiddenWorkspaces = (workspaces: readonly Workspace[]): HiddenWorkspace[] =>
+  workspaces
+    .filter((workspace) => workspace.archived)
+    .toSorted(bySortOrder)
+    .map((workspace) => ({
+      id: workspace.id,
+      name: workspace.name,
+      color: workspace.color,
+      image: workspaceImageUrl(workspace.customImage),
+      icon: workspaceIcon(workspace.icon),
+    }));
+
+export function shownSessions(
+  source: Pick<SidebarSource, "workspaces" | "projects" | "sessions">,
+): Session[] {
+  const hidden = new Set(
+    source.workspaces.filter((workspace) => workspace.archived).map((workspace) => workspace.id),
+  );
+  const projectsShown = new Set(
+    source.projects
+      .filter((project) => !hidden.has(project.workspaceId))
+      .map((project) => project.id),
+  );
+  return source.sessions.filter(
+    (session) => session.status !== "done" && projectsShown.has(session.projectId),
+  );
+}
+
+export const stripSessions = (
+  source: Pick<SidebarSource, "workspaces" | "projects" | "sessions">,
+) => shownSessions(source).filter((session) => !session.minimized);
 
 export function workspaceSummary(workspace: SidebarWorkspace): string {
   const tasks = workspace.projects.flatMap((project) => project.tasks);

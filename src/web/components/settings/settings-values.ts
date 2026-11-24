@@ -4,8 +4,30 @@ import { PERMISSION_LABEL, PERMISSION_MODES } from "@/lib/permission-modes";
 const options = <T extends string>(values: readonly T[], labels?: Partial<Record<T, string>>) =>
   values.map((value) => ({ value, label: labels?.[value] ?? value }));
 
-export const IDE_APPS = ["Cursor", "Visual Studio Code", "Zed", "Windsurf", "Xcode"];
-export const TERMINAL_APPS = ["Terminal", "iTerm", "Ghostty", "Warp"];
+export const IDE_APPS = [
+  "Cursor",
+  "Visual Studio Code",
+  "Zed",
+  "Windsurf",
+  "Sublime Text",
+  "Nova",
+  "WebStorm",
+  "IntelliJ IDEA",
+  "PyCharm",
+  "Xcode",
+];
+export const TERMINAL_APPS = [
+  "Terminal",
+  "iTerm",
+  "Ghostty",
+  "Warp",
+  "kitty",
+  "Alacritty",
+  "WezTerm",
+  "Hyper",
+];
+const APP_SHORT_NAMES: Record<string, string> = { "Visual Studio Code": "Code" };
+export const appShortName = (app: string) => APP_SHORT_NAMES[app] ?? app;
 export const FONT_SIZES = options(["11", "12", "13", "14"]);
 export const MOTION = options(["system", "reduce"], {
   system: "Follow system",
