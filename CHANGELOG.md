@@ -1,5 +1,13 @@
 # nex
 
+## 1.0.2
+
+### Patch Changes
+
+- 4ac584f: The home prompt keeps its send button beside the fields instead of on a line of its own.
+- 3dafb43: We fixed the new task dialog cutting the branch name when it still had room to grow.
+- 292b5cc: We fixed the environments step of the first run breaking its layout with many services or a small window.
+
 ## 1.0.1
 
 ### Patch Changes
