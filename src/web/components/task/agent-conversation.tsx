@@ -79,6 +79,9 @@ import { compactTokens } from "@/lib/usage";
 import { limitResetAt, limitResetLabel } from "@/lib/usage-limit";
 import { cn } from "@/lib/utils";
 
+const elapsedLabel = (seconds: number) =>
+  seconds < 10 ? `${seconds}s` : formatDuration(seconds * 1000);
+
 const ICONS: Record<ToolIcon, BlockIcon> = {
   read: Eye,
   write: FileIcon,
@@ -227,7 +230,7 @@ function ToolBlock({
         task={display.target}
         meta={[
           `${steps.length} ${steps.length === 1 ? "tool" : "tools"}`,
-          seconds > 0 && `${seconds}s`,
+          seconds > 0 && elapsedLabel(seconds),
         ]
           .filter(Boolean)
           .join(" · ")}
@@ -244,7 +247,7 @@ function ToolBlock({
         target={display.target}
         prose={display.prose}
         code={Boolean(display.command)}
-        meta={elapsed >= MIN_SHOWN_SECONDS ? `${elapsed}s` : undefined}
+        meta={elapsed >= MIN_SHOWN_SECONDS ? elapsedLabel(elapsed) : undefined}
       />
     );
   if (display.pullRequest) {
