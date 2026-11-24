@@ -4,6 +4,7 @@ import * as sessionRepo from "@native/db/repositories/session.repo";
 import * as terminalRepo from "@native/db/repositories/terminal.repo";
 import * as usageRepo from "@native/db/repositories/usage.repo";
 import * as workspaceRepo from "@native/db/repositories/workspace.repo";
+import { pastClaudeSessions } from "@native/agents/agent-history";
 import type { AgentAccount } from "@native/db/types";
 import type { DayRange, ModelBucket } from "@native/db/repositories/usage.repo";
 import {
@@ -213,6 +214,11 @@ function sessionContext(): SessionContext {
   const sessionIdOf = new Map<string, string>();
   for (const terminal of terminalRepo.getAll()) {
     if (terminal.agentSessionId) sessionIdOf.set(terminal.agentSessionId, terminal.sessionId);
+  }
+  for (const session of sessions.values()) {
+    for (const past of pastClaudeSessions(session.id)) {
+      if (!sessionIdOf.has(past)) sessionIdOf.set(past, session.id);
+    }
   }
 
   return {

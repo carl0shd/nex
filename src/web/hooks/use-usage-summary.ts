@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
-import type { UsageSummary } from "@native/usage/types";
+import { useCallback, useEffect } from "react";
+import { useUsageSummaryStore } from "@/stores/usage-summary.store";
 
 const RELOAD_MS = 60_000;
 
 export function useUsageSummary({ watch = true }: { watch?: boolean } = {}) {
-  const [summary, setSummary] = useState<UsageSummary | null>(null);
+  const summary = useUsageSummaryStore((s) => s.summary);
+  const setSummary = useUsageSummaryStore((s) => s.setSummary);
 
   const reload = useCallback(
     () =>
@@ -12,7 +13,7 @@ export function useUsageSummary({ watch = true }: { watch?: boolean } = {}) {
         .getSummary()
         .then(setSummary)
         .catch(() => {}),
-    [],
+    [setSummary],
   );
 
   useEffect(() => {
@@ -34,3 +35,8 @@ export function useUsageSummary({ watch = true }: { watch?: boolean } = {}) {
 
   return { summary, reload, refresh };
 }
+
+export const useTaskCost = (sessionId: string): number | null =>
+  useUsageSummaryStore(
+    (s) => s.summary?.sessions.find((item) => item.sessionId === sessionId)?.totals.costUsd ?? null,
+  );
