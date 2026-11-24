@@ -5,6 +5,11 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      app:
+        description: Build the macOS app again for the current version (for a build that failed)
+        type: boolean
+        default: false
 
 concurrency:
   group: release
@@ -48,3 +53,34 @@ jobs:
 
       - id: version
         run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+  app:
+    name: Build the macOS app
+    needs: version
+    if: needs.version.outputs.published == 'true' || inputs.app
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # The install only warns when the speech helper fails to build; a release must not ship without it.
+      - name: Check the speech helper
+        run: test -x "helpers/speech/bin/Nex Speech.app/Contents/MacOS/Nex Speech"
+
+      - run: pnpm build:mac
+
+      - name: Attach the app to the GitHub release
+        run: gh release upload "v${VERSION}" dist/*.dmg --clobber
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
