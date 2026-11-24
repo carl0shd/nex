@@ -1,6 +1,6 @@
 {
   "name": "nex",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Run Claude Code on many tasks at once, each in its own worktree and environment.",
   "author": "Carlos Villalobos",
