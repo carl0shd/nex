@@ -97,7 +97,8 @@ export function createMainWindow(): BrowserWindow {
   });
 
   if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-    mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]);
+    const demo = process.env["NEX_DEMO"] ? "?demo" : "";
+    mainWindow.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}${demo}`);
   } else {
     mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
