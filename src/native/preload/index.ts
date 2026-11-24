@@ -409,4 +409,5 @@ const api = {
   },
 };
 
-contextBridge.exposeInMainWorld("api", api);
+// The demo (`pnpm dev:demo`) gives the renderer a mock API with sample tasks instead.
+if (!new URLSearchParams(location.search).has("demo")) contextBridge.exposeInMainWorld("api", api);

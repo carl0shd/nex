@@ -10,8 +10,16 @@ if (import.meta.env.DEV) {
   import("react-scan").then(({ scan }) => scan({ enabled: true }));
 }
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+async function start() {
+  if (import.meta.env.DEV && new URLSearchParams(location.search).has("demo")) {
+    const { installDemoApi } = await import("./demo/demo-api");
+    installDemoApi();
+  }
+  createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+}
+
+void start();

@@ -2,7 +2,7 @@
   "name": "nex",
   "version": "1.0.0",
   "private": true,
-  "description": "Nex desktop application",
+  "description": "Run Claude Code on many tasks at once, each in its own worktree and environment.",
   "author": "Carlos Villalobos",
   "main": "./out/main/index.js",
   "scripts": {
@@ -12,6 +12,7 @@
     "typecheck": "pnpm typecheck:node && pnpm typecheck:web",
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
+    "dev:demo": "NEX_DEMO=1 electron-vite dev",
     "licenses:generate": "node scripts/generate-licenses.js",
     "build": "pnpm licenses:generate && pnpm typecheck && electron-vite build",
     "postinstall": "git config core.hooksPath .githooks && electron-builder install-app-deps && node helpers/speech/scripts/postinstall.js",
