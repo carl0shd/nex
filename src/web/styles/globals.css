@@ -98,6 +98,7 @@
   --page-glass: rgb(245 244 242 / 70%);
   --surface-glass: rgb(255 255 255 / 72%);
   --surface-glass-hover: rgb(255 255 255 / 84%);
+  --card-glass: rgb(253 253 252 / 86%);
   --ring-idle: rgb(29 29 29 / 20%);
   --knob: #fdfdfc;
 
@@ -191,6 +192,7 @@
   --page-glass: rgb(14 14 15 / 70%);
   --surface-glass: rgb(24 24 26 / 72%);
   --surface-glass-hover: rgb(34 34 37 / 80%);
+  --card-glass: rgb(20 20 21 / 86%);
   --ring-idle: rgb(237 237 240 / 18%);
   --knob: #f4f4f5;
 
@@ -276,6 +278,7 @@
   --color-page-glass: var(--page-glass);
   --color-surface-glass: var(--surface-glass);
   --color-surface-glass-hover: var(--surface-glass-hover);
+  --color-card-glass: var(--card-glass);
   --color-ring-idle: var(--ring-idle);
   --color-knob: var(--knob);
 
@@ -3304,6 +3307,7 @@ body {
   --page-glass: var(--page);
   --surface-glass: var(--surface-raised);
   --surface-glass-hover: var(--elevated);
+  --card-glass: var(--surface);
 }
 .reduce-transparency * {
   backdrop-filter: none !important;
