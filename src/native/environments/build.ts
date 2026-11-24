@@ -3,6 +3,7 @@ import { posix } from "path";
 import type { EnvBuild, ProjectEnvironment } from "@native/db/types";
 import { parseDockerfile } from "./dockerfile";
 import { nexLabels, PROJECT_LABEL, projectKey } from "./labels";
+import { envInstance } from "./instance";
 import { repoPath, type ProjectFiles } from "./project-files";
 
 export const BUILD_LABEL = "nex.build";
@@ -122,7 +123,7 @@ export function buildPlans(env: ProjectEnvironment, target: BuildTarget): BuildP
       existing.services.push(service.name);
       continue;
     }
-    const repository = `nex-${projectSlug}-${service.name}`;
+    const repository = `${envInstance().prefix}-${projectSlug}-${service.name}`;
     const tag = `${repository}:${hashes.get(key) ?? "latest"}`;
     const slot = sha(`${projectPath}\0${repository}`).slice(0, HASH_LENGTH);
     plans.set(key, {

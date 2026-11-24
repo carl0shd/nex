@@ -23,6 +23,7 @@ import {
   type ContainerInfo,
 } from "./parse";
 import { DISCOVERY_DOMAIN } from "./definition";
+import { envInstance } from "./instance";
 import { container, ensureContentStore } from "./runtime";
 
 export const BUILDER_ID = "buildkit";
@@ -262,7 +263,9 @@ export async function checkEnvironments(
   log: EnvLog,
   onDetail: (detail: string) => void,
 ): Promise<CheckResult> {
-  const stale = (await listContainers()).filter((item) => item.labels[CHECK_LABEL]);
+  const stale = (await listContainers()).filter(
+    (item) => isNex(item.labels) && item.labels[CHECK_LABEL],
+  );
   await deleteContainers(
     stale.map((item) => item.id),
     log,
@@ -273,7 +276,7 @@ export async function checkEnvironments(
     ensureContentStore();
     await runOk(container(), ["image", "pull", CHECK_IMAGE], { log, timeoutMs: PULL_TIMEOUT_MS });
   }
-  const name = `nexcheck-${Date.now().toString(36)}`;
+  const name = `${envInstance().prefix}check-${Date.now().toString(36)}`;
   const zone = `check.${DISCOVERY_DOMAIN}`;
   const address = `${name}.${zone}`;
   onDetail("Starting a test container");
@@ -312,7 +315,10 @@ export async function checkEnvironments(
       throw new Error("Containers can’t find each other by name.");
     }
     const reachable = await resolveFromMac(address, ip);
-    if (!reachable || !(await resolveFromMac(`${name}.${NEX_DOMAIN}`, MAC_LOOPBACK))) {
+    const nexResolves =
+      !envInstance().ownsMacNetwork ||
+      (await resolveFromMac(`${name}.${NEX_DOMAIN}`, MAC_LOOPBACK));
+    if (!reachable || !nexResolves) {
       throw new Error(
         ".nex addresses don’t resolve on this Mac. A VPN or DNS filter can block them.",
       );

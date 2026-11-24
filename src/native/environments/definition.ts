@@ -1,4 +1,5 @@
 import type { EnvHostPort, EnvServiceDef, ProjectEnvironment } from "@native/db/types";
+import { envInstance, RELEASE_INSTANCE } from "./instance";
 
 export const WORKSPACE_PATH = "/workspace";
 export const MIN_MEMORY_MB = 256;
@@ -11,7 +12,7 @@ export const NEX_ADDRESS_DOMAIN = "nex";
 export const LOCAL_DOMAIN = "localhost";
 export type AddressDomain = typeof NEX_ADDRESS_DOMAIN | typeof LOCAL_DOMAIN;
 export const WEB_ENTRY_PORT = 80;
-export const ENTRY_PORT = 1355;
+export const ENTRY_PORT = RELEASE_INSTANCE.entryPort;
 const MAX_NAME = 40;
 const NAME = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
 
@@ -186,7 +187,8 @@ export function serviceAddress(
 export const originFor = (address: string, port: number) =>
   port === 80 ? `http://${address}` : `http://${address}:${port}`;
 
-export const searchDomain = (taskSlug: string) => `${taskSlug}.${DISCOVERY_DOMAIN}`;
+export const searchDomain = (taskSlug: string) =>
+  `${taskSlug}${envInstance().discoverySuffix}.${DISCOVERY_DOMAIN}`;
 
 export class EnvDefinitionError extends Error {}
 

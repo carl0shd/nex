@@ -4,9 +4,11 @@ import { join } from "path";
 import * as settings from "@native/db/repositories/settings.repo";
 import type { EnvLog } from "./cli";
 import { answerQuery, errorReply, LOOPBACK_RECORDS, parseQuery } from "./dns-packet";
+import { envInstance } from "./instance";
 import { NEX_DOMAIN } from "./labels";
 import {
   addressesRegistered,
+  discoveryCommands,
   DISCOVERY_RESOLVER,
   DNS_HOST,
   DNS_PORTS,
@@ -67,6 +69,7 @@ async function listen(log?: EnvLog): Promise<number | null> {
 }
 
 export function startNexDns(log?: EnvLog): Promise<number | null> {
+  if (!envInstance().ownsMacNetwork) return Promise.resolve(null);
   starting ??= listen(log).then((bound) => {
     port = bound;
     refreshNexAddresses();
@@ -91,10 +94,11 @@ export const resolverFiles = (): ResolverFiles => ({
   legacy: existsSync(LEGACY_RESOLVER),
 });
 
-export const nexAddressesOn = () => registered;
+export const nexAddressesOn = () => registered && envInstance().ownsMacNetwork;
 
 export function refreshNexAddresses(): boolean {
-  const next = addressesRegistered(resolverFiles(), port);
+  const files = resolverFiles();
+  const next = envInstance().ownsMacNetwork ? addressesRegistered(files, port) : files.discovery;
   if (next !== registered) {
     registered = next;
     for (const listener of listeners) listener();
@@ -111,6 +115,7 @@ export async function registerAddressCommands(
   dir: string,
   containerBinary: string,
 ): Promise<string[][]> {
+  if (!envInstance().ownsMacNetwork) return discoveryCommands(resolverFiles(), containerBinary);
   const bound = await startNexDns();
   if (bound === null) throw new Error("Nex couldn’t find a free port to answer .nex names.");
   mkdirSync(dir, { recursive: true });
@@ -119,4 +124,5 @@ export async function registerAddressCommands(
   return registerCommands(staged, resolverFiles(), containerBinary);
 }
 
-export const unregisterAddressCommands = () => unregisterCommands(resolverFiles());
+export const unregisterAddressCommands = () =>
+  envInstance().ownsMacNetwork ? unregisterCommands(resolverFiles()) : [];

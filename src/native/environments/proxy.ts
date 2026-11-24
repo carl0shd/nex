@@ -2,7 +2,9 @@ import http, { type IncomingMessage, type ServerResponse } from "http";
 import net from "net";
 import type { Duplex } from "stream";
 import { run } from "./cli";
-import { ENTRY_PORT, WEB_ENTRY_PORT } from "./definition";
+import { WEB_ENTRY_PORT } from "./definition";
+import { envInstance } from "./instance";
+import { containerName } from "./translate";
 import {
   forwardedHeaders,
   hostPorts,
@@ -53,7 +55,8 @@ export function configureProxy(next: ProxyOptions): void {
   options = next;
 }
 
-export const proxyEntryPort = () => table.entryPort;
+export const proxyEntryPort = () =>
+  entryBound ? table.entryPort : (entryCandidates()[0]?.port ?? table.entryPort);
 
 export const blockedPorts = (): BlockedPort[] =>
   [...blocked].map(([port, reason]) => ({ port, reason })).toSorted((a, b) => a.port - b.port);
@@ -69,7 +72,7 @@ const changed = () => {
 
 export function forgetAddresses(slug?: string): void {
   for (const name of addresses.keys()) {
-    if (!slug || name.startsWith(`nex-${slug}-`)) addresses.delete(name);
+    if (!slug || name.startsWith(containerName(slug, ""))) addresses.delete(name);
   }
 }
 
@@ -152,16 +155,19 @@ function close(port: number) {
 }
 
 // macOS lets an unprivileged app bind port 80 only on the wildcard address, never on 127.0.0.1.
-const ENTRY_CANDIDATES: readonly { port: number; hosts: readonly [string, string] }[] = [
-  { port: WEB_ENTRY_PORT, hosts: WILDCARDS },
-  ...Array.from({ length: ENTRY_TRIES }, (_, offset) => ({
-    port: ENTRY_PORT + offset,
-    hosts: LOOPBACKS,
-  })),
-];
+function entryCandidates(): { port: number; hosts: readonly [string, string] }[] {
+  const { entryPort, ownsMacNetwork } = envInstance();
+  return [
+    ...(ownsMacNetwork ? [{ port: WEB_ENTRY_PORT, hosts: WILDCARDS }] : []),
+    ...Array.from({ length: ENTRY_TRIES }, (_, offset) => ({
+      port: entryPort + offset,
+      hosts: LOOPBACKS,
+    })),
+  ];
+}
 
 async function openEntry(): Promise<void> {
-  for (const { port, hosts } of ENTRY_CANDIDATES) {
+  for (const { port, hosts } of entryCandidates()) {
     if (listening.has(port)) continue;
     if ((await open(port, "entry", hosts)) === null) {
       table = { ...table, entryPort: port };
@@ -175,7 +181,7 @@ async function openEntry(): Promise<void> {
 const snapshot = () => JSON.stringify([table.entryPort, blockedPorts()]);
 
 async function reconcile(retry: boolean, before = snapshot()): Promise<void> {
-  const wanted = new Set(hostPorts(table.tasks));
+  const wanted = new Set(envInstance().ownsMacNetwork ? hostPorts(table.tasks) : []);
   const wantEntry = table.tasks.length > 0;
   if (!wantEntry && entryBound) {
     close(table.entryPort);
@@ -203,7 +209,9 @@ function schedule(retry = false, before?: string): Promise<void> {
 }
 
 export function setProxyTasks(tasks: readonly ProxyTask[], viewing: string | null): Promise<void> {
-  const samePorts = JSON.stringify(hostPorts(tasks)) === JSON.stringify(hostPorts(table.tasks));
+  const samePorts =
+    !envInstance().ownsMacNetwork ||
+    JSON.stringify(hostPorts(tasks)) === JSON.stringify(hostPorts(table.tasks));
   const sameEntry = Boolean(tasks.length) === Boolean(table.tasks.length);
   table = { ...table, tasks, viewing };
   return samePorts && sameEntry ? syncing : schedule();

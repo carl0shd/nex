@@ -50,6 +50,7 @@ import {
   proxyEntryPort,
   setProxyTasks,
 } from "./proxy";
+import { envInstance } from "./instance";
 import { nexAddressesOn, onNexAddressesChange, refreshNexAddresses, startNexDns } from "./nex-dns";
 import { projectFiles } from "./project-files";
 import { proxyTask } from "./proxy-routing";
@@ -196,7 +197,11 @@ function routeAddresses() {
   void setProxyTasks(tasks, viewed);
 }
 
-const addressOptions = (): AddressOptions => ({ port: proxyEntryPort(), nex: nexAddressesOn() });
+const addressOptions = (): AddressOptions => ({
+  port: proxyEntryPort(),
+  nex: nexAddressesOn(),
+  hostPorts: envInstance().ownsMacNetwork,
+});
 
 function followProxy() {
   const blocked = blockedPorts();

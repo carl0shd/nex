@@ -11,12 +11,14 @@ import { flushAllBuffers, killAllTerminals, sweepOrphanBuffers } from "@native/p
 import { getAllIds, resetAllStatus } from "@native/db/repositories/terminal.repo";
 import { disposeSpeech, initSpeech } from "@native/speech/manager";
 import { isDev } from "@native/paths";
+import { DEV_INSTANCE, selectEnvInstance } from "@native/environments/instance";
 import { agentStates, refreshAgentModels, stopAllAgents } from "@native/agents/agent-runner";
 import { readPreferences } from "@native/main/preferences";
 import { removeLegacyHooks } from "@native/hooks/cleanup";
 import { fixEnv } from "./fix-env";
 
 if (isDev()) {
+  selectEnvInstance(DEV_INSTANCE);
   app.setName("Nex Dev");
   app.setPath("userData", join(app.getPath("appData"), "Nex Dev"));
 } else {
@@ -29,6 +31,7 @@ const MODELS_REFRESH_DELAY_MS = 3000;
 
 app.whenReady().then(() => {
   electronApp.setAppUserModelId(isDev() ? "com.nex.app.dev" : "com.nex.app");
+  if (isDev()) app.dock?.setIcon(join(app.getAppPath(), "build/icon.png"));
   registerHandler();
 
   app.on("browser-window-created", (_, window) => {
