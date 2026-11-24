@@ -2,6 +2,8 @@ import { useState } from "react";
 import {
   ChevronRight,
   Ellipsis,
+  Eye,
+  EyeOff,
   Folder,
   GitBranch,
   Palette,
@@ -34,6 +36,7 @@ export interface SettingsWorkspace {
   color: string;
   image?: string;
   icon?: WorkspaceIconName;
+  hidden: boolean;
   projects: readonly SettingsProject[];
 }
 
@@ -75,6 +78,7 @@ export function WorkspaceCard({
   onImport,
   onRename,
   onLookChange,
+  onHiddenChange,
   onRemove,
 }: {
   workspace: SettingsWorkspace;
@@ -83,6 +87,7 @@ export function WorkspaceCard({
   onImport?: () => void;
   onRename?: (name: string) => void;
   onLookChange?: (look: WorkspaceLookChange) => void;
+  onHiddenChange?: (hidden: boolean) => void;
   onRemove?: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -127,6 +132,7 @@ export function WorkspaceCard({
                 </span>
                 <span className="shrink-0 text-xs text-ink-4">
                   {count(workspace.projects.length, "project")}
+                  {workspace.hidden && " · hidden"}
                 </span>
               </>
             )}
@@ -165,6 +171,16 @@ export function WorkspaceCard({
                     Color and badge
                   </MenuItem>
                 )}
+                {onHiddenChange &&
+                  (workspace.hidden ? (
+                    <MenuItem icon={Eye} onSelect={run(() => onHiddenChange(false))}>
+                      Show workspace
+                    </MenuItem>
+                  ) : (
+                    <MenuItem icon={EyeOff} onSelect={run(() => onHiddenChange(true))}>
+                      Hide workspace
+                    </MenuItem>
+                  ))}
                 {onRemove && (
                   <>
                     <MenuSeparator />

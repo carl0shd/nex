@@ -132,6 +132,7 @@ export interface SettingsActions {
   onAddWorkspace: () => void;
   onRenameWorkspace: (workspaceId: string, name: string) => void;
   onWorkspaceLookChange: (workspaceId: string, look: WorkspaceLookChange) => void;
+  onWorkspaceHiddenChange: (workspaceId: string, hidden: boolean) => void;
   onRemoveWorkspace: (workspaceId: string) => void;
   onChangeClaudePath: () => void;
   onPlaySound: (sound: string) => void;
@@ -218,8 +219,8 @@ const card = (key: string, blocks: Block[], label?: string, trailing?: ReactNode
   blocks,
 });
 
-const appOptions = (apps: readonly string[], current: string) =>
-  [...new Set([...apps, current])].map((app) => ({ value: app, label: app }));
+const appOptions = (installed: readonly string[], current: string) =>
+  (installed.length > 0 ? installed : [current]).map((app) => ({ value: app, label: app }));
 
 function Field({
   label,
@@ -828,6 +829,7 @@ export function SettingsPage({
                 onImport={() => actions.onImportFromGitHub(workspace.id)}
                 onRename={(name) => actions.onRenameWorkspace(workspace.id, name)}
                 onLookChange={(look) => actions.onWorkspaceLookChange(workspace.id, look)}
+                onHiddenChange={(hidden) => actions.onWorkspaceHiddenChange(workspace.id, hidden)}
                 onRemove={() => actions.onRemoveWorkspace(workspace.id)}
               />,
             ),

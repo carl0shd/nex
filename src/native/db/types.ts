@@ -222,6 +222,7 @@ export interface Session {
   width: number;
   envSlug: string;
   envOff: boolean;
+  minimized: boolean;
 }
 
 export interface CreateSessionInput {
@@ -249,6 +250,7 @@ export interface UpdateSessionInput {
   verticalLayout?: PanelLayout | null;
   horizontalLayout?: PanelLayout | null;
   width?: number;
+  minimized?: boolean;
 }
 
 export interface StartWorkInput {

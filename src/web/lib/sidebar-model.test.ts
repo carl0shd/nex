@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vite-plus/test";
 import type { Project, Session, Workspace } from "@native/db/types";
-import { buildSidebar, shortAge, taskStatus, workspaceSummary } from "@/lib/sidebar-model";
+import {
+  buildSidebar,
+  shortAge,
+  shownSessions,
+  stripSessions,
+  taskStatus,
+  workspaceSummary,
+} from "@/lib/sidebar-model";
 
 const NOW = Date.parse("2026-10-28T12:00:00Z");
 
@@ -57,6 +64,7 @@ const session = (overrides: Partial<Session>): Session => ({
   width: 600,
   envSlug: "",
   envOff: false,
+  minimized: false,
   ...overrides,
 });
 
@@ -120,6 +128,32 @@ describe("buildSidebar", () => {
       NOW,
     );
     expect(result[0].projects[0].tasks[0].status).toBe("idle");
+  });
+});
+
+describe("shownSessions", () => {
+  const source = {
+    workspaces: [workspace({}), workspace({ id: "w2", archived: true })],
+    projects: [project({}), project({ id: "p2", workspaceId: "w2" })],
+    sessions: [
+      session({}),
+      session({ id: "s2", minimized: true }),
+      session({ id: "s3", status: "done" }),
+      session({ id: "s4", projectId: "p2" }),
+    ],
+  };
+
+  it("leaves out finished tasks and the tasks of hidden workspaces", () => {
+    expect(shownSessions(source).map((item) => item.id)).toEqual(["s1", "s2"]);
+  });
+
+  it("keeps minimized tasks out of the strip", () => {
+    expect(stripSessions(source).map((item) => item.id)).toEqual(["s1"]);
+  });
+
+  it("marks minimized tasks in the sidebar", () => {
+    const tasks = buildSidebar({ ...source, terminals: [] }, NOW)[0].projects[0].tasks;
+    expect(tasks.map((task) => task.minimized)).toEqual([undefined, true]);
   });
 });
 

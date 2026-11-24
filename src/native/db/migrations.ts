@@ -183,6 +183,7 @@ const migrations: string[] = [
   `ALTER TABLE projects ADD COLUMN environment TEXT;`,
   `ALTER TABLE sessions ADD COLUMN env_slug TEXT NOT NULL DEFAULT '';`,
   `ALTER TABLE sessions ADD COLUMN env_off INTEGER NOT NULL DEFAULT 0;`,
+  `ALTER TABLE sessions ADD COLUMN minimized INTEGER NOT NULL DEFAULT 0;`,
 ];
 
 export function runMigrations(db: Database.Database): void {

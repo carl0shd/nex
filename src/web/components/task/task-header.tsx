@@ -5,6 +5,7 @@ import {
   Ellipsis,
   FolderOpen,
   GitBranch,
+  Minus,
   PenLine,
   SquareTerminal,
   X,
@@ -30,6 +31,7 @@ export interface TaskActions {
   openInEditor?: OpenWithAction;
   openInTerminal?: OpenWithAction;
   onCopyBranch?: () => void;
+  onMinimize?: () => void;
   onClose?: () => void;
 }
 
@@ -101,6 +103,11 @@ export function TaskHeader({
       <div className="ml-auto flex shrink-0 items-center gap-0.5">
         <StatusPill tone={PILL[status].tone}>{PILL[status].label}</StatusPill>
         <span className="w-1.5" />
+        {actions.onMinimize && (
+          <IconButton aria-label="Minimize" title="Minimize" onClick={actions.onMinimize}>
+            <Minus width={15} height={15} strokeWidth={2} />
+          </IconButton>
+        )}
         <AnchoredPopover
           open={menuOpen}
           onOpenChange={setMenuOpen}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, Ellipsis, Palette, PenLine, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Ellipsis, EyeOff, Palette, PenLine, Plus, Trash2 } from "lucide-react";
 import { Monogram } from "@/components/atoms/entity-chip";
 import { HoverSwap } from "@/components/atoms/hover-swap";
 import { InlineRename } from "@/components/atoms/inline-rename";
@@ -22,6 +22,7 @@ export function WorkspaceHeader({
   onAddProject,
   onRename,
   onLookChange,
+  onHide,
   onRemove,
 }: {
   workspace: SidebarWorkspace;
@@ -29,6 +30,7 @@ export function WorkspaceHeader({
   onAddProject?: () => void;
   onRename?: (name: string) => void;
   onLookChange?: (look: WorkspaceLookChange) => void;
+  onHide?: () => void;
   onRemove?: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -138,6 +140,11 @@ export function WorkspaceHeader({
                 {onLookChange && (
                   <MenuItem icon={Palette} onSelect={run(() => setLookOpen(true))}>
                     Color and badge
+                  </MenuItem>
+                )}
+                {onHide && (
+                  <MenuItem icon={EyeOff} onSelect={run(onHide)}>
+                    Hide workspace
                   </MenuItem>
                 )}
                 {onRemove && (

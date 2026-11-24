@@ -15,14 +15,17 @@ import { parseWorktreePatch } from "@/lib/worktree-changes";
 import { usePreferencesStore } from "@/stores/preferences.store";
 import { usePermissionStore } from "@/stores/permission.store";
 import { useWorkspaceStore } from "@/stores/workspace.store";
+import { shownSessions } from "@/lib/sidebar-model";
 
 const needsYouId = (requestId: string) => `needs-you:${requestId}`;
 const doneId = (sessionId: string) => `done:${sessionId}`;
 const stoppedId = (sessionId: string) => `stopped:${sessionId}`;
 
 function taskOf(sessionId: string): (ToastTask & { baseBranch: string }) | null {
-  const { sessions, projects } = useWorkspaceStore.getState();
-  const session = sessions.find((item) => item.id === sessionId);
+  const { sessions, projects, workspaces } = useWorkspaceStore.getState();
+  const session = shownSessions({ workspaces, projects, sessions }).find(
+    (item) => item.id === sessionId,
+  );
   if (!session) return null;
   return {
     title: session.title || session.name,

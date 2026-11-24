@@ -13,9 +13,11 @@ import { useAddProjectStore } from "@/stores/add-project.store";
 import { useCommandPaletteStore } from "@/stores/command-palette.store";
 import { useNewTaskStore } from "@/stores/new-task.store";
 import { usePermissionStore } from "@/stores/permission.store";
-import { usePreferencesStore } from "@/stores/preferences.store";
 import { useSettingsStore } from "@/stores/settings.store";
 import { useWorkspaceStore } from "@/stores/workspace.store";
+import { useOpenWithApps } from "@/hooks/use-open-with-apps";
+import { appShortName } from "@/components/settings/settings-values";
+import { shownSessions } from "@/lib/sidebar-model";
 
 const FILE_RESULTS = 8;
 const PROJECT_RESULTS = 6;
@@ -69,7 +71,7 @@ export function AppCommandPalette() {
   const resolvedTheme = useSettingsStore((s) => s.resolvedTheme);
   const setTheme = useSettingsStore((s) => s.setTheme);
   const toggleSidebar = useSettingsStore((s) => s.toggleSidebar);
-  const ide = usePreferencesStore((s) => s.prefs.ide);
+  const { editor } = useOpenWithApps();
   useAppHotkey("palette", toggle);
 
   const activeTask = sessions.find((session) => session.id === activeTaskId) ?? null;
@@ -101,13 +103,17 @@ export function AppCommandPalette() {
       : []),
     ...(activeTask
       ? [
-          {
-            kind: "action" as const,
-            id: "ide",
-            label: `Open task in ${ide}`,
-            icon: Code,
-            keywords: ["IDE", "editor"],
-          },
+          ...(editor
+            ? [
+                {
+                  kind: "action" as const,
+                  id: "ide",
+                  label: `Open task in ${appShortName(editor)}`,
+                  icon: Code,
+                  keywords: ["IDE", "editor", editor],
+                },
+              ]
+            : []),
           { kind: "action" as const, id: "finder", label: "Open task in Finder", icon: FolderOpen },
         ]
       : []),
@@ -128,29 +134,33 @@ export function AppCommandPalette() {
     {
       id: "tasks",
       label: "Tasks",
-      items: sessions
-        .filter((session) => session.status !== "done")
-        .map((session) => ({
-          kind: "task",
-          id: session.id,
-          label: session.title || session.name,
-          project: projectOf(session.projectId)?.name ?? "",
-          status: statusOf(session.id),
-          keywords: [session.branch, projectOf(session.projectId)?.name ?? ""],
-        })),
+      items: shownSessions({ workspaces, projects, sessions }).map((session) => ({
+        kind: "task",
+        id: session.id,
+        label: session.title || session.name,
+        project: projectOf(session.projectId)?.name ?? "",
+        status: statusOf(session.id),
+        keywords: [session.branch, projectOf(session.projectId)?.name ?? ""],
+      })),
     },
     {
       id: "projects",
       label: "Projects",
       onlyWhenSearching: true,
       limit: PROJECT_RESULTS,
-      items: projects.map((project) => ({
-        kind: "project" as const,
-        id: project.id,
-        label: project.name,
-        workspace: workspaceName(project.workspaceId),
-        keywords: [workspaceName(project.workspaceId)],
-      })),
+      items: projects
+        .filter((project) =>
+          workspaces.some(
+            (workspace) => workspace.id === project.workspaceId && !workspace.archived,
+          ),
+        )
+        .map((project) => ({
+          kind: "project" as const,
+          id: project.id,
+          label: project.name,
+          workspace: workspaceName(project.workspaceId),
+          keywords: [workspaceName(project.workspaceId)],
+        })),
     },
     ...(activeTask
       ? [
@@ -169,7 +179,7 @@ export function AppCommandPalette() {
   const runAction = (id: ActionId) => {
     if (id === "new-task") showNewTask(activeTask?.projectId);
     if (id === "new-project" && workspaceForProject) showAddProject(workspaceForProject);
-    if (id === "ide" && activeTask) openInEditor(ide, activeTask.worktreePath);
+    if (id === "ide" && activeTask && editor) openInEditor(editor, activeTask.worktreePath);
     if (id === "finder" && activeTask) void window.api.openInFinder(activeTask.worktreePath);
     if (id === "theme") setTheme(resolvedTheme === "dark" ? "light" : "dark");
     if (id === "sidebar") toggleSidebar();

@@ -11,6 +11,8 @@ export function ProjectGroup({
   project,
   activeTaskId,
   onSelectTask,
+  onMinimizeTask,
+  onCloseTask,
   onNewTask,
   onOpenInFinder,
   onRemove,
@@ -19,6 +21,8 @@ export function ProjectGroup({
   project: SidebarProject;
   activeTaskId?: string;
   onSelectTask?: (id: string) => void;
+  onMinimizeTask?: (id: string, minimized: boolean) => void;
+  onCloseTask?: (id: string) => void;
   onNewTask?: () => void;
   onOpenInFinder?: () => void;
   onRemove?: () => void;
@@ -113,6 +117,8 @@ export function ProjectGroup({
             task={task}
             active={task.id === activeTaskId}
             onClick={() => onSelectTask?.(task.id)}
+            onMinimize={onMinimizeTask && ((minimized) => onMinimizeTask(task.id, minimized))}
+            onClose={onCloseTask && (() => onCloseTask(task.id))}
           />
         ))}
       </GlideMenu>

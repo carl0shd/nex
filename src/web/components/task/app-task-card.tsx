@@ -25,9 +25,10 @@ import { useTerminalRuntimes } from "@/hooks/use-terminal-runtimes";
 import { workspaceImageUrl } from "@/lib/workspace-image";
 import { notifyCompact } from "@/lib/notify";
 import { useCloseTaskStore } from "@/stores/close-task.store";
-import { usePreferencesStore } from "@/stores/preferences.store";
 import { usePermissionStore } from "@/stores/permission.store";
 import { useWorkspaceStore } from "@/stores/workspace.store";
+import { useOpenWithApps } from "@/hooks/use-open-with-apps";
+import { appShortName } from "@/components/settings/settings-values";
 import { workspaceIcon } from "@/lib/workspace-icons";
 
 const MIN_CARD_WIDTH = 600;
@@ -61,8 +62,7 @@ export function AppTaskCard({ sessionId }: { sessionId: string }) {
   const selectTask = useWorkspaceStore((s) => s.selectTask);
   const renameTask = useWorkspaceStore((s) => s.renameTask);
   const setTaskWidth = useWorkspaceStore((s) => s.setTaskWidth);
-  const ide = usePreferencesStore((s) => s.prefs.ide);
-  const terminalApp = usePreferencesStore((s) => s.prefs.terminalApp);
+  const { editor, terminal } = useOpenWithApps();
   const taskRef = useRef<HTMLElement>(null);
   const runQuickCommand = useWorkspaceStore((s) => s.runQuickCommand);
   const addShell = useWorkspaceStore((s) => s.addShell);
@@ -76,6 +76,7 @@ export function AppTaskCard({ sessionId }: { sessionId: string }) {
   const openEnvironmentLogs = useWorkspaceStore((s) => s.openEnvironmentLogs);
   const editProject = useAddProjectStore((s) => s.edit);
   const showCloseTask = useCloseTaskStore((s) => s.show);
+  const setTaskMinimized = useWorkspaceStore((s) => s.setTaskMinimized);
   const [chosenView, setView] = useState<TaskView>("agent");
   const view: TaskView = !agent && chosenView === "agent" ? "shell" : chosenView;
   const tabOrder: TaskView[] = agent
@@ -184,15 +185,17 @@ export function AppTaskCard({ sessionId }: { sessionId: string }) {
           actions={{
             onRename: (title) => void renameTask(sessionId, title),
             onOpenInFinder: () => void window.api.openInFinder(session.worktreePath),
-            openInEditor: { app: ide, run: () => openWith(ide, session.worktreePath) },
-            openInTerminal: {
-              app: terminalApp,
-              run: () => openWith(terminalApp, session.worktreePath),
-            },
+            openInEditor: editor
+              ? { app: appShortName(editor), run: () => openWith(editor, session.worktreePath) }
+              : undefined,
+            openInTerminal: terminal
+              ? { app: appShortName(terminal), run: () => openWith(terminal, session.worktreePath) }
+              : undefined,
             onCopyBranch: () => {
               void navigator.clipboard.writeText(session.branch);
               notifyCompact({ tone: "green", title: "Branch name copied" });
             },
+            onMinimize: () => setTaskMinimized(sessionId, true),
             onClose: () => showCloseTask(sessionId),
           }}
         />
