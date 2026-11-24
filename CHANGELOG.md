@@ -1,5 +1,17 @@
 # nex
 
+## 1.1.0
+
+### Minor Changes
+
+- 7639afb: New option to hide a workspace and its tasks, and to show it again from the sidebar or settings.
+- 7639afb: New option to minimize a task: it leaves the Tasks view and stays in the sidebar until you open it again.
+
+### Patch Changes
+
+- afb25e0: We fixed an issue where the new task dialog grew wider right after opening.
+- 7639afb: Tasks now offer to open in an editor or terminal you have installed, instead of one you don't.
+
 ## 1.0.2
 
 ### Patch Changes
