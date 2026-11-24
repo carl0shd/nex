@@ -45,6 +45,7 @@ export function TaskHeader({
   branch,
   workspace,
   status,
+  cost,
   actions = {},
 }: {
   title: string;
@@ -52,6 +53,7 @@ export function TaskHeader({
   branch: string;
   workspace: { name: string; color: string; image?: string; icon?: WorkspaceIconName };
   status: TaskStatus;
+  cost?: string;
   actions?: TaskActions;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -89,6 +91,11 @@ export function TaskHeader({
           <span title={branch} className="truncate">
             {branch}
           </span>
+          {cost && (
+            <span title="Spent on this task" className="shrink-0 tabular-nums">
+              · {cost}
+            </span>
+          )}
         </span>
       </div>
       <div className="ml-auto flex shrink-0 items-center gap-0.5">

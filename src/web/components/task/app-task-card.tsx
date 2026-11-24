@@ -17,6 +17,8 @@ import { stripCardMaxWidth } from "@/lib/agent-strip";
 import { prefillTerminal } from "@/lib/terminal-prefill";
 import { useAddProjectStore } from "@/stores/add-project.store";
 import { useWorktreeChanges } from "@/hooks/use-worktree-changes";
+import { useTaskCost } from "@/hooks/use-usage-summary";
+import { formatUsd } from "@/lib/usage";
 import { useBackgroundCommands } from "@/hooks/use-background-commands";
 import { useAgentTasks } from "@/hooks/use-agent-tasks";
 import { useTerminalRuntimes } from "@/hooks/use-terminal-runtimes";
@@ -55,6 +57,7 @@ export function AppTaskCard({ sessionId }: { sessionId: string }) {
   );
   const focused = useWorkspaceStore((s) => s.activeTaskId === sessionId);
   const asking = usePermissionStore((s) => s.requests.some((item) => item.sessionId === sessionId));
+  const cost = useTaskCost(sessionId);
   const selectTask = useWorkspaceStore((s) => s.selectTask);
   const renameTask = useWorkspaceStore((s) => s.renameTask);
   const setTaskWidth = useWorkspaceStore((s) => s.setTaskWidth);
@@ -177,6 +180,7 @@ export function AppTaskCard({ sessionId }: { sessionId: string }) {
             icon: workspaceIcon(workspace.icon),
           }}
           status={status}
+          cost={cost === null ? undefined : formatUsd(cost)}
           actions={{
             onRename: (title) => void renameTask(sessionId, title),
             onOpenInFinder: () => void window.api.openInFinder(session.worktreePath),
