@@ -9,8 +9,10 @@ import {
   PenLine,
   TriangleAlert,
   WifiOff,
+  X,
 } from "lucide-react";
 import { ClaudeTile } from "@/components/atoms/agent-tile";
+import { HoverSwap } from "@/components/atoms/hover-swap";
 import { Orbit } from "@/components/atoms/orbit";
 import { Shimmer } from "@/components/atoms/shimmer";
 import { Spinner } from "@/components/atoms/spinner";
@@ -73,11 +75,13 @@ function CardHead({
 export function CardButton({
   children,
   kind = "neutral",
+  size = "md",
   disabled = false,
   onClick,
 }: {
   children: ReactNode;
   kind?: "primary" | "neutral" | "quiet" | "danger";
+  size?: "sm" | "md";
   disabled?: boolean;
   onClick?: () => void;
 }) {
@@ -87,7 +91,8 @@ export function CardButton({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "interactive press flex h-7 cursor-pointer items-center gap-1.5 rounded-full px-3 text-xs font-medium whitespace-nowrap select-none",
+        "interactive press flex cursor-pointer items-center gap-1.5 rounded-full font-medium whitespace-nowrap select-none",
+        size === "md" ? "h-7 px-3 text-xs" : "-my-1 h-6 px-2.5 text-2xs",
         kind === "primary" && "bg-accent text-on-accent hover:bg-accent-hover",
         kind === "neutral" &&
           "bg-elevated text-ink shadow-[0_0_0_1px_rgb(255_255_255/6%)] hover:bg-control-off",
@@ -159,11 +164,15 @@ export function SubagentCard({
   task,
   meta,
   steps,
+  onOpen,
+  onStop,
 }: {
   name: string;
   task: string;
   meta: string;
   steps: { icon: BlockIcon; verb: string; target: string; running?: boolean; prose?: boolean }[];
+  onOpen?: () => void;
+  onStop?: () => void;
 }) {
   return (
     <CardShell className="gap-1 px-3 py-2.5">
@@ -171,9 +180,14 @@ export function SubagentCard({
         <span className="flex size-3.5 shrink-0 items-center justify-center">
           <Orbit size="md" />
         </span>
-        <span className="text-sm font-medium text-ink">{name}</span>
+        <CardTitle onOpen={onOpen}>{name}</CardTitle>
         <span className="truncate text-xs text-ink-3">{task}</span>
-        <span className="ml-auto shrink-0 text-2xs text-ink-4">{meta}</span>
+        <span className="ml-auto shrink-0 text-2xs text-ink-4 tabular-nums">{meta}</span>
+        {onStop && (
+          <CardButton kind="quiet" size="sm" onClick={onStop}>
+            Stop
+          </CardButton>
+        )}
       </div>
       <div className="ml-[23px]">
         {steps.map(({ icon: Icon, verb, target, running, prose }, index) => (
@@ -200,15 +214,136 @@ export function SubagentCard({
   );
 }
 
+function CardTitle({ onOpen, children }: { onOpen?: () => void; children: ReactNode }) {
+  if (!onOpen) return <span className="shrink-0 text-sm font-medium text-ink">{children}</span>;
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="interactive press shrink-0 cursor-pointer text-sm font-medium text-ink select-none hover:text-ink-2"
+    >
+      {children}
+    </button>
+  );
+}
+
+export type WorkflowAgentState = "queued" | "running" | "done" | "failed" | "skipped";
+
+export interface WorkflowCardPhase {
+  title: string;
+  agents: { label: string; state: WorkflowAgentState; meta: string }[];
+}
+
+function AgentStateIcon({ state }: { state: WorkflowAgentState }) {
+  if (state === "running") return <Spinner />;
+  if (state === "done") {
+    return (
+      <span className="flex w-3 text-accent-ink">
+        <Check width={11} height={11} strokeWidth={2.5} />
+      </span>
+    );
+  }
+  if (state === "failed") {
+    return (
+      <span className="flex w-3 text-red">
+        <X width={11} height={11} strokeWidth={2.5} />
+      </span>
+    );
+  }
+  return (
+    <span className="flex w-3 justify-center">
+      <span className="size-1 rounded-full bg-ink-5" />
+    </span>
+  );
+}
+
+export function WorkflowCard({
+  name,
+  description,
+  status,
+  meta,
+  phases,
+  summary,
+  onStop,
+}: {
+  name: string;
+  description: string;
+  status: "running" | "completed" | "failed" | "stopped";
+  meta: string;
+  phases: WorkflowCardPhase[];
+  summary?: string;
+  onStop?: () => void;
+}) {
+  return (
+    <CardShell className="gap-1.5 px-3 py-2.5">
+      <div className="flex items-center gap-[9px]">
+        <span className="flex size-3.5 shrink-0 items-center justify-center">
+          {status === "running" ? (
+            <Orbit size="md" />
+          ) : (
+            <AgentStateIcon state={status === "completed" ? "done" : "failed"} />
+          )}
+        </span>
+        <span className="shrink-0 text-sm font-medium text-ink">{name}</span>
+        <span className="truncate text-xs text-ink-3">{description}</span>
+        <span className="ml-auto shrink-0 text-2xs text-ink-4 tabular-nums">{meta}</span>
+        {onStop && status === "running" && (
+          <CardButton kind="quiet" size="sm" onClick={onStop}>
+            Stop
+          </CardButton>
+        )}
+      </div>
+      {phases.length > 0 && (
+        <div className="ml-[23px] flex flex-col gap-1">
+          {phases.map((phase) => (
+            <div key={phase.title} className="flex flex-col">
+              {phases.length > 1 && (
+                <span className="flex h-5 items-center text-2xs text-ink-4">{phase.title}</span>
+              )}
+              {phase.agents.map((agent, index) => (
+                <div key={index} className="flex h-[22px] items-center gap-[9px] text-xs">
+                  <AgentStateIcon state={agent.state} />
+                  <span
+                    className={cn(
+                      "truncate font-medium",
+                      agent.state === "queued" || agent.state === "skipped"
+                        ? "text-ink-4"
+                        : "text-ink-2",
+                    )}
+                  >
+                    {agent.label}
+                  </span>
+                  <span className="ml-auto shrink-0 text-2xs text-ink-4 tabular-nums">
+                    {agent.meta}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+      {summary && <p className="m-0 ml-[23px] text-xs text-ink-3">{summary}</p>}
+    </CardShell>
+  );
+}
+
 export function ParallelAgents({
   agents,
 }: {
-  agents: { name: string; task: string; meta: string; done: boolean }[];
+  agents: {
+    name: string;
+    task: string;
+    meta: string;
+    done: boolean;
+    activity?: string;
+    onOpen?: () => void;
+    onStop?: () => void;
+  }[];
 }) {
   return (
     <div className="-mt-0.5 mb-1 ml-[23px]">
       {agents.map((agent, index) => (
-        <div key={index} className="flex h-[26px] items-center gap-[9px] text-xs">
+        <div key={index} className="hover-swap-host flex h-[26px] items-center gap-[9px] text-xs">
           {agent.done ? (
             <span className="flex w-3 text-accent-ink">
               <Check width={11} height={11} strokeWidth={2.5} />
@@ -216,9 +351,35 @@ export function ParallelAgents({
           ) : (
             <Spinner />
           )}
-          <span className="font-medium text-ink">{agent.name}</span>
-          <span className="truncate text-ink-3">{agent.task}</span>
-          <span className="ml-auto text-2xs text-ink-4">{agent.meta}</span>
+          {agent.onOpen ? (
+            <button
+              type="button"
+              onClick={agent.onOpen}
+              className="interactive press shrink-0 cursor-pointer font-medium text-ink select-none hover:text-ink-2"
+            >
+              {agent.name}
+            </button>
+          ) : (
+            <span className="shrink-0 font-medium text-ink">{agent.name}</span>
+          )}
+          {agent.activity ? (
+            <Shimmer className="truncate">{agent.activity}</Shimmer>
+          ) : (
+            <span className="truncate text-ink-3">{agent.task}</span>
+          )}
+          {agent.onStop ? (
+            <HoverSwap
+              className="ml-auto"
+              rest={<span className="text-2xs text-ink-4 tabular-nums">{agent.meta}</span>}
+              hover={
+                <CardButton kind="quiet" size="sm" onClick={agent.onStop}>
+                  Stop
+                </CardButton>
+              }
+            />
+          ) : (
+            <span className="ml-auto shrink-0 text-2xs text-ink-4 tabular-nums">{agent.meta}</span>
+          )}
         </div>
       ))}
     </div>

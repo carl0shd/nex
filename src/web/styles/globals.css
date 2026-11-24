@@ -47,6 +47,19 @@
   --stripe: rgb(29 29 29 / 4%);
   --stripe-bg: var(--page);
 
+  --scene-dawn-0: #1f1527;
+  --scene-dawn-1: #94506a;
+  --scene-dawn-2: #ffe1c4;
+  --scene-day-0: #163591;
+  --scene-day-1: #2d5ee4;
+  --scene-day-2: #f2f6ff;
+  --scene-dusk-0: #200e08;
+  --scene-dusk-1: #a23f18;
+  --scene-dusk-2: #ffd7a0;
+  --scene-night-0: #0a0d22;
+  --scene-night-1: #29316c;
+  --scene-night-2: #dfe3ff;
+
   --accent: #33843f;
   --accent-hover: #2d7537;
   --accent-ink: #2b6c35;
@@ -82,12 +95,15 @@
   --shadow-task-waiting: 0 0 0 1px var(--ring-waiting), 0 18px 40px -12px rgb(0 0 0 / 18%);
   --shadow-island: 0 0 0 1px var(--line), 0 1px 2px rgb(0 0 0 / 8%);
   --glass: rgb(255 255 255 / 92%);
+  --page-glass: rgb(245 244 242 / 70%);
+  --surface-glass: rgb(255 255 255 / 72%);
+  --surface-glass-hover: rgb(255 255 255 / 84%);
   --ring-idle: rgb(29 29 29 / 20%);
   --knob: #fdfdfc;
 
-  --tooltip-bg: #1e1f1d;
-  --tooltip-fg: #ecebe6;
-  --tooltip-muted: #9a9c96;
+  --tooltip-bg: #1e1e20;
+  --tooltip-fg: #ededee;
+  --tooltip-muted: #98989c;
   --tooltip-border: rgb(236 235 230 / 9%);
 
   --shadow-hairline: 0 0 0 1px var(--line);
@@ -111,31 +127,31 @@
 }
 
 .dark {
-  --page: #131412;
-  --canvas: #161715;
-  --surface: #191a18;
-  --surface-raised: #1e1f1d;
-  --elevated: #242522;
-  --inset: #141513;
-  --backdrop: #0d0e0c;
-  --hover: rgb(236 235 230 / 6%);
-  --hover-2: rgb(236 235 230 / 8%);
-  --field: rgb(236 235 230 / 5%);
+  --page: #0e0e0f;
+  --canvas: #111112;
+  --surface: #141415;
+  --surface-raised: #18181a;
+  --elevated: #1e1e20;
+  --inset: #0f0f10;
+  --backdrop: #08080a;
+  --hover: rgb(237 237 240 / 6%);
+  --hover-2: rgb(237 237 240 / 8%);
+  --field: rgb(237 237 240 / 5%);
 
-  --ink: #ecebe6;
-  --ink-2: #b9b8b2;
-  --ink-3: #9a9c96;
-  --ink-4: #6f716c;
-  --ink-5: #52544f;
-  --ink-6: #3a3b38;
-  --inverse: #131412;
+  --ink: #ededee;
+  --ink-2: #b8b8bb;
+  --ink-3: #98989c;
+  --ink-4: #6e6e73;
+  --ink-5: #515155;
+  --ink-6: #39393c;
+  --inverse: #0e0e0f;
 
-  --line-soft: rgb(236 235 230 / 4.5%);
-  --line: rgb(236 235 230 / 6%);
-  --line-chip: rgb(236 235 230 / 7%);
-  --line-strong: rgb(236 235 230 / 10%);
-  --line-focus: rgb(236 235 230 / 14%);
-  --stripe: rgb(236 235 230 / 3%);
+  --line-soft: rgb(237 237 240 / 4.5%);
+  --line: rgb(237 237 240 / 6%);
+  --line-chip: rgb(237 237 240 / 7%);
+  --line-strong: rgb(237 237 240 / 10%);
+  --line-focus: rgb(237 237 240 / 14%);
+  --stripe: rgb(237 237 240 / 3%);
 
   --accent: #33843f;
   --accent-hover: #3b9147;
@@ -159,26 +175,29 @@
   --violet-tint: rgb(138 111 224 / 16%);
   --claude: #d97757;
   --claude-tile: #2a211d;
-  --control-off: #2a2b28;
-  --island: rgb(25 26 24 / 84%);
-  --line-tree: rgb(236 235 230 / 8%);
+  --control-off: #262628;
+  --island: rgb(20 20 21 / 84%);
+  --line-tree: rgb(237 237 240 / 8%);
   --ring-waiting: rgb(216 156 50 / 22%);
   --ring-focused: rgb(74 158 87 / 20%);
   --ring-selected: rgb(74 158 87 / 55%);
   --ring-plan: rgb(111 154 224 / 22%);
-  --shadow-task: 0 0 0 1px rgb(236 235 230 / 5%), 0 10px 24px -12px rgb(0 0 0 / 50%);
+  --shadow-task: 0 0 0 1px rgb(237 237 240 / 5%), 0 10px 24px -12px rgb(0 0 0 / 50%);
   --shadow-task-focused:
     0 0 0 1px var(--ring-focused), 0 2px 4px rgb(0 0 0 / 22%), 0 18px 40px -12px rgb(0 0 0 / 60%);
   --shadow-task-waiting: 0 0 0 1px var(--ring-waiting), 0 18px 40px -12px rgb(0 0 0 / 60%);
   --shadow-island: 0 0 0 1px var(--line), 0 1px 2px rgb(0 0 0 / 25%);
-  --glass: rgb(30 31 29 / 92%);
-  --ring-idle: rgb(236 235 230 / 18%);
-  --knob: #f4f3ef;
+  --glass: rgb(24 24 26 / 92%);
+  --page-glass: rgb(14 14 15 / 70%);
+  --surface-glass: rgb(24 24 26 / 72%);
+  --surface-glass-hover: rgb(34 34 37 / 80%);
+  --ring-idle: rgb(237 237 240 / 18%);
+  --knob: #f4f4f5;
 
-  --tooltip-bg: #242522;
-  --tooltip-fg: #ecebe6;
-  --tooltip-muted: #9a9c96;
-  --tooltip-border: rgb(236 235 230 / 9%);
+  --tooltip-bg: #1e1e20;
+  --tooltip-fg: #ededee;
+  --tooltip-muted: #98989c;
+  --tooltip-border: rgb(237 237 240 / 9%);
 
   --shadow-hairline: 0 0 0 1px var(--line);
   --shadow-btn: inset 0 0 0 1px var(--line-strong);
@@ -190,12 +209,12 @@
     0 0 0 1px var(--line), 0 2px 4px rgb(0 0 0 / 22%), 0 24px 48px -20px rgb(0 0 0 / 60%);
   --shadow-overlay:
     0 0 0 1px color-mix(in srgb, var(--elevated), var(--ink) 9%), 0 18px 40px -12px rgb(0 0 0 / 75%);
-  --shadow-toast: 0 0 0 1px rgb(236 235 230 / 7%), 0 24px 48px -16px rgb(0 0 0 / 65%);
+  --shadow-toast: 0 0 0 1px rgb(237 237 240 / 7%), 0 24px 48px -16px rgb(0 0 0 / 65%);
   --shadow-modal:
     0 0 0 1px color-mix(in srgb, var(--surface-raised), var(--ink) 8%),
     0 24px 48px -16px rgb(0 0 0 / 65%), 0 2px 6px rgb(0 0 0 / 30%);
   --shadow-inset-field: inset 0 0 0 1px var(--line-strong);
-  --shadow-focus: inset 0 0 0 1px rgb(236 235 230 / 24%), 0 0 0 3px rgb(236 235 230 / 5%);
+  --shadow-focus: inset 0 0 0 1px rgb(237 237 240 / 24%), 0 0 0 3px rgb(237 237 240 / 5%);
 }
 
 @theme inline {
@@ -254,6 +273,9 @@
   --shadow-task-waiting: var(--shadow-task-waiting);
   --shadow-island: var(--shadow-island);
   --color-glass: var(--glass);
+  --color-page-glass: var(--page-glass);
+  --color-surface-glass: var(--surface-glass);
+  --color-surface-glass-hover: var(--surface-glass-hover);
   --color-ring-idle: var(--ring-idle);
   --color-knob: var(--knob);
 
@@ -1908,6 +1930,49 @@ body {
   animation: effort-dither-breathe 4.8s step-end infinite;
 }
 
+.slider {
+  appearance: none;
+  height: 16px;
+  background: transparent;
+}
+
+.slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--line-strong);
+}
+
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border-radius: 999px;
+  background: var(--ink);
+  transition: transform 150ms var(--ease-out-strong);
+}
+
+.slider:active::-webkit-slider-thumb {
+  transform: scale(0.88);
+}
+
+.chrome-glass {
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% var(--titlebar),
+    var(--sidebar) var(--titlebar),
+    var(--sidebar) 100%,
+    0 100%
+  );
+  transition: clip-path 250ms var(--ease-out-strong);
+}
+
+.dither-scene {
+  image-rendering: pixelated;
+  animation: fade-in 400ms var(--ease-out-strong) both;
+}
+
 /* Stars: a canvas of dither dots; the fade keeps the left side quiet behind the label. */
 .dither-stars {
   overflow: hidden;
@@ -2178,6 +2243,26 @@ body {
 
 .no-scrollbar.no-scrollbar {
   scrollbar-width: none;
+}
+
+.edge-fade {
+  --edge-fade-to: right;
+  width: calc(var(--edge-solid) + 88px);
+  backdrop-filter: blur(3px);
+  background: linear-gradient(
+    to var(--edge-fade-to),
+    color-mix(in srgb, var(--surface) 82%, transparent) var(--edge-solid),
+    color-mix(in srgb, var(--surface) 50%, transparent) calc(var(--edge-solid) + 40px),
+    transparent
+  );
+  mask-image: linear-gradient(
+    to var(--edge-fade-to),
+    black calc(var(--edge-solid) + 24px),
+    transparent
+  );
+}
+.edge-fade[data-side="end"] {
+  --edge-fade-to: left;
 }
 
 /* Menus draw their own pill thumb, inset from the rounded corners; Chromium skips these rules
@@ -2478,7 +2563,23 @@ body {
 }
 
 @utility rise-in {
-  animation: rise-in 500ms var(--ease-out-strong) both;
+  animation: rise-in 500ms var(--ease-out-strong) backwards;
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateY(6px);
+  }
+}
+
+/* Fading a parent cuts a blurred child off from what is behind it, so the glass fades itself. */
+@utility rise-in-glass {
+  animation: slide-in 500ms var(--ease-out-strong) backwards;
+}
+
+@utility rise-in-glass-fade {
+  animation: fade-in 500ms var(--ease-out-strong) backwards;
+  animation-delay: inherit;
 }
 
 @keyframes message-in {
@@ -2623,6 +2724,564 @@ body {
   animation-play-state: paused;
 }
 
+/* The starting strip's field (EnvTaskCard board): the effort slider's pixels creep behind the
+   front, a bright edge blinks on it and a wave runs up to it. */
+@property --boot-f {
+  syntax: "<length-percentage>";
+  inherits: true;
+  initial-value: 0%;
+}
+.boot-field {
+  transition: --boot-f 900ms linear;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  animation: boot-intro 960ms steps(12, end);
+}
+.boot-px {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.boot-layer,
+.boot-lead {
+  --boot-w: 9999px;
+  clip-path: inset(0 calc(100% - var(--boot-x)) 0 max(0px, calc(var(--boot-x) - var(--boot-w))));
+  animation: boot-creep 3.6s step-end calc(var(--boot-k) * 60ms) infinite;
+}
+.boot-layer {
+  background: conic-gradient(at 3px 3px, transparent 75%, var(--boot-c) 0) var(--boot-px)
+    var(--boot-py) / 12px 12px;
+}
+.boot-k0 {
+  --boot-k: 0;
+  --boot-x: calc(var(--boot-f) - 0px);
+  --boot-px: 0px;
+  --boot-py: 0px;
+  --boot-c: color-mix(in srgb, var(--accent) 46%, transparent);
+}
+.boot-k1 {
+  --boot-k: 1;
+  --boot-x: calc(var(--boot-f) - 15px);
+  --boot-px: 6px;
+  --boot-py: 6px;
+  --boot-c: color-mix(in srgb, var(--accent) 46%, transparent);
+}
+.boot-k2 {
+  --boot-k: 2;
+  --boot-x: calc(var(--boot-f) - 30px);
+  --boot-px: 6px;
+  --boot-py: 0px;
+  --boot-c: color-mix(in srgb, var(--accent) 46%, transparent);
+}
+.boot-k3 {
+  --boot-k: 3;
+  --boot-x: calc(var(--boot-f) - 45px);
+  --boot-px: 0px;
+  --boot-py: 6px;
+  --boot-c: color-mix(in srgb, var(--accent) 46%, transparent);
+}
+.boot-k4 {
+  --boot-k: 4;
+  --boot-x: calc(var(--boot-f) - 60px);
+  --boot-px: 3px;
+  --boot-py: 3px;
+  --boot-c: color-mix(in srgb, var(--accent) 68%, transparent);
+}
+.boot-k5 {
+  --boot-k: 5;
+  --boot-x: calc(var(--boot-f) - 75px);
+  --boot-px: 9px;
+  --boot-py: 9px;
+  --boot-c: color-mix(in srgb, var(--accent) 68%, transparent);
+}
+.boot-k6 {
+  --boot-k: 6;
+  --boot-x: calc(var(--boot-f) - 90px);
+  --boot-px: 9px;
+  --boot-py: 3px;
+  --boot-c: color-mix(in srgb, var(--accent) 68%, transparent);
+}
+.boot-k7 {
+  --boot-k: 7;
+  --boot-x: calc(var(--boot-f) - 105px);
+  --boot-px: 3px;
+  --boot-py: 9px;
+  --boot-c: color-mix(in srgb, var(--accent) 68%, transparent);
+}
+.boot-k8 {
+  --boot-k: 8;
+  --boot-x: calc(var(--boot-f) - 120px);
+  --boot-px: 3px;
+  --boot-py: 0px;
+  --boot-c: color-mix(in srgb, var(--green) 54%, transparent);
+}
+.boot-k9 {
+  --boot-k: 9;
+  --boot-x: calc(var(--boot-f) - 135px);
+  --boot-px: 9px;
+  --boot-py: 6px;
+  --boot-c: color-mix(in srgb, var(--green) 54%, transparent);
+}
+.boot-k10 {
+  --boot-k: 10;
+  --boot-x: calc(var(--boot-f) - 150px);
+  --boot-px: 9px;
+  --boot-py: 0px;
+  --boot-c: color-mix(in srgb, var(--green) 54%, transparent);
+}
+.boot-k11 {
+  --boot-k: 11;
+  --boot-x: calc(var(--boot-f) - 165px);
+  --boot-px: 3px;
+  --boot-py: 6px;
+  --boot-c: color-mix(in srgb, var(--green) 54%, transparent);
+}
+.boot-k12 {
+  --boot-k: 12;
+  --boot-x: calc(var(--boot-f) - 180px);
+  --boot-px: 0px;
+  --boot-py: 3px;
+  --boot-c: color-mix(in srgb, var(--green) 66%, transparent);
+}
+.boot-k13 {
+  --boot-k: 13;
+  --boot-x: calc(var(--boot-f) - 195px);
+  --boot-px: 6px;
+  --boot-py: 9px;
+  --boot-c: color-mix(in srgb, var(--green) 66%, transparent);
+}
+.boot-track {
+  clip-path: inset(0 0 0 calc(var(--boot-f) + 12px));
+  background: conic-gradient(
+      at 3px 3px,
+      transparent 75%,
+      color-mix(in srgb, var(--accent) 20%, transparent) 0
+    )
+    0px 0px / 12px 12px;
+}
+.boot-lead {
+  --boot-k: 0;
+  --boot-x: var(--boot-f);
+  --boot-w: 12px;
+}
+.boot-lead-a {
+  background:
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 88%, transparent) 0
+      )
+      0px 0px / 12px 12px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 88%, transparent) 0
+      )
+      6px 6px / 12px 12px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 88%, transparent) 0
+      )
+      6px 0px / 12px 12px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 88%, transparent) 0
+      )
+      0px 6px / 12px 12px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 88%, transparent) 0
+      )
+      3px 0px / 12px 12px;
+  animation:
+    boot-creep 3.6s step-end infinite,
+    boot-blink 420ms step-end infinite;
+}
+.boot-lead-b {
+  background:
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 88%, transparent) 0
+      )
+      3px 3px / 12px 12px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 88%, transparent) 0
+      )
+      9px 9px / 12px 12px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 88%, transparent) 0
+      )
+      9px 3px / 12px 12px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 88%, transparent) 0
+      )
+      3px 9px / 12px 12px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 88%, transparent) 0
+      )
+      9px 0px / 12px 12px;
+  animation:
+    boot-creep 3.6s step-end infinite,
+    boot-blink 420ms step-end -210ms infinite;
+}
+.boot-wave {
+  clip-path: inset(0 100% 0 0);
+  animation: boot-wave 2.8s linear 1s infinite;
+}
+.boot-wave-head {
+  --boot-wl: 0px;
+  --boot-wr: 12px;
+  background:
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 44%, transparent) 0
+      )
+      0px 0px / 12px 12px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 44%, transparent) 0
+      )
+      6px 6px / 12px 12px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 44%, transparent) 0
+      )
+      6px 0px / 12px 12px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 44%, transparent) 0
+      )
+      0px 6px / 12px 12px;
+}
+.boot-wave-core {
+  --boot-wl: -24px;
+  --boot-wr: 0px;
+  background:
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 64%, transparent) 0
+      )
+      0px 0px / 12px 12px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 64%, transparent) 0
+      )
+      6px 6px / 12px 12px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 64%, transparent) 0
+      )
+      6px 0px / 12px 12px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 64%, transparent) 0
+      )
+      0px 6px / 12px 12px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 64%, transparent) 0
+      )
+      3px 3px / 12px 12px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 64%, transparent) 0
+      )
+      9px 9px / 12px 12px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 64%, transparent) 0
+      )
+      9px 3px / 12px 12px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 64%, transparent) 0
+      )
+      3px 9px / 12px 12px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 64%, transparent) 0
+      )
+      3px 0px / 12px 12px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 64%, transparent) 0
+      )
+      9px 6px / 12px 12px;
+}
+.boot-wave-tail {
+  --boot-wl: -48px;
+  --boot-wr: -24px;
+  background:
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 36%, transparent) 0
+      )
+      0px 0px / 12px 12px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 36%, transparent) 0
+      )
+      6px 6px / 12px 12px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 36%, transparent) 0
+      )
+      6px 0px / 12px 12px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 36%, transparent) 0
+      )
+      0px 6px / 12px 12px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 36%, transparent) 0
+      )
+      3px 3px / 12px 12px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 36%, transparent) 0
+      )
+      9px 9px / 12px 12px;
+}
+.boot-spark {
+  clip-path: inset(0 calc(100% - var(--boot-f) + 42px) 0 0);
+}
+.boot-spark-a {
+  background:
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 92%, transparent) 0
+      )
+      9px 3px / 48px 24px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 92%, transparent) 0
+      )
+      33px 15px / 48px 24px;
+  animation: boot-spark-a 1.2s step-end infinite;
+}
+.boot-spark-b {
+  background:
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 74%, transparent) 0
+      )
+      21px 6px / 72px 36px,
+    conic-gradient(
+        at 3px 3px,
+        transparent 75%,
+        color-mix(in srgb, var(--accent-ink) 74%, transparent) 0
+      )
+      57px 27px / 72px 36px;
+  animation: boot-spark-b 1.8s step-end -0.6s infinite;
+}
+.boot-scout-a {
+  clip-path: inset(0 calc(100% - var(--boot-f) - 48px) 0 calc(var(--boot-f) + 6px));
+  background: conic-gradient(
+      at 3px 3px,
+      transparent 75%,
+      color-mix(in srgb, var(--green) 85%, transparent) 0
+    )
+    6px 3px / 36px 24px;
+  animation: boot-scout-a 1.5s step-end infinite;
+}
+.boot-scout-b {
+  clip-path: inset(0 calc(100% - var(--boot-f) - 96px) 0 calc(var(--boot-f) + 48px));
+  background: conic-gradient(
+      at 3px 3px,
+      transparent 75%,
+      color-mix(in srgb, var(--accent-ink) 60%, transparent) 0
+    )
+    12px 9px / 48px 36px;
+  animation: boot-scout-b 2.1s step-end -0.7s infinite;
+}
+@keyframes boot-creep {
+  0%,
+  92%,
+  100% {
+    clip-path: inset(0 calc(100% - var(--boot-x)) 0 max(0px, calc(var(--boot-x) - var(--boot-w))));
+  }
+  14%,
+  78% {
+    clip-path: inset(
+      0 calc(100% - var(--boot-x) - 12px) 0 max(0px, calc(var(--boot-x) + 12px - var(--boot-w)))
+    );
+  }
+  28%,
+  64% {
+    clip-path: inset(
+      0 calc(100% - var(--boot-x) - 24px) 0 max(0px, calc(var(--boot-x) + 24px - var(--boot-w)))
+    );
+  }
+  42% {
+    clip-path: inset(
+      0 calc(100% - var(--boot-x) - 36px) 0 max(0px, calc(var(--boot-x) + 36px - var(--boot-w)))
+    );
+  }
+}
+@keyframes boot-blink {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.18;
+  }
+}
+@keyframes boot-intro {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+@keyframes boot-wave {
+  0% {
+    clip-path: inset(0 calc(100% - var(--boot-wr)) 0 max(0px, var(--boot-wl)));
+    animation-timing-function: steps(16, end);
+  }
+  70% {
+    clip-path: inset(
+      0 calc(100% - var(--boot-f) - var(--boot-wr)) 0 max(0px, calc(var(--boot-f) + var(--boot-wl)))
+    );
+    animation-timing-function: step-end;
+  }
+  70.01%,
+  100% {
+    clip-path: inset(0 100% 0 0);
+  }
+}
+@keyframes boot-spark-a {
+  0% {
+    background-position:
+      9px 3px,
+      33px 15px;
+    opacity: 1;
+  }
+  25% {
+    background-position:
+      27px 12px,
+      3px 6px;
+    opacity: 0.55;
+  }
+  50% {
+    background-position:
+      42px 18px,
+      18px 0px;
+    opacity: 1;
+  }
+  75% {
+    background-position:
+      15px 9px,
+      36px 21px;
+    opacity: 0.7;
+  }
+}
+@keyframes boot-spark-b {
+  0% {
+    background-position:
+      21px 6px,
+      57px 27px;
+    opacity: 1;
+  }
+  33% {
+    background-position:
+      45px 24px,
+      9px 15px;
+    opacity: 0.6;
+  }
+  66% {
+    background-position:
+      66px 0px,
+      33px 30px;
+    opacity: 1;
+  }
+}
+@keyframes boot-scout-a {
+  0% {
+    background-position: 6px 3px;
+    opacity: 1;
+  }
+  20% {
+    opacity: 0;
+  }
+  40% {
+    background-position: 18px 15px;
+    opacity: 1;
+  }
+  60% {
+    opacity: 0.35;
+  }
+  80% {
+    background-position: 30px 9px;
+    opacity: 1;
+  }
+}
+@keyframes boot-scout-b {
+  0% {
+    background-position: 12px 9px;
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  50% {
+    background-position: 27px 24px;
+    opacity: 0.4;
+  }
+  75% {
+    background-position: 39px 0px;
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .boot-field,
+  .boot-px {
+    animation: none !important;
+  }
+  .boot-wave,
+  .boot-lead-b {
+    display: none;
+  }
+}
+
 /* Long setup progress fills with the same pixel texture as the effort slider. */
 @utility dither-fill {
   background:
@@ -2638,8 +3297,13 @@ body {
   transition-duration: 0.01ms !important;
 }
 
-.reduce-transparency {
+/* Listed with .dark too: the home scene forces the dark palette, which redefines the glass. */
+.reduce-transparency,
+.reduce-transparency .dark {
   --glass: var(--surface-raised);
+  --page-glass: var(--page);
+  --surface-glass: var(--surface-raised);
+  --surface-glass-hover: var(--elevated);
 }
 .reduce-transparency * {
   backdrop-filter: none !important;

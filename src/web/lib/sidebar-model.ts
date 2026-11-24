@@ -1,5 +1,6 @@
 import type { Project, Session, Terminal, TerminalStatus, Workspace } from "@native/db/types";
-import type { SidebarTaskStatus, SidebarWorkspace } from "@/components/sidebar/types";
+import type { TaskEnvState } from "@native/environments/types";
+import type { SidebarTask, SidebarTaskStatus, SidebarWorkspace } from "@/components/sidebar/types";
 import { workspaceIcon } from "@/lib/workspace-icons";
 import { workspaceImageUrl } from "@/lib/workspace-image";
 
@@ -28,6 +29,13 @@ export interface SidebarSource {
   projects: readonly Project[];
   sessions: readonly Session[];
   terminals: readonly Pick<Terminal, "sessionId" | "type" | "status">[];
+  environments?: Readonly<Record<string, TaskEnvState>>;
+}
+
+export function sidebarEnv(env: TaskEnvState | undefined): SidebarTask["env"] {
+  if (env?.status === "starting") return "starting";
+  if (env?.status === "down" || env?.status === "failed") return "down";
+  return undefined;
 }
 
 export function buildSidebar(source: SidebarSource, now: number): SidebarWorkspace[] {
@@ -61,10 +69,12 @@ export function buildSidebar(source: SidebarSource, now: number): SidebarWorkspa
             .toSorted(bySortOrder)
             .map((session) => {
               const status = taskStatus(agentStatuses.get(session.id) ?? []);
+              const env = sidebarEnv(source.environments?.[session.id]);
               return {
                 id: session.id,
                 title: session.title || session.name,
                 status,
+                ...(env ? { env } : {}),
                 meta:
                   status === "waiting"
                     ? "needs you"

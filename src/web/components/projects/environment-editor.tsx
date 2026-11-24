@@ -1,12 +1,12 @@
 import { useState, type ReactNode } from "react";
-import { Box, Code, Hammer, Play, Plus, RefreshCw, RotateCcw, Square } from "lucide-react";
+import { Box, Code, Hammer, Play, Plus, RotateCcw, Square } from "lucide-react";
 import type { EnvServiceKind, ProjectEnvironment } from "@native/db/types";
-import type { CleanBaseState, EnvCheckState } from "@native/environments/types";
+import type { EnvCheckState } from "@native/environments/types";
 import { Button } from "@/components/atoms/button";
 import { Expand } from "@/components/atoms/expand";
 import { ServiceChip } from "@/components/atoms/service-chip";
 import { Spinner } from "@/components/atoms/spinner";
-import { StatusDot, type DotTone } from "@/components/atoms/status-dot";
+import { StatusDot } from "@/components/atoms/status-dot";
 import { AnchoredPopover } from "@/components/primitives/anchored-popover";
 import { CommandRows } from "@/components/primitives/command-rows";
 import { Disclosure } from "@/components/primitives/disclosure";
@@ -14,7 +14,6 @@ import { StatusCard } from "@/components/primitives/status-card";
 import { Menu, MenuItem } from "@/components/primitives/menu";
 import { ServiceDetail } from "@/components/projects/service-detail";
 import { useNow } from "@/hooks/use-now";
-import { dataCopyView, type DataCopyView } from "@/lib/clean-base";
 import {
   addService,
   environmentNotices,
@@ -52,16 +51,16 @@ const EMPTY_STATUS: TestStatus = {
 
 const STEP_LISTS: { list: StepList; label: string; hint: string; placeholder: string }[] = [
   {
-    list: "prepare",
-    label: "Fill the copy",
-    hint: "Runs once while the copy is built, like loading test data",
-    placeholder: "npm run db:seed",
+    list: "taskPrepare",
+    label: "Every start",
+    hint: "Runs each time a task’s environment starts, like its branch’s migrations",
+    placeholder: "npx prisma migrate deploy",
   },
   {
-    list: "taskPrepare",
-    label: "Update each task",
-    hint: "Runs in every task after its copy starts, like its branch’s migrations",
-    placeholder: "npx prisma migrate deploy",
+    list: "prepare",
+    label: "New data",
+    hint: "Runs once when a task’s databases are created, like loading test data",
+    placeholder: "npm run db:seed",
   },
 ];
 
@@ -125,54 +124,6 @@ function ServiceGroup({
       </div>
       {children}
     </section>
-  );
-}
-
-const COPY_TONE: Record<DataCopyView["tone"], DotTone> = {
-  neutral: "green",
-  orange: "orange",
-  red: "red",
-};
-
-function DataCopyCard({
-  view,
-  actionLabel,
-  disabledReason,
-  onAction,
-}: {
-  view: DataCopyView;
-  actionLabel: string;
-  disabledReason: string | null;
-  onAction?: () => void;
-}) {
-  const empty = view.action === "build" || view.action === null;
-  return (
-    <StatusCard
-      tone={empty ? "idle" : COPY_TONE[view.tone]}
-      busy={view.busy}
-      title={view.title}
-      hint={view.hint}
-      action={
-        view.action &&
-        onAction && (
-          <Button
-            variant="quiet"
-            size="xs"
-            className="-mr-1.5"
-            disabled={disabledReason !== null}
-            title={disabledReason ?? undefined}
-            onClick={onAction}
-          >
-            {view.busy ? (
-              <Square width={9} height={9} strokeWidth={2.5} />
-            ) : (
-              <RefreshCw width={10} height={10} strokeWidth={2.5} />
-            )}
-            {actionLabel}
-          </Button>
-        )
-      }
-    />
   );
 }
 
@@ -304,10 +255,6 @@ export function EnvironmentEditor({
   onDetectAgain,
   detecting = false,
   initialOpen = null,
-  cleanBase = null,
-  onBuildCleanBase,
-  onStopCleanBase,
-  onShowCleanBaseFailure,
 }: {
   value: ProjectEnvironment;
   onChange: (value: ProjectEnvironment) => void;
@@ -318,10 +265,6 @@ export function EnvironmentEditor({
   onDetectAgain?: () => void;
   detecting?: boolean;
   initialOpen?: number | null;
-  cleanBase?: CleanBaseState | null;
-  onBuildCleanBase?: () => void;
-  onStopCleanBase?: () => void;
-  onShowCleanBaseFailure?: () => void;
 }) {
   const pin = (index: number): PinnedRole | null => {
     const service = value.services[index];
@@ -334,7 +277,6 @@ export function EnvironmentEditor({
   const { problems, warnings } = environmentNotices(value);
   const checking = check?.phase === "running";
   const groups = groupServices(value, open);
-  const keepsData = value.services.some((service) => service.data);
   const hasSteps = Boolean(value.prepare?.length || value.taskPrepare?.length);
   const status = value.services.length === 0 ? EMPTY_STATUS : testStatus(check, now);
   const blocked = !canCheck
@@ -342,13 +284,6 @@ export function EnvironmentEditor({
     : problems.length > 0
       ? "Fix what’s flagged above first"
       : null;
-  const copy = dataCopyView(cleanBase, now);
-  const copyAction =
-    copy.action === "stop"
-      ? onStopCleanBase
-      : copy.action === "details"
-        ? (onShowCleanBaseFailure ?? onBuildCleanBase)
-        : onBuildCleanBase;
 
   const detail = (index: number) => {
     const service = value.services[index];
@@ -416,27 +351,7 @@ export function EnvironmentEditor({
       {groups.open.length > 0 && group("open")}
       {groups.background.length > 0 && group("background")}
       {(groups.data.length > 0 || hasSteps) &&
-        group(
-          "data",
-          undefined,
-          <>
-            {keepsData && (
-              <DataCopyCard
-                view={copy}
-                actionLabel={
-                  copy.action === "details" && !onShowCleanBaseFailure
-                    ? "Try again"
-                    : copy.actionLabel
-                }
-                disabledReason={
-                  copy.action === "stop" || copy.action === "details" ? null : blocked
-                }
-                onAction={copyAction}
-              />
-            )}
-            <SeedSteps value={value} onChange={onChange} />
-          </>,
-        )}
+        group("data", undefined, <SeedSteps value={value} onChange={onChange} />)}
 
       <div className="flex items-center gap-2">
         <AddServiceMenu

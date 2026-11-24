@@ -47,6 +47,8 @@ export default defineConfig({
   },
   renderer: {
     root: resolve("src/web"),
+    // Off Vite's default 5173: task environments forward the project's own localhost ports.
+    server: { port: 5847 },
     build: {
       rollupOptions: {
         input: resolve("src/web/index.html"),

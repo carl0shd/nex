@@ -2,6 +2,7 @@ import { promises as dns } from "dns";
 import { cpus, totalmem } from "os";
 import { run, runOk, type EnvLog } from "./cli";
 import {
+  BASE_LABEL,
   CHECK_LABEL,
   isNex,
   NEX_DOMAIN,
@@ -16,10 +17,12 @@ import {
   parseIds,
   parseImageNames,
   parseImages,
+  parseLines,
   parseMemoryUsage,
   parseVolumes,
   type ContainerInfo,
 } from "./parse";
+import { DISCOVERY_DOMAIN } from "./definition";
 import { container, ensureContentStore } from "./runtime";
 
 export const BUILDER_ID = "buildkit";
@@ -27,6 +30,7 @@ export const CHECK_IMAGE = "docker.io/library/alpine:3.20";
 
 const CHECK_MEMORY = "256M";
 const CONTAINER_DNS = "127.0.0.1:2053";
+const MAC_LOOPBACK = "127.0.0.1";
 const LEGACY_MACHINE = "nex";
 const LEGACY_IMAGE = "nex-machine";
 const PULL_TIMEOUT_MS = 5 * 60_000;
@@ -39,7 +43,7 @@ export async function listContainers(): Promise<ContainerInfo[]> {
   return result.code === 0 ? parseContainers(result.stdout) : [];
 }
 
-async function listVolumes() {
+export async function listVolumes() {
   const result = await run(container(), ["volume", "ls", "--format", "json"]);
   return result.code === 0 ? parseVolumes(result.stdout) : [];
 }
@@ -68,6 +72,22 @@ export async function nexUsage(): Promise<NexUsage> {
   return { containers: nex.length, running: running.length, usedGb: gbFromBytes(bytes) };
 }
 
+export async function containerMemory(ids: readonly string[]): Promise<Map<string, number>> {
+  if (ids.length === 0) return new Map();
+  const stats = await run(container(), ["stats", "--no-stream", "--format", "json", ...ids]);
+  return stats.code === 0 ? parseMemoryUsage(stats.stdout) : new Map();
+}
+
+export async function bootLog(id: string): Promise<string> {
+  const result = await run(container(), ["logs", "--boot", "-n", "40", id]);
+  return result.code === 0 ? result.stdout : "";
+}
+
+export async function lastLogLine(id: string): Promise<string | undefined> {
+  const result = await run(container(), ["logs", "-n", "20", id]);
+  return parseLines(`${result.stdout}\n${result.stderr}`).at(-1);
+}
+
 export async function removeNexResources(log: EnvLog): Promise<void> {
   const containers = (await listContainers()).filter((item) => isNex(item.labels));
   await deleteContainers(
@@ -78,6 +98,19 @@ export async function removeNexResources(log: EnvLog): Promise<void> {
   if (volumes.length > 0) {
     await run(container(), ["volume", "rm", ...volumes.map((item) => item.name)], { log });
   }
+}
+
+export async function removeCleanBases(log: EnvLog): Promise<void> {
+  const ofBase = (labels: Record<string, string>) => isNex(labels) && Boolean(labels[BASE_LABEL]);
+  const containers = (await listContainers()).filter((item) => ofBase(item.labels));
+  await deleteContainers(
+    containers.map((item) => item.id),
+    log,
+  );
+  const volumes = (await listVolumes()).filter((item) => ofBase(item.labels));
+  if (volumes.length === 0) return;
+  log(`Removing ${volumes.length} clean base volumes an earlier Nex kept`);
+  await run(container(), ["volume", "rm", ...volumes.map((item) => item.name)], { log });
 }
 
 export async function removeTaskResources(taskSlug: string, log?: EnvLog): Promise<void> {
@@ -201,8 +234,17 @@ async function resolveFromContainerDns(address: string): Promise<string[]> {
   return resolver.resolve4(address).catch(() => []);
 }
 
-async function resolveFromMac(address: string, expected: string): Promise<boolean> {
-  for (let attempt = 0; attempt < LOOKUP_TRIES; attempt++) {
+async function resolveInContainer(id: string, name: string): Promise<string[]> {
+  const result = await run(container(), ["exec", id, "getent", "ahostsv4", name]);
+  return result.code === 0 ? result.stdout.split(/\s+/).filter(Boolean) : [];
+}
+
+export async function resolveFromMac(
+  address: string,
+  expected: string,
+  tries = LOOKUP_TRIES,
+): Promise<boolean> {
+  for (let attempt = 0; attempt < tries; attempt++) {
     const found = await dns.lookup(address, { family: 4 }).catch(() => null);
     if (found?.address === expected) return true;
     await wait(LOOKUP_WAIT_MS);
@@ -232,7 +274,8 @@ export async function checkEnvironments(
     await runOk(container(), ["image", "pull", CHECK_IMAGE], { log, timeoutMs: PULL_TIMEOUT_MS });
   }
   const name = `nexcheck-${Date.now().toString(36)}`;
-  const address = `${name}.check.${NEX_DOMAIN}`;
+  const zone = `check.${DISCOVERY_DOMAIN}`;
+  const address = `${name}.${zone}`;
   onDetail("Starting a test container");
   const started = Date.now();
   await runOk(
@@ -245,6 +288,8 @@ export async function checkEnvironments(
       ...nexLabels({ [CHECK_LABEL]: "1" }),
       "--memory",
       CHECK_MEMORY,
+      "--dns-search",
+      zone,
       "--network",
       `default,alias=${address}`,
       CHECK_IMAGE,
@@ -263,9 +308,13 @@ export async function checkEnvironments(
     if (!(await resolveFromContainerDns(address)).includes(ip)) {
       throw new Error("Apple container’s DNS didn’t answer for the test container.");
     }
-    if (!(await resolveFromMac(address, ip))) {
+    if (!(await resolveInContainer(name, name)).includes(ip)) {
+      throw new Error("Containers can’t find each other by name.");
+    }
+    const reachable = await resolveFromMac(address, ip);
+    if (!reachable || !(await resolveFromMac(`${name}.${NEX_DOMAIN}`, MAC_LOOPBACK))) {
       throw new Error(
-        ".nex addresses don’t reach containers from this Mac. A VPN or DNS filter can block them.",
+        ".nex addresses don’t resolve on this Mac. A VPN or DNS filter can block them.",
       );
     }
   } finally {

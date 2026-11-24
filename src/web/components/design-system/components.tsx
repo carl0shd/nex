@@ -278,7 +278,7 @@ export function Inputs() {
               </Button>
             }
           />
-          <StatusCard tone="red" title="The copy failed" hint="postgres didn’t stop cleanly" />
+          <StatusCard tone="red" title="The test failed" hint="postgres didn’t start" />
         </Specimen>
         <Specimen name="KeyValueList · environment variables" className="flex-col items-stretch">
           <KeyValueList
@@ -419,7 +419,7 @@ export function Overlays() {
         <Specimen name="Menu" bare>
           <Menu>
             <MenuLabel>Environment · 4 services</MenuLabel>
-            <MenuItem icon={Globe} meta="monoku-fix-login.nex">
+            <MenuItem icon={Globe} meta="fix-login.nex">
               web
             </MenuItem>
             <MenuItem icon={Copy}>Copy link</MenuItem>

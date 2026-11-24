@@ -15,6 +15,7 @@ export function QuickCommandChips({
   onRun,
   onOpenTerminal,
   onStop,
+  onStopClaude,
   onEdit,
 }: {
   commands: readonly QuickCommandEntry[];
@@ -22,6 +23,7 @@ export function QuickCommandChips({
   onRun: (name: string) => void;
   onOpenTerminal: (name: string) => void;
   onStop: (name: string) => void;
+  onStopClaude?: (id: string) => void;
   onEdit?: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -70,6 +72,7 @@ export function QuickCommandChips({
             onRun={close(onRun)}
             onOpenTerminal={close(onOpenTerminal)}
             onStop={onStop}
+            onStopClaude={onStopClaude}
             onEdit={
               onEdit &&
               (() => {

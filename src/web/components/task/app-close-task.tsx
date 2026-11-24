@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Overlay } from "@/components/primitives/overlay";
 import { CloseTaskDialog } from "@/components/task/close-task-dialog";
 import { notifyCompact } from "@/lib/notify";
+import { closeEnvironment } from "@/lib/task-environment";
+import { useEnvironmentsStore } from "@/stores/environments.store";
 import { useCloseTaskStore } from "@/stores/close-task.store";
 import { usePreferencesStore } from "@/stores/preferences.store";
 import { useWorkspaceStore } from "@/stores/workspace.store";
@@ -13,7 +15,19 @@ function CloseTask({ sessionId, onDone }: { sessionId: string; onDone: () => voi
   const closeTask = useWorkspaceStore((s) => s.closeTask);
   const setAgentRunning = useWorkspaceStore((s) => s.setAgentRunning);
   const [uncommitted, setUncommitted] = useState<number | null>(null);
+  const [envBytes, setEnvBytes] = useState<number | null>(null);
+  const env = useEnvironmentsStore((s) => s.tasks[sessionId]);
   const worktreePath = session?.worktreePath;
+
+  useEffect(() => {
+    let cancelled = false;
+    void window.api.getTaskEnvironmentSize(sessionId).then((bytes) => {
+      if (!cancelled) setEnvBytes(bytes);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId]);
 
   useEffect(() => {
     if (!worktreePath) return;
@@ -48,7 +62,12 @@ function CloseTask({ sessionId, onDone }: { sessionId: string; onDone: () => voi
   return (
     <Overlay onClose={onDone}>
       <CloseTaskDialog
-        task={{ title, branch: session.branch, uncommitted }}
+        task={{
+          title,
+          branch: session.branch,
+          uncommitted,
+          environment: closeEnvironment(env, envBytes),
+        }}
         onCancel={onDone}
         onCommitFirst={() => {
           setAgentRunning(sessionId, true);

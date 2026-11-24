@@ -48,6 +48,11 @@ export interface EnvMount {
   readOnly?: boolean;
 }
 
+export interface EnvHostPort {
+  host: number;
+  container: number;
+}
+
 export interface EnvServiceDef {
   name: string;
   kind: EnvServiceKind;
@@ -59,6 +64,7 @@ export interface EnvServiceDef {
   mounts?: EnvMount[];
   volumes?: string[];
   ports: number[];
+  hostPorts?: EnvHostPort[];
   env: Record<string, string>;
   envFiles?: string[];
   data?: { path: string };
@@ -214,6 +220,8 @@ export interface Session {
   horizontalLayout: PanelLayout | null;
   sortOrder: number;
   width: number;
+  envSlug: string;
+  envOff: boolean;
 }
 
 export interface CreateSessionInput {
@@ -227,6 +235,7 @@ export interface CreateSessionInput {
   worktreePath: string;
   notesPath?: string;
   symlinks?: string[];
+  envOff?: boolean;
 }
 
 export interface UpdateSessionInput {
@@ -251,6 +260,8 @@ export interface StartWorkInput {
   baseBranch?: string;
   prompt?: string;
   agentSettings?: { model: string; effort: string; mode: string };
+  environment?: boolean;
+  resumeClaudeSession?: { id: string; title: string; updatedAt: number; path: string };
 }
 
 export interface CloneAgentAccountInput {
@@ -298,6 +309,7 @@ export interface UpdateTerminalInput {
 
 export type InterfaceSize = "compact" | "default" | "large";
 export type MotionPreference = "system" | "reduce" | "full";
+export type HomeScene = "time" | "dawn" | "day" | "dusk" | "night" | "off";
 export type TerminalCursor = "block" | "bar" | "underline";
 
 export interface Preferences {
@@ -309,6 +321,7 @@ export interface Preferences {
   codeFontSize: string;
   reduceTransparency: boolean;
   motion: MotionPreference;
+  homeScene: HomeScene;
   notifyNeedsYou: boolean;
   notifyFinished: boolean;
   notifyErrors: boolean;

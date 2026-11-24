@@ -1,11 +1,10 @@
 import { create } from "zustand";
-import type { ProjectEnvironment } from "@native/db/types";
 import type {
-  CleanBaseState,
   EnvCheckInput,
   EnvCheckState,
   EnvironmentStatus,
   EnvSetupState,
+  TaskEnvState,
 } from "@native/environments/types";
 import type { EnvAction } from "@/lib/environments";
 
@@ -14,11 +13,13 @@ interface EnvironmentsStore {
   setup: EnvSetupState | null;
   action: EnvAction | null;
   checks: Record<string, EnvCheckState>;
-  bases: Record<string, CleanBaseState>;
+  tasks: Record<string, TaskEnvState>;
   load: () => void;
-  loadBase: (projectId: string) => void;
-  buildBase: (projectId: string, environment: ProjectEnvironment) => void;
-  stopBase: (projectId: string) => void;
+  loadTasks: () => void;
+  startTask: (sessionId: string) => void;
+  pauseTask: (sessionId: string) => void;
+  restartTask: (sessionId: string, service?: string) => void;
+  pauseIdle: () => void;
   startCheck: (input: EnvCheckInput) => void;
   stopCheck: (projectPath: string) => void;
   refresh: () => Promise<void>;
@@ -30,7 +31,7 @@ interface EnvironmentsStore {
 
 let listening = false;
 let listeningChecks = false;
-let listeningBases = false;
+let listeningTasks = false;
 
 export const useEnvironmentsStore = create<EnvironmentsStore>((set, get) => {
   const during = async (action: EnvAction, task: () => Promise<void>) => {
@@ -46,14 +47,13 @@ export const useEnvironmentsStore = create<EnvironmentsStore>((set, get) => {
   const putCheck = (check: EnvCheckState) =>
     set((state) => ({ checks: { ...state.checks, [check.projectPath]: check } }));
 
-  const putBase = (base: CleanBaseState | null) => {
-    if (base) set((state) => ({ bases: { ...state.bases, [base.projectId]: base } }));
-  };
-
-  const listenBases = () => {
-    if (listeningBases) return;
-    listeningBases = true;
-    window.api.onCleanBase(putBase);
+  const putTask = (env: TaskEnvState | null) => {
+    if (!env) return;
+    set((state) => {
+      const { [env.sessionId]: _previous, ...rest } = state.tasks;
+      const gone = env.status === "none" && env.services.length === 0;
+      return { tasks: gone ? rest : { ...rest, [env.sessionId]: env } };
+    });
   };
 
   return {
@@ -61,7 +61,30 @@ export const useEnvironmentsStore = create<EnvironmentsStore>((set, get) => {
     setup: null,
     action: null,
     checks: {},
-    bases: {},
+    tasks: {},
+
+    loadTasks: () => {
+      if (listeningTasks) return;
+      listeningTasks = true;
+      window.api.onTaskEnvironment(putTask);
+      void window.api.getTaskEnvironments().then((all) => all.forEach(putTask));
+    },
+
+    startTask: (sessionId) => {
+      void window.api.startTaskEnvironment(sessionId).then(putTask);
+    },
+
+    pauseTask: (sessionId) => {
+      void window.api.pauseTaskEnvironment(sessionId);
+    },
+
+    restartTask: (sessionId, service) => {
+      void window.api.restartTaskEnvironment(sessionId, service);
+    },
+
+    pauseIdle: () => {
+      void window.api.pauseIdleTaskEnvironments();
+    },
 
     load: () => {
       if (!listening) {
@@ -94,20 +117,6 @@ export const useEnvironmentsStore = create<EnvironmentsStore>((set, get) => {
 
     stopCheck: (projectPath) => {
       void window.api.stopEnvironmentCheck(projectPath);
-    },
-
-    loadBase: (projectId) => {
-      listenBases();
-      void window.api.getCleanBase(projectId).then(putBase);
-    },
-
-    buildBase: (projectId, environment) => {
-      listenBases();
-      void window.api.buildCleanBase({ projectId, environment }).then(putBase);
-    },
-
-    stopBase: (projectId) => {
-      void window.api.stopCleanBase(projectId);
     },
 
     startSetup: () => {

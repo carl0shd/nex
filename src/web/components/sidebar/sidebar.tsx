@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { LayoutGrid, Plus, SquarePen } from "lucide-react";
+import { GalleryHorizontalEnd, LayoutGrid, Plus, SquarePen } from "lucide-react";
 import { Kbd } from "@/components/atoms/kbd";
 import GlideMenu from "@/components/primitives/glide-menu";
 import { ProjectGroup } from "@/components/sidebar/project-group";
@@ -14,6 +14,7 @@ export function Sidebar({
   workspaces,
   activeTaskId,
   overviewActive = !activeTaskId,
+  tasksActive = false,
   needsYou = 0,
   creating,
   environments,
@@ -23,6 +24,7 @@ export function Sidebar({
   onToggleWorkspace,
   onSelectTask,
   onOverview,
+  onTasks,
   onNewTask,
   onNewTaskInProject,
   onOpenProjectInFinder,
@@ -36,6 +38,7 @@ export function Sidebar({
   workspaces: SidebarWorkspace[];
   activeTaskId?: string;
   overviewActive?: boolean;
+  tasksActive?: boolean;
   needsYou?: number;
   creating?: ReactNode;
   environments?: ReactNode;
@@ -45,6 +48,7 @@ export function Sidebar({
   onToggleWorkspace?: (workspaceId: string) => void;
   onSelectTask?: (taskId: string) => void;
   onOverview?: () => void;
+  onTasks?: () => void;
   onNewTask?: () => void;
   onNewTaskInProject?: (projectId: string) => void;
   onOpenProjectInFinder?: (projectId: string) => void;
@@ -58,7 +62,7 @@ export function Sidebar({
   return (
     <aside
       aria-label="Navigation"
-      className={cn("relative flex w-[260px] shrink-0 flex-col bg-page px-2 pt-1.5", className)}
+      className={cn("relative flex w-[260px] shrink-0 flex-col px-2 pt-1.5", className)}
     >
       <GlideMenu className="flex flex-col gap-px">
         <SidebarLink
@@ -73,12 +77,19 @@ export function Sidebar({
           label="Overview"
           active={overviewActive}
           onClick={onOverview}
+        />
+        <SidebarLink
+          icon={GalleryHorizontalEnd}
+          label="Tasks"
+          active={tasksActive}
+          onClick={onTasks}
           trailing={
             needsYou > 0 && <span className="text-2xs text-orange tabular-nums">{needsYou}</span>
           }
         />
       </GlideMenu>
-      <div className="-mx-2 mt-[18px] flex min-h-0 flex-col overflow-y-auto px-2 pb-2">
+      <span className="mx-2.5 mt-3 h-px shrink-0 bg-line-tree" />
+      <div className="-mx-2 mt-2.5 flex min-h-0 flex-col overflow-y-auto px-2 pb-2">
         {workspaces.map((workspace) => (
           <div key={workspace.id} className="flex flex-col">
             <WorkspaceHeader

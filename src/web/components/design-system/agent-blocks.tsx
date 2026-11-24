@@ -27,6 +27,7 @@ import {
   TodoPlan,
   TurnSummary,
   UsageLimitCard,
+  WorkflowCard,
 } from "@/components/task/block-cards";
 import { LogoTile } from "@/components/atoms/logo-tile";
 import {
@@ -409,6 +410,58 @@ function CoordinationPanel() {
           { icon: Eye, verb: "Read", target: "src/oauth/callback.ts", running: true },
         ]}
       />
+      <Caption>Subagente en background · con su avance y Stop</Caption>
+      <SubagentCard
+        name="general-purpose"
+        task="Run the whole test suite"
+        meta="in background · 6 tools · 48k tokens · 1m 12s"
+        steps={[
+          { icon: Cpu, verb: "Running the auth tests", target: "Bash", running: true, prose: true },
+        ]}
+        onOpen={() => {}}
+        onStop={() => {}}
+      />
+      <Caption>Workflow · corriendo, agentes por fase</Caption>
+      <WorkflowCard
+        name="review-changes"
+        description="Review the diff and verify each finding"
+        status="running"
+        meta="2 of 5 agents · 96k tokens · 2m 4s"
+        phases={[
+          {
+            title: "Review",
+            agents: [
+              { label: "review:bugs", state: "done", meta: "41k tokens" },
+              { label: "review:perf", state: "done", meta: "33k tokens" },
+              { label: "review:security", state: "running", meta: "22k tokens" },
+            ],
+          },
+          {
+            title: "Verify",
+            agents: [
+              { label: "verify:login.tsx", state: "queued", meta: "" },
+              { label: "verify:url.ts", state: "queued", meta: "" },
+            ],
+          },
+        ]}
+        onStop={() => {}}
+      />
+      <Caption>Workflow · detenido</Caption>
+      <WorkflowCard
+        name="apple-pear"
+        description="Two agents in parallel"
+        status="stopped"
+        meta="2 agents · 40k tokens · 2.1s · stopped"
+        phases={[
+          {
+            title: "Words",
+            agents: [
+              { label: "apple", state: "done", meta: "20k tokens" },
+              { label: "pear", state: "failed", meta: "" },
+            ],
+          },
+        ]}
+      />
       <Caption>Subagente · terminado, se pliega con su resultado</Caption>
       <BlockRow
         icon={Cpu}
@@ -431,8 +484,23 @@ function CoordinationPanel() {
       <ParallelAgents
         agents={[
           { name: "Explore", task: "Map the auth routes", meta: "41s", done: true },
-          { name: "Explore", task: "Find redirect helpers in api/", meta: "18s", done: false },
-          { name: "Review", task: "Check tests for open redirects", meta: "12s", done: false },
+          {
+            name: "Explore",
+            task: "Find redirect helpers in api/",
+            meta: "4 tools · 18s",
+            done: false,
+            activity: "Searching redirect(",
+            onOpen: () => {},
+            onStop: () => {},
+          },
+          {
+            name: "Review",
+            task: "Check tests for open redirects",
+            meta: "12s",
+            done: false,
+            onOpen: () => {},
+            onStop: () => {},
+          },
         ]}
       />
       <Caption>Plan para aprobar</Caption>

@@ -1,45 +1,22 @@
 import { useState } from "react";
-import type { AgentOption } from "@/components/new-task/agent-picker";
-import { NewTaskDialog, type NewTaskDraft } from "@/components/new-task/new-task-dialog";
-import type { NewTaskProject } from "@/components/new-task/place-pickers";
+import { NewTaskDialog } from "@/components/new-task/new-task-dialog";
+import type { NewTaskDraft } from "@/hooks/use-task-fields";
 import { Composer } from "@/components/composer/composer";
-import { HomeEmpty } from "@/components/home/home-empty";
+import { HomeHero } from "@/components/home/home-hero";
 import { Sidebar } from "@/components/sidebar/sidebar";
 import { TaskCard } from "@/components/task/task-card";
 import { TaskEmptyState } from "@/components/task/task-empty-state";
 import { WORKSPACES } from "@/components/design-system/sidebar-samples";
+import { SAMPLE_AGENTS, SAMPLE_PROJECTS } from "@/components/design-system/new-task-samples";
+import { SampleHomePrompt } from "@/components/design-system/sample-home-prompt";
 import { Section, Specimen } from "@/components/design-system/specimen";
-
-const MONOKU = { id: "monoku", name: "Monoku", color: "#33843F" };
-const PERSONAL = { id: "personal", name: "Personal", color: "#6b21a8" };
-
-const PROJECTS: NewTaskProject[] = [
-  { id: "nex", name: "nex", workspace: MONOKU, branches: ["main", "develop", "release/2.4"] },
-  { id: "api", name: "api", workspace: MONOKU, branches: ["main", "staging"] },
-  { id: "website", name: "website", workspace: MONOKU, branches: ["main"] },
-  { id: "dotfiles", name: "dotfiles", workspace: PERSONAL, branches: ["master"] },
-];
-
-const AGENTS: AgentOption[] = [
-  {
-    id: "claude",
-    name: "Claude Code",
-    detail: "v2.4.1 · detected",
-    installed: true,
-    accounts: [
-      { id: "work", name: "Work", plan: "Max", color: MONOKU.color, usedPercent: 62 },
-      { id: "personal", name: "Personal", plan: "Pro", color: PERSONAL.color, usedPercent: 12 },
-    ],
-  },
-  { id: "shell", name: "Shell only", detail: "A plain terminal, no agent", installed: true },
-];
 
 function NewTaskDemo() {
   const [open, setOpen] = useState(false);
   const [started, setStarted] = useState<NewTaskDraft | null>(null);
   return (
     <div className="relative flex h-[720px] w-full overflow-hidden rounded-card bg-page shadow-card">
-      <Sidebar workspaces={WORKSPACES} />
+      <Sidebar workspaces={WORKSPACES} onNewTask={() => setOpen(true)} />
       <div className="flex min-w-0 flex-1 flex-col items-center">
         {started ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3">
@@ -59,13 +36,17 @@ function NewTaskDemo() {
             </button>
           </div>
         ) : (
-          <HomeEmpty onNewTask={() => setOpen(true)} />
+          <HomeHero
+            phase="night"
+            greeting="Good evening"
+            prompt={<SampleHomePrompt onStart={setStarted} />}
+          />
         )}
       </div>
       {open && (
         <NewTaskDialog
-          projects={PROJECTS}
-          agents={AGENTS}
+          projects={SAMPLE_PROJECTS}
+          agents={SAMPLE_AGENTS}
           onClose={() => setOpen(false)}
           onStart={(draft) => {
             setStarted(draft);
@@ -84,7 +65,10 @@ export function NewTask() {
       title="New task"
       description="⌘T opens it over whatever is on screen. The branch name follows the title; ⌘↵ starts the task."
     >
-      <Specimen name="NewTaskDialog · press New task, type a title, open each picker" bare>
+      <Specimen
+        name="NewTaskDialog · press New task in the sidebar, or start from the home box"
+        bare
+      >
         <NewTaskDemo />
       </Specimen>
       <Specimen name="A new task with no messages yet" bare>

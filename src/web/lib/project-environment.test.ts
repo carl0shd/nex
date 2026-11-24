@@ -12,7 +12,10 @@ import {
   issuesLabel,
   memoryOptions,
   mountsNote,
-  parsePorts,
+  parsePortMappings,
+  portsPatch,
+  portsText,
+  servicePort,
   removeService,
   seedSummary,
   serviceCheck,
@@ -169,7 +172,21 @@ describe("project environment", () => {
   });
 
   it("reads ports and memory choices", () => {
-    expect(parsePorts("5173, 24678 5173 nope 0")).toEqual([5173, 24678]);
+    expect(parsePortMappings("5173, 24678 5173 nope 0")).toEqual([
+      { host: 5173, container: 5173 },
+      { host: 24678, container: 24678 },
+    ]);
+    const mappings = parsePortMappings("5173:80, 8000 9:0");
+    expect(mappings).toEqual([
+      { host: 5173, container: 80 },
+      { host: 8000, container: 8000 },
+    ]);
+    expect(portsPatch(mappings)).toEqual({
+      ports: [80, 8000],
+      hostPorts: [{ host: 5173, container: 80 }],
+    });
+    expect(portsText({ ...ENV.services[0]!, ...portsPatch(mappings) })).toBe("5173:80, 8000");
+    expect(servicePort({ ...ENV.services[0]!, ...portsPatch(mappings) })).toBe(5173);
     expect(memoryOptions(640).map((option) => option.label)).toEqual([
       "256 MB",
       "384 MB",
@@ -260,8 +277,8 @@ describe("project environment", () => {
 
   it("lists services for the onboarding card", () => {
     expect(foundServices(ENV)).toEqual([
-      { name: "web", detail: "pnpm dev", code: true, meta: ":5173", address: "task.nex" },
-      { name: "api", detail: "pnpm api", code: true, meta: ":8000", address: "api.task.nex" },
+      { name: "web", detail: "pnpm dev", code: true, address: "task.nex" },
+      { name: "api", detail: "pnpm api", code: true, address: "api.task.nex" },
       {
         name: "db",
         detail: "postgres:16-alpine",

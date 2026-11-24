@@ -60,6 +60,7 @@ export interface ContainerInfo {
   state: string;
   labels: Record<string, string>;
   ip: string | null;
+  searchDomains: string[];
 }
 
 export function parseContainers(json: string): ContainerInfo[] {
@@ -68,11 +69,13 @@ export function parseContainers(json: string): ContainerInfo[] {
     const status = object(raw.status);
     const networks = Array.isArray(status.networks) ? status.networks.map(object) : [];
     const address = networks[0]?.ipv4Address;
+    const search = object(configuration.dns).searchDomains;
     return {
       id: String(raw.id ?? configuration.id ?? ""),
       state: typeof status.state === "string" ? status.state : "unknown",
       labels: stringMap(configuration.labels),
       ip: typeof address === "string" && address ? (address.split("/")[0] ?? null) : null,
+      searchDomains: Array.isArray(search) ? search.filter((item) => typeof item === "string") : [],
     };
   });
 }
@@ -189,8 +192,12 @@ const CANCELLED = /User canceled|\(-128\)/i;
 const NS_ERROR = /Error Domain=\S+ Code=-?\d+ "([^"]+)"/;
 const LONG_HASH = /\b[0-9a-f]{32,}\b/g;
 
+const MISSING_PATH = /path '(?:.*\/\.worktrees\/[^/]+\/)?([^']+)' does not exist/;
+
 export function friendlyError(raw: string): string {
   if (CANCELLED.test(raw)) return "The password dialog was closed.";
+  const missing = MISSING_PATH.exec(raw)?.[1];
+  if (missing) return `${missing} isn’t in this task’s files, so it can’t be mounted.`;
   const lines = raw
     .split("\n")
     .map((line) => line.trim())

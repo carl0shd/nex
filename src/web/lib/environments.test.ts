@@ -29,6 +29,7 @@ const STATUS: EnvironmentStatus = {
     running: true,
   },
   dns: { domain: "nex", registered: true },
+  blockedPorts: [],
   usage: { containers: 3, running: 2, usedGb: 0.2 },
   setup: null,
 };

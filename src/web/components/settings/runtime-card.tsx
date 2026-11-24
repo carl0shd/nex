@@ -15,6 +15,7 @@ export interface RuntimeStatus {
   containers: number;
   usedGb: number;
   budgetGb: number;
+  blocked?: string;
 }
 
 const FILL: Record<UsageTone, string> = {
@@ -27,6 +28,7 @@ function health(runtime: RuntimeStatus): { label: string; tone: "green" | "orang
   if (runtime.state === "restarting") return { label: "Restarting", tone: "neutral" };
   if (runtime.state === "stopped") return { label: "Stopped", tone: "neutral" };
   if (runtime.addresses !== "registered") return { label: ".nex addresses off", tone: "orange" };
+  if (runtime.blocked) return { label: "Port in use", tone: "orange" };
   return { label: "Healthy", tone: "green" };
 }
 
@@ -69,6 +71,11 @@ export function RuntimeCard({
           <ValuePill tone={status.tone}>{status.label}</ValuePill>
         </span>
         <span className="text-xs text-ink-3 tabular-nums">{summary(runtime)}</span>
+        {runtime.blocked && running && (
+          <span title={runtime.blocked} className="truncate text-xs text-orange">
+            {runtime.blocked}
+          </span>
+        )}
         <span className="mt-1 block h-1 overflow-hidden rounded-full bg-hover">
           <span
             className={cn(

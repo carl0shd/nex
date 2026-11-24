@@ -16,6 +16,7 @@ import {
   modeFromCli,
   readAgentSettings,
   saveAgentSettings,
+  ultracodeOn,
   type AgentSettings,
 } from "@native/agents/agent-settings";
 import { toAgentCommands, type AgentCommand } from "@native/agents/agent-commands";
@@ -36,7 +37,9 @@ import { rememberPastClaudeSession } from "@native/agents/agent-history";
 import { carryTranscript, transcriptPath } from "@native/agents/transcript";
 import { requestPermission, dropPermissionsFor } from "@native/agents/permissions";
 import { clearBackground, trackBackground } from "@native/agents/background-tracker";
+import { endTrackedAgentTasks, trackAgentTasks } from "@native/agents/agent-task-tracker";
 import { IPC } from "@native/ipc/channels";
+import { getNexDir } from "@native/paths";
 
 export type AgentRunState = "running" | "idle";
 
@@ -51,6 +54,7 @@ interface RunningAgent {
   buffer: string;
   settings: AgentSettings;
   restartWhenIdle: boolean;
+  note: string | null;
   claudeSessionId: string | null;
   initRequestId: string;
   cwd: string;
@@ -91,10 +95,37 @@ function broadcast(channel: string, payload: unknown) {
   for (const window of BrowserWindow.getAllWindows()) window.webContents.send(channel, payload);
 }
 
+const activityListeners = new Set<(sessionId: string, state: AgentRunState) => void>();
+let systemNote: (sessionId: string) => string | null = () => null;
+
+export function setAgentSystemNote(note: (sessionId: string) => string | null): void {
+  systemNote = note;
+}
+
+const systemNoteArgs = (note: string | null) => (note ? ["--append-system-prompt", note] : []);
+
+function restartBetweenTurns(sessionId: string, agent: RunningAgent) {
+  if (agent.state === "idle") stopAgent(sessionId);
+  else agent.restartWhenIdle = true;
+}
+
+export function refreshAgentSystemNote(sessionId: string): void {
+  const agent = agents.get(sessionId);
+  if (agent && systemNote(sessionId) !== agent.note) restartBetweenTurns(sessionId, agent);
+}
+
+export function onAgentActivity(
+  listener: (sessionId: string, state: AgentRunState) => void,
+): () => void {
+  activityListeners.add(listener);
+  return () => activityListeners.delete(listener);
+}
+
 function setState(sessionId: string, state: AgentRunState) {
   const agent = agents.get(sessionId);
   if (agent) agent.state = state;
   broadcast(IPC.AGENT_STATE, { sessionId, state });
+  for (const listener of activityListeners) listener(sessionId, state);
 }
 
 function write(sessionId: string, message: unknown) {
@@ -234,6 +265,7 @@ function handleLine(sessionId: string, line: string) {
     if (agents.get(sessionId)?.restartWhenIdle) stopAgent(sessionId);
   }
   trackBackground(sessionId, message);
+  trackAgentTasks(sessionId, message);
   if (FORWARDED.has(message.type as string)) {
     broadcast(IPC.AGENT_EVENT, { sessionId, event: message } satisfies AgentLiveEvent);
   }
@@ -268,12 +300,14 @@ function start(sessionId: string): RunningAgent {
   }
 
   const settings = readAgentSettings(sessionId);
+  const note = systemNote(sessionId);
   const child = spawn(
     agent.command,
     [
       ...STREAM_ARGS,
       ...cliFlags(settings, modelSupportsEffort(cliModel(settings.model))),
       ...claudeSessionArgs(terminal.id),
+      ...systemNoteArgs(note),
       ...agent.args,
       ...extraAgentArgs(),
     ],
@@ -285,6 +319,7 @@ function start(sessionId: string): RunningAgent {
     buffer: "",
     settings,
     restartWhenIdle: false,
+    note,
     claudeSessionId: null,
     initRequestId: randomUUID(),
     cwd: session.worktreePath,
@@ -315,6 +350,7 @@ function start(sessionId: string): RunningAgent {
     agents.delete(sessionId);
     dropPermissionsFor(sessionId);
     clearBackground(sessionId);
+    endTrackedAgentTasks(sessionId);
     setState(sessionId, "idle");
     if (code === 0) return;
     const event = { type: "nex_exit", code, log: entry.stderr.join("\n") };
@@ -358,16 +394,18 @@ export function interruptAgent(sessionId: string): void {
   setState(sessionId, "idle");
 }
 
+export async function stopAgentTask(sessionId: string, taskId: string): Promise<boolean> {
+  if (!agents.has(sessionId)) return false;
+  return (await ask(sessionId, { subtype: "stop_task", task_id: taskId })) !== null;
+}
+
 export function configureAgent(sessionId: string, settings: AgentSettings): void {
   saveAgentSettings(sessionId, settings);
   const agent = agents.get(sessionId);
   if (!agent) return;
   const before = agent.settings;
   agent.settings = settings;
-  const restart = () => {
-    if (agent.state === "idle") stopAgent(sessionId);
-    else agent.restartWhenIdle = true;
-  };
+  const restart = () => restartBetweenTurns(sessionId, agent);
   const live: Promise<Record<string, unknown> | null>[] = [];
   if (before.model !== settings.model) {
     live.push(ask(sessionId, { subtype: "set_model", model: cliModel(settings.model) }));
@@ -376,6 +414,10 @@ export function configureAgent(sessionId: string, settings: AgentSettings): void
     live.push(ask(sessionId, { subtype: "set_permission_mode", mode: cliMode(settings.mode) }));
   }
   if (cliEffort(before.effort) !== cliEffort(settings.effort)) return restart();
+  if (ultracodeOn(before) !== ultracodeOn(settings)) {
+    const flags = { ultracode: ultracodeOn(settings) };
+    live.push(ask(sessionId, { subtype: "apply_flag_settings", settings: flags }));
+  }
   void Promise.all(live).then((answers) => {
     if (answers.some((answer) => answer === null) && agents.get(sessionId) === agent) restart();
   });
@@ -460,8 +502,7 @@ export async function mcpRemove(sessionId: string, name: string): Promise<McpSer
       (error) => (error ? reject(error) : resolve()),
     ),
   );
-  if (agent.state === "idle") stopAgent(sessionId);
-  else agent.restartWhenIdle = true;
+  restartBetweenTurns(sessionId, agent);
   return (await mcpStatus(sessionId)).filter((item) => item.name !== name);
 }
 
@@ -473,8 +514,7 @@ export async function mcpAdd(sessionId: string, input: McpAddInput): Promise<Mcp
       error ? reject(new Error(stderr.trim() || error.message)) : resolve(),
     ),
   );
-  if (agent.state === "idle") stopAgent(sessionId);
-  else agent.restartWhenIdle = true;
+  restartBetweenTurns(sessionId, agent);
   return mcpStatus(sessionId);
 }
 
@@ -502,4 +542,48 @@ export function switchAgentAccount(sessionId: string, accountId: string): void {
   carryTranscript(terminal.id, account.configDir);
   sessionRepo.update(sessionId, { accountId });
   stopAgent(sessionId);
+}
+
+const MODELS_PROBE_TIMEOUT_MS = 20_000;
+
+interface ControlResponse {
+  request_id?: string;
+  response?: { models?: unknown };
+}
+
+function controlResponse(line: string): ControlResponse | null {
+  try {
+    const message = JSON.parse(line) as { type?: string; response?: ControlResponse };
+    return message.type === "control_response" ? (message.response ?? null) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function refreshAgentModels(): void {
+  const agent = agentRepo.getAll()[0];
+  if (!agent) return;
+  const requestId = randomUUID();
+  const child = spawn(agent.command, [...STREAM_ARGS, ...agent.args], { cwd: getNexDir() });
+  const stop = () => child.kill();
+  const timer = setTimeout(stop, MODELS_PROBE_TIMEOUT_MS);
+  let buffer = "";
+  child.on("error", () => clearTimeout(timer));
+  child.on("exit", () => clearTimeout(timer));
+  child.stdout.setEncoding("utf8").on("data", (chunk: string) => {
+    buffer += chunk;
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    for (const line of lines) {
+      const response = controlResponse(line);
+      if (response?.request_id !== requestId) continue;
+      if (rememberAgentModels(toAgentModels(response.response?.models))) {
+        broadcast(IPC.AGENT_MODELS, null);
+      }
+      stop();
+    }
+  });
+  child.stdin.write(
+    `${JSON.stringify({ type: "control_request", request_id: requestId, request: { subtype: "initialize" } })}\n`,
+  );
 }

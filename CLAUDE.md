@@ -156,7 +156,7 @@ our paths, and comments that broke the [Comments](#comments) rules were removed.
   `segmented-control` (text or icons), `switch`, `select-button`, `text-field`, `selection-mark`
   (clickable when it gets `onClick`), `option-card`,
   `agent-tile` (`ClaudeTile`), `agent-logo` (Claude or shell), `entity-chip` (`Monogram` workspace badge), `meter`, `orbit`,
-  `shimmer`, `stream-text` (block caret), `spinner` (`Spinner`, `SpinnerArc` icon), `color-swatches`, `dither-progress`, `dither-field` (the effort slider's dot field), `dither-stars` (a canvas starfield in the dither palette — three parallax layers drifting left, stars that twinkle, pulse or bob, sparkles and meteors; pauses off screen; math in `lib/dither.ts`), `checkbox` (square), `search-field` (search input with an optional key hint), `hover-swap` (`HoverSwap`: a row's detail cross-fades into its hover action), `expand` (`Expand`: a detail opens and closes by height and fade; its content mounts on first open), `inline-code`, `service-chip` (`ServiceChip`: a status dot and a service name, pressed while its detail is open), `nex-logo` (`NexLogo`, the isotype on its own — never inside a tile — and `NexWordmark`), `logo-tile` (connector and MCP
+  `shimmer`, `stream-text` (block caret), `spinner` (`Spinner`, `SpinnerArc` icon), `color-swatches`, `dither-progress`, `dither-field` (the effort slider's dot field), `dither-scene` (`DitherScene`: a dithered sea and sky at dawn, day, dusk or night — `scenePhase` from the hour — with drifting cumulus (clusters of puffs lit from above, clear of the sun or moon at the start), waves, the light's reflection, stars and meteors at night; opaque, drawn at half resolution with a 4×4 screen in three tones (`--scene-<phase>-0..2`), the only colored backdrop in the app, and `HomeHero` sits on it in the dark theme; `focusRef` centers the quiet area behind that element; the Home background preference (`homeScene`: time of day, a fixed phase or off) goes through `homeScenePhase`; math in `lib/dither-scene.ts`), `dither-stars` (a canvas starfield in the dither palette — three parallax layers drifting left, stars that twinkle, pulse or bob, sparkles and meteors; pauses off screen; math in `lib/dither.ts`), `slider` (`Slider`: a range input with a thin track and a round thumb), `checkbox` (square), `search-field` (search input with an optional key hint), `hover-swap` (`HoverSwap`: a row's detail cross-fades into its hover action), `expand` (`Expand`: a detail opens and closes by height and fade; its content mounts on first open), `side-scroll` (`SideScroll`: a row that scrolls sideways — wheel too — with a dark blurred fade on each edge that has more, centering the `data-scroll-focus` item when `focusKey` changes), `inline-code`, `service-chip` (`ServiceChip`: a status dot and a service name, pressed while its detail is open), `nex-logo` (`NexLogo`, the isotype on its own — never inside a tile — and `NexWordmark`), `logo-tile` (connector and MCP
   logos). `segmented-control` also has a `bar` variant (icon-only, full width) and `switch` /
   `selection-mark` take `size="sm"`.
 - primitives: `menu` (`Menu`, `MenuItem`, `MenuLabel`, `MenuSeparator` over `GlideMenu`),
@@ -206,8 +206,13 @@ our paths, and comments that broke the [Comments](#comments) rules were removed.
   environment, session, context, connectors — to `EnvironmentPopover`, `SessionInfoPopover`,
   `ContextPopover`, `ConnectorsPopover`), `task-view/` (`ExpandedTaskView` lays out header, strip,
   `TaskChat` and the `TaskDock` side panel, which can expand to full width; `TaskViewHeader`), `home/`
-  (`AgentStrip` — freely scrolling task cards with the previous one peeking, `StripSummary` and a
-  scroll map — `HomeEmpty`, which `routes/home.tsx` renders until tasks are wired, and
+  (the sidebar's Overview and Tasks links switch `homeView` in `workspace.store.ts`; opening a task goes to Tasks; `AgentStrip`, the Tasks view — freely scrolling task cards with the previous one peeking, `StripSummary` in a glass pill and a
+  scroll map, over the same full-window scene (`HomeBackdrop`) — `HomeHero`, the Overview in `routes/home.tsx`: the greeting, `HomePrompt`
+  (a title plus the new task fields — `TaskFieldRows`, which wrap to a second row, over `hooks/use-task-fields.tsx`, shared with
+  `NewTaskDialog` — that starts the task directly; `AppHomePrompt` wires it through `hooks/use-new-task-launcher.ts`,
+  which `AppNewTask` uses too) and `HomeStats` (`HomeStat` tiles: tasks by state, which opens Tasks, spend today, the usage limit and environments; `lib/home-stats.ts`, counts in `lib/task-status.ts`) over `DitherScene`; the route renders one `HomeBackdrop` for Overview and Tasks (so switching never redraws it, `HomeHero backdrop={false}`), which `fullWindow` portals into the app shell's backdrop layer
+  (`layout/app-backdrop.tsx`) with `ChromeGlass` (`layout/chrome-glass.tsx`), one blurred `bg-page-glass` layer clipped to the
+  titlebar and sidebar so the blur runs on without a seam (titlebar and sidebar themselves have no background); `TasksEmpty` (Tasks with nothing running) and
   `AddAgentSlot`, the dashed card next to the only task), `new-task/`
   (`NewTaskDialog` over a `scrim`: title, details and `FieldPill`s for project, base branch, agent,
   model and mode; the branch name comes from the title via `lib/task-branch.ts`; `AgentPicker`,
@@ -221,7 +226,7 @@ our paths, and comments that broke the [Comments](#comments) rules were removed.
   data so search (`lib/settings-search.ts`) filters rows and drops empty sections; only options that
   do something are listed; `SettingsIndex`
   follows the scroll with a sliding marker and jumps on click; `AccountList` + `RemoveAccountDialog`,
-  `WorkspaceCard`, `RuntimeCard` (Apple container, `.nex` addresses, Restart and Repair) + `RemoveEnvironmentsDialog`, `ShortcutRow` records a new shortcut (`lib/shortcut.ts`);
+  `WorkspaceCard`, `RuntimeCard` (Apple container, `.nex` addresses, ports other apps hold, Restart and Repair) + `RemoveEnvironmentsDialog`, `ShortcutRow` records a new shortcut (`lib/shortcut.ts`);
   `LicensesView` + `LicenseSheet` read `assets/licenses.json`; defaults and options in
   `settings-values.ts`; its dialogs use `Overlay fullWindow`, which portals to the body so the scrim covers the whole window and the dialog sits in its center),
   `onboarding/` (`OnboardingFlow` runs Welcome and the five steps — `AgentStep` (ready, signed out,
@@ -233,18 +238,22 @@ our paths, and comments that broke the [Comments](#comments) rules were removed.
   line — `BranchEditor`, `WorktreeSetupEditor`, `EnvironmentEditor` (`projects/environment-editor.tsx`:
   one sentence and a test status line with "Test it", issues folded into one line, services as
   `ServiceChip`s grouped "You open" / "Runs in the background" / "Data" (`serviceRole`; the Data
-  heading carries the clean base copy state and a "Seed and migrations" disclosure), a chip opens its
-  `ServiceDetail` (`projects/service-detail.tsx`: command and memory, the rest under Advanced) below
+  group ends with a "Seed and migrations" disclosure), a chip opens its
+  `ServiceDetail` (`projects/service-detail.tsx`: command and memory, "Opens at" `<short>.{task}.nex`, the rest under Advanced) below
   its group; Add service and Detect again at the bottom; helpers in `lib/project-environment.ts`), `QuickCommandsEditor`; the dialog never grows past the window: header
   and actions stay put and the body scrolls (`quiet-scroll`), for adding, editing and onboarding; each
   line's sentence comes from `lib/project-summary.ts`; the base branch, pull and worktree setup are saved on the
   project and `native/git/start-work.ts` applies them: start from `origin/<base>`, copy files, run install and
   script in a "Setup" shell), `environment/` (`EnvTaskButton` = the tab bar
-  `EnvButton` (running, starting, paused, down, waiting) + `EnvMenu`; `EnvBanner` under the tab bar
-  for starting, paused, a service down or waiting for memory; `EnvStartStatus` inside
-  `TaskEmptyState`; `EnvironmentsMeter` in the sidebar footer opens `MachinePopover` (memory used by Nex containers against the memory budget);
-  `CleanBaseFailedDialog` (the editor's Data line and its labels come from `lib/clean-base.ts`), `AddressStatus`; closing a task is `task/close-task-dialog.tsx`). They take plain
-  props; nothing is wired to the stores yet.
+  `EnvButton` (running, starting, paused, down, waiting) + `EnvMenu` (a service whose port another app
+  holds shows it in orange); `EnvBanner` under the tab bar for starting, paused, a service down,
+  waiting for memory or a published port in use (`EnvBannerSlot` opens and closes it by height); `EnvStartStatus` inside
+  `TaskEmptyState` (`BootStatus`: the effort slider's `DitherField`, mirrored, behind the label and count); `EnvironmentsMeter` in the sidebar footer opens `MachinePopover` (memory used by Nex containers against the memory budget);
+  `AddressStatus`; closing a task is `task/close-task-dialog.tsx`, which lists the
+  environment's data and address; `environment/app-task-environment.tsx` (`AppEnvButton`, `AppEnvBanner`,
+  `AppEnvStartStatus`) wires them to the task states in `environments.store.ts`, mapped by
+  `lib/task-environment.ts`). They take plain props; outside the environment pieces nothing is wired to the
+  stores yet.
 
 The other beautiful-ui primitives are still in their original look and are not shown anywhere yet.
 
@@ -260,7 +269,7 @@ only exception is inline `style` for dynamic colors passed as props (e.g. worksp
 - The palette lives in `:root` (light) and `.dark` (the wireframe palette — the default). **A theme
   only overrides these variables**, and `@theme inline` turns them into utilities:
   surfaces `page` · `canvas` · `surface` · `surface-raised` · `elevated` · `inset`; fills `field` ·
-  `hover` · `hover-2` · `glass`; ink `ink` … `ink-6`, `inverse`; lines `line-soft` · `line` ·
+  `hover` · `hover-2` · `glass` · `page-glass` · `surface-glass`; ink `ink` … `ink-6`, `inverse`; lines `line-soft` · `line` ·
   `line-chip` · `line-strong` · `line-focus` · `ring-idle`; brand `accent` (logo green #33843F) ·
   `accent-hover` · `accent-ink` · `accent-tint` · `on-accent`; semantic `green` · `orange` · `red`
   (`red-solid` for filled) · `blue` · `violet`, each with a `-tint`; identity `claude` · `claude-tile`; overlay `scrim`.
@@ -344,45 +353,71 @@ Each task runs Claude Code headless, one process per task, in `native/agents/age
 - **Sent messages** are parsed back into pills and pasted-text cards by `lib/user-message.ts`; attached
   images carry their file name as an `[Image N: name]` line that the chat strips from the bubble.
 - **MCP servers** are added with `claude mcp add` through `mcpAdd` (`agents/mcp-servers.ts` builds the args).
+- **Subagents and workflows** (verified on 2.1.322): `task_started` / `task_progress` / `task_updated` /
+  `task_notification` for `local_agent` and `local_workflow` are kept per task by `agents/agent-tasks.ts`
+  (pure) and `agent-task-tracker.ts` (`AGENT_TASKS`); a workflow's `workflow_progress` lists its phases and
+  agents. `SubagentCard`, `ParallelAgents` and `WorkflowCard` show them live with Stop (`stop_task`); the
+  `SubagentSheet` reads a subagent's own transcript, `<session>/subagents/agent-<id>.jsonl`, found by the
+  `toolUseId` in its `.meta.json`. Background agents and workflows also list under "Started by Claude".
+- **Ultracode** is Claude Code's session mode, not an effort: the composer's Ultracode step runs `--effort max`
+  with `--settings {"ultracode":true}`, and switching it on or off mid-task sends `apply_flag_settings`.
+- **Continuing a Claude Code session:** `agents/claude-sessions.ts` lists the CLI conversations of a project's
+  folder (not ones a task already owns); picking one in the "New chat" pill copies its transcript into the
+  task's worktree folder and the agent starts with `--resume`.
 - Never drive the agent through a pty or by simulating keys.
 
 ### Environments
 
 Tasks run their services on native Apple container (`native/environments/`): every service is its
 own container, so its own micro-VM with its own IP on `192.168.64.0/24`. No Linux machine, no Docker;
-images a project builds come from Apple container's own builder. Ports never collide because nothing
-is published to localhost.
+images a project builds come from Apple container's own builder. Nothing is published by Apple
+container; the Mac reaches every task through Nex's own proxy (`proxy.ts`), so tasks never collide.
 
 - **Setup** (`service.ts`, steps in `setup-steps.ts`): install Apple container (signed pkg from
   GitHub), start it with `--enable-kernel-install`, register `.nex` addresses, then run a throwaway
-  container and open its address. Install and `.nex` share one password prompt; a failed step retries
-  from itself. Setup also removes what the old Linux-machine version left (`nex` machine, `nex-machine`
+  container and check that its `nexsvc` alias answers on Apple's DNS, from the Mac and inside the
+  container (`getent ahostsv4` through its search domain), and that a `.nex` name is loopback. Install and `.nex` share one password prompt; a failed step retries from itself; Settings ›
+  Environments "Repair" re-runs the registration (existing installs show ".nex addresses off" until then). Setup also removes what the old Linux-machine version left (`nex` machine, `nex-machine`
   images, its builder and folders).
 - **Labels:** everything Nex creates carries `nex=1` (`labels.ts`), plus `nex.task=<id>` per task;
   status, memory use (`container stats`) and uninstall only ever look at labelled containers and volumes.
-- **`.nex` addresses:** a dotted alias (`--network default,alias=<name>.nex`) resolves through
-  container's DNS (`127.0.0.1:2053`) without a `[dns] domain` in `config.toml`, and
-  `sudo container system dns create nex` writes `/etc/resolver/containerization.nex` so macOS asks it.
+- **Nex DNS** (`nex-dns.ts`, packets pure in `dns-packet.ts`, resolver file in `resolver-file.ts`): a
+  UDP server in main on `127.0.0.1:53535` (or the next free one up to 53544, kept in the `nexDnsPort`
+  setting). `/etc/resolver/nex` (`nameserver 127.0.0.1`, `port`, `search_order 1`) sends the Mac's
+  `.nex` lookups to it. Every `.nex` name answers `127.0.0.1` / `::1` (TTL 5 s); names outside `.nex`
+  are NXDOMAIN.
+- **Two domains, never one** (verified on 1.7.1): containers ask the gateway `192.168.64.1`, which
+  answers aliases only inside a domain registered with `container system dns create`; an alias in an
+  unregistered domain answers on 2053 from the Mac but is NXDOMAIN inside containers. Apple's
+  `/etc/resolver/containerization.<domain>` wins over Nex's file whatever its `search_order`, so a
+  registered `nex` handed the Mac container IPs for `mailpit.<task>.nex`. Discovery lives in its own
+  domain, `nexsvc` (`DISCOVERY_DOMAIN`), and `nex` belongs to Nex alone. Registered means Nex's file on
+  the current port, `containerization.nexsvc` present and `containerization.nex` gone; one admin batch
+  (`dns delete nex`, `dns create nexsvc`, Nex's file; with the install when both are needed), which is
+  also what Repair runs. Uninstall removes all three files.
 - **Service discovery** (verified on 1.7.1): every service of a task gets the alias
-  `<service>.<task>.nex` and every container of that task runs with `--dns-search <task>.nex`, so the
-  names a project already uses (`db`, `redis` in `DATABASE_URL`) resolve inside the task, each task to
-  its own containers. A container can carry several aliases; the first app service with a port also
-  gets `<task>.nex`, the task's main address. There is no `--add-host`. Isolation is by name only:
-  every container shares `192.168.64.0/24`.
+  `<service>.<task>.nexsvc`, and every container of that task runs with `--dns-search <task>.nexsvc`,
+  so the names a project already uses (`db`, `redis` in `DATABASE_URL`) resolve inside the task, each
+  task to its own containers. A task whose containers carry another search domain (the older
+  `<task>.svc.nex`) is recreated on its next start instead of resumed, volumes kept. There is no
+  `--add-host`. Isolation is by name only: every container shares `192.168.64.0/24`.
 - **Definition** (`EnvServiceDef` / `ProjectEnvironment` in `db/types.ts`, stored as JSON in
   `projects.environment`): per service `kind` (`image` = a ready image, `build` = an image built from
   the project's Dockerfile, `app` = the project's code on a runtime image, for repos without compose),
   `image`, `build` (`context`, `dockerfile` — both repo paths — `target`, `args`), `entrypoint`,
   `command`, `workdir`, `mounts` (project paths bind-mounted from the worktree), `volumes` (paths that
-  get a task volume filled from the image), `ports` (only the ones shown as addresses; every port
-  is reachable inside the task and from the Mac), `env`, `envFiles` (read from the worktree at run
-  time, so secrets never land in Nex's database), `data` (the directory the clean base keeps), `dependsOn`,
+  get a task volume filled from the image), `ports` (container ports compose published; every port
+  is reachable inside the task), `hostPorts` (`{ host, container }` only where compose published a
+  different Mac port, `"5173:80"`; missing means the same number, so older data needs nothing), `env`, `envFiles` (read from the worktree at run
+  time, so secrets never land in Nex's database), `data` (the directory a task volume keeps), `dependsOn`,
   `ready` (a probe command or a port), `seed`, `memoryMb`. `source` turns `edited` on the first change.
   A project created without one gets it detected in main.
 - **Detection** (`detect.ts`, never runs project code): the first of `compose.yaml`,
   `docker-compose.yml` and their `.local` / `.dev` variants (`detect-compose.ts`, faithful to compose:
   `.env` interpolation, YAML anchors and merge keys, `build` → a `build` service, `env_file`,
   `environment`, `command` / `entrypoint` (string or list), `working_dir`, `healthcheck` → `ready`,
+  `ports` → container ports plus host ports (`"5173:80"`, `"8000"`, `ip:host:container`, `[::1]:…`,
+  `/udp`, equal-length ranges, long syntax; anything else becomes a warning),
   bind mounts inside the project → `mounts` (`:ro` kept, `:z` dropped), anonymous and named volumes →
   `volumes`, the named volume of a known data store → `data`; `stdin_open`, `tty`, `container_name`,
   `networks` and `restart` are ignored and proxies like traefik dropped; `depends_on` only orders,
@@ -416,40 +451,127 @@ is published to localhost.
   `check-<project>` with `nex.check=1`, streams building (with the current `#N [stage x/y]` step) /
   pulling / starting / ready / failed per service (`ENV_CHECK_PROGRESS`) and always removes the
   containers and volumes afterwards; built and pulled images stay.
-- **Memory:** `envMemory` is the budget every environment shares (the queue enforces it later);
+- **Memory:** `envMemory` is the budget every environment shares (the task queue enforces it);
   changing it restarts nothing. Each container needs at least 200 MiB.
-- **Clean base** (`clean-base.ts`, pure parts in `clean-base-plan.ts`): one stopped copy of every `data`
-  service per project, the volumes `nex-base-<projectKey>-<service>` (`nex.base` + `nex.project`, no
-  `nex.task`). Building runs the plan once against the main checkout as task `base-<project>` through the
-  same machinery as the check (`env-run.ts`), with readiness strict for ports too, then `taskPrepare` and
-  `prepare` steps, then stops the apps and the data stores in reverse dependency order (postgres with
-  `SIGINT`, a 180 s grace), deletes the run and keeps the volumes. The record (built at, branch, commit,
-  size, migrations fingerprint, status) is the `cleanBases` setting keyed by project key.
-- **Prepare steps** (`prepare`, `taskPrepare` on the environment) run with `container exec` through the
-  image's entrypoint and working directory (the cookiecutter entrypoints export `DATABASE_URL`).
-  `prepare` runs once into the base; `taskPrepare` runs in the base first, then in every task. During
-  the base build every non-app service mounts the checkout read-only at `/nex-project` (SQL seeds).
+- **No shared data:** every task is a new, isolated environment. Its databases start empty and are
+  migrated and filled by its own code, never copied from the main checkout or another task (a copy made
+  with one version of the code breaks a task on another, as submodules ahead of their recorded commit
+  showed). Volumes an older Nex kept for this (`nex.base` label, `nex-base-*`, `nex-next-*`, the
+  `cleanBases` setting) are deleted once at startup (`removeCleanBases`).
+- **Prepare steps** (`prepare`, `taskPrepare` on the environment, helpers in `env-steps.ts`) run with
+  `container exec` through the image's entrypoint and working directory (the cookiecutter entrypoints
+  export `DATABASE_URL`). `taskPrepare` (migrations) runs on every start, right after its service is
+  ready; `prepare` (seeds) runs once, in order, after every service is up, when the task's data volumes
+  are new. Until it finishes the stored record carries `seeded: false` (written before it starts, as a
+  failed start, so quitting mid-seed counts), and the next start deletes the task's data volumes and
+  seeds again from scratch. Data services, services with steps and services whose start command
+  migrates (`migratesOnStart`) get strict readiness, so steps never race the server's own migrate. Every
+  non-app service mounts the worktree read-only at `/nex-project` (SQL seeds).
   Detection (`detect-prepare.ts`): migrations for Django, Rails, Prisma, Alembic, Knex and Sequelize as
   `taskPrepare` unless the start command or the script it runs (a Dockerfile `COPY` to that path, a
   package script) already migrates; Prisma seeds, `seed.file` SQL loaded with `psql`/`mysql`, and
   `Makefile` targets named `*seed*` that `run`/`exec` one of the services, as `prepare`.
-- **Staleness:** the fingerprint hashes the paths and contents of `migrations/`, `db/migrate/` and
-  `alembic/versions/` files (plus seeds) from `git ls-files -co`, nested repos and submodules included,
-  capped at 5000 files. A different fingerprint is "out of date", so is a change to the data services
-  or the steps. Checked when the editor opens and when Nex starts; a build Nex quit during is cleaned up.
-- **Clone** (`cloneBaseForTask`, used by tasks next): refuses unless the base is ready, creates
-  `nex-<task>-<service>-data` with the task's labels and replaces its `volume.img` with
-  `cp -c` of the base's (~60 ms a volume, near zero disk; verified isolated); `toContainerRuns` takes
-  them as `dataVolumes` and mounts them without creating. A build waits for clones in flight. Never
-  `container commit` (it fails on Postgres with "could not read block"); the source must be stopped cleanly.
-- **Hot reload** (not built yet) comes from Nex forwarding file changes from the worktree into the containers.
+- **Task environments** (`task-env.ts`, pure parts in `task-env-plan.ts`): each task gets a DNS-safe slug
+  of at most 20 characters (`sessions.env_slug`), from its name without the `-2` a taken branch added
+  (`slugSource`), `-2`… only when a task that still exists (or one being deleted) holds it, so a closed
+  task frees its slug; never `check-`. Existing tasks keep theirs. Start =
+  build missing images under the shared lock, run every service against the task's worktree with its
+  own empty data volumes, `taskPrepare` after its service is ready, then `prepare` when the data is
+  new; readiness soft for the rest (a service with ports and no probe gets a port probe that only
+  notes "not answering yet"). The empty state shows "Filling its databases" while `prepare` runs. States `queued` · `starting` · `running` · `paused` · `down` (service, exit
+  code from `container logs --boot`, last log line) · `failed` · `none`; the result is kept in the
+  `taskEnvironments` setting and reconciled with `container ls` by `nex.task` when Nex starts (all stopped
+  → paused, resumes on open). Pause stops apps, then data stores (postgres `SIGINT`); resume starts in
+  dependency order, each after its dependencies answer; a failed environment is recreated (volumes
+  kept) instead of resumed. Closing a task deletes everything with its `nex.task` label.
+- **When:** on task creation if `envStartOnCreate`, otherwise the next time the task is opened or its
+  first message; never blocking either. The new task dialog's Environment switch (`FieldToggle`, only for projects
+  with an environment) creates a task with `sessions.env_off`: nothing starts it by itself and Claude gets no
+  note; the tab bar globe (`EnvButton` `off`) or the empty state's "Start it" starts it, clears the flag and restarts
+  the agent between turns so it gets the note. The renderer reports the viewed task (`viewTaskEnvironment`).
+- **Queue and budget:** at most `envRunAtMost` environments starting or running, and new ones must fit
+  `envMemory` counting `container stats` of running Nex containers plus the limits of environments still
+  starting; the first one always starts. Otherwise `queued` with the oldest unused task as "Pause X now";
+  pausing, deleting or finishing a start advances the queue (and every 15 s poll).
+- **Idle pause:** after `envPauseAfter` minutes (`never` turns it off) with no agent activity and not
+  being viewed; opening the task or sending a message resumes it. Idle for 5 min marks it idle in the
+  machine popover.
+- **Addresses and the proxy** (`proxy.ts`, routing and rewrites pure in `proxy-routing.ts`): Node
+  `http` plus raw sockets in main. "You open" services (`serviceRole`) get `http://<short>.<task>.nex`;
+  the main one (`mainService`: a `web`/`front`/`ui`/`app`… name, else the first one you open) gets
+  `http://<task>.nex`. `<short>` drops a dash prefix several services share (`triton-django` →
+  `django`; `shortNames`, only when it stays unique and a valid label); container names and aliases
+  keep the full name. `*.localhost` routes identically and is the fallback: the main address when
+  `.nex` isn't registered, and the menu's ".localhost" action per address (Chrome's secure DNS skips
+  `/etc/resolver`). `TaskEnvService` carries `url` plus `localhostUrl`.
+- **Open with:** a service you open that publishes a host port gets `localPort` (data services too). Its
+  menu row opens the task address; a chevron (`OpenWithMenu`) lists that address, then
+  `http://localhost:<host port>`, which follows the task you view so sign-in and cookies work as with
+  compose (`.localhost` instead when the port is blocked), and Copy link. Opening from a task marks it
+  viewed first (`useOpenInTask`).
+- **Port 80, loopback only:** an unprivileged process can't bind `127.0.0.1:80` on macOS 26, only the
+  wildcard, so the entry listens on `0.0.0.0:80` and `[::]:80` and destroys every connection whose
+  remote address isn't loopback (`isLoopback`) before reading a byte. If 80 is taken or refused it
+  falls back to `ENTRY_PORT` 1355 (next free up to 1364) on `127.0.0.1`/`::1`, and only then do
+  addresses show the port. A packaged build may make the macOS firewall ask once to allow incoming
+  connections; denying it doesn't matter, since only loopback is served.
+- **Host ports:** while an environment is starting, running or down, Nex also listens on every host
+  port its services publish (`8000`, `1234`, `5173`…), like compose did. Routing per request: a
+  `<short>.<task>.nex` (or `.localhost`) Host picks the task directly (on the entry port, the
+  service's web port; on a host port, the service publishing it); otherwise the page's `Origin` (else `Referer`) names the
+  task; with neither (a typed URL, curl) it's the task being viewed, else the newest. The service is the
+  one publishing that host port, forwarded to its **container** port (`5173` → `80`). WebSocket
+  upgrades route the same way. The container's IP is looked up per connection (`container inspect`,
+  cached 2 s, dropped on every start, pause and restart); a refused connect is retried once with a
+  fresh lookup, so a resume's new IP is invisible. A non-HTTP first packet (debugpy) is piped raw to
+  the fallback task.
+- **Database ports** (`speaksRaw`, `rawPort`): a host port published by a data service (postgres,
+  mysql, redis, mongo…) or on a non-web port (SMTP `1025`) is piped raw at once, without waiting for a
+  first packet, to the task you're viewing, else the newest running one, so TablePlus or `psql` on
+  `localhost:5432` reach the viewed task and server-first protocols (SMTP, MySQL) work. Only ports the
+  compose publishes; conflicts and release work like every host port. The menu shows
+  `localhost:<port> · while you view this task` (`localPort`).
+- **Looking like compose:** the forwarded `Host` is `localhost:<host port>`; `Origin` and `Referer` from
+  a task address become the compose origin of that service (`http://taska.nex` →
+  `http://localhost:5173`). Responses get `Access-Control-Allow-Origin` back to the real page when it
+  echoes the rewritten origin, and a `Location` at `localhost:<host port>` turns into that service's
+  task address in the domain the request came in on, `.nex` or `.localhost` (only for requests that
+  came in through a task address). Bodies are never touched.
+  Cookies without `Domain` stay host-only: `localhost` cookies are shared across tasks, as with compose,
+  and a page on `*.nex` or `*.localhost` calling `localhost:8000` is cross-site, so `SameSite` cookies and
+  `document.cookie` from the API don't reach it (use `localhost:<port>` for the viewed task for those).
+- **Port conflicts:** Node sets `SO_REUSEADDR`, so binding `127.0.0.1:8000` succeeds even when Docker
+  holds `*:8000` and silently shadows it. Nex first connects to the port on both loopbacks; if anything
+  answers the port is blocked ("Port 8000 is used by another app" in the task's banner and menu and in
+  Settings, `EnvironmentStatus.blockedPorts`), the other ports keep working. Every 15 s poll `lsof`
+  finds apps that bound one of Nex's ports later (Nex lets it go) and blocked ports are tried again.
+  A port nobody running needs is closed; the entry port stays open while any task has an environment
+  (a paused task answers "paused").
+- **Env files:** a worktree lacks gitignored files like `oberon/.env`. At task creation
+  `native/git/env-files.ts` copies from the main checkout every file the environment names in
+  `envFiles` plus the `.env*` files `git ls-files --others --ignored --exclude-standard` lists in each
+  service's code root (app root, build context, mount sources; run inside nested repos and submodules),
+  only when missing in the worktree, never overwriting, at most 50. The worktree setup line says so.
+- **Hot reload** (verified on 1.7.1): file events on the Mac never reach a container's inotify through a
+  virtiofs bind mount. Nex watches each running task's worktree (skipping `.git`, `node_modules` and
+  build dirs), debounces 150 ms, maps paths through the writable mounts and runs one batched
+  `container exec <name> sh -c 'for f; do touch -c -r "$f" "$f"; done'` per container (deleted files
+  touch their folder); the guest sees the change with fresh content (~60 ms). A plain `touch` changes
+  the file's time on the Mac and loops back into the watcher; `-r` keeps it, and events whose mtime
+  matches what was touched are dropped as echoes.
+- **Claude knows its environment:** `agentEnvironmentNote` (pure, in `task-env-plan.ts`) lists each service
+  with its task address, its in-task names and container, and how to `exec` and read logs; the agent gets it
+  through `--append-system-prompt` (`setAgentSystemNote`, registered by `initTaskEnvironments`), so it uses
+  the task's addresses instead of `localhost` and never starts the services itself. It applies on the next
+  agent start.
+- **Logs in Shell** open a terminal tab running `container logs -f` (one service, or all prefixed).
 - Every container boots its own kernel with 8k inotify watches, too few for dev-server file watchers, so
   service runs pass `--kernel-arg sysctl.fs.inotify.max_user_watches=524288` (and `max_user_instances`).
 - Apple container 1.7.1 never creates `content/blobs/sha256` after a fresh install, so the first pull
   fails: `ensureContentStore()` runs before any pull or build.
 - **Uninstall** stops the system before running Apple's uninstall script (running containers and the
-  builder are left orphaned otherwise) and batches `dns delete` and the script in one admin prompt; the
-  runtime goes only when Nex installed it.
+  builder are left orphaned otherwise) and batches removing `/etc/resolver/nex` and Apple's
+  `containerization.nexsvc` (and an old `containerization.nex`) with the script in one admin prompt; the runtime goes only when Nex installed it.
 
 ### Diff viewer
 
@@ -558,7 +680,7 @@ We improved how fast the task view opens.
 - **Long names:** names that come from the user (workspace, project, task, branch, account) never
   wrap and never push a row wider: the text sits in its own `truncate` span with the full name in
   `title`, icons and trailing bits are `shrink-0`. A dialog whose row of pills runs long grows
-  first (the new task dialog is `w-fit` from 700px up to 780px); only past that does the branch
+  first (the new task dialog grows from 820px up to 1040px); only past that does the branch
   pill shrink (`FieldPill shrink`, capped at 260px); project, agent, model and mode keep their full
   label up to 180px (the agent pill shows only the account name when there are several, its logo
   names the agent), and the main action stays `shrink-0`.

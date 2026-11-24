@@ -27,7 +27,7 @@ interface WorktreeWatch {
 
 const watches = new Map<string, WorktreeWatch>();
 
-function isIgnored(relativePath: string | null): boolean {
+export function isIgnored(relativePath: string | null): boolean {
   if (!relativePath) return false;
   return relativePath.split("/").some((segment) => IGNORED_SEGMENTS.has(segment));
 }

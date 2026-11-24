@@ -1,4 +1,5 @@
 import type {
+  EnvHostPort,
   EnvPrepareStep,
   EnvServiceDef,
   EnvServiceKind,
@@ -7,10 +8,15 @@ import type {
 import {
   APP_MEMORY_MB,
   environmentProblems,
+  hostPortOf,
   IMAGE_MEMORY_MB,
   knownImage,
   MEMORY_CHOICES_MB,
+  portMappings,
   serviceAddress,
+  serviceRole,
+  webPort,
+  type ServiceRole,
 } from "@native/environments/definition";
 import type { EnvCheckServiceState, EnvCheckState } from "@native/environments/types";
 import type { DotTone } from "@/components/atoms/status-dot";
@@ -19,11 +25,13 @@ import { relativeTime } from "@/lib/relative-time";
 
 export const TASK_PLACEHOLDER = "{task}";
 
-export const addressOf = (
+export function addressOf(
   env: ProjectEnvironment,
   service: EnvServiceDef,
   task = TASK_PLACEHOLDER,
-) => serviceAddress(env, service, task);
+): string | null {
+  return serviceAddress(env, service, task);
+}
 
 export const isDataStore = (service: EnvServiceDef) => knownImage(service.image) !== null;
 
@@ -76,19 +84,11 @@ function listed(items: readonly string[]): string {
 }
 
 export function servicePort(service: EnvServiceDef): number | undefined {
-  return service.ports[0] ?? knownImage(service.image)?.port;
+  const port = webPort(service) ?? service.ports[0];
+  return port === undefined ? knownImage(service.image)?.port : hostPortOf(service, port);
 }
 
-export type ServiceRole = "open" | "background" | "data";
-
-const WORKER =
-  /celery|worker|sidekiq|flower|scheduler|resque|crontab|\bbeat\b|\bqueue\b|\bcron\b|\brq\b/i;
-
-export function serviceRole(service: EnvServiceDef): ServiceRole {
-  if (service.data || isDataStore(service)) return "data";
-  if (service.ports.length === 0) return "background";
-  return WORKER.test(`${service.name} ${service.command ?? ""}`) ? "background" : "open";
-}
+export { serviceRole, type ServiceRole };
 
 export interface PinnedRole {
   index: number;
@@ -226,15 +226,34 @@ export const updateSteps = (
 export const serviceOptions = (env: ProjectEnvironment) =>
   env.services.map((service) => ({ value: service.name, label: service.name }));
 
-export function parsePorts(text: string): number[] {
-  return [
-    ...new Set(
-      text
-        .split(/[\s,]+/)
-        .map((part) => Number.parseInt(part, 10))
-        .filter((port) => Number.isInteger(port) && port > 0),
-    ),
-  ];
+const validPort = (port: number) => Number.isInteger(port) && port > 0 && port <= 65_535;
+
+export function parsePortMappings(text: string): EnvHostPort[] {
+  const mappings: EnvHostPort[] = [];
+  for (const part of text.split(/[\s,]+/)) {
+    const [first = "", second] = part.split(":");
+    const host = Number.parseInt(first, 10);
+    const container = second === undefined ? host : Number.parseInt(second, 10);
+    if (!validPort(host) || !validPort(container)) continue;
+    if (mappings.some((item) => item.container === container)) continue;
+    mappings.push({ host, container });
+  }
+  return mappings;
+}
+
+export const portsText = (service: EnvServiceDef) =>
+  portMappings(service)
+    .map((item) =>
+      item.host === item.container ? `${item.host}` : `${item.host}:${item.container}`,
+    )
+    .join(", ");
+
+export function portsPatch(mappings: readonly EnvHostPort[]): Partial<EnvServiceDef> {
+  const moved = mappings.filter((item) => item.host !== item.container);
+  return {
+    ports: mappings.map((item) => item.container),
+    hostPorts: moved.length > 0 ? moved : undefined,
+  };
 }
 
 export const memoryOptions = (current: number) =>
@@ -349,7 +368,11 @@ export interface FoundService {
 export function foundServices(env: ProjectEnvironment): FoundService[] {
   return env.services.map((service) => {
     const port = servicePort(service);
-    const meta = [port ? `:${port}` : null, service.seed ? `seeds from ${service.seed.file}` : null]
+    const address = addressOf(env, service, "task");
+    const meta = [
+      port && !address ? `:${port}` : null,
+      service.seed ? `seeds from ${service.seed.file}` : null,
+    ]
       .filter(Boolean)
       .join(" · ");
     return {
@@ -357,9 +380,7 @@ export function foundServices(env: ProjectEnvironment): FoundService[] {
       detail: serviceDetail(service),
       code: detailIsCode(service),
       ...(meta ? { meta } : {}),
-      ...(addressOf(env, service, "task")
-        ? { address: addressOf(env, service, "task") as string }
-        : {}),
+      ...(address ? { address } : {}),
     };
   });
 }

@@ -55,6 +55,8 @@ const session = (overrides: Partial<Session>): Session => ({
   horizontalLayout: null,
   sortOrder: 0,
   width: 600,
+  envSlug: "",
+  envOff: false,
   ...overrides,
 });
 

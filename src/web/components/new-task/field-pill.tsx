@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
+import { Switch } from "@/components/atoms/switch";
 import { cn } from "@/lib/utils";
 
 export interface FieldPillContent {
@@ -62,7 +63,8 @@ export function FieldPill({
       title={shrink ? label : undefined}
       onClick={onClick}
       className={cn(
-        "interactive press flex h-7 cursor-pointer items-center gap-[7px] rounded-full pr-[9px] pl-[7px] text-xs font-medium whitespace-nowrap select-none",
+        "interactive press flex h-7 cursor-pointer items-center gap-[7px] rounded-full pr-[9px] text-xs font-medium whitespace-nowrap select-none",
+        icon ? "pl-[7px]" : "pl-3",
         shrink ? "max-w-[260px] min-w-0 shrink" : "shrink-0",
         open
           ? "bg-hover-2 text-ink shadow-[inset_0_0_0_1px_var(--line-focus)]"
@@ -77,6 +79,63 @@ export function FieldPill({
         <span className="truncate">{label}</span>
       )}
       <ChevronDown width={10} height={10} strokeWidth={2.5} className="shrink-0 text-ink-4" />
+    </button>
+  );
+}
+
+export function FieldAction({
+  icon,
+  label,
+  disabled = false,
+  onClick,
+}: {
+  icon?: ReactNode;
+  label: string;
+  disabled?: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className="interactive press flex h-7 shrink-0 cursor-pointer items-center gap-[7px] rounded-full bg-field pr-3 pl-[7px] text-xs font-medium whitespace-nowrap text-ink-2 select-none hover:bg-hover hover:text-ink disabled:pointer-events-none disabled:opacity-50"
+    >
+      {icon && <span className="flex shrink-0">{icon}</span>}
+      {label}
+    </button>
+  );
+}
+
+export function FieldToggle({
+  icon,
+  label,
+  checked,
+  disabled = false,
+  onChange,
+}: {
+  icon?: ReactNode;
+  label: string;
+  checked: boolean;
+  disabled?: boolean;
+  onChange?: (checked: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
+      onClick={() => onChange?.(!checked)}
+      className={cn(
+        "interactive press flex h-7 shrink-0 cursor-pointer items-center gap-[7px] rounded-full bg-field pr-1.5 pl-[7px] text-xs font-medium whitespace-nowrap select-none hover:bg-hover",
+        checked ? "text-ink-2 hover:text-ink" : "text-ink-4 hover:text-ink-3",
+        "disabled:pointer-events-none disabled:opacity-50",
+      )}
+    >
+      {icon && <span className="flex shrink-0">{icon}</span>}
+      {label}
+      <Switch checked={checked} size="sm" display />
     </button>
   );
 }

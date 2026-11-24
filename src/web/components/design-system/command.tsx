@@ -7,7 +7,8 @@ import {
 } from "@/components/command/command-palette";
 import { WORKSPACES } from "@/components/design-system/sidebar-samples";
 import { Section, Specimen } from "@/components/design-system/specimen";
-import { HomeEmpty } from "@/components/home/home-empty";
+import { HomeHero } from "@/components/home/home-hero";
+import { SampleHomePrompt } from "@/components/design-system/sample-home-prompt";
 import { TitlebarView } from "@/components/layout/titlebar";
 import { Sidebar } from "@/components/sidebar/sidebar";
 
@@ -122,7 +123,7 @@ function CommandDemo() {
               {chosen.split && "in a split"}
             </div>
           ) : (
-            <HomeEmpty />
+            <HomeHero phase="night" greeting="Good evening" prompt={<SampleHomePrompt />} />
           )}
         </div>
       </div>

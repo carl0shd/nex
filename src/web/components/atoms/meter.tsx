@@ -18,7 +18,7 @@ export function Meter({
 }: {
   value: number;
   tone?: MeterTone;
-  width?: number;
+  width?: number | "full";
   showValue?: boolean;
   className?: string;
 }) {
@@ -27,7 +27,13 @@ export function Meter({
     <span
       className={cn("inline-flex items-center gap-2 text-2xs text-ink-3 tabular-nums", className)}
     >
-      <span className="block h-1 overflow-hidden rounded-full bg-line-chip" style={{ width }}>
+      <span
+        className={cn(
+          "block h-1 overflow-hidden rounded-full bg-line-chip",
+          width === "full" && "flex-1",
+        )}
+        style={width === "full" ? undefined : { width }}
+      >
         <span
           className={cn("block h-full rounded-full", FILL[resolved])}
           style={{ width: `${value}%` }}

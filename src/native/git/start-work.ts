@@ -8,25 +8,34 @@ import {
   detectBaseBranch,
   fetchOrigin,
   createWorktree,
+  initSubmodules,
   removeWorktree,
   deleteBranch,
   setupGitExclude,
   isGitRepo,
   refExists,
 } from "@native/git/git";
+import { copyEnvFiles } from "@native/git/env-files";
 import { setupSymlinks } from "@native/git/symlinks";
 import { createTerminalForSession } from "@native/agents/agent-terminal";
 import type { ProjectSetup, Session, StartWorkInput } from "@native/db/types";
 import { spawnTerminal } from "@native/pty/manager";
 import { sendToAgent } from "@native/agents/agent-runner";
+import { adoptClaudeSession } from "@native/agents/claude-sessions";
 import { saveAgentSettings } from "@native/agents/agent-settings";
+import { startTaskEnvironmentOnCreate } from "@native/environments/task-env";
 
-function createPrimaryTerminal(session: Session, prompt?: string): void {
+function createPrimaryTerminal(
+  session: Session,
+  prompt?: string,
+  resume?: StartWorkInput["resumeClaudeSession"],
+): void {
   const terminal = createTerminalForSession({
     sessionId: session.id,
     type: session.agentId ? "agent" : "shell",
     isPrimary: true,
   });
+  if (terminal.type === "agent" && resume) adoptClaudeSession(terminal.id, resume);
   if (terminal.type === "agent" && prompt?.trim()) sendToAgent(session.id, prompt.trim());
 }
 
@@ -114,9 +123,11 @@ export async function startWork(input: StartWorkInput): Promise<Session> {
       worktreePath: project.path,
       notesPath,
       symlinks: [],
+      envOff: input.environment === false,
     });
     if (input.agentSettings) saveAgentSettings(session.id, input.agentSettings);
-    createPrimaryTerminal(session, input.prompt);
+    createPrimaryTerminal(session, input.prompt, input.resumeClaudeSession);
+    startTaskEnvironmentOnCreate(session.id);
     return session;
   }
 
@@ -129,6 +140,9 @@ export async function startWork(input: StartWorkInput): Promise<Session> {
   const branch = prefix ? `${prefix}/${input.name}` : input.name;
   const wtPath = join(project.path, ".worktrees", input.name);
   await createWorktree(project.path, branch, wtPath, startPoint);
+  await initSubmodules(project.path, wtPath).catch((error: unknown) =>
+    console.warn(`Submodules of ${wtPath} weren't checked out:`, error),
+  );
 
   try {
     setupGitExclude(project.path);
@@ -148,11 +162,18 @@ export async function startWork(input: StartWorkInput): Promise<Session> {
       worktreePath: wtPath,
       notesPath,
       symlinks: [".claude"],
+      envOff: input.environment === false,
     });
     if (input.agentSettings) saveAgentSettings(session.id, input.agentSettings);
     if (project.setup) await copySetupFiles(project.path, wtPath, project.setup);
-    createPrimaryTerminal(session, input.prompt);
+    if (project.environment?.services.length) {
+      await copyEnvFiles(project.path, wtPath, project.environment).catch((error: unknown) =>
+        console.warn(`Env files weren't copied into ${wtPath}:`, error),
+      );
+    }
+    createPrimaryTerminal(session, input.prompt, input.resumeClaudeSession);
     if (project.setup) startSetup(session, project.setup);
+    startTaskEnvironmentOnCreate(session.id);
     return session;
   } catch (err) {
     await removeWorktree(project.path, wtPath).catch(() => {});

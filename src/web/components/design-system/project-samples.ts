@@ -1,5 +1,5 @@
 import type { ProjectEnvironment } from "@native/db/types";
-import type { CleanBaseState, CleanBaseStep, EnvCheckState } from "@native/environments/types";
+import type { EnvCheckState } from "@native/environments/types";
 import type { ProjectConfig } from "@/components/projects/add-project-dialog";
 import type { FoundRepo } from "@/components/projects/repo-picker";
 
@@ -176,62 +176,3 @@ export const SAMPLE_EMPTY_ENVIRONMENT: ProjectEnvironment = {
   detectedFrom: [],
   warnings: [],
 };
-
-const HOUR = 3_600_000;
-
-const baseSteps = (states: CleanBaseStep["state"][], details: (string | undefined)[] = []) =>
-  [
-    { label: "Start the services" },
-    { label: "python manage.py migrate", code: true },
-    { label: "psql -f /nex-project/db/seed.sql", code: true },
-    { label: "python manage.py loaddata fixtures/demo.json", code: true },
-    { label: "Stop the databases cleanly" },
-    { label: "Save the clean base" },
-  ].map((step, index) => ({
-    ...step,
-    state: states[index] ?? "pending",
-    ...(details[index] ? { detail: details[index] } : {}),
-  }));
-
-const baseOf = (overrides: Partial<CleanBaseState>): CleanBaseState => ({
-  projectId: "atlas",
-  projectPath: SAMPLE_PATH,
-  status: "none",
-  services: ["db"],
-  steps: baseSteps([]),
-  ...overrides,
-});
-
-export function sampleCleanBases(
-  now: number,
-): Record<"none" | "building" | "ready" | "stale" | "failed", CleanBaseState> {
-  const built = {
-    builtAt: now - 2 * HOUR,
-    branch: "main",
-    commit: "abc1234f9",
-    sizeBytes: 340e6,
-  };
-  return {
-    none: baseOf({}),
-    building: baseOf({
-      status: "building",
-      steps: baseSteps(
-        ["done", "running"],
-        ["3 ready in 41.2s", "api · Applying accounts.0042… OK"],
-      ),
-    }),
-    ready: baseOf({ status: "ready", ...built, steps: baseSteps(Array(6).fill("done")) }),
-    stale: baseOf({
-      status: "stale",
-      stale: "migrations",
-      ...built,
-      builtAt: now - 3 * 24 * HOUR,
-      steps: baseSteps(Array(6).fill("done")),
-    }),
-    failed: baseOf({
-      status: "failed",
-      error: 'django.db.utils.ProgrammingError: relation "accounts" already exists',
-      steps: baseSteps(["done", "failed"], ["3 ready in 41.2s"]),
-    }),
-  };
-}

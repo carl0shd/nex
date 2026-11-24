@@ -17,6 +17,7 @@ export interface NewTaskProject {
   };
   branches: string[];
   branchPrefix?: string;
+  environment?: boolean;
 }
 
 export function ProjectPicker({

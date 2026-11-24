@@ -1,5 +1,5 @@
 import { parse as parseYaml } from "yaml";
-import type { EnvBuild, EnvMount, EnvServiceDef } from "@native/db/types";
+import type { EnvBuild, EnvHostPort, EnvMount, EnvServiceDef } from "@native/db/types";
 import {
   APP_MEMORY_MB,
   clampMemory,
@@ -79,12 +79,47 @@ function deepInterpolate(
   return value;
 }
 
-export function containerPort(spec: unknown): number | undefined {
-  if (isRecord(spec)) return Number(scalar(spec.target)) || undefined;
-  const text = scalar(spec);
-  if (!text) return undefined;
-  const container = text.split("/")[0]?.split(":").at(-1) ?? "";
-  return Number.parseInt(container.split("-")[0] ?? "", 10) || undefined;
+const MAX_RANGE = 100;
+
+function portRange(text: string): number[] | null {
+  if (text === "") return [];
+  const [from, to = from] = text.split("-").map((part) => Number(part));
+  if (!Number.isInteger(from) || !Number.isInteger(to) || from < 1 || to < from) return null;
+  if (to - from >= MAX_RANGE) return null;
+  return Array.from({ length: to - from + 1 }, (_, index) => (from as number) + index);
+}
+
+export interface PublishedPorts {
+  ports: EnvHostPort[];
+  unreadable?: string;
+}
+
+export function publishedPorts(spec: unknown): PublishedPorts {
+  if (isRecord(spec)) {
+    const target = portRange(scalar(spec.target) ?? "");
+    const published = portRange(scalar(spec.published) ?? "");
+    const container = target?.[0];
+    if (!container) return { ports: [], unreadable: JSON.stringify(spec) };
+    return { ports: [{ host: published?.[0] ?? container, container }] };
+  }
+  const text = scalar(spec)?.trim();
+  if (!text) return { ports: [] };
+  const withoutProtocol = text.split("/")[0] ?? "";
+  const withoutIp = withoutProtocol.startsWith("[")
+    ? withoutProtocol.slice(withoutProtocol.indexOf("]:") + 2)
+    : withoutProtocol;
+  const parts = withoutIp.split(":");
+  const containers = portRange(parts.at(-1) ?? "");
+  const hosts = parts.length >= 2 ? portRange(parts.at(-2) ?? "") : [];
+  if (!containers?.length || hosts === null) return { ports: [], unreadable: text };
+  if (hosts.length === 0)
+    return { ports: containers.map((port) => ({ host: port, container: port })) };
+  if (hosts.length === containers.length) {
+    return {
+      ports: containers.map((port, index) => ({ host: hosts[index] as number, container: port })),
+    };
+  }
+  return { ports: [{ host: hosts[0] as number, container: containers[0] as number }] };
 }
 
 export function memoryMb(value: unknown): number | undefined {
@@ -258,9 +293,16 @@ async function composeService(
   const env = environmentEntries(raw.environment, vars);
 
   const allMounts = mounts(raw.volumes);
-  const ports = asList(raw.ports)
-    .map(containerPort)
-    .filter((port): port is number => Boolean(port));
+  const published: EnvHostPort[] = [];
+  for (const spec of asList(raw.ports)) {
+    const result = publishedPorts(spec);
+    if (result.unreadable) warnings.push(`${name}: Nex can’t read the port ${result.unreadable}.`);
+    for (const port of result.ports) {
+      if (!published.some((item) => item.container === port.container)) published.push(port);
+    }
+  }
+  const ports = published.map((port) => port.container);
+  const moved = published.filter((port) => port.host !== port.container);
   const deploy = isRecord(raw.deploy) && isRecord(raw.deploy.resources) ? raw.deploy.resources : {};
   const limit =
     memoryMb(raw.mem_limit) ?? memoryMb(isRecord(deploy.limits) ? deploy.limits.memory : undefined);
@@ -326,6 +368,7 @@ async function composeService(
       ...(binds.length ? { mounts: binds } : {}),
       ...(kept.length ? { volumes: kept } : {}),
       ports: shown,
+      ...(!known && moved.length ? { hostPorts: moved } : {}),
       env,
       ...(envFiles.length ? { envFiles } : {}),
       ...(dataMount ? { data: { path: dataMount.target } } : {}),

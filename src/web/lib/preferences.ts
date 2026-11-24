@@ -9,6 +9,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   codeFontSize: "12",
   reduceTransparency: false,
   motion: "system",
+  homeScene: "time",
   notifyNeedsYou: true,
   notifyFinished: true,
   notifyErrors: true,

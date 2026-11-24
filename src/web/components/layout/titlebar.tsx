@@ -7,6 +7,7 @@ import { useSettingsStore } from "@/stores/settings.store";
 import { IconButton } from "@/components/atoms/icon-button";
 import { SearchButton } from "@/components/layout/search-button";
 import { useCommandPaletteStore } from "@/stores/command-palette.store";
+import { useUsagePanelStore } from "@/stores/usage-panel.store";
 import { UsagePill } from "@/components/layout/usage-pill";
 import { AppUsagePanel } from "@/components/usage/app-usage-panel";
 import { useAppHotkey } from "@/hooks/use-app-hotkey";
@@ -118,9 +119,11 @@ function Titlebar(): React.JSX.Element {
   const defaultAccount = summary?.accounts.find((account) => account.isDefault);
   const showUsage = usePreferencesStore((s) => s.prefs.showUsage);
   const onSettings = pathname === "/settings";
-  const [usageOpen, setUsageOpen] = useState(false);
+  const usageOpen = useUsagePanelStore((s) => s.open);
+  const setUsageOpen = useUsagePanelStore((s) => s.setOpen);
+  const toggleUsage = useUsagePanelStore((s) => s.toggle);
   useAppHotkey("settings", () => navigate(onSettings ? "/" : "/settings"));
-  useAppHotkey("usage", () => setUsageOpen((open) => !open), Boolean(summary && showUsage));
+  useAppHotkey("usage", toggleUsage, Boolean(summary && showUsage));
 
   return (
     <TitlebarView

@@ -23,11 +23,19 @@ import { TaskDock, type DockTab } from "@/components/task-view/task-dock";
 import { TaskViewHeader } from "@/components/task-view/task-view-header";
 
 const ENVIRONMENT = {
-  host: "monoku-fix-login.nex",
+  host: "fix-login.nex",
   memory: "1.9 GB",
   services: [
-    { name: "web", detail: "monoku-fix-login.nex", url: "https://monoku-fix-login.nex" },
-    { name: "api", detail: "api.monoku-…nex", url: "https://api.monoku-fix-login.nex" },
+    {
+      name: "web",
+      detail: "fix-login.nex",
+      url: "http://fix-login.nex",
+    },
+    {
+      name: "api",
+      detail: "api.fix-login.nex",
+      url: "http://api.fix-login.nex",
+    },
     { name: "postgres", detail: "own copy" },
     { name: "redis", detail: ":6379" },
   ],
@@ -89,7 +97,7 @@ function DockContent({ tab, expanded }: { tab: DockTab; expanded: boolean }) {
       <BrowserPanel
         tabs={[{ id: "login", title: "Sign in · hub" }]}
         activeTab="login"
-        url="https://monoku-fix-login.nex/login?next=/billing"
+        url="http://fix-login.nex/login?next=/billing"
         device={device}
         onDeviceChange={setDevice}
         picking={picking}

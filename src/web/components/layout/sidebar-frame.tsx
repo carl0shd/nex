@@ -4,6 +4,7 @@ import { SidebarRail } from "@/components/sidebar/sidebar-rail";
 import type { SidebarWorkspace } from "@/components/sidebar/types";
 import type { WorkspaceLookChange } from "@/components/sidebar/workspace-header";
 import { useAppHotkey } from "@/hooks/use-app-hotkey";
+import { SIDEBAR_WIDTH } from "@/lib/app-chrome";
 import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/stores/settings.store";
 
@@ -11,12 +12,14 @@ export function SidebarFrame({
   workspaces,
   activeTaskId,
   overviewActive = !activeTaskId,
+  tasksActive = false,
   creating,
   environments,
   onToggleWorkspace,
   onExpandWorkspace,
   onSelectTask,
   onOverview,
+  onTasks,
   onNewTask,
   onNewTaskInProject,
   onOpenProjectInFinder,
@@ -32,12 +35,14 @@ export function SidebarFrame({
   workspaces: SidebarWorkspace[];
   activeTaskId?: string;
   overviewActive?: boolean;
+  tasksActive?: boolean;
   creating?: ReactNode;
   environments?: ReactNode;
   onToggleWorkspace?: (id: string) => void;
   onExpandWorkspace?: (id: string) => void;
   onSelectTask?: (id: string) => void;
   onOverview?: () => void;
+  onTasks?: () => void;
   onNewTask?: () => void;
   onNewTaskInProject?: (projectId: string) => void;
   onOpenProjectInFinder?: (projectId: string) => void;
@@ -78,8 +83,8 @@ export function SidebarFrame({
       className={cn(
         "shrink-0 transition-[width] duration-[250ms] ease-out-strong",
         resizing && "overflow-hidden",
-        collapsed ? "w-[52px]" : "w-[260px]",
       )}
+      style={{ width: collapsed ? SIDEBAR_WIDTH.rail : SIDEBAR_WIDTH.open }}
     >
       {collapsed ? (
         <SidebarRail
@@ -87,7 +92,9 @@ export function SidebarFrame({
           activeTaskId={activeTaskId}
           needsYou={needsYou > 0}
           overviewActive={overviewActive}
+          tasksActive={tasksActive}
           onOverview={onOverview}
+          onTasks={onTasks}
           onNewTask={onNewTask}
           onAddWorkspace={addWorkspace}
           onSelectTask={onSelectTask}
@@ -102,12 +109,14 @@ export function SidebarFrame({
           workspaces={workspaces}
           activeTaskId={activeTaskId}
           overviewActive={overviewActive}
+          tasksActive={tasksActive}
           needsYou={needsYou}
           creating={creating}
           environments={environments}
           onToggleWorkspace={onToggleWorkspace}
           onSelectTask={onSelectTask}
           onOverview={onOverview}
+          onTasks={onTasks}
           onNewTask={onNewTask}
           onNewTaskInProject={onNewTaskInProject}
           onOpenProjectInFinder={onOpenProjectInFinder}

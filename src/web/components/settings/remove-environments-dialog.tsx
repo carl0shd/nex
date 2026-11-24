@@ -24,7 +24,7 @@ export function RemoveEnvironmentsDialog({
   return (
     <ModalCard
       title="Remove environments?"
-      description="Nex deletes the environments and clean bases it created and asks for your password once to remove its .nex addresses. You can set environments up again from Settings."
+      description="Nex deletes the environments it created and asks for your password once to remove its .nex addresses. You can set environments up again from Settings."
       icon={<StatusIcon tone="red" icon={Trash2} />}
       onClose={onCancel}
       footer={

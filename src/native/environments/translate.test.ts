@@ -84,9 +84,9 @@ describe("toContainerRuns", () => {
       "--memory",
       "256M",
       "--dns-search",
-      "fix-login.nex",
+      "fix-login.nexsvc",
       "--network",
-      "default,alias=db.fix-login.nex",
+      "default,alias=db.fix-login.nexsvc",
       "--env",
       "PGDATA=/var/lib/postgresql/data/pgdata",
       "--env",
@@ -110,9 +110,9 @@ describe("toContainerRuns", () => {
       "--memory",
       "1024M",
       "--dns-search",
-      "fix-login.nex",
+      "fix-login.nexsvc",
       "--network",
-      "default,alias=web.fix-login.nex,alias=fix-login.nex",
+      "default,alias=web.fix-login.nexsvc",
       "--env",
       "COREPACK_ENABLE_DOWNLOAD_PROMPT=0",
       "--env",
@@ -280,18 +280,10 @@ describe("toContainerRuns", () => {
     ]);
   });
 
-  it("mounts data volumes that already exist instead of creating them", () => {
-    const plan = toContainerRuns(env, {
-      ...TARGET,
-      dataVolumes: { db: "nex-base-shop-db" },
-      labels: { "nex.base": "shop" },
-      mountProject: true,
-    });
+  it("mounts the worktree read-only for seed files, except on app services", () => {
+    const plan = toContainerRuns(env, { ...TARGET, mountProject: true });
     const db = plan.runs.find((run) => run.service === "db");
     const web = plan.runs.find((run) => run.service === "web");
-    expect(plan.volumes.map((volume) => volume.name)).not.toContain("nex-fix-login-db-data");
-    expect(db?.args).toContain("nex-base-shop-db:/var/lib/postgresql/data");
-    expect(db?.args).toContain("nex.base=shop");
     expect(db?.args).toContain("/Users/me/wt/fix-login:/nex-project:ro");
     expect(web?.args).not.toContain("/Users/me/wt/fix-login:/nex-project:ro");
   });

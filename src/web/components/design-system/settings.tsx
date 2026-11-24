@@ -210,23 +210,29 @@ export function SettingsPageSection() {
           />
         </div>
       </Specimen>
-      <Specimen
-        name="Environments · Apple container running, .nex addresses off, stopped, restarting, and Uninstall…"
-        bare
-      >
-        <div className="flex flex-wrap items-start gap-10">
-          <div className="flex w-[620px] flex-col gap-3">
-            <RuntimeCard runtime={RUNTIME} />
-            <RuntimeCard runtime={{ ...RUNTIME, addresses: "missing" }} />
-            <RuntimeCard runtime={{ ...RUNTIME, state: "stopped", containers: 0, usedGb: 0 }} />
-            <RuntimeCard runtime={{ ...RUNTIME, state: "restarting", containers: 0, usedGb: 0 }} />
-          </div>
-          <RemoveEnvironmentsDialog containers={6} removesRuntime />
-        </div>
-      </Specimen>
+      <RuntimeSpecimen />
       <Specimen name="LicensesView · search, open a package" bare>
         <LicensesDemo />
       </Specimen>
     </Section>
+  );
+}
+
+export function RuntimeSpecimen() {
+  return (
+    <Specimen
+      name="Environments · Apple container running, .nex addresses off, stopped, restarting, and Uninstall…"
+      bare
+    >
+      <div className="flex flex-wrap items-start gap-10">
+        <div className="flex w-[620px] flex-col gap-3">
+          <RuntimeCard runtime={RUNTIME} />
+          <RuntimeCard runtime={{ ...RUNTIME, addresses: "missing" }} />
+          <RuntimeCard runtime={{ ...RUNTIME, state: "stopped", containers: 0, usedGb: 0 }} />
+          <RuntimeCard runtime={{ ...RUNTIME, state: "restarting", containers: 0, usedGb: 0 }} />
+        </div>
+        <RemoveEnvironmentsDialog containers={6} removesRuntime />
+      </div>
+    </Specimen>
   );
 }

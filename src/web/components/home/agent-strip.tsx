@@ -142,7 +142,11 @@ export function AgentStrip({
 
   return (
     <div className="relative flex min-w-0 flex-1 flex-col">
-      <div className="flex h-8 shrink-0 items-center gap-2.5 px-3">{summary}</div>
+      <div className="flex h-11 shrink-0 items-center px-3">
+        <div className="flex h-7 items-center gap-2.5 rounded-full bg-surface-glass px-3 shadow-hairline backdrop-blur-[28px] backdrop-saturate-[1.2]">
+          {summary}
+        </div>
+      </div>
       <div
         ref={scrollerRef}
         className="flex min-h-0 flex-1 scroll-px-[62px] gap-2.5 overflow-x-auto overflow-y-hidden pr-[62px] pl-3 pt-1 pb-8 no-scrollbar"

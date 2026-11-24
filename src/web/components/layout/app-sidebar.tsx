@@ -1,15 +1,16 @@
 import { useLocation, useNavigate } from "react-router";
 import { useMemo } from "react";
-import { EnvironmentsMeter } from "@/components/environment/machine-popover";
+import { EnvironmentsMeter, NEARLY_FULL } from "@/components/environment/machine-popover";
 import { SidebarFrame } from "@/components/layout/sidebar-frame";
 import { NewWorkspaceRow, type NewWorkspace } from "@/components/sidebar/new-workspace-row";
-import { useEnvironments } from "@/hooks/use-environments";
+import { useEnvironments, useViewedEnvironment } from "@/hooks/use-environments";
 import { useNow } from "@/hooks/use-now";
 import { useAppHotkey } from "@/hooks/use-app-hotkey";
 import { notifyCompact } from "@/lib/notify";
 import { repoAt } from "@/lib/repo-at";
 import { environmentsUsage, memoryBudget } from "@/lib/environments";
 import { buildSidebar } from "@/lib/sidebar-model";
+import { idleCount, machineEnvironments } from "@/lib/task-environment";
 import { useAddProjectStore } from "@/stores/add-project.store";
 import { useEnvironmentsStore } from "@/stores/environments.store";
 import { useRemoveProjectStore } from "@/stores/remove-project.store";
@@ -31,6 +32,8 @@ export function AppSidebar() {
   const expandWorkspace = useWorkspaceStore((s) => s.expandWorkspace);
   const openTask = useWorkspaceStore((s) => s.openTask);
   const showOverview = useWorkspaceStore((s) => s.showOverview);
+  const showTasks = useWorkspaceStore((s) => s.showTasks);
+  const homeView = useWorkspaceStore((s) => s.homeView);
   const createWorkspace = useWorkspaceStore((s) => s.createWorkspace);
   const showNewTask = useNewTaskStore((s) => s.show);
   const showAddProject = useAddProjectStore((s) => s.show);
@@ -48,16 +51,41 @@ export function AppSidebar() {
     navigate("/");
     showOverview();
   };
+  const openTasks = () => {
+    navigate("/");
+    showTasks();
+  };
   useAppHotkey("overview", openOverview);
   const now = useNow(AGE_REFRESH_MS);
   useEnvironments();
+  useViewedEnvironment(onHome ? activeTaskId : null);
   const envStatus = useEnvironmentsStore((s) => s.status);
+  const environments = useEnvironmentsStore((s) => s.tasks);
+  const pauseEnvironment = useEnvironmentsStore((s) => s.pauseTask);
+  const pauseIdle = useEnvironmentsStore((s) => s.pauseIdle);
   const envMemory = usePreferencesStore((s) => s.prefs.envMemory);
 
   const workspaces = useMemo(
-    () => buildSidebar({ workspaces: rawWorkspaces, projects, sessions, terminals }, now),
-    [rawWorkspaces, projects, sessions, terminals, now],
+    () =>
+      buildSidebar({ workspaces: rawWorkspaces, projects, sessions, terminals, environments }, now),
+    [rawWorkspaces, projects, sessions, terminals, environments, now],
   );
+
+  const usage = useMemo(() => {
+    if (!envStatus) return null;
+    const budget = memoryBudget(envStatus, envMemory);
+    const all = Object.values(environments);
+    const machines = machineEnvironments(
+      {
+        environments: all,
+        sessions,
+        projects,
+        nearlyFull: budget > 0 && envStatus.usage.usedGb / budget >= NEARLY_FULL,
+      },
+      now,
+    );
+    return environmentsUsage(envStatus, budget, machines, idleCount(all));
+  }, [envStatus, envMemory, environments, sessions, projects, now]);
 
   const create = async (draft: NewWorkspace) => {
     hideNewWorkspace();
@@ -81,16 +109,21 @@ export function AppSidebar() {
     <SidebarFrame
       workspaces={workspaces}
       activeTaskId={onHome ? (activeTaskId ?? undefined) : undefined}
-      overviewActive={onHome && !activeTaskId}
+      overviewActive={onHome && !activeTaskId && homeView === "overview"}
+      tasksActive={onHome && !activeTaskId && homeView === "tasks"}
       onToggleWorkspace={toggleWorkspace}
       onExpandWorkspace={expandWorkspace}
       onSelectTask={openTask}
       onOverview={openOverview}
+      onTasks={openTasks}
       creating={creating && <NewWorkspaceRow onCreate={create} onCancel={hideNewWorkspace} />}
       environments={
-        envStatus?.enabled && (
+        envStatus?.enabled &&
+        usage && (
           <EnvironmentsMeter
-            usage={environmentsUsage(envStatus, memoryBudget(envStatus, envMemory))}
+            usage={usage}
+            onPause={pauseEnvironment}
+            onPauseIdle={pauseIdle}
             onSettings={() => navigate("/settings", { state: { section: "environments" } })}
           />
         )

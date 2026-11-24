@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { detectFromFiles } from "@native/environments/detect";
 import {
-  containerPort,
+  publishedPorts,
   dependencies,
   environmentEntries,
   healthcheck,
@@ -325,6 +325,7 @@ services:
       kind: "build",
       build: { context: "", dockerfile: "Dockerfile" },
       ports: [80],
+      hostPorts: [{ host: 5173, container: 80 }],
       ready: { port: 80 },
     });
     expect(env.services[0]?.command).toBeUndefined();
@@ -413,10 +414,21 @@ services:
   });
 
   it("reads every compose shape", () => {
-    expect(containerPort("127.0.0.1:5432:5432/tcp")).toBe(5432);
-    expect(containerPort(6379)).toBe(6379);
-    expect(containerPort("8000-8001:8000-8001")).toBe(8000);
-    expect(containerPort({ target: 80, published: 8080 })).toBe(80);
+    expect(publishedPorts("127.0.0.1:5432:5432/tcp").ports).toEqual([
+      { host: 5432, container: 5432 },
+    ]);
+    expect(publishedPorts(6379).ports).toEqual([{ host: 6379, container: 6379 }]);
+    expect(publishedPorts("5173:80").ports).toEqual([{ host: 5173, container: 80 }]);
+    expect(publishedPorts("8000-8001:9000-9001").ports).toEqual([
+      { host: 8000, container: 9000 },
+      { host: 8001, container: 9001 },
+    ]);
+    expect(publishedPorts("[::1]:8080:80").ports).toEqual([{ host: 8080, container: 80 }]);
+    expect(publishedPorts("127.0.0.1::80").ports).toEqual([{ host: 80, container: 80 }]);
+    expect(publishedPorts({ target: 80, published: "8080" }).ports).toEqual([
+      { host: 8080, container: 80 },
+    ]);
+    expect(publishedPorts("${PORT}:80")).toEqual({ ports: [], unreadable: "${PORT}:80" });
     expect(memoryMb("512m")).toBe(512);
     expect(memoryMb("1.5g")).toBe(1536);
     expect(memoryMb("bogus")).toBeUndefined();

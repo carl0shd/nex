@@ -1,4 +1,4 @@
-import type { EnvServiceDef, ProjectEnvironment } from "@native/db/types";
+import type { EnvHostPort, EnvServiceDef, ProjectEnvironment } from "@native/db/types";
 
 export const WORKSPACE_PATH = "/workspace";
 export const MIN_MEMORY_MB = 256;
@@ -6,7 +6,12 @@ export const APP_MEMORY_MB = 1536;
 export const IMAGE_MEMORY_MB = 256;
 export const MEMORY_CHOICES_MB = [256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096];
 
-const ADDRESS_DOMAIN = "nex";
+export const DISCOVERY_DOMAIN = "nexsvc";
+export const NEX_ADDRESS_DOMAIN = "nex";
+export const LOCAL_DOMAIN = "localhost";
+export type AddressDomain = typeof NEX_ADDRESS_DOMAIN | typeof LOCAL_DOMAIN;
+export const WEB_ENTRY_PORT = 80;
+export const ENTRY_PORT = 1355;
 const MAX_NAME = 40;
 const NAME = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
 
@@ -79,6 +84,33 @@ export function knownImage(image: string): KnownImage | null {
   return store ? { store, ...KNOWN_IMAGES[store] } : null;
 }
 
+const NOT_WEB_PORTS = new Set([
+  21, 22, 25, 465, 587, 1025, 2525, 3306, 5432, 5672, 6379, 9092, 11211, 27017,
+]);
+
+export const webPort = (service: EnvServiceDef): number | undefined =>
+  service.ports.find((port) => !NOT_WEB_PORTS.has(port));
+
+export const rawPort = (service: EnvServiceDef, container: number) =>
+  serviceRole(service) === "data" || NOT_WEB_PORTS.has(container);
+
+export const hostPortOf = (service: EnvServiceDef, container: number): number =>
+  service.hostPorts?.find((item) => item.container === container)?.host ?? container;
+
+export const portMappings = (service: EnvServiceDef): EnvHostPort[] =>
+  service.ports.map((container) => ({ host: hostPortOf(service, container), container }));
+
+export type ServiceRole = "open" | "background" | "data";
+
+const WORKER =
+  /celery|worker|sidekiq|flower|scheduler|resque|crontab|\bbeat\b|\bqueue\b|\bcron\b|\brq\b/i;
+
+export function serviceRole(service: EnvServiceDef): ServiceRole {
+  if (service.data || knownImage(service.image)) return "data";
+  if (service.ports.length === 0) return "background";
+  return WORKER.test(`${service.name} ${service.command ?? ""}`) ? "background" : "open";
+}
+
 export const isNodeImage = (image: string) =>
   /^(node|bun)$/.test(imageRepository(image).split("/").at(-1) ?? "");
 
@@ -94,34 +126,67 @@ export function slugName(value: string): string {
 export const clampMemory = (memoryMb: number) =>
   Math.max(MIN_MEMORY_MB, Math.round(Number.isFinite(memoryMb) ? memoryMb : MIN_MEMORY_MB));
 
-export function primaryService(env: ProjectEnvironment): EnvServiceDef | undefined {
-  return (
-    env.services.find((service) => service.kind !== "image" && service.ports.length > 0) ??
-    env.services.find((service) => service.ports.length > 0)
-  );
+const FRONTEND = /(^|-)(web|www|front|frontend|ui|client|site|app)(-|$)/;
+
+export function mainService(env: ProjectEnvironment): EnvServiceDef | undefined {
+  const open = env.services.filter((service) => serviceRole(service) === "open");
+  return open.find((service) => FRONTEND.test(service.name)) ?? open[0];
 }
 
-export function serviceAliases(
-  env: ProjectEnvironment,
-  service: EnvServiceDef,
-  taskSlug: string,
-): string[] {
-  const own = `${service.name}.${taskSlug}.${ADDRESS_DOMAIN}`;
-  return primaryService(env)?.name === service.name
-    ? [own, `${taskSlug}.${ADDRESS_DOMAIN}`]
-    : [own];
+export const discoveryAlias = (service: EnvServiceDef, taskSlug: string) =>
+  `${service.name}.${searchDomain(taskSlug)}`;
+
+const LABEL = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
+
+function sharedPrefix(name: string, names: readonly string[]): string | null {
+  for (let at = name.lastIndexOf("-"); at > 0; at = name.lastIndexOf("-", at - 1)) {
+    const prefix = name.slice(0, at + 1);
+    if (names.filter((other) => other.startsWith(prefix)).length >= 2) return prefix;
+  }
+  return null;
 }
+
+export function shortNames(names: readonly string[]): Map<string, string> {
+  const short = new Map(
+    names.map((name) => {
+      const prefix = sharedPrefix(name, names);
+      const rest = prefix ? name.slice(prefix.length) : name;
+      return [name, LABEL.test(rest) ? rest : name] as const;
+    }),
+  );
+  for (let changed = true; changed;) {
+    changed = false;
+    const counts = new Map<string, number>();
+    for (const value of short.values()) counts.set(value, (counts.get(value) ?? 0) + 1);
+    for (const [name, value] of short) {
+      if (value !== name && (counts.get(value) ?? 0) > 1) {
+        short.set(name, name);
+        changed = true;
+      }
+    }
+  }
+  return short;
+}
+
+export const addressName = (env: ProjectEnvironment, service: EnvServiceDef) =>
+  shortNames(env.services.map((item) => item.name)).get(service.name) ?? service.name;
 
 export function serviceAddress(
   env: ProjectEnvironment,
   service: EnvServiceDef,
   taskSlug: string,
+  domain: AddressDomain = NEX_ADDRESS_DOMAIN,
 ): string | null {
   if (service.ports.length === 0) return null;
-  return serviceAliases(env, service, taskSlug).at(-1) ?? null;
+  return mainService(env)?.name === service.name
+    ? `${taskSlug}.${domain}`
+    : `${addressName(env, service)}.${taskSlug}.${domain}`;
 }
 
-export const searchDomain = (taskSlug: string) => `${taskSlug}.${ADDRESS_DOMAIN}`;
+export const originFor = (address: string, port: number) =>
+  port === 80 ? `http://${address}` : `http://${address}:${port}`;
+
+export const searchDomain = (taskSlug: string) => `${taskSlug}.${DISCOVERY_DOMAIN}`;
 
 export class EnvDefinitionError extends Error {}
 
@@ -168,7 +233,12 @@ export function environmentProblems(env: ProjectEnvironment): string[] {
     } else if (!service.image.trim()) {
       problems.push(`${label} needs an image.`);
     }
-    if (service.ports.some((port) => !Number.isInteger(port) || port < 1 || port > 65_535)) {
+    const published = (service.hostPorts ?? []).map((item) => item.host);
+    if (
+      [...service.ports, ...published].some(
+        (port) => !Number.isInteger(port) || port < 1 || port > 65_535,
+      )
+    ) {
       problems.push(`${label} has a port outside 1–65535.`);
     }
   }

@@ -35,18 +35,19 @@ import type { PermissionAnswer, PermissionRequest } from "@native/agents/permiss
 import type { AgentLiveEvent, AgentMessage, AgentRunState } from "@native/agents/agent-runner";
 import type { AgentCommand } from "@native/agents/agent-commands";
 import type { BackgroundCommand } from "@native/agents/background-commands";
+import type { AgentTask } from "@native/agents/agent-tasks";
+import type { ClaudeSessionInfo } from "@native/agents/claude-sessions";
 import type { TerminalRuntime } from "@native/pty/manager";
 import type { McpAddInput, McpServer } from "@native/agents/mcp-servers";
 import type { AgentCommandChange } from "@native/agents/version";
 import type { AgentSettings } from "@native/agents/agent-settings";
 import type { GhInfo, GithubOwner, GithubRepo } from "@native/git/github";
 import type {
-  CleanBaseInput,
-  CleanBaseState,
   EnvCheckInput,
   EnvCheckState,
   EnvironmentStatus,
   EnvSetupState,
+  TaskEnvState,
 } from "@native/environments/types";
 import type { UsageGranularity, UsageStats, UsageSummary } from "@native/usage/types";
 
@@ -163,6 +164,13 @@ interface NexAPI {
   onBackgroundCommands: (
     callback: (info: { sessionId: string; commands: BackgroundCommand[] }) => void,
   ) => () => void;
+  getAgentTasks: () => Promise<Record<string, readonly AgentTask[]>>;
+  listClaudeSessions: (projectId: string) => Promise<ClaudeSessionInfo[]>;
+  onAgentTasks: (
+    callback: (info: { sessionId: string; tasks: readonly AgentTask[] }) => void,
+  ) => () => void;
+  stopAgentTask: (sessionId: string, taskId: string) => Promise<boolean>;
+  readSubagentTranscript: (terminalId: string, toolUseId: string) => Promise<unknown[]>;
   getAgentSettings: (sessionId: string) => Promise<AgentSettings>;
   configureAgent: (sessionId: string, settings: AgentSettings) => Promise<void>;
   onAgentState: (
@@ -269,10 +277,15 @@ interface NexAPI {
   stopEnvironmentCheck: (projectPath: string) => Promise<void>;
   getEnvironmentCheck: (projectPath: string) => Promise<EnvCheckState | null>;
   onEnvironmentCheck: (callback: (state: EnvCheckState) => void) => () => void;
-  getCleanBase: (projectId: string) => Promise<CleanBaseState | null>;
-  buildCleanBase: (input: CleanBaseInput) => Promise<CleanBaseState>;
-  stopCleanBase: (projectId: string) => Promise<void>;
-  onCleanBase: (callback: (state: CleanBaseState) => void) => () => void;
+  getTaskEnvironments: () => Promise<TaskEnvState[]>;
+  startTaskEnvironment: (sessionId: string) => Promise<TaskEnvState | null>;
+  pauseTaskEnvironment: (sessionId: string) => Promise<void>;
+  restartTaskEnvironment: (sessionId: string, service?: string) => Promise<void>;
+  viewTaskEnvironment: (sessionId: string | null) => Promise<void>;
+  openTaskEnvironmentLogs: (sessionId: string, service?: string) => Promise<Terminal | null>;
+  getTaskEnvironmentSize: (sessionId: string) => Promise<number | null>;
+  pauseIdleTaskEnvironments: () => Promise<void>;
+  onTaskEnvironment: (callback: (state: TaskEnvState) => void) => () => void;
 
   usage: {
     getSummary: () => Promise<UsageSummary>;
